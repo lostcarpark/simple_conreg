@@ -1,0 +1,48 @@
+simple_conreg.register:
+  title: Register
+  route_name: simple_conreg_register
+
+simple_conreg.list:
+  title: List Members
+  route_name: simple_conreg_list
+  weight: 0
+  parent: simple_conreg.register
+
+simple_conreg.config:
+  title: Registration Config
+  route_name: simple_conreg_config
+  weight: 2
+  parent: simple_conreg.register
+
+simple_conreg.admin.members:
+  title: Membership Admin
+  route_name: simple_conreg_admin_members
+  weight: 3
+  parent: simple_conreg.register
+
+simple_conreg.admin.add:
+  title: Add Member
+  route_name: simple_conreg_admin_members_add
+  weight: 0
+  parent: simple_conreg.admin.members
+
+simple_conreg.member_list:
+  title: Membership List
+  route_name: simple_conreg_admin_member_list
+  weight: 2
+
+simple_conreg.zz9_member_list:
+  title: ZZ9 Membership List
+  route_name: simple_conreg_admin_zz9_list
+  weight: 3
+
+simple_conreg.programme_list:
+  title: Programme Participant List
+  route_name: simple_conreg_admin_programme_list
+  weight: 3
+
+simple_conreg.volunteer_list:
+  title: Volunteer List
+  route_name: simple_conreg_admin_volunteer_list
+  weight: 3
+

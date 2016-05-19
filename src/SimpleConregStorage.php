@@ -1,0 +1,382 @@
+<?php
+
+/**
+ * @file
+ * Contains \Drupal\simple_conreg\SimpleConregStorage
+ */
+
+use Drupal\devel;
+
+namespace Drupal\simple_conreg;
+
+class SimpleConregStorage {
+
+  /**
+   * Save an entry in the database.
+   *
+   * The underlying DBTNG function is db_insert().
+   *
+   * Exception handling is shown in this example. It could be simplified
+   * without the try/catch blocks, but since an insert will throw an exception
+   * and terminate your application if the exception is not handled, it is best
+   * to employ try/catch.
+   *
+   * @param array $entry
+   *   An array containing all the fields of the database record.
+   *
+   * @return int
+   *   The number of updated rows.
+   *
+   * @throws \Exception
+   *   When the database insert fails.
+   *
+   * @see db_insert()
+   */
+  public static function insert($entry) {
+    $return_value = NULL;
+    try {
+      $return_value = db_insert('simple_conreg_members')
+          ->fields($entry)
+          ->execute();
+    }
+    catch (\Exception $e) {
+      drupal_set_message(t('db_insert failed. Message = %message, query= %query', array(
+            '%message' => $e->getMessage(),
+            '%query' => $e->query_string,
+          )), 'error');
+    }
+    return $return_value;
+  }
+
+  /**
+   * Update an entry in the database.
+   *
+   * @param array $entry
+   *   An array containing all the fields of the item to be updated.
+   *
+   * @return int
+   *   The number of updated rows.
+   *
+   * @see db_update()
+   */
+  public static function update($entry) {
+    try {
+      // db_update()...->execute() returns the number of rows updated.
+      $count = db_update('simple_conreg_members')
+          ->fields($entry)
+          ->condition('mid', $entry['mid'])
+          ->execute();
+    }
+    catch (\Exception $e) {
+      drupal_set_message(t('db_update failed. Message = %message, query= %query', array(
+            '%message' => $e->getMessage(),
+            '%query' => $e->query_string,
+          )), 'error');
+    }
+    return $count;
+  }
+
+  /**
+   * Update an entry in the database, using the lead_mid as key.
+   *
+   * @param array $entry
+   *   An array containing all the fields of the item to be updated.
+   *
+   * @return int
+   *   The number of updated rows.
+   *
+   * @see db_update()
+   */
+  public static function updateByLeadMid($entry) {
+    try {
+      // db_update()...->execute() returns the number of rows updated.
+      $count = db_update('simple_conreg_members')
+          ->fields($entry)
+          ->condition('lead_mid', $entry['lead_mid'])
+          ->execute();
+    }
+    catch (\Exception $e) {
+      drupal_set_message(t('db_update failed. Message = %message, query= %query', array(
+            '%message' => $e->getMessage(),
+            '%query' => $e->query_string,
+          )), 'error');
+    }
+    return $count;
+  }
+
+
+  /**
+   * Delete an entry from the database.
+   *
+   * @param array $entry
+   *   An array containing at least the person identifier 'pid' element of the
+   *   entry to delete.
+   *
+   * @see db_delete()
+   */
+  public static function delete($entry) {
+    db_delete('simple_conreg_members')
+        ->condition('mid', $entry['mid'])
+        ->execute();
+  }
+
+  /**
+   * Read from the database using a filter array.
+   *
+   */
+  public static function load($entry = array()) {
+    // Read all fields from the simple_conreg table.
+    $select = db_select('simple_conreg_members', 'members');
+    $select->fields('members');
+
+    // Add each field and value as a condition to this query.
+    foreach ($entry as $field => $value) {
+      $select->condition($field, $value);
+    }
+    // Return the result in object format.
+    return $select->execute()->fetchAll();
+  }
+
+
+  /**
+   * Check if valid mid and key combo.
+   */
+  public static function checkMemberKey($mid, $key) {
+    // Read all fields from the simple_conreg table.
+    $select = db_select('simple_conreg_members', 'members');
+    $select->fields('members');
+    $select->condition("mid", $mid);
+    $select->condition("random_key", $key);
+
+    // Return the result in object format.
+    if ($select->countQuery()->execute()->fetchField() > 0)
+      return TRUE;
+    else
+      return FALSE;
+  }
+
+  public static function adminPublicListLoad() {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'member_type');
+    $select->addField('m', 'member_no');
+    $select->addField('m', 'first_name');
+    $select->addField('m', 'last_name');
+    $select->addField('m', 'badge_name');
+    $select->addField('m', 'display');
+    $select->addField('m', 'country');
+    $select->condition('m.is_approved', 1);
+    $select->orderBy('m.member_no');
+    // Make sure we only get items 0-49, for scalability reasons.
+    //$select->range(0, 50);
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  public static function adminMemberListLoad($condition) {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'mid');
+    $select->addField('m', 'first_name');
+    $select->addField('m', 'last_name');
+    $select->addField('m', 'email');
+    $select->addField('m', 'badge_name');
+    $select->addField('m', 'display');
+    $select->addField('m', 'member_type');
+    $select->addField('m', 'is_paid');
+    $select->addField('m', 'is_approved');
+    $select->addField('m', 'member_no');
+    switch ($condition) {
+      case '1':
+        $select->condition('m.is_paid', 1);
+        $select->condition('m.is_approved', 0);
+        break;
+      case '2':
+        $select->condition('m.is_paid', 1);
+        $select->condition('m.is_approved', 1);
+        break;
+      case '3':
+        $select->condition('m.is_paid', 0);
+        break;
+      case '4':
+        // All members.
+        break;
+    }
+    // Make sure we only get items 0-49, for scalability reasons.
+    //$select->range(0, 50);
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  public static function loadAllMemberNos() {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'mid');
+    $select->addField('m', 'member_no');
+    $select->addField('m', 'is_approved');
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+    $members = array();
+    //Turn numeric array into associative array by mid.
+    foreach ($entries as $member) {
+      $members[$member["mid"]] = $member;
+    }
+
+    return $members;
+  }
+
+  public static function loadMaxMemberNo() {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addExpression('MAX(m.member_no)');
+    $select->condition('m.is_approved', 1);
+    // Make sure we only get items 0-49, for scalability reasons.
+    //$select->range(0, 50);
+
+    $max = $select->execute()->fetchField();
+    if (empty($max)) {
+      $max = 0;
+    }
+
+    return $max;
+  }
+
+
+  public static function adminPaidMemberListLoad() {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'mid');
+    $select->addField('m', 'member_type');
+    $select->addField('m', 'member_no');
+    $select->addField('m', 'first_name');
+    $select->addField('m', 'last_name');
+    $select->addField('m', 'email');
+    $select->addField('m', 'badge_name');
+    $select->addField('m', 'street');
+    $select->addField('m', 'street2');
+    $select->addField('m', 'city');
+    $select->addField('m', 'county');
+    $select->addField('m', 'postcode');
+    $select->addField('m', 'country');
+    $select->addField('m', 'phone');
+    $select->addField('m', 'birth_date');
+    $select->addField('m', 'display');
+    $select->addField('m', 'communication_method');
+    $select->addField('m', 'is_paid');
+    $select->addField('m', 'member_price');
+    $select->addField('m', 'is_approved');
+    $select->addExpression('from_unixtime(join_date)', 'joined');
+    $select->condition('m.is_paid', 1);
+    // Make sure we only get items 0-49, for scalability reasons.
+    //$select->range(0, 50);
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  public static function adminMemberSummaryLoad() {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'member_type');
+    $select->addExpression('COUNT(m.mid)', 'num');
+    $select->condition('m.is_paid', 1);
+    $select->groupby('m.member_type');
+    // Make sure we only get items 0-49, for scalability reasons.
+    //$select->range(0, 50);
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  public static function adminMemberCountrySummaryLoad() {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'country');
+    $select->addExpression('COUNT(m.mid)', 'num');
+    $select->condition('m.is_paid', 1);
+    $select->groupby('m.country');
+    $select->orderby('num', $direction = 'DESC');
+    // Make sure we only get items 0-49, for scalability reasons.
+    //$select->range(0, 50);
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  public static function adminZZ9MemberListLoad($condition) {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'mid');
+    $select->addField('m', 'first_name');
+    $select->addField('m', 'last_name');
+    $select->addField('m', 'email');
+    $select->addField('m', 'badge_name');
+    $select->addField('m', 'street');
+    $select->addField('m', 'city');
+    $select->addField('m', 'county');
+    $select->addField('m', 'postcode');
+    $select->addField('m', 'country');
+    $select->addField('m', 'phone');
+    $select->addField('m', 'birth_date');
+    $select->addField('m', 'add_on');
+    $select->addField('m', 'add_on_info');
+    $select->addField('m', 'extra_flag1');
+    $select->addField('m', 'extra_flag2');
+    $select->condition('m.is_paid', 1);
+    $select->condition('m.add_on', "No thanks!", "!=");
+    $select->orderBy('m.add_on');
+    // Make sure we only get items 0-49, for scalability reasons.
+    //$select->range(0, 50);
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  public static function adminProgrammeMemberListLoad() {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'mid');
+    $select->addField('m', 'member_type');
+    $select->addField('m', 'member_no');
+    $select->addField('m', 'first_name');
+    $select->addField('m', 'last_name');
+    $select->addField('m', 'email');
+    $select->addField('m', 'badge_name');
+    $select->addField('m', 'is_paid');
+    $select->addField('m', 'is_approved');
+    $select->condition('m.extra_flag1', 1);
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  public static function adminVolunteerMemberListLoad() {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'mid');
+    $select->addField('m', 'member_type');
+    $select->addField('m', 'member_no');
+    $select->addField('m', 'first_name');
+    $select->addField('m', 'last_name');
+    $select->addField('m', 'email');
+    $select->addField('m', 'badge_name');
+    $select->addField('m', 'is_paid');
+    $select->addField('m', 'is_approved');
+    $select->condition('m.extra_flag2', 1);
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+
+}

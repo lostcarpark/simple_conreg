@@ -1,0 +1,152 @@
+<?php
+
+/**
+ * @file
+ * Module file for simple convention registration. May do more in future.
+ */
+
+//Warning: should not be in namespace!
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Component\Utility\SafeMarkup;
+use Drupal\devel;
+
+function simple_conreg_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    //case 'simple_conreg_register':
+      // Help text for the simple page registered for this path.
+      //return t('Please register your details.');
+
+    case 'help.page.simple_conreg':
+      // Help text for the admin section, using the module name in the path.
+      return t("Configure settings for convention registration.");
+  }
+}
+
+function simple_conreg_mail($key, &$message, $params) {
+  $config = \Drupal::config('simple_conreg.settings');
+  $symbol = $config->get('payments.symbol');
+
+  // Get language message to be sent in.
+  $options = array(
+    'langcode' => $message['langcode'],
+  );
+
+  switch ($key) {
+    // Send a simple message from the registration form.
+    case 'confirmation_message':
+    case 'organiser_copy_message':
+      // Get the member type options.
+      $types = explode("\n", $config->get('member_types')); // One type per line.
+      $typeOptions = array();
+      foreach ($types as $type) {
+        list($code, $desc, $price) = explode('|', $type);
+        $typeOptions[$code] = $desc;
+      }
+
+      // List of fields to add to mail for each member.
+      $confirm_labels = array(
+        'first_name' => 'fields.first_name_label',
+        'last_name' => 'fields.last_name_label',
+        'badge_name' => 'fields.badge_name_label',
+        'email' => 'fields.email_label',
+        'display' => 'fields.display_label',
+        'communications_method' => 'fields.communications_method_label',
+        'street' => 'fields.street_label',
+        'street2' => 'fields.street2_label',
+        'city' => 'fields.city_label',
+        'county' => 'fields.county_label',
+        'postcode' => 'fields.postcode_label',
+        'country' => 'fields.country_label',
+        'phone' => 'fields.phone_label',
+        'birth_date' => 'fields.birth_date_label',
+        'member_type' => 'fields.member_type_label',
+        'add_on' => 'add_ons.label',
+        'add_on_info' => 'add_on_info.label',
+        'extra_flag1' => 'extras.flag1',
+        'extra_flag2' => 'extras.flag2',
+      );
+      // Look up labels for fields to email.
+      $confirm_fields = array();
+      foreach ($confirm_labels as $key=>$val) {
+        if (!empty($config->get($val))) {
+          $confirm_fields[$key] = $config->get($val);
+        }
+      }
+      // Add price with static label.
+      $confirm_fields['member_price'] = 'Price for member';
+      // Labels for display option and communications method. Will add to config later.
+      $displayOptions = array(
+        'F' => t('Full name and badge name'),
+        'B' => t('Badge name only'),
+        'N' => t('Not at all'),
+      );
+      $communicationsOptions = array('E' => t('Electronic only'),
+                                     'P' => t('Paper only'),
+                                     'B' => t('Both electronic and paper'));
+      $yesNoOptions = array(
+        0 => t('No'),
+        1 => t('Yes'),
+      );
+
+      // Set message subject, depending on key.
+      $site_name = \Drupal::config('system.site')->get('name');
+      if ($key == 'organiser_copy_message') {
+        $message['subject'] = t('New member @member_name has registered for @site-name', array('@member_name' => trim($params['first'] . ' ' . $params['last']),'@site-name' => $site_name), $options);
+      } else {
+        $message['subject'] = t('Thank you for registering for @site-name', array('@site-name' => $site_name), $options);
+      }
+
+      // Replacement strings.
+      $find = array("[first_name]", "[last_name]", "[email]", "[payment_url]");
+      $replace = array(SafeMarkup::checkPlain($params['first']), SafeMarkup::checkPlain($params['last']), SafeMarkup::checkPlain($params['email']), $params['payment_url']);
+      // Note that the message body is an array, not a string.
+      $message['body'][] = str_replace($find, $replace, $config->get('confirmation.reg_header'));
+      foreach($params['members'] as $memberNo=>$memberVals) {
+        // Expand list values and add currency symbol.
+        $memberVals['display'] = $displayOptions[$memberVals['display']];
+        $memberVals['member_price'] = $symbol . $memberVals['member_price'];
+        $memberVals['member_type'] = $typeOptions[$memberVals['member_type']];
+        if (!empty($memberVals['communication_method']))
+          $memberVals['communication_method'] = $communicationOptions[$memberVals['communication_method']];
+        $memberVals['extra_flag1'] = $yesNoOptions[$memberVals['extra_flag1']];
+        $memberVals['extra_flag2'] = $yesNoOptions[$memberVals['extra_flag2']];
+        
+        // Concatenate values into a string.
+        $memberDetails = t("Member @number details:", array('@number' => $memberNo), $options);
+        foreach($confirm_fields as $field => $label) {
+          if (!empty($label) && isset($memberVals[$field])) {
+            $memberDetails .= "\n" . t($label, array(), $options) . ": " . SafeMarkup::checkPlain($memberVals[$field]);
+          }
+        }
+        // Add member details to message body.
+        $message['body'][] = $memberDetails;
+      }
+      $message['body'][] = str_replace($find, $replace, $config->get('confirmation.reg_footer'));
+      //$message['body'][] = SafeMarkup::checkPlain($params['message']);
+      break;
+
+
+    // Payment receipt message.
+    case 'payment_message':
+    case 'organiser_payment_message':
+      // Set message subject, depending on key.
+      $site_name = \Drupal::config('system.site')->get('name');
+      if ($key == 'organiser_payment_message') {
+        $message['subject'] = t('Payment received from @member_name for @site-name', array('@member_name' => $params['first_name'] . ' ' . $params['last_name'],'@site-name' => $site_name), $options);
+      } else {
+        $message['subject'] = t('Receipt for your payment for @site-name', array('@site-name' => $site_name), $options);
+      }
+
+      $find = array("[first_name]", "[last_name]", "[email]", "[payment_amount]", "[payment_id]");
+      $replace = array($params['first_name'], $params['last_name'], $params['email'], $symbol . $params['payment_amount'], $params['payment_id']);
+      $message['body'][] = str_replace($find, $replace, $config->get('confirmation.pay_template'));
+      break;
+
+  }
+  if (!empty($params['from'])) {
+    $message['from'] = $params['from'];
+    $message['headers']['From'] = $params['from'];
+  }
+}
+

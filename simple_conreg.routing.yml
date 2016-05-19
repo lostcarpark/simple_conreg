@@ -1,0 +1,98 @@
+simple_conreg_register:
+  path: 'members/register'
+  defaults:
+    _title: 'Registration'
+    _form: '\Drupal\simple_conreg\SimpleConregRegistrationForm'
+  requirements:
+    _permission: 'convention registration'
+
+simple_conreg_payment:
+  path: 'members/payment/{mid}/{key}'
+  defaults:
+    _title: 'Payment'
+    _form: '\Drupal\simple_conreg\SimpleConregPaymentForm'
+  requirements:
+    _permission: 'convention registration'
+
+simple_conreg_thanks:
+  path: 'members/thanks'
+  defaults:
+    _title: 'Thank you'
+    _controller: '\Drupal\simple_conreg\SimpleConregController::registrationThanks'
+  requirements:
+    _permission: 'convention registration'
+
+simple_conreg_list:
+  path: 'members/list'
+  defaults:
+    _title: 'Member List'
+    _controller: '\Drupal\simple_conreg\SimpleConregController::memberList'
+  requirements:
+    _permission: 'convention registration'
+
+simple_conreg_config:
+  path: 'admin/config/simple_conreg'
+  defaults:
+    _title: 'Simple Convention Registration'
+    _form: '\Drupal\simple_conreg\SimpleConregConfigForm'
+  requirements:
+    _permission: 'configure convention registration'
+
+simple_conreg_admin_member_list:
+  path: 'members/memberlist'
+  defaults:
+    _title: 'Member List'
+    _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminMemberList'
+  requirements:
+    _permission: 'view membership details'
+
+simple_conreg_admin_zz9_list:
+  path: 'members/zz9list'
+  defaults:
+    _title: 'ZZ9 Member List'
+    _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminZZ9List'
+  requirements:
+    _permission: 'view zz9 membership details'
+
+simple_conreg_admin_programme_list:
+  path: 'members/programmelist'
+  defaults:
+    _title: 'Programme Participant List'
+    _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminProgrammeList'
+  requirements:
+    _permission: 'view programme membership details'
+
+simple_conreg_admin_volunteer_list:
+  path: 'members/volunteerlist'
+  defaults:
+    _title: 'Volunteer List'
+    _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminVolunteerList'
+  requirements:
+    _permission: 'view volunteer membership details'
+
+
+simple_conreg_admin_members:
+  path: 'admin/members/list'
+  defaults:
+    _title: 'Member Administration'
+    _form: '\Drupal\simple_conreg\SimpleConregAdminMembers'
+  requirements:
+    _permission: 'manage convention members'
+
+simple_conreg_admin_members_add:
+  path: 'admin/members/add'
+  defaults:
+    _title: 'Member Administration - Add Member'
+    _form: '\Drupal\simple_conreg\SimpleConregAdminMemberAdd'
+  requirements:
+    _permission: 'manage convention members'
+
+simple_conreg_admin_members_update:
+  path: 'admin/members/update/{mid}'
+  defaults:
+    _title: 'Member Administration - Update Member'
+    _form: '\Drupal\simple_conreg\SimpleConregAdminMemberUpdate'
+  requirements:
+    _permission: 'manage convention members'
+
+

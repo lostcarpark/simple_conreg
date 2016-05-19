@@ -1,0 +1,397 @@
+<?php
+
+/**
+ * @file
+ * Contains \Drupal\simple_conreg\DBTNExampleAddForm
+ */
+
+namespace Drupal\simple_conreg;
+
+use Drupal\Core\Form\FormBase;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\AlertCommand;
+use Drupal\Core\Ajax\CssCommand;
+use Drupal\Core\Ajax\HtmlCommand;
+use Drupal\Component\Utility\SafeMarkup;
+use Drupal\devel;
+
+/**
+ * Simple form to add an entry, with all the interesting fields.
+ */
+class SimpleConregAdminMembers extends FormBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFormID() {
+    return 'simple_conreg_admin_members';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildForm(array $form, FormStateInterface $form_state, $mid = NULL, $key = NULL) {
+    //Get any existing form values for use in AJAX validation.
+    $form_values = $form_state->getValues();
+
+    $config = $this->config('simple_conreg.settings');
+
+    $form = array(
+      '#prefix' => '<div id="memberform">',
+      '#suffix' => '</div>',
+    );
+
+    $form['display'] = array(
+      '#type' => 'select',
+      '#title' => $this->t('Select '),
+      '#options' => array('1' => $this->t('Paid members awaiting approval'),
+                          '2' => $this->t('Paid and approved members'),
+                          '3' => $this->t('Unpaid members'),
+                          '4' => $this->t('All members'),
+                          '5' => $this->t('Custom search'),
+                          ),
+      '#default_value' => '1',
+      '#required' => TRUE,
+      '#ajax' => array(
+        'wrapper' => 'memberform',
+        'callback' => array($this, 'updateDisplayCallback'),
+        'event' => 'change',
+      ),
+    );
+
+    $headers = array(
+      t('First name'),
+      t('Last name'),
+      t('Email'),
+      t('Badge name'),
+      t('Display'),
+      t('Type'),
+      t('Paid'),
+      t('Approved'),
+      t('Member no'),
+      //t('Update'),
+    );
+
+    if (isset($form_values['display']))
+      $display = $form_values['display'];
+    else
+      $display = 1;
+
+    if ($display == 5) {
+      $form['search'] = array(
+        '#type' => 'textfield',
+        '#title' => $this->t('Custom search term'),
+      );
+    }
+
+    $form['table'] = array(
+      '#type' => 'table',
+      '#header' => $headers,
+      '#attributes' => array('id' => 'simple-conreg-admin-member-list'),
+      '#empty' => t('No entries available.'),
+    );      
+
+    if ($display < 5)
+      $entries = SimpleConregStorage::adminMemberListLoad($display);
+    elseif (isset($form_values['search']) && !empty(trim($form_values['search'])))
+      $entries = SimpleConregStorage::adminMemberListLoad($display);
+
+    foreach ($entries as $entry) {
+      $mid = $entry['mid'];
+      // Sanitize each entry.
+      $is_paid = $entry['is_paid'];
+      //$row = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $entry);
+      $row = array();
+      $row['first_name'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['first_name']),
+      );
+      $row['last_name'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['last_name']),
+      );
+      $row['email'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['email']),
+      );
+      $row['badge_name'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['badge_name']),
+      );
+      $row['display'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['display']),
+      );
+      $row['member_type'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['member_type']),
+      );
+      $row['is_paid'] = array(
+        '#markup' => $is_paid ? $this->t('Yes') : $this->t('No'),
+      );
+      $row["is_approved"] = array(
+        //'#attributes' => array('name' => 'is_approved_'.$mid, 'id' => 'edit_is_approved_'.$mid),
+        '#type' => 'checkbox',
+        '#title' => t('Is Approved'),
+        '#title_display' => 'invisible',
+        '#default_value' => $entry['is_approved'],
+      );
+      if (empty($entry["member_no"]))
+        $entry["member_no"] = "";
+      $row["member_no"] = array(
+        '#type' => 'textfield',
+        '#title' => t('Member No'),
+        '#title_display' => 'invisible',
+        '#size' => 5,
+        '#default_value' => $entry['member_no'],
+      );
+      $form['table'][$mid] = $row;
+    }
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save Changes'),
+      '#attributes' => array('id' => "submitBtn"),
+    );
+    return $form;
+  }
+
+  // Callback function for "member type" and "add-on" drop-downs. Replace price fields.
+  public function updateApprovedCallback(array $form, FormStateInterface $form_state) {
+    $triggering_element = $form_state->getTriggeringElement();
+    $ajax_response = new AjaxResponse();
+    if (preg_match("/table\[(\d+)\]\[is_approved\]/", $triggering_element['#name'], $matches)) {
+      $mid = $matches[1];
+      $form['table'][$mid]["member_div"]["member_no"]['#value'] = $triggering_element['#value'];
+      $ajax_response->addCommand(new HtmlCommand('#member_no_'.$mid, render($form['table'][$mid]["member_div"]["member_no"]['#value'])));
+      //$ajax_response->addCommand(new AlertCommand($row." = ".));
+    }
+    return $ajax_response;
+  }
+
+  // Callback function for "member type" and "add-on" drop-downs. Replace price fields.
+  public function updateTestCallback(array $form, FormStateInterface $form_state) {
+    $triggering_element = $form_state->getTriggeringElement();
+    $ajax_response = new AjaxResponse();
+    $ajax_response->addCommand(new AlertCommand($triggering_element['#name']." = ".$triggering_element['#value']));
+    return $ajax_response;
+  }
+
+  // Callback function for "display" drop down.
+  public function updateDisplayCallback(array $form, FormStateInterface $form_state) {
+    // Form rebuilt with required number of members before callback. Return new form.
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+  	  $saved_members = SimpleConregStorage::loadAllMemberNos();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    $form_values = $form_state->getValues();
+    $saved_members = SimpleConregStorage::loadAllMemberNos();
+    $max_member = SimpleConregStorage::loadMaxMemberNo();
+    foreach ($form_values["table"] as $mid => $member) {
+      if (($member["is_approved"] != $saved_members[$mid]["is_approved"]) ||
+          ($member["is_approved"] && $member["member_no"] != $saved_members[$mid]["member_no"])) {
+        if ($member["is_approved"]) {
+	        if (empty($member["member_no"])) {
+	          // No member no specified, so assign next one.
+	          $max_member++;
+	          $member_no = $max_member;
+	        } else {
+	          // Member no specified. Adjust next member no.
+	          $member_no = $member["member_no"];
+	          if ($member_no > $max_member)
+	            $max_member = $member_no;
+	        }
+	      } else {
+	        // No member number for unapproved members.
+	        $member_no = 0;
+	      }
+        $entry = array('mid' => $mid, 'is_approved' => $member["is_approved"], 'member_no' => $member_no);
+        $return = SimpleConregStorage::update($entry);
+      }
+    }
+    \Drupal\Core\Cache\Cache::invalidateTags(['simple-conreg-member-list']);
+  }
+}    
+
+/*
+  public function oldbuildForm(array $form, FormStateInterface $form_state, $mid = NULL, $key = NULL) {
+    //Get any existing form values for use in AJAX validation.
+    $form_values = $form_state->getValues();
+
+    $config = $this->config('simple_conreg.settings');
+
+    $form = array(
+      '#prefix' => '<div id="memberform">',
+      '#suffix' => '</div>',
+    );
+
+    $form['display'] = array(
+      '#type' => 'select',
+      '#title' => $this->t('Select '),
+      '#options' => array('1' => $this->t('Paid members awaiting approval'),
+                          '2' => $this->t('Paid and approved members'),
+                          '3' => $this->t('Unpaid members'),
+                          '4' => $this->t('All members')),
+      '#default_value' => '1',
+      '#required' => TRUE,
+      '#ajax' => array(
+        'wrapper' => 'memberform',
+        'callback' => array($this, 'updateDisplayCallback'),
+        'event' => 'change',
+      ),
+    );
+
+    $headers = array(
+      t('First name'),
+      t('Last name'),
+      t('Email'),
+      t('Badge name'),
+      t('Display'),
+      t('Type'),
+      t('Paid'),
+      t('Approved'),
+      t('Member no'),
+      t('Update'),
+    );
+
+    $form['check'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Test'),
+      '#ajax' => array(
+        'callback' => array($this, 'updateTestCallback'),
+        'event' => 'change',
+      ),
+    );
+    $form['check2'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Test2'),
+      '#ajax' => array(
+        'callback' => array($this, 'updateTestCallback'),
+        'event' => 'change',
+      ),
+    );
+
+    $form['button'] = array(
+      '#type' => 'button',
+      '#value' => t('Test Button'),
+      '#ajax' => array(
+        'callback' => array($this, 'updateTestCallback'),
+        'event' => 'click',
+      ),
+    );
+
+    $form['another'] = array(
+      '#type' => 'button',
+      '#value' => t('Another'),
+      '#ajax' => array(
+        'callback' => array($this, 'updateTestCallback'),
+        'event' => 'click',
+      ),
+    );
+    $form['table'] = array(
+      //'#type' => 'table',
+      //'#header' => $headers,
+      //'#attributes' => array('id' => 'simple-conreg-admin-member-list'),
+      //'#empty' => t('No entries available.'),
+      '#prefix' => '<table id="simple-conreg-admin-member-list">',
+      '#suffix' => '</table>',
+      //'#tree' => TRUE,
+    );      
+
+    $form['table']['tbody'] = array(
+      //'#type' => 'table',
+      //'#header' => $headers,
+      //'#attributes' => array('id' => 'simple-conreg-admin-member-list'),
+      //'#empty' => t('No entries available.'),
+      '#prefix' => '<tbody>',
+      '#suffix' => '</tbody>',
+    );
+    if (isset($form_values['display']))
+      $display = $form_values['display'];
+    else
+      $display = 1;
+    foreach ($entries = SimpleConregStorage::adminMemberListLoad($display) as $entry) {
+      $mid = $entry['mid'];
+      // Sanitize each entry.
+      $is_paid = $entry['is_paid'];
+      //$row = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $entry);
+      $row = array(
+        '#prefix' => '<tr>',
+        '#suffix' => '</tr>',
+      );
+      $row['first_name'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['first_name']),
+        '#prefix' => '<td>',
+        '#suffix' => '</td>',
+      );
+      $row['last_name'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['last_name']),
+        '#prefix' => '<td>',
+        '#suffix' => '</td>',
+      );
+      $row['email'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['email']),
+        '#prefix' => '<td>',
+        '#suffix' => '</td>',
+      );
+      $row['badge_name'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['badge_name']),
+        '#prefix' => '<td>',
+        '#suffix' => '</td>',
+      );
+      $row['display'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['display']),
+        '#prefix' => '<td>',
+        '#suffix' => '</td>',
+      );
+      $row['member_type'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['member_type']),
+        '#prefix' => '<td>',
+        '#suffix' => '</td>',
+      );
+      $row['is_paid'] = array(
+        '#markup' => $is_paid ? $this->t('Yes') : $this->t('No'),
+        '#prefix' => '<td>',
+        '#suffix' => '</td>',
+      );
+      $row["is_approved_".$mid] = array(
+        //'#attributes' => array('name' => 'is_approved_'.$mid, 'id' => 'edit_is_approved_'.$mid),
+        '#type' => 'checkbox',
+        '#name' => "is_approved_".$mid,
+        '#title' => t('Is Approved'),
+        '#title_display' => 'invisible',
+        '#ajax' => array(
+          'callback' => array($this, 'updateTestCallback'),
+          'event' => 'change',
+        ),
+        '#prefix' => '<td>',
+        '#suffix' => '</td>',
+      );
+      $row["member_div"] = array(
+        '#prefix' => '<div id="member_no_'.$mid.'">',
+        '#suffix' => '</div>',
+      );
+      $row["member_div"]["member_no"] = array(
+        '#type' => 'textfield',
+        '#title' => t('Member No'),
+        '#title_display' => 'invisible',
+        '#size' => 5
+      );
+      $row["update"] = array(
+        '#type' => 'button',
+        '#value' => t('Update '.$mid),
+        '#ajax' => array(
+          'callback' => array($this, 'updateTestCallback'),
+          'event' => 'click',
+        ),
+      );
+      $form['table']['tbody'][$mid] = $row;
+    }
+    return $form;
+  }
+*/
+

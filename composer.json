@@ -1,0 +1,10 @@
+{
+  "name": "drupal/simple-conreg",
+  "type": "drupal-module",
+  "description": "Allows a simple convention registration form.",
+  "license": "GPL-2.0+",
+  "require": {
+    "stripe/stripe-php": "dev-master"
+  },
+  "minimum-stability": "dev"
+}

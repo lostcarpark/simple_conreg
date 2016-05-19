@@ -1,0 +1,277 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the simple_conreg module.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function simple_conreg_requirements($phase) {
+  $requirements = [];
+  if ($phase == 'install') {
+    if (!class_exists('\Stripe\Stripe')) {
+      $requirements['addressing_library'] = [
+        'description' => t('Simple Convention Registration requires the stripe/stripe-php library. Please see README for install instructions.'),
+        'severity' => REQUIREMENT_ERROR,
+      ];
+    }
+  }
+
+  return $requirements;
+}
+
+/**
+ * Implements hook_install().
+ *
+ * Creates some default entries on this module custom table.
+ *
+ * @see hook_install()
+ * @ingroup simple_conreg
+ */
+function simple_conreg_install() {
+}
+
+/**
+ * Implements hook_schema().
+ *
+ * Defines the database tables used by this module.
+ *
+ * @see hook_schema()
+ * @ingroup simple_conreg
+ */
+function simple_conreg_schema() {
+  $schema['simple_conreg_members'] = array(
+    'description' => 'Stores member details for convention registrations.',
+    'fields' => array(
+      'mid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique member ID.',
+      ),
+      'lead_mid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => "Member ID of lead member (to link groups who register together)",
+      ),
+      'random_key' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => "A random generated key to provide some security in payment URL",
+      ),
+      'member_no' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+        'description' => "Member number - assigned once approved.",
+      ),
+      'member_type' => array(
+        'type' => 'varchar',
+        'length' => 1,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Type of membership.',
+      ),
+      // alter table simple_conreg_members add communication_method varchar(1) NULL after member_type;
+      'communication_method' => array(
+        'type' => 'varchar',
+        'length' => 1,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'E=Electronic, P=Paper, B=Both.',
+      ),
+      'is_approved' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'Set to 1 if member wishes to volunteer to help.',
+      ),
+      'approver_uid' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+        'description' => "User ID of the admin who approved the member.",
+      ),
+      'first_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'First name of the member.',
+      ),
+      'last_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Last name of the member.',
+      ),
+      'badge_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Badge name of the member.',
+      ),
+      'display' => array(
+        'type' => 'varchar',
+        'length' => 1,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Display in membership list - F=Full Name, B=Badge Name, N=Not at all.',
+      ),
+      'email' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Email address of the member (only required for first member).',
+      ),
+      'street' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Street address of the member.',
+      ),
+      // alter table simple_conreg_members add street2 varchar(255) NULL after street;
+      'street2' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Street address line 2 of the member.',
+      ),
+      'city' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Town/city address of the member.',
+      ),
+      'county' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'State/county of the member.',
+      ),
+      'postcode' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Postcode of the member.',
+      ),
+      'country' => array(
+        'type' => 'varchar',
+        'length' => 2,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Country of the member.',
+      ),
+      'phone' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Phone number of the member.',
+      ),
+      'birth_date' => array(
+        'mysql_type' => 'datetime',
+        'pgsql_type' => 'timestamp',
+        'not null' => FALSE,
+        'description' => 'SQL datetime for the member\'s date of birth.',
+      ),
+      'is_volunteer' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'Set to 1 if member wishes to volunteer to help.',
+      ),
+      'member_price' => array(
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 2,
+        'not null' => TRUE,
+        'default' => 0.0,
+        'description' => 'Price for this member.',
+      ),
+      'is_paid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'Set to 1 if payment complete.',
+      ),
+      'payment_method' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'How payment received (Stripe, PayPal, etc).',
+      ),
+      'payment_amount' => array(
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 2,
+        'not null' => TRUE,
+        'default' => 0.0,
+        'description' => 'Total amount received.',
+      ),
+      'payment_id' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Payment confirmation code from Stripe or other payment system.',
+      ),
+      'add_on' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Optional addons to membership.',
+      ),
+      'add_on_info' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Extra information about add-on.',
+      ),      
+      'extra_flag1' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'Optional user defined extra checkbox.',
+      ),
+      'extra_flag2' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'Optional user defined extra checkbox.',
+      ),
+      'join_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp for the date and time registered.',
+      ),
+    ),
+    'primary key' => array('mid'),
+    'indexes' => array(
+      'name' => array('last_name', 'first_name'),
+      'lead_mid' => array('lead_mid'),
+    ),
+  );
+
+  return $schema;
+}

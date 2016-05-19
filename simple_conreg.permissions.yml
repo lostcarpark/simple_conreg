@@ -1,0 +1,29 @@
+# Custom permissions for simple convention registration module.
+
+'convention registration':
+  title: Register for convention
+  description: Allow users to register and view other members
+
+'configure convention registration':
+  title: Configure convention registration
+  description: Allow users to change registration configuration settings
+
+'view membership details':
+  title: View membership details
+  description: Allow users to view lists of members (including private data)
+  
+'view zz9 membership details':
+  title: View membership details for ZZ9 members
+  description: Allow users to view lists of ZZ9 members (including private data)
+
+'view programme membership details':
+  title: View programme participant membership details
+  description: Allow users to view lists of members who ticked "programme participant" (including private data)
+  
+'view membership details':
+  title: View membership details
+  description: Allow users to view lists of members who ticked "volunteer" (including private data)
+  
+'manage convention members':
+  title: Manage convention members
+  description: Allow users to approve, add and update members

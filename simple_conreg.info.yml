@@ -1,0 +1,6 @@
+name: Simple Convention Registration
+type: module
+description: 'A simple module to provide a convention registration form.'
+core: 8.x
+libraries:
+  - simple_conreg/conreg_form

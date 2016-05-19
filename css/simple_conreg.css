@@ -1,0 +1,31 @@
+
+.form-item-members-member1-first-name,
+.form-item-members-member1-last-name,
+.form-item-members-member2-first-name,
+.form-item-members-member2-last-name,
+.form-item-members-member3-first-name,
+.form-item-members-member3-last-name,
+.form-item-members-member4-first-name,
+.form-item-members-member4-last-name,
+.form-item-members-member5-first-name,
+.form-item-members-member5-last-name,
+.form-item-members-member6-first-name,
+.form-item-members-member6-last-name,
+.form-item-members-member7-first-name,
+.form-item-members-member7-last-name,
+.form-item-members-member8-first-name,
+.form-item-members-member8-last-name,
+.form-item-members-member9-first-name,
+.form-item-members-member9-last-name,
+.form-item-members-member10-first-name,
+.form-item-members-member10-last-name {
+  width: 19em;
+  display: inline-block;
+  margin-bottom: 0!important;
+}
+
+.edit-members-badge-name-option div.form-type-radio {
+  display: inline-block;
+  margin: 0 1em;
+}
+

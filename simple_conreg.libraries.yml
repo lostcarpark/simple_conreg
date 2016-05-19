@@ -1,0 +1,19 @@
+conreg_form:
+  version: 1.x
+  css:
+    theme:
+      css/simple_conreg.css: {}
+  js:
+    js/simple_conreg.js: {}
+  dependencies:
+    - core/jquery
+
+conreg_payment:
+  version: 1.x
+  js:
+    https://js.stripe.com/v2/: { type: external, minified: true }
+    js/simple_conreg_stripe.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupalSettings
+
