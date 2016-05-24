@@ -489,12 +489,21 @@ class SimpleConregRegistrationForm extends FormBase {
     $form_values = $form_state->getValues();
     $memberQty = $form_values['global']['member_quantity'];
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
+      // Check that either first name or last name has been entered. Will only arise if both first and last name are optional fields.
+      if ((empty($form_values['members']['member'.$cnt]['first_name']) ||
+           empty(trim($form_values['members']['member'.$cnt]['first_name']))) &&
+          (empty($form_values['members']['member'.$cnt]['last_name']) ||
+           empty(trim($form_values['members']['member'.$cnt]['last_name'])))) {
+        $form_state->setErrorByName('members][member'.$cnt.'][first_name', $this->t('You must enter either first name or last name'));
+        $form_state->setErrorByName('members][member'.$cnt.'][last_name');
+      }
       // Check that if first name selected for badge, that first name has actually been entered.
       if ($form_values['members']['member'.$cnt]['badge_name_option']=='F' &&
           (empty($form_values['members']['member'.$cnt]['first_name']) ||
            empty(trim($form_values['members']['member'.$cnt]['first_name'])))) {
         $form_state->setErrorByName('members][member'.$cnt.'][first_name', $this->t('You cannot choose first name for badge unless you enter a first name'));
       }
+      // Check that if the "other" option has been chosen for badge name, that a badge name has been entered.
       if ($form_values['members']['member'.$cnt]['badge_name_option']=='O' &&
           (empty($form_values['members']['member'.$cnt]['badge_name']['other']) ||
            empty(trim($form_values['members']['member'.$cnt]['badge_name']['other'])))) {
