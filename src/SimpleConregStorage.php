@@ -378,5 +378,23 @@ class SimpleConregStorage {
     return $entries;
   }
 
+  /*
+   * Function to return a list of members and communications methods for integration with Simplenews module.
+   */
+  public static function adminSimplenewsSubscribeListLoad() {
+    // Run this query: select email, min(communication_method) from simple_conreg_members where email is not null and email<>'' and communication_method is not null group by email;
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'email');
+    $select->addExpression('MIN(m.communication_method)', 'method');
+    $select->isNotNull('m.email');
+    $select->condition('m.email', '', '<>');
+    $select->isNotNull('m.communication_method');
+    $select->groupby('m.email');
+    
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
 
 }
