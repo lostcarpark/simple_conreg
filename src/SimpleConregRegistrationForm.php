@@ -65,8 +65,6 @@ class SimpleConregRegistrationForm extends FormBase {
     //dpm($form_values);
     $memberPrices = array();
     
-    //dpm(class_exists('\Stripe\Stripe'), "Stripe class");
-    
     $config = $this->config('simple_conreg.settings');
     list($typeOptions, $typePrices) = $this->getMemberTypes($config);
     list($addOnOptions, $addOnPrices) = $this->getMemberAddons($config);
@@ -256,9 +254,7 @@ class SimpleConregRegistrationForm extends FormBase {
         $form['members']['member'.$cnt]['communication_method'] = array(
           '#type' => 'select',
           '#title' => $config->get('fields.communication_method_label'),
-          '#options' => array('E' => $this->t('Electronic only'),
-                              'P' => $this->t('Paper only'),
-                              'B' => $this->t('Both electronic and paper')),
+          '#options' => SimpleConregOptions::communicationsMethod(),
           '#default_value' => 'E',
           '#required' => TRUE,
         );
@@ -632,8 +628,32 @@ class SimpleConregRegistrationForm extends FormBase {
         $lead_mid = $return;
         $lead_key = $rand_key;
         // Update first member with own member ID as lead member ID.
-        $entry = array('mid' => $lead_mid, 'lead_mid' => $lead_mid);
-        $return = SimpleConregStorage::update($entry);
+        $update = array('mid' => $lead_mid, 'lead_mid' => $lead_mid);
+        $return = SimpleConregStorage::update($update);
+      }
+
+      // Check Simplenews module loaded.
+      if (\Drupal::moduleHandler()->moduleExists('simplenews')) {
+        // Get Drupal SimpleNews subscription manager.
+        $subscription_manager = \Drupal::service('simplenews.subscription_manager');
+        // Simplenews is active, so check for mailing lists member should be subscribed to.
+        $simplenews_options = $config->get('simplenews.options');
+        foreach ($simplenews_options as $newsletter_id => $options) {
+          if ($options['active']) {
+            // Get communications methods selected for newsletter.
+            $communications_methods = $simplenews_options[$newsletter_id]['communications_methods'];
+            // Check if member matches newsletter criteria.
+            if (isset($entry['email']) &&
+                $entry['email'] != '' &&
+                isset($entry['communication_method']) &&
+                isset($communications_methods[$entry['communication_method']]) &&
+                $communications_methods[$entry['communication_method']]) {
+              // Subscribe member if criteria met.
+              $subscription_manager->subscribe($entry['email'], $newsletter_id, FALSE, 'website');
+              //dpm($entry['email'], 'Subscribed to '.$newsletter_id);
+            }
+          }
+        }
       }
     }
 
