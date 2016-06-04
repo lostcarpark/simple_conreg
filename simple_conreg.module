@@ -8,6 +8,7 @@
 //Warning: should not be in namespace!
 
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\devel;
 use Drupal\simple_conreg\SimpleConregStorage;
@@ -152,7 +153,7 @@ function simple_conreg_mail($key, &$message, $params) {
   }
 }
 
-function simple_conreg_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+function simple_conreg_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   //dpm($form_id);
 
   switch ($form_id) {
