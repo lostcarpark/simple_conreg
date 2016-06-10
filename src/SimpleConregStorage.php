@@ -134,7 +134,7 @@ class SimpleConregStorage {
       $select->condition($field, $value);
     }
     // Return the result in object format.
-    return $select->execute()->fetchAll();
+    return $select->execute()->fetchAssoc();
   }
 
 

@@ -88,10 +88,10 @@ simple_conreg_admin_members_add:
     _permission: 'manage convention members'
 
 simple_conreg_admin_members_update:
-  path: 'admin/members/update/{mid}'
+  path: 'admin/members/edit/{mid}'
   defaults:
-    _title: 'Member Administration - Update Member'
-    _form: '\Drupal\simple_conreg\SimpleConregAdminMemberUpdate'
+    _title: 'Member Administration - Edit Member'
+    _form: '\Drupal\simple_conreg\SimpleConregAdminMemberEdit'
   requirements:
     _permission: 'manage convention members'
 

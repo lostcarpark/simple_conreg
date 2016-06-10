@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\simple_conreg\DBTNExampleAddForm
+ * Contains \Drupal\simple_conreg\SimpleConregRegistrationForm
  */
 
 namespace Drupal\simple_conreg;
@@ -16,6 +16,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Component\Utility\SafeMarkup;
+use Drupal\node\NodeInterface;
 use Drupal\devel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -66,10 +67,10 @@ class SimpleConregRegistrationForm extends FormBase {
     $memberPrices = array();
     
     $config = $this->config('simple_conreg.settings');
-    list($typeOptions, $typePrices) = $this->getMemberTypes($config);
-    list($addOnOptions, $addOnPrices) = $this->getMemberAddons($config);
+    list($typeOptions, $typePrices) = SimpleConregOptions::memberTypes($config);
+    list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($config);
     $symbol = $config->get('payments.symbol');
-    $countryOptions = $this->getMemberCountries($config);
+    $countryOptions = SimpleConregOptions::memberCountries($config);
     $defaultCountry = $config->get('reference.default_country');
     
     $totalPrice = 0;
@@ -516,8 +517,8 @@ class SimpleConregRegistrationForm extends FormBase {
     
     $config = $this->config('simple_conreg.settings');
     $symbol = $config->get('payments.symbol');
-    list($typeOptions, $typePrices) = $this->getMemberTypes($config);
-    list($addOnOptions, $addOnPrices) = $this->getMemberAddons($config);
+    list($typeOptions, $typePrices) = SimpleConregOptions::memberTypes($config);
+    list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($config);
     
     // Find out number of members.
     $memberQty = $form_values['global']['member_quantity'];
@@ -691,40 +692,6 @@ class SimpleConregRegistrationForm extends FormBase {
     $form_state->setRedirect('simple_conreg_payment',
       array('mid' => $lead_mid, 'key' => $lead_key)
     );
-  }
-
-  public static function getMemberTypes(&$config) {
-    $types = explode("\n", $config->get('member_types')); // One type per line.
-    $typeOptions = array();
-    $typePrices = array();
-    foreach ($types as $type) {
-      list($code, $desc, $price) = explode('|', $type);
-      $typeOptions[$code] = $desc;
-      $typePrices[$code] = $price;
-    }
-    return array($typeOptions, $typePrices);
-  }
-
-  public function getMemberAddons(&$config) {
-    $addOns = explode("\n", $config->get('add_ons.options')); // One type per line.
-    $addOnOptions = array();
-    $addOnPrices = array();
-    foreach ($addOns as $addOn) {
-      list($desc, $price) = explode('|', $addOn);
-      $addOnOptions[$desc] = $desc;
-      $addOnPrices[$desc] = $price;
-    }
-    return array($addOnOptions, $addOnPrices);
-  }
-
-  public function getMemberCountries(&$config) {
-    $countries = explode("\n", $config->get('reference.countries')); // One country per line.
-    $countryOptions = array();
-    foreach ($countries as $country) {
-      list($code, $name) = explode('|', $country);
-      $countryOptions[$code] = $name;
-    }
-    return $countryOptions;
   }
 
 
