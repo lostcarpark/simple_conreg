@@ -13,6 +13,7 @@ use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\AlertCommand;
 use Drupal\Core\Ajax\CssCommand;
 use Drupal\Core\Ajax\HtmlCommand;
+use Drupal\Core\Link;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\devel;
 
@@ -42,6 +43,8 @@ class SimpleConregAdminMembers extends FormBase {
       '#suffix' => '</div>',
     );
 
+    $form['add_link'] = Link::createFromRoute($this->t('Add new member'), 'simple_conreg_admin_members_add', ['mid' => $mid])->toRenderable();
+
     $form['display'] = array(
       '#type' => 'select',
       '#title' => $this->t('Select '),
@@ -70,7 +73,7 @@ class SimpleConregAdminMembers extends FormBase {
       t('Paid'),
       t('Approved'),
       t('Member no'),
-      //t('Update'),
+      t('Update'),
     );
 
     if (isset($form_values['display']))
@@ -140,6 +143,8 @@ class SimpleConregAdminMembers extends FormBase {
         '#size' => 5,
         '#default_value' => $entry['member_no'],
       );
+      $row['link'] = Link::createFromRoute($this->t('Edit'), 'simple_conreg_admin_members_edit', ['mid' => $mid])->toRenderable();
+
       $form['table'][$mid] = $row;
     }
     $form['submit'] = array(

@@ -39,10 +39,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state, $mid = NULL) {
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
-    //dpm($form_values);
     $memberPrices = array();
-
-dpm($mid);
 
     $config = $this->config('simple_conreg.settings');
     list($typeOptions, $typePrices) = SimpleConregOptions::memberTypes($config);
@@ -50,8 +47,12 @@ dpm($mid);
     $symbol = $config->get('payments.symbol');
     $countryOptions = SimpleConregOptions::memberCountries($config);
     $defaultCountry = $config->get('reference.default_country');
-    
-    $member = SimpleConregStorage::load(['mid' => 23]);
+
+    if (isset($mid)) {    
+      $member = SimpleConregStorage::load(['mid' => $mid]);
+    } else {
+      $member = [];
+    }
 
     $form = array(
       '#tree' => TRUE,
@@ -65,6 +66,19 @@ dpm($mid);
     $form['member'] = array(
       '#type' => 'fieldset',
       '#title' => $this->t('Member details'),
+    );
+
+    $form['member']['is_approved'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Approved'),
+      '#default_value' => $member['is_approved'],
+    );
+
+    $form['member']['member_no'] = array(
+      '#type' => 'number',
+      '#title' => $this->t('Member number'),
+      '#description' => $this->t('Check approved and leave blank to auto assign.'),
+      '#default_value' => ($member['member_no'] ? $member['member_no'] : ''),
     );
 
     $form['member']['first_name'] = array(
@@ -123,7 +137,7 @@ dpm($mid);
       }
     }
 
-    $form['member']['badge_name']['other'] = array(
+    $form['member']['badge_name'] = array(
       '#type' => 'textfield',
       '#title' => $config->get('fields.badge_name_label'),
       '#default_value' => $member['badge_name'],
@@ -133,11 +147,261 @@ dpm($mid);
         'class' => array('edit-members-badge-name')),
     );
 
+    $form['member']['display'] = array(
+      '#type' => 'select',
+      '#title' => $config->get('fields.display_label'),
+      '#description' => $this->t('Select how you would like to appear on the membership list.'),
+      '#options' => SimpleConregOptions::display(),
+      '#default_value' => (isset($member['display']) ? $member['display'] : 'F'),
+      '#required' => TRUE,
+    );
+
+    if (!empty($config->get('fields.communication_method_label'))) {
+      $form['member']['communication_method'] = array(
+        '#type' => 'select',
+        '#title' => $config->get('fields.communication_method_label'),
+        '#options' => SimpleConregOptions::communicationMethod(),
+        '#default_value' => (isset($member['communication_method']) ? $member['communication_method'] : 'E'),
+        '#required' => TRUE,
+      );
+    }
+
+    if (!empty($config->get('fields.street_label'))) {
+      $form['member']['street'] = array(
+        '#type' => 'textfield',
+        '#title' => $config->get('fields.street_label'),
+        '#default_value' => $member['street'],
+      );
+    }
+
+    if (!empty($config->get('fields.street2_label'))) {
+      $form['member']['street2'] = array(
+        '#type' => 'textfield',
+        '#title' => $config->get('fields.street2_label'),
+        '#default_value' => $member['street2'],
+      );
+    }
+
+    if (!empty($config->get('fields.city_label'))) {
+      $form['member']['city'] = array(
+        '#type' => 'textfield',
+        '#title' => $config->get('fields.city_label'),
+        '#default_value' => $member['city'],
+      );
+    }
+
+    if (!empty($config->get('fields.county_label'))) {
+      $form['member']['county'] = array(
+        '#type' => 'textfield',
+        '#title' => $config->get('fields.county_label'),
+        '#default_value' => $member['county'],
+      );
+    }
+
+    if (!empty($config->get('fields.postcode_label'))) {
+      $form['member']['postcode'] = array(
+        '#type' => 'textfield',
+        '#title' => $config->get('fields.postcode_label'),
+        '#default_value' => $member['postcode'],
+      );
+    }
+
+    if (!empty($config->get('fields.country_label'))) {
+      $form['member']['country'] = array(
+        '#type' => 'select',
+        '#title' => $config->get('fields.country_label'),
+        '#options' => $countryOptions,
+        '#default_value' => (isset($member['country']) ? $member['country'] : $defaultCountry),
+        '#required' => TRUE,
+      );
+    }
+
+    if (!empty($config->get('fields.phone_label'))) {
+      $form['member']['phone'] = array(
+        '#type' => 'tel',
+        '#title' => $config->get('fields.phone_label'),
+        '#default_value' => $member['phone'],
+      );
+    }
+
+    if (!empty($config->get('fields.birth_date_label'))) {
+      $form['member']['birth_date'] = array(
+        '#type' => 'date',
+        '#title' => $config->get('fields.birth_date_label'),
+        '#default_value' => $member['birth_date'],
+      );
+    }
+
+    if (!empty($config->get('extras.flag1'))) {
+      $form['member']['extra_flag1'] = array(
+        '#type' => 'checkbox',
+        '#title' => $config->get('extras.flag1'),
+        '#default_value' => $member['extra_flag1'],
+      );
+    }
+
+    if (!empty($config->get('extras.flag2'))) {
+      $form['member']['extra_flag2'] = array(
+        '#type' => 'checkbox',
+        '#title' => $config->get('extras.flag2'),
+        '#default_value' => $member['extra_flag2'],
+      );
+    }
+
+    $form['member']['is_paid'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Paid'),
+      '#default_value' => $member['is_paid'],
+    );
+
+    $form['member']['payment_method'] = array(
+      '#type' => 'select',
+      '#title' => $this->t('Payment method'),
+      '#options' => SimpleConregOptions::paymentMethod(),
+      '#default_value' => $member['payment_method'],
+      '#required' => TRUE,
+    );
+
+    $form['member']['member_price'] = array(
+      '#type' => 'number',
+      '#title' => $this->t('Price'),
+      '#default_value' => $member['member_price'],
+    );
+
+    $form['member']['payment_id'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Payment reference'),
+      '#default_value' => $member['payment_id'],
+    );
+
+    $form['payment']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save member'),
+    );
+
+    $form_state->set('mid', $mid);
     return $form;
   }
+  
+  /*
+   * Submit handler for member edit form.
+   */
 
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    
+    $mid = $form_state->get('mid');
+    
+    $config = $this->config('simple_conreg.settings');
     $form_values = $form_state->getValues();
+
+    // If no date, use NULL.
+    if (isset($form_values['member']['birth_date']) && preg_match("/^(\d{4})-(\d{2})-(\d{2})$/", $form_values['member']['birth_date'])) {
+      $birth_date = $form_values['member']['birth_date'];
+    } else {
+      $birth_date = NULL;
+    }
+
+    // Get the maximum member number from the database.
+    $max_member = SimpleConregStorage::loadMaxMemberNo();
+    // Check if approved has been checked.
+    if ($form_values['member']["is_approved"]) {
+      if (empty($form_values['member']["member_no"])) {
+        // No member no specified, so assign next one.
+        $max_member++;
+        $member_no = $max_member;
+      } else {
+        // Member no specified.
+        $member_no = $form_values['member']["member_no"];
+      }
+    } else {
+      // No member number for unapproved members.
+      $member_no = 0;
+    }
+
+    // Save the submitted entry.
+    $entry = array(
+      'is_approved' => $form_values['member']['is_approved'],
+      'member_no' => $member_no,
+      'member_type' => $form_values['member']['type'],
+      'first_name' => $form_values['member']['first_name'],
+      'last_name' => $form_values['member']['last_name'],
+      'badge_name' => $form_values['member']['badge_name'],
+      'display' => $form_values['member']['display'],
+      'communication_method' => isset($form_values['member']['communication_method']) ?
+          $form_values['member']['communication_method'] : '',
+      'email' => $form_values['member']['email'],
+      'street' => isset($form_values['member']['street']) ?
+          $form_values['member']['street'] : '',
+      'street2' => isset($form_values['member']['street2']) ?
+          $form_values['member']['street2'] : '',
+      'city' => isset($form_values['member']['city']) ?
+          $form_values['member']['city'] : '',
+      'county' => isset($form_values['member']['county']) ?
+          $form_values['member']['county'] : '',
+      'postcode' => isset($form_values['member']['postcode']) ?
+          $form_values['member']['postcode'] : '',
+      'country' => isset($form_values['member']['country']) ?
+          $form_values['member']['country'] : '',
+      'phone' => isset($form_values['member']['phone']) ?
+          $form_values['member']['phone'] : '',
+      'birth_date' => $birth_date,
+      'add_on' => isset($form_values['members']['add_on']) ?
+          $form_values['member']['add_on'] : '',
+      'add_on_info' => isset($form_values['member']['add_on_extra']['info']) ?
+          $form_values['member']['add_on_extra']['info'] : '',
+      'extra_flag1' => isset($form_values['member']['extra_flag1']) ?
+          $form_values['member']['extra_flag1'] : 0,
+      'extra_flag2' => isset($form_values['member']['extra_flag2']) ?
+          $form_values['member']['extra_flag2'] : 0,
+      'is_paid' => $form_values['member']['is_approved'],
+      'payment_method' => $form_values['member']['payment_method'],
+      'member_price' => $form_values['member']['member_price'],
+      'payment_id' => $form_values['member']['payment_id'],
+    );
+
+    if (isset($mid)) {
+      // Update the member record.
+      $entry['mid'] = $mid;
+      $return = SimpleConregStorage::update($entry);
+    } else {
+      // Insert to database table.
+      $entry['join_date'] = time();
+      $return = SimpleConregStorage::insert($entry);
+    }
+    if ($return) {
+
+      // Check Simplenews module loaded.
+      if (\Drupal::moduleHandler()->moduleExists('simplenews')) {
+        // Get Drupal SimpleNews subscription manager.
+        $subscription_manager = \Drupal::service('simplenews.subscription_manager');
+        // Simplenews is active, so check for mailing lists member should be subscribed to.
+        $simplenews_options = $config->get('simplenews.options');
+        foreach ($simplenews_options as $newsletter_id => $options) {
+          if ($options['active']) {
+            // Get communications methods selected for newsletter.
+            $communications_methods = $simplenews_options[$newsletter_id]['communications_methods'];
+            // Check if member matches newsletter criteria.
+            if (isset($entry['email']) &&
+                $entry['email'] != '' &&
+                isset($entry['communication_method']) &&
+                isset($communications_methods[$entry['communication_method']]) &&
+                $communications_methods[$entry['communication_method']]) {
+              // Subscribe member if criteria met.
+              $subscription_manager->subscribe($entry['email'], $newsletter_id, FALSE, 'website');
+              drupal_set_message($this->t('Subscribed %email to %newsletter.', ['%email' => $entry['email'], '%newsletter' => $newsletter_id]));
+            } else {
+              // Unsubscribe member if criteria not met (their communications method may have changed).
+              $subscription_manager->unsubscribe($entry['email'], $newsletter_id, FALSE, 'website');
+              drupal_set_message($this->t('Unsubscribed %email from %newsletter.', ['%email' => $entry['email'], '%newsletter' => $newsletter_id]));
+            }
+          }
+        }
+      }
+
+
+      // Redirect to member list.
+      $form_state->setRedirect('simple_conreg_admin_members');
+    }
   }
 
 }

@@ -71,12 +71,35 @@ class SimpleConregOptions {
   }
 
   /**
+   * Return list of display options for membership list.
+   */
+  public function display() {
+    return ['F' => t('Full name and badge name'),
+            'B' => t('Badge name only'),
+            'N' => t('Not at all')];
+  }
+
+  /**
    * Return list of communications methods (currently hard coded, will be editable later).
    */
-  public function communicationsMethod() {
+  public function communicationMethod() {
     return ['E' => t('Electronic only'),
             'P' => t('Paper only'),
             'B' => t('Both electronic and paper')];
+  }
+
+  /**
+   * Return list of payment methods.
+   */
+  public function paymentMethod() {
+    return ['Stripe' => t('Stripe'),
+            'Bank Transfer' => t('Bank Transfer'),
+            'Cash' => t('Cash'),
+            'Cheque' => t('Cheque'),
+            'Credit Card' => t('Credit Card'),
+            'Free' => t('Free'),
+            'PayPal' => t('PayPal'),
+           ];
   }
 
 }

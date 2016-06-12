@@ -244,9 +244,7 @@ class SimpleConregRegistrationForm extends FormBase {
         '#type' => 'select',
         '#title' => $config->get('fields.display_label'),
         '#description' => $this->t('Select how you would like to appear on the membership list.'),
-        '#options' => array('F' => $this->t('Full name and badge name'),
-                            'B' => $this->t('Badge name only'),
-                            'N' => $this->t('Not at all')),
+        '#options' => SimpleConregOptions::display(),
         '#default_value' => 'F',
         '#required' => TRUE,
       );
@@ -255,7 +253,7 @@ class SimpleConregRegistrationForm extends FormBase {
         $form['members']['member'.$cnt]['communication_method'] = array(
           '#type' => 'select',
           '#title' => $config->get('fields.communication_method_label'),
-          '#options' => SimpleConregOptions::communicationsMethod(),
+          '#options' => SimpleConregOptions::communicationMethod(),
           '#default_value' => 'E',
           '#required' => TRUE,
         );
