@@ -14,6 +14,7 @@ use Drupal\Core\Ajax\AlertCommand;
 use Drupal\Core\Ajax\CssCommand;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Link;
+use Drupal\Core\URL;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\devel;
 
@@ -44,6 +45,7 @@ class SimpleConregAdminMembers extends FormBase {
     );
 
     $form['add_link'] = Link::createFromRoute($this->t('Add new member'), 'simple_conreg_admin_members_add', ['mid' => $mid])->toRenderable();
+    $form['add_link']['#attributes'] = ['class' => ['button', 'button-action', 'button--primary', 'button--small']];
 
     $form['display'] = array(
       '#type' => 'select',
@@ -143,7 +145,16 @@ class SimpleConregAdminMembers extends FormBase {
         '#size' => 5,
         '#default_value' => $entry['member_no'],
       );
-      $row['link'] = Link::createFromRoute($this->t('Edit'), 'simple_conreg_admin_members_edit', ['mid' => $mid])->toRenderable();
+      $row['link'] = array(
+        '#type' => 'dropbutton',
+        '#links' => array(
+          'simple_form' => array(
+            'title' => $this->t('Edit'),
+            'url' => Url::fromRoute('simple_conreg_admin_members_edit', ['mid' => $mid]),
+          ),
+        ),
+      );
+      //Link::createFromRoute($this->t('Edit'), 'simple_conreg_admin_members_edit', ['mid' => $mid])->toRenderable();
 
       $form['table'][$mid] = $row;
     }
