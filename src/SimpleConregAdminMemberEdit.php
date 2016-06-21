@@ -274,6 +274,15 @@ class SimpleConregAdminMemberEdit extends FormBase {
       '#default_value' => $member['payment_id'],
     );
 
+    $join_timestamp = $member['join_date'];
+    $join_date = gmdate("Y-m-d H:i:s", $join_timestamp);
+    $form['member']['join_date'] = array(
+      '#type' => 'date',
+      '#title' => $this->t('Date joined'),
+      '#description' => $this->t('Leave blank to set to current date.'),
+      '#default_value' => $join_date,
+    );
+
     $form['payment']['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Save member'),
@@ -345,7 +354,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
       'phone' => isset($form_values['member']['phone']) ?
           $form_values['member']['phone'] : '',
       'birth_date' => $birth_date,
-      'add_on' => isset($form_values['members']['add_on']) ?
+      'add_on' => isset($form_values['member']['add_on']) ?
           $form_values['member']['add_on'] : '',
       'add_on_info' => isset($form_values['member']['add_on_extra']['info']) ?
           $form_values['member']['add_on_extra']['info'] : '',
@@ -353,11 +362,22 @@ class SimpleConregAdminMemberEdit extends FormBase {
           $form_values['member']['extra_flag1'] : 0,
       'extra_flag2' => isset($form_values['member']['extra_flag2']) ?
           $form_values['member']['extra_flag2'] : 0,
-      'is_paid' => $form_values['member']['is_approved'],
+      'is_paid' => $form_values['member']['is_paid'],
       'payment_method' => $form_values['member']['payment_method'],
-      'member_price' => $form_values['member']['member_price'],
+      'member_price' => isset($form_values['member']['member_price']) && $form_values['member']['member_price'] != '' ?
+        $form_values['member']['member_price'] : 0,
       'payment_id' => $form_values['member']['payment_id'],
     );
+
+    // If Join Date specified, use it. If not, use current date/time.
+    if (!isset($form_values['member']['join_date']) || $form_values['member']['join_date'] == '')
+      $entry['join_date'] = time();
+    elseif ($join_timestamp = strtotime($form_values['member']['join_date']))
+      // Date specified, and successfully converted into timestamp.
+      $entry['join_date'] = $join_timestamp;
+    else
+      // Invalid date format, so default to current time.
+      $entry['join_date'] = time();
 
     if (isset($mid)) {
       // Update the member record.
@@ -365,7 +385,6 @@ class SimpleConregAdminMemberEdit extends FormBase {
       $return = SimpleConregStorage::update($entry);
     } else {
       // Insert to database table.
-      $entry['join_date'] = time();
       $return = SimpleConregStorage::insert($entry);
     }
     if ($return) {
