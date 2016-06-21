@@ -17,3 +17,11 @@ conreg_payment:
     - core/jquery
     - core/drupalSettings
 
+conreg_member_edit:
+  version: 1.x
+  js:
+    /var/www/drupal/drupal8/vendor/trentrichardson/jquery-timepicker-addon/dist: {}
+  dependencies:
+    - core/jquery
+  
+

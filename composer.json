@@ -6,5 +6,8 @@
   "require": {
     "stripe/stripe-php": "dev-master"
   },
+  "require": {
+    "trentrichardson/jquery-timepicker-addon": "dev-master"
+  },
   "minimum-stability": "dev"
 }
