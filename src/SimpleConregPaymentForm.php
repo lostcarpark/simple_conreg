@@ -66,8 +66,7 @@ class SimpleConregPaymentForm extends FormBase {
     );
 
     if (is_numeric($mid) && is_numeric($key) && SimpleConregStorage::checkMemberKey($mid, $key)) {
-      $result = SimpleConregStorage::load(array("mid"=>$mid));
-      $member = $result[0];
+      $member = SimpleConregStorage::load(array("mid"=>$mid));
     } else {
       $form['message'] = array(
         '#markup' => $this->t('Invalid payment credentials. Please return to <a href="@url">registration page</a> and complete membership details.', array("@url" => "/members/register"))
@@ -83,7 +82,7 @@ class SimpleConregPaymentForm extends FormBase {
     }
 
     $form_state->set('mid', $mid);
-    $amount = $member->payment_amount;
+    $amount = $member["payment_amount"];
     $form_state->set('payment_amount', $amount);
 
     // Callback function to be called after the page is built. This prevents card details from being sent to our server.
@@ -202,14 +201,13 @@ class SimpleConregPaymentForm extends FormBase {
         $return = SimpleConregStorage::updateByLeadMid($entry);
 
         // Load the lead member to send confirmation email.
-        $result = SimpleConregStorage::load(array("mid"=>$mid));
-        $member = $result[0];
+        $member = SimpleConregStorage::load(array("mid"=>$mid));
 
         // Set up parameters for receipt email.
         $params = (array)$member;
         $module = "simple_conreg";
         $key = "payment_message";
-        $to = $member->email;
+        $to = $member["email"];
         $language_code = \Drupal::languageManager()->getDefaultLanguage()->getId();
         $params['from'] = $config->get('confirmation.from_name').' <'.$config->get('confirmation.from_email').'>';
         $send_now = TRUE;
