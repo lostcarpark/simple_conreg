@@ -259,6 +259,26 @@ class SimpleConregConfigForm extends ConfigFormBase {
     );
 
 
+    /*
+     * Fields for communications method options.
+     */
+    $form['simple_conreg_communication'] = array(
+      '#type' => 'fieldset',
+      '#title' => $this->t('Communications Methods'),
+      '#tree' => TRUE,
+    );
+
+    $form['simple_conreg_communication']['options'] = array(
+      '#type' => 'textarea',
+      '#title' => $this->t('Options'),
+      '#description' => $this->t('Put each communications method on a line with sincle character code and description separated by | character (e.g. "E|Electronic").'),
+      '#default_value' => $config->get('communications_method.options'),
+    );  
+
+
+    /*
+     * Fields for add on choices and options.
+     */
     $form['simple_conreg_addons'] = array(
       '#type' => 'fieldset',
       '#title' => $this->t('Add-ons'),
@@ -446,6 +466,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('fields.birth_date_label', $vals['simple_conreg_fields']['birth_date_label']);
     $config->set('fields.first_name_mandatory', $vals['simple_conreg_mandatory']['first_name']);
     $config->set('fields.last_name_mandatory', $vals['simple_conreg_mandatory']['last_name']);
+    $config->set('communications_method.options', $vals['simple_conreg_communication']['options']);
     $config->set('add_ons.label', $vals['simple_conreg_addons']['label']);
     $config->set('add_ons.description', $vals['simple_conreg_addons']['description']);
     $config->set('add_ons.options', $vals['simple_conreg_addons']['options']);

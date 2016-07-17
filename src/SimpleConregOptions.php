@@ -57,7 +57,7 @@ class SimpleConregOptions {
    *
    * Parameters: Optional config.
    */
-  public function memberCountries(&$config = MULL) {
+  public function memberCountries(&$config = NULL) {
     if (is_null($config)) {
       $config = \Drupal::config('simple_conreg.settings');
     }
@@ -82,10 +82,20 @@ class SimpleConregOptions {
   /**
    * Return list of communications methods (currently hard coded, will be editable later).
    */
-  public function communicationMethod() {
-    return ['E' => t('Electronic only'),
+  public function communicationMethod(&$config = NULL) {
+    if (is_null($config)) {
+      $config = \Drupal::config('simple_conreg.settings');
+    }
+    $methods = explode("\n", $config->get('communications_method.options')); // One communications method per line.
+    $methodOptions = array();
+    foreach ($methods as $method) {
+      list($code, $description) = explode('|', $method);
+      $methodOptions[$code] = $description;
+    }
+    return $methodOptions;
+    /* return ['E' => t('Electronic only'),
             'P' => t('Paper only'),
-            'B' => t('Both electronic and paper')];
+            'B' => t('Both electronic and paper')]; */
   }
 
   /**
