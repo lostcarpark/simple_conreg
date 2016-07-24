@@ -72,12 +72,16 @@ simple_conreg_admin_volunteer_list:
 
 
 simple_conreg_admin_members:
-  path: 'admin/members/list'
+  path: 'admin/members/list/{display}/{page}'
   defaults:
     _title: 'Member Administration'
     _form: '\Drupal\simple_conreg\SimpleConregAdminMembers'
+    display: 'approval'
+    page: 1
   requirements:
     _permission: 'manage convention members'
+    display: ^[a-z]+$
+    page: ^[0-9]+$
 
 simple_conreg_admin_members_add:
   path: 'admin/members/add'
@@ -94,5 +98,6 @@ simple_conreg_admin_members_edit:
     _form: '\Drupal\simple_conreg\SimpleConregAdminMemberEdit'
   requirements:
     _permission: 'manage convention members'
+    mid: ^[0-9]+$
 
 

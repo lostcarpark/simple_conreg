@@ -341,6 +341,27 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('extras.flag2'),
     );  
 
+    /*
+     * Display settings - entries per page.
+     */
+
+    $form['simple_conreg_display'] = array(
+      '#type' => 'fieldset',
+      '#title' => $this->t('Display settings'),
+      '#tree' => TRUE,
+    );
+
+    $form['simple_conreg_display']['page_size'] = array(
+      '#type' => 'number',
+      '#title' => $this->t('Page size'),
+      '#description' => $this->t('Number of entries per page on lists.'),
+      '#default_value' => $config->get('display.page_size'),
+    );  
+
+    /*
+     * Fields for reference data - countries list.
+     */
+
     $form['simple_conreg_reference'] = array(
       '#type' => 'fieldset',
       '#title' => $this->t('Reference'),
@@ -474,6 +495,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('add_on_info.description', $vals['simple_conreg_addon_info']['description']);
     $config->set('extras.flag1', $vals['simple_conreg_extras']['flag1']);
     $config->set('extras.flag2', $vals['simple_conreg_extras']['flag2']);
+    $config->set('display.page_size', $vals['simple_conreg_display']['page_size']);
     $config->set('reference.default_country', $vals['simple_conreg_reference']['default_country']);
     $config->set('reference.countries', $vals['simple_conreg_reference']['countries']);
     $config->set('thanks.thank_you_message', $vals['simple_conreg_thanks']['thank_you_message']);

@@ -33,11 +33,33 @@ class SimpleConregAdminMembers extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $mid = NULL, $key = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $display = NULL, $page = NULL) {
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
 
     $config = $this->config('simple_conreg.settings');
+    $pageSize = $config->get('display.page_size');
+
+    $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
+    // If form values submitted, use the display value that was submitted over the passed in values.
+    if (isset($form_values['display']))
+      $display = $form_values['display'];
+    elseif (empty($display)) {
+      // If display not submitted from form or passed in through URL, take last value from
+      $display = $tempstore->get('display');
+      if (empty($display))
+        $display = 'approval'; // If still no display specified, default to awaiting approval.
+    }
+    $tempstore->set('display', $display);
+
+    $tempstore->set('page', $page);
+
+
+    if (isset($form_values['search']))
+      $search = $form_values['search'];
+    else
+      $search = $tempstore->get('search');
+    $tempstore->set('search', $search);
 
     $form = array(
       '#prefix' => '<div id="memberform">',
@@ -50,13 +72,13 @@ class SimpleConregAdminMembers extends FormBase {
     $form['display'] = array(
       '#type' => 'select',
       '#title' => $this->t('Select '),
-      '#options' => array('1' => $this->t('Paid members awaiting approval'),
-                          '2' => $this->t('Paid and approved members'),
-                          '3' => $this->t('Unpaid members'),
-                          '4' => $this->t('All members'),
-                          '5' => $this->t('Custom search'),
+      '#options' => array('approval' => $this->t('Paid members awaiting approval'),
+                          'approved' => $this->t('Paid and approved members'),
+                          'unpaid' => $this->t('Unpaid members'),
+                          'all' => $this->t('All members'),
+                          'custom' => $this->t('Custom search'),
                           ),
-      '#default_value' => '1',
+      '#default_value' => $display,
       '#required' => TRUE,
       '#ajax' => array(
         'wrapper' => 'memberform',
@@ -78,15 +100,24 @@ class SimpleConregAdminMembers extends FormBase {
       t('Update'),
     );
 
-    if (isset($form_values['display']))
-      $display = $form_values['display'];
-    else
-      $display = 1;
-
-    if ($display == 5) {
+    // If display 
+    if ($display == 'custom') {
       $form['search'] = array(
         '#type' => 'textfield',
         '#title' => $this->t('Custom search term'),
+        '#default_value' => $search,
+      );
+      
+      $form['search_button'] = array(
+        '#type' => 'button',
+        '#value' => t('Search'),
+        '#attributes' => array('id' => "searchBtn"),
+        '#validate' => array(),
+        '#submit' => array('::search'),
+        '#ajax' => array(
+          'wrapper' => 'memberform',
+          'callback' => array($this, 'updateDisplayCallback'),
+        ),
       );
     }
 
@@ -97,10 +128,14 @@ class SimpleConregAdminMembers extends FormBase {
       '#empty' => t('No entries available.'),
     );      
 
-    if ($display < 5)
-      $entries = SimpleConregStorage::adminMemberListLoad($display);
-    elseif (isset($form_values['search']) && !empty(trim($form_values['search'])))
-      $entries = SimpleConregStorage::adminMemberListLoad($display);
+    if ($display != 'custom')
+      list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($display, NULL, $page, $pageSize);
+    elseif (!empty(trim($search)))
+      list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($display, $search, $page, $pageSize);
+    else {
+      $pages = 0;
+      $entries = [];
+    }
 
     foreach ($entries as $entry) {
       $mid = $entry['mid'];
@@ -158,6 +193,17 @@ class SimpleConregAdminMembers extends FormBase {
 
       $form['table'][$mid] = $row;
     }
+    
+    $form['pager'] = array(
+      '#markup' => $this->t('Page:'),
+      '#prefix' => '<div id="pager">',
+      '#suffix' => '</div>',
+    );
+    for ($page = 1; $page <= $pages; $page++) {
+      $form['pager']['page'.$page] = Link::createFromRoute($page, 'simple_conreg_admin_members', ['display' => $display, 'page' => $page])->toRenderable();
+      $form['pager']['page'.$page]['#prefix'] = ' ';
+    }
+
     $form['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Save Changes'),
@@ -191,6 +237,10 @@ class SimpleConregAdminMembers extends FormBase {
   public function updateDisplayCallback(array $form, FormStateInterface $form_state) {
     // Form rebuilt with required number of members before callback. Return new form.
     return $form;
+  }
+
+  public function search(array &$form, FormStateInterface $form_state) {
+    $form_state->setRebuild();
   }
 
   /**

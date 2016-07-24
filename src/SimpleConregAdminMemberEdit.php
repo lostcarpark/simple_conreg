@@ -417,9 +417,13 @@ class SimpleConregAdminMemberEdit extends FormBase {
         }
       }
 
+      // Get session state to return to correct page.
+      $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
+      $display = $tempstore->get('display');
+      $page = $tempstore->get('page');
 
       // Redirect to member list.
-      $form_state->setRedirect('simple_conreg_admin_members');
+      $form_state->setRedirect('simple_conreg_admin_members', ['display'=>$display, 'page'=>$page]);
     }
   }
 

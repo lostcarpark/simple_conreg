@@ -175,7 +175,39 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberListLoad($condition) {
+  private static function adminMemberListCondition($select, $condition, $search) {
+    switch ($condition) {
+      case 'approval':
+        $select->condition('m.is_paid', 1);
+        $select->condition('m.is_approved', 0);
+        break;
+      case 'approved':
+        $select->condition('m.is_paid', 1);
+        $select->condition('m.is_approved', 1);
+        break;
+      case 'unpaid':
+        $select->condition('m.is_paid', 0);
+        break;
+      case 'all':
+        // All members.
+        break;
+      case 'custom':
+        $likes = $select->orConditionGroup()
+          ->condition('m.member_no', $search, 'LIKE')
+          ->condition('m.first_name', $search, 'LIKE')
+          ->condition('m.last_name', $search, 'LIKE')
+          ->condition('m.badge_name', $search, 'LIKE')
+          ->condition('m.email', $search, 'LIKE')
+          ->condition('m.payment_id', $search, 'LIKE');
+        $select->condition($likes);
+    }
+    return $select;
+  }
+
+  public static function adminMemberListLoad($condition, $search, $page=1, $pageSize=10) {
+    // Escape search term to prevent dangerous characters.
+    $esc_search = '%'.db_like($search).'%';
+    
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'mid');
@@ -188,28 +220,22 @@ class SimpleConregStorage {
     $select->addField('m', 'is_paid');
     $select->addField('m', 'is_approved');
     $select->addField('m', 'member_no');
-    switch ($condition) {
-      case '1':
-        $select->condition('m.is_paid', 1);
-        $select->condition('m.is_approved', 0);
-        break;
-      case '2':
-        $select->condition('m.is_paid', 1);
-        $select->condition('m.is_approved', 1);
-        break;
-      case '3':
-        $select->condition('m.is_paid', 0);
-        break;
-      case '4':
-        // All members.
-        break;
-    }
+    // Add selection criteria.
+    $select = SimpleConregStorage::adminMemberListCondition($select, $condition, $esc_search);
     // Make sure we only get items 0-49, for scalability reasons.
-    //$select->range(0, 50);
+    $select->range(($page-1) * $pageSize, $pageSize);
+    
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
-    return $entries;
+    // Run query to get total count.
+    $select = db_select('simple_conreg_members', 'm');
+    $select->addField('m', 'mid');
+    $select = SimpleConregStorage::adminMemberListCondition($select, $condition, $esc_search);
+    $count = $select->countQuery()->execute()->fetchField();
+    $pages = (int)(($count - 1) / $pageSize) + 1;
+
+    return [$pages, $entries];
   }
 
   public static function loadAllMemberNos() {
