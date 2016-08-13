@@ -515,7 +515,7 @@ class SimpleConregRegistrationForm extends FormBase {
     
     $config = $this->config('simple_conreg.settings');
     $symbol = $config->get('payments.symbol');
-    list($typeOptions, $typePrices) = SimpleConregOptions::memberTypes($config);
+    list($typeOptions, $typePrices, $defaultBadgeTypes) = SimpleConregOptions::memberTypes($config);
     list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($config);
     
     // Find out number of members.
@@ -547,6 +547,13 @@ class SimpleConregRegistrationForm extends FormBase {
       // Check member price.
       list($price, $priceMessage) = $this->getMemberPrice($form_values, $cnt, $typePrices, $addOnPrices, $symbol);
 
+      // Look up the member type, and get the default badge type for member type.
+      $member_type = $form_values['members']['member'.$cnt]['type'];
+      if (isset($defaultBadgeTypes[$member_type])) {
+        $badge_type = $defaultBadgeTypes[$member_type];
+      } else
+        $badge_type = 'A'; // This shouldn't happen, but if no default badge type found, hard code to A.
+
       // Check whether to use name or "other" badge name...
       switch($form_values['members']['member'.$cnt]['badge_name_option']) {
         case 'N':
@@ -577,10 +584,11 @@ class SimpleConregRegistrationForm extends FormBase {
       $entry = array(
         'lead_mid' => $lead_mid,
         'random_key' => $rand_key,
-        'member_type' => $form_values['members']['member'.$cnt]['type'],
+        'member_type' => $member_type,
         'first_name' => $form_values['members']['member'.$cnt]['first_name'],
         'last_name' => $form_values['members']['member'.$cnt]['last_name'],
         'badge_name' => $badge_name,
+        'badge_type' => $badge_type,
         'display' => $form_values['members']['member'.$cnt]['display'],
         'communication_method' => isset($form_values['members']['member'.$cnt]['communication_method']) ?
             $form_values['members']['member'.$cnt]['communication_method'] : '',
@@ -612,6 +620,7 @@ class SimpleConregRegistrationForm extends FormBase {
         'payment_amount' => $totalPrice,
         'join_date' => time(),
       );
+      dpm($entry);
       // Add member details to parameters for email.
       $confirm_params["members"][$cnt] = $entry;
       // Insert to database table.

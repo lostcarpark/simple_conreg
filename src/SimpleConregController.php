@@ -53,7 +53,7 @@ class SimpleConregController extends ControllerBase {
 
     foreach ($entries = SimpleConregStorage::adminPublicListLoad() as $entry) {
       // Sanitize each entry.
-      $member = array('Member No' => $entry['member_no']);
+      $member = array('Member No' => $entry['badge_type'] . $entry['member_no']);
       switch ($entry['display']) {
         case 'F':
           $fullname = trim($entry['first_name']) . ' ' . trim($entry['last_name']);

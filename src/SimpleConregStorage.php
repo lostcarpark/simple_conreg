@@ -158,7 +158,7 @@ class SimpleConregStorage {
   public static function adminPublicListLoad() {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
-    $select->addField('m', 'member_type');
+    $select->addField('m', 'badge_type');
     $select->addField('m', 'member_no');
     $select->addField('m', 'first_name');
     $select->addField('m', 'last_name');

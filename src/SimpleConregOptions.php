@@ -22,14 +22,34 @@ class SimpleConregOptions {
       $config = \Drupal::config('simple_conreg.settings');
     }
     $types = explode("\n", $config->get('member_types')); // One type per line.
-    $typeOptions = array();
-    $typePrices = array();
+    $typeOptions = [];
+    $typePrices = [];
+    $defaultBadgeTypes = [];
     foreach ($types as $type) {
-      list($code, $desc, $price) = explode('|', $type);
+      list($code, $desc, $price, $badgetype) = explode('|', $type);
       $typeOptions[$code] = $desc;
       $typePrices[$code] = $price;
+      $defaultBadgeTypes[$code] = $badgetype;
     }
-    return array($typeOptions, $typePrices);
+    return array($typeOptions, $typePrices, $defaultBadgeTypes);
+  }
+
+  /**
+   * Return list of badge types from config.
+   *
+   * Parameters: Optional config.
+   */
+  public static function badgeTypes(&$config = NULL) {
+    if (is_null($config)) {
+      $config = \Drupal::config('simple_conreg.settings');
+    }
+    $types = explode("\n", $config->get('badge_types')); // One type per line.
+    $badgeTypes = [];
+    foreach ($types as $type) {
+      list($code, $badgetype) = explode('|', $type);
+      $badgeTypes[$code] = $badgetype;
+    }
+    return $badgeTypes;
   }
 
   /**

@@ -43,6 +43,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
 
     $config = $this->config('simple_conreg.settings');
     list($typeOptions, $typePrices) = SimpleConregOptions::memberTypes($config);
+    $badgeTypeOptions = SimpleConregOptions::badgeTypes($config);
     list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($config);
     $symbol = $config->get('payments.symbol');
     $countryOptions = SimpleConregOptions::memberCountries($config);
@@ -145,6 +146,14 @@ class SimpleConregAdminMemberEdit extends FormBase {
       '#attributes' => array(
         'id' => "edit-members-member$cnt-badge-name",
         'class' => array('edit-members-badge-name')),
+    );
+
+    $form['member']['badge_type'] = array(
+      '#type' => 'select',
+      '#title' => $this->t('Badge type'),
+      '#options' => $badgeTypeOptions,
+      '#default_value' => $member['badge_type'],
+      '#required' => TRUE,
     );
 
     $form['member']['display'] = array(
@@ -335,6 +344,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
       'first_name' => $form_values['member']['first_name'],
       'last_name' => $form_values['member']['last_name'],
       'badge_name' => $form_values['member']['badge_name'],
+      'badge_type' => $form_values['member']['badge_type'],
       'display' => $form_values['member']['display'],
       'communication_method' => isset($form_values['member']['communication_method']) ?
           $form_values['member']['communication_method'] : '',

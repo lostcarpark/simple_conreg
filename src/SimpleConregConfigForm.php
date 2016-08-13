@@ -88,8 +88,15 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $form['simple_conreg_members']['types'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Member types'),
-      '#description' => $this->t('Put each membership type on a line with type code, description and price separated by | character.'),
+      '#description' => $this->t('Put each membership type on a line with type code, description, price and default badge type separated by | character (e.d. J|Junior Attending|$50|A).'),
       '#default_value' => $config->get('member_types'),
+    );
+
+    $form['simple_conreg_members']['badge_types'] = array(
+      '#type' => 'textarea',
+      '#title' => $this->t('Badge types'),
+      '#description' => $this->t('Put each badge type on a line with type code and description separated by | character (e.g. G|Guest).'),
+      '#default_value' => $config->get('badge_types'),
     );
 
     /* Intro text. */
@@ -460,11 +467,12 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config = $this->config('simple_conreg.settings');
     $config->set('payments.system', $vals['simple_conreg_payments']['system']);
     $config->set('payments.mode', $vals['simple_conreg_payments']['mode']);
-    $config->set('payments.private_key', $vals['simple_conreg_payments']['private_key']);
-    $config->set('payments.public_key', $vals['simple_conreg_payments']['public_key']);
-    $config->set('payments.currency', $vals['simple_conreg_payments']['currency']);
-    $config->set('payments.symbol', $vals['simple_conreg_payments']['symbol']);
+    $config->set('payments.private_key', trim($vals['simple_conreg_payments']['private_key']));
+    $config->set('payments.public_key', trim($vals['simple_conreg_payments']['public_key']));
+    $config->set('payments.currency', trim($vals['simple_conreg_payments']['currency']));
+    $config->set('payments.symbol', trim($vals['simple_conreg_payments']['symbol']));
     $config->set('member_types', $vals['simple_conreg_members']['types']);
+    $config->set('badge_types', $vals['simple_conreg_members']['badge_types']);
     $config->set('registration_intro', $vals['simple_conreg_intros']['registration_intro']);
     $config->set('payment_intro', $vals['simple_conreg_intros']['payment_intro']);
     $config->set('fields.first_name_label', $vals['simple_conreg_fields']['first_name_label']);

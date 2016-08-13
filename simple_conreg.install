@@ -117,6 +117,15 @@ function simple_conreg_schema() {
         'default' => '',
         'description' => 'Badge name of the member.',
       ),
+      // alter table simple_conreg_members add badge_type varchar(1) NULL after badge_name;
+      // update simple_conreg_members set badge_type='A';
+      'badge_type' => array(
+        'type' => 'varchar',
+        'length' => 1,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Type of Badge (e.g. Attending, Guest, Committee, Dealer).',
+      ),
       'display' => array(
         'type' => 'varchar',
         'length' => 1,
