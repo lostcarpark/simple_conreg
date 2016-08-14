@@ -57,7 +57,7 @@ class SimpleConregOptions {
    *
    * Parameters: Optional config.
    */
-  public function memberAddons(&$config = NULL) {
+  public static function memberAddons(&$config = NULL) {
     if (is_null($config)) {
       $config = \Drupal::config('simple_conreg.settings');
     }
@@ -77,7 +77,7 @@ class SimpleConregOptions {
    *
    * Parameters: Optional config.
    */
-  public function memberCountries(&$config = NULL) {
+  public static function memberCountries(&$config = NULL) {
     if (is_null($config)) {
       $config = \Drupal::config('simple_conreg.settings');
     }
@@ -93,7 +93,7 @@ class SimpleConregOptions {
   /**
    * Return list of display options for membership list.
    */
-  public function display() {
+  public static function display() {
     return ['F' => t('Full name and badge name'),
             'B' => t('Badge name only'),
             'N' => t('Not at all')];
@@ -102,7 +102,7 @@ class SimpleConregOptions {
   /**
    * Return list of communications methods (currently hard coded, will be editable later).
    */
-  public function communicationMethod(&$config = NULL) {
+  public static function communicationMethod($config = NULL) {
     if (is_null($config)) {
       $config = \Drupal::config('simple_conreg.settings');
     }
@@ -121,7 +121,7 @@ class SimpleConregOptions {
   /**
    * Return list of payment methods.
    */
-  public function paymentMethod() {
+  public static function paymentMethod() {
     return ['Stripe' => t('Stripe'),
             'Bank Transfer' => t('Bank Transfer'),
             'Cash' => t('Cash'),

@@ -181,7 +181,7 @@ function simple_conreg_form_alter(&$form, FormStateInterface $form_state, $form_
       $form['simple_conreg']['communications_methods'] = [
         '#type' => 'checkboxes',
         '#title' => t('Communications methods to subscribe to newsletter'),
-        '#options' => SimpleConregOptions::communicationsMethod(),
+        '#options' => SimpleConregOptions::communicationMethod(),
         '#default_value' => $communications_methods,
       ];
 
