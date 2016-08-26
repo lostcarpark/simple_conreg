@@ -31,6 +31,11 @@ simple_conreg.member_list:
   route_name: simple_conreg_admin_member_list
   weight: 2
 
+simple_conreg.member_summary:
+  title: Membership Summary
+  route_name: simple_conreg_admin_member_summary
+  weight: 2
+
 simple_conreg.zz9_member_list:
   title: ZZ9 Membership List
   route_name: simple_conreg_admin_zz9_list

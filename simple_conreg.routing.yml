@@ -46,6 +46,14 @@ simple_conreg_admin_member_list:
   requirements:
     _permission: 'view membership details'
 
+simple_conreg_admin_member_summary:
+  path: 'members/membersummary'
+  defaults:
+    _title: 'Membership Summery'
+    _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminMemberSummary'
+  requirements:
+    _permission: 'view membership details'
+
 simple_conreg_admin_zz9_list:
   path: 'members/zz9list'
   defaults:

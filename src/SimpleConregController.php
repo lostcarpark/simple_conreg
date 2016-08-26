@@ -110,22 +110,21 @@ class SimpleConregController extends ControllerBase {
   }
 
   /**
-   * Render a list of paid convention members in the database.
+   * Add a summary by member type to render array.
    */
-  public function memberAdminMemberList() {
-    $content = array();
+  public function memberAdminMemberListSummary(&$content) {
 
-    $content['message'] = array(
-      '#markup' => $this->t('Here is a list of all paid convention members.'),
-    );
-
+    list($types, $prices, $default) = SimpleConregOptions::memberTypes();
     $rows = array();
     $headers = array(
-      t('Type'), 
+      t('Member Type'), 
       t('Number of members'),
     );
     $total = 0;
     foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad() as $entry) {
+      // Replace type code with description.
+      if (isset($types[$entry['member_type']]))
+        $entry['member_type'] = $types[$entry['member_type']];
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
       $total += $entry['num'];
@@ -138,6 +137,114 @@ class SimpleConregController extends ControllerBase {
       '#rows' => $rows,
       '#empty' => t('No entries available.'),
     );
+
+    return $content;
+  }
+
+  /**
+   * Add a summary by payment method to render array.
+   */
+  public function memberAdminMemberListBadgeSummary(&$content) {
+
+    $types = SimpleConregOptions::badgeTypes();
+    $rows = array();
+    $headers = array(
+      t('Badge Type'), 
+      t('Number of members'),
+    );
+    $total = 0;
+    foreach ($entries = SimpleConregStorage::adminMemberBadgeSummaryLoad() as $entry) {
+      // Replace type code with description.
+      if (isset($types[$entry['badge_type']]))
+        $entry['badge_type'] = $types[$entry['badge_type']];
+      // Sanitize each entry.
+      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $total += $entry['num'];
+    }
+    //Add a row for the total.
+    $rows[] = array(t("Total"), $total);
+    $content['badge_summary'] = array(
+      '#type' => 'table',
+      '#header' => $headers,
+      '#rows' => $rows,
+      '#empty' => t('No entries available.'),
+    );
+
+    return $content;
+  }
+
+  /**
+   * Add a summary by badge type to render array.
+   */
+  public function memberAdminMemberListPaymentMethodSummary(&$content) {
+
+    $rows = array();
+    $headers = array(
+      t('Number of members'),
+      t('Number of members'),
+    );
+    $total = 0;
+    foreach ($entries = SimpleConregStorage::adminMemberPaymentMethodSummaryLoad() as $entry) {
+      // Sanitize each entry.
+      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $total += $entry['num'];
+    }
+    //Add a row for the total.
+    $rows[] = array(t("Total"), $total);
+    $content['payment_method_summary'] = array(
+      '#type' => 'table',
+      '#header' => $headers,
+      '#rows' => $rows,
+      '#empty' => t('No entries available.'),
+    );
+
+    return $content;
+  }
+
+  /**
+   * Add a summary by badge type to render array.
+   */
+  public function memberAdminMemberListAmountPaidSummary(&$content) {
+
+    $rows = array();
+    $headers = array(
+      t('Payment Method'), 
+      t('Amount Paid'), 
+      t('Total Paid'),
+    );
+    $total = 0;
+    $totalAmount = 0;
+    foreach ($entries = SimpleConregStorage::adminMemberAmountPaidSummaryLoad() as $entry) {
+      // Calculate total received at that rate.
+      $entry['total_paid'] = $entry['member_price'] * $entry['num'];
+      // Sanitize each entry.
+      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $total += $entry['num'];
+      $totalAmount += $entry['total_paid'];
+    }
+    //Add a row for the total.
+    $rows[] = array(t("Total"), $total, $totalAmount);
+    $content['amount_paid_summary'] = array(
+      '#type' => 'table',
+      '#header' => $headers,
+      '#rows' => $rows,
+      '#empty' => t('No entries available.'),
+    );
+
+    return $content;
+  }
+
+  /**
+   * Render a list of paid convention members in the database.
+   */
+  public function memberAdminMemberList() {
+    $content = array();
+
+    $content['message'] = array(
+      '#markup' => $this->t('Here is a list of all paid convention members.'),
+    );
+
+    $this->memberAdminMemberListSummary($content);
 
     $rows = array();
     $headers = array(
@@ -174,6 +281,38 @@ class SimpleConregController extends ControllerBase {
       '#rows' => $rows,
       '#empty' => t('No entries available.'),
     );
+    // Don't cache this page.
+    $content['#cache']['max-age'] = 0;
+
+    return $content;
+  }
+
+  /**
+   * Render a list of paid convention members in the database.
+   */
+  public function memberAdminMemberSummary() {
+    $content = array();
+
+    $content['message_member'] = array(
+      '#markup' => $this->t('Summary by member type.'),
+    );
+    $this->memberAdminMemberListSummary($content);
+
+    $content['message_badge_tyoe'] = array(
+      '#markup' => $this->t('Summary by badge type.'),
+    );
+    $this->memberAdminMemberListBadgeSummary($content);
+    
+    $content['message_payment_method'] = array(
+      '#markup' => $this->t('Summary by payment method.'),
+    );
+    $this->memberAdminMemberListPaymentMethodSummary($content);
+
+    $content['message_amount_paid'] = array(
+      '#markup' => $this->t('Summary by amount paid.'),
+    );
+    $this->memberAdminMemberListAmountPaidSummary($content);
+
     // Don't cache this page.
     $content['#cache']['max-age'] = 0;
 

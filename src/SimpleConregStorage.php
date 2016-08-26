@@ -312,8 +312,45 @@ class SimpleConregStorage {
     $select->addExpression('COUNT(m.mid)', 'num');
     $select->condition('m.is_paid', 1);
     $select->groupby('m.member_type');
-    // Make sure we only get items 0-49, for scalability reasons.
-    //$select->range(0, 50);
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  public static function adminMemberBadgeSummaryLoad() {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'badge_type');
+    $select->addExpression('COUNT(m.mid)', 'num');
+    $select->condition('m.is_paid', 1);
+    $select->groupby('m.badge_type');
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  public static function adminMemberPaymentMethodSummaryLoad() {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'payment_method');
+    $select->addExpression('COUNT(m.mid)', 'num');
+    $select->condition('m.is_paid', 1);
+    $select->groupby('m.payment_method');
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  public static function adminMemberAmountPaidSummaryLoad() {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'member_price');
+    $select->addExpression('COUNT(m.mid)', 'num');
+    $select->condition('m.is_paid', 1);
+    $select->groupby('m.member_price');
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
