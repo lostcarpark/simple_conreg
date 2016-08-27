@@ -12,6 +12,10 @@
   title: View membership details
   description: Allow users to view lists of members (including private data)
   
+'view membership summary':
+  title: View membership summary
+  description: Allow users to view membership summary (including financial data)
+  
 'view zz9 membership details':
   title: View membership details for ZZ9 members
   description: Allow users to view lists of ZZ9 members (including private data)

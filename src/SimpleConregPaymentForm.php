@@ -197,7 +197,7 @@ class SimpleConregPaymentForm extends FormBase {
         $return = SimpleConregStorage::update($entry);
 
         // Update all members in group using lead_mid.
-        $entry = array('lead_mid' => $mid, 'is_paid' => 1, 'payment_id' => $payment_id);
+        $entry = array('lead_mid' => $mid, 'is_paid' => 1, 'payment_id' => $payment_id, 'payment_method' => 'Stripe');
         $return = SimpleConregStorage::updateByLeadMid($entry);
 
         // Load the lead member to send confirmation email.

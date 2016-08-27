@@ -180,7 +180,7 @@ class SimpleConregController extends ControllerBase {
 
     $rows = array();
     $headers = array(
-      t('Number of members'),
+      t('Payment Method'),
       t('Number of members'),
     );
     $total = 0;
@@ -208,8 +208,8 @@ class SimpleConregController extends ControllerBase {
 
     $rows = array();
     $headers = array(
-      t('Payment Method'), 
       t('Amount Paid'), 
+      t('Number of members'), 
       t('Total Paid'),
     );
     $total = 0;
