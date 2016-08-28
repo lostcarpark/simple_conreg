@@ -388,6 +388,11 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('reference.default_country'),
     );  
 
+
+    /*
+     * Fields for Thank You page.
+     */
+
     $form['simple_conreg_thanks'] = array(
       '#type' => 'fieldset',
       '#title' => $this->t('Thank You Page'),
@@ -401,6 +406,34 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('thanks.thank_you_message'),
     );  
 
+
+    /*
+     * Fields for multiple member discounts.
+     */
+
+    $form['simple_conreg_discount'] = array(
+      '#type' => 'fieldset',
+      '#title' => $this->t('Multiple Member Discounts'),
+      '#tree' => TRUE,
+    );
+
+    $form['simple_conreg_discount']['enable'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Enable discount for multiple memberships.'),
+      '#default_value' => $config->get('discount.enable'),
+    );  
+
+    $form['simple_conreg_discount']['free_every'] = array(
+      '#type' => 'number',
+      '#title' => $this->t('Free member for every'),
+      '#description' => $this->t('The number of paid members for every free member.'),
+      '#default_value' => $config->get('discount.free_every'),
+    );  
+
+
+    /*
+     * Fields for confirmation emails.
+     */
 
     $form['simple_conreg_confirmation'] = array(
       '#type' => 'fieldset',
@@ -507,6 +540,8 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('reference.default_country', $vals['simple_conreg_reference']['default_country']);
     $config->set('reference.countries', $vals['simple_conreg_reference']['countries']);
     $config->set('thanks.thank_you_message', $vals['simple_conreg_thanks']['thank_you_message']);
+    $config->set('discount.enable', $vals['simple_conreg_discount']['enable']);
+    $config->set('discount.free_every', $vals['simple_conreg_discount']['free_every']);
     $config->set('confirmation.copy_us', $vals['simple_conreg_confirmation']['copy_us']);
     $config->set('confirmation.from_name', $vals['simple_conreg_confirmation']['from_name']);
     $config->set('confirmation.from_email', $vals['simple_conreg_confirmation']['from_email']);

@@ -63,7 +63,6 @@ class SimpleConregRegistrationForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
-    //dpm($form_values);
     $memberPrices = array();
     
     $config = $this->config('simple_conreg.settings');
@@ -72,8 +71,18 @@ class SimpleConregRegistrationForm extends FormBase {
     $symbol = $config->get('payments.symbol');
     $countryOptions = SimpleConregOptions::memberCountries($config);
     $defaultCountry = $config->get('reference.default_country');
+    // Check if discounts enabled.
+    $discountEnabled = $config->get('discount.enable');
+    $discountFreeEvery = $config->get('discount.free_every');
+
+    // Get thenumber of members on the form.
+    $memberQty = $form_values['global']['member_quantity'];
+    if (empty($memberQty))
+      $memberQty = 1;
     
-    $totalPrice = 0;
+    // Calculate price for all members.
+    list($fullPrice, $discountPrice, $totalPrice, $memberPrices) =
+      $this->getAllMemberPrices($form_values, $memberQty, $typePrices, $addOnPrices, $symbol, $discountEnabled, $discountFreeEvery);
   
     $form = array(
       '#tree' => TRUE,
@@ -113,10 +122,6 @@ class SimpleConregRegistrationForm extends FormBase {
       '#suffix' => '</div>',
     );
 
-    $memberQty = $form_values['global']['member_quantity'];
-    if (empty($memberQty))
-      $memberQty = 1;
-    
     for ($cnt=1; $cnt<=$memberQty; $cnt++) {
       $form['members']['member'.$cnt] = array(
         '#type' => 'fieldset',
@@ -196,14 +201,12 @@ class SimpleConregRegistrationForm extends FormBase {
       }
 
       // Display price for selected member type and add-ons.
-      list($price, $priceMessage) = $this->getMemberPrice($form_values, $cnt, $typePrices, $addOnPrices, $symbol);
+      list($price, $priceMessage) = $memberPrices[$cnt];
       $form['members']['member'.$cnt]['price'] = array(
         '#prefix' => '<div id="memberPrice'.$cnt.'">',
         '#suffix' => '</div>',
         '#markup' => $priceMessage,
       );
-      $memberPrices['member'.$cnt]['price'] = $price;
-      $totalPrice += $price;
 
       $form['members']['member'.$cnt]['badge_name_option'] = array(
         '#type' => 'radios',
@@ -362,13 +365,30 @@ class SimpleConregRegistrationForm extends FormBase {
       '#title' => $this->t('Total price'),
     );
 
-    $form['payment']['total_price'] = array(
+    $form['payment']['price'] = array(
+      '#prefix' => '<div id="Pricing">',
+      '#suffix' => '</div>',
+    );
+
+    if ($discountPrice > 0) {
+      $form['payment']['price']['full_price'] = array(
+        '#prefix' => '<div id="fullPrice">',
+        '#suffix' => '</div>',
+        '#markup' => $this->t('Amount before discount: @symbol@full',
+                     ['@symbol' => $symbol, '@full' => $fullPrice]),
+      );
+      $form['payment']['price']['discount_price'] = array(
+        '#prefix' => '<div id="discountPrice">',
+        '#suffix' => '</div>',
+        '#markup' => $this->t('Total discount: @symbol@discount',
+                     ['@symbol' => $symbol, '@discount' => $discountPrice]),
+      );
+    }
+    $form['payment']['price']['total_price'] = array(
       '#prefix' => '<div id="totalPrice">',
       '#suffix' => '</div>',
-      '#markup' => $this->t('Total amount to pay: @symbol@total', array(
-        '@symbol' => $symbol,
-        '@total' => $totalPrice,
-      )),
+      '#markup' => $this->t('Total amount to pay: @symbol@total', 
+                   ['@symbol' => $symbol, '@total' => $totalPrice]),
     );
 
     $form['payment']['submit'] = array(
@@ -376,7 +396,6 @@ class SimpleConregRegistrationForm extends FormBase {
       '#value' => t('Proceed to payment page'),
     );
 
-    $form_state->set('members', $memberPrices);
     $form_state->set('total_price', $totalPrice);
     return $form;
   }
@@ -398,7 +417,7 @@ class SimpleConregRegistrationForm extends FormBase {
       $ajax_response->addCommand(new HtmlCommand('#memberAddOnInfo'.$cnt, render($form['members']['member'.$cnt]['add_on_extra']['info'])));
       $ajax_response->addCommand(new HtmlCommand('#memberPrice'.$cnt, $form['members']['member'.$cnt]['price']['#markup']));
     }
-    $ajax_response->addCommand(new HtmlCommand('#totalPrice', $form['payment']['total_price']['#markup']));
+    $ajax_response->addCommand(new HtmlCommand('#Pricing', $form['payment']['price']));
 
     return $ajax_response;
   }
@@ -515,20 +534,19 @@ class SimpleConregRegistrationForm extends FormBase {
     
     $config = $this->config('simple_conreg.settings');
     $symbol = $config->get('payments.symbol');
+    $discountEnabled = $config->get('discount.enable');
+    $discountFreeEvery = $config->get('discount.free_every');
     list($typeOptions, $typePrices, $defaultBadgeTypes) = SimpleConregOptions::memberTypes($config);
     list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($config);
     
     // Find out number of members.
     $memberQty = $form_values['global']['member_quantity'];
     $members = $form_state->get('members');
-    $totalPrice = 0;
+    
     // Can't rely on price sent back from form, so recalculate.
-    for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
-      // Check member price.
-      list($price, $priceMessage) = $this->getMemberPrice($form_values, $cnt, $typePrices, $addOnPrices, $symbol);
-      $members['member'.$cnt]['price'] = $price;
-      $totalPrice += $price;
-    }
+    list($fullPrice, $discountPrice, $totalPrice, $memberPrices) =
+      $this->getAllMemberPrices($form_values, $memberQty, $typePrices, $addOnPrices, $symbol, $discountEnabled, $discountFreeEvery);
+    
     // Gather the current user so the new record has ownership.
     $account = \Drupal::currentUser();
     $lead_mid = 0;
@@ -545,7 +563,7 @@ class SimpleConregRegistrationForm extends FormBase {
     
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
       // Check member price.
-      list($price, $priceMessage) = $this->getMemberPrice($form_values, $cnt, $typePrices, $addOnPrices, $symbol);
+      list($price, $priceMessage) = $memberPrices[$cnt];
 
       // Look up the member type, and get the default badge type for member type.
       $member_type = $form_values['members']['member'.$cnt]['type'];
@@ -616,11 +634,10 @@ class SimpleConregRegistrationForm extends FormBase {
             $form_values['members']['member'.$cnt]['extra_flag1'] : 0,
         'extra_flag2' => isset($form_values['members']['member'.$cnt]['extra_flag2']) ?
             $form_values['members']['member'.$cnt]['extra_flag2'] : 0,
-        'member_price' => $members['member'.$cnt]['price'],
+        'member_price' => $price,
         'payment_amount' => $totalPrice,
         'join_date' => time(),
       );
-      dpm($entry);
       // Add member details to parameters for email.
       $confirm_params["members"][$cnt] = $entry;
       // Insert to database table.
@@ -658,7 +675,6 @@ class SimpleConregRegistrationForm extends FormBase {
                 $communications_methods[$entry['communication_method']]) {
               // Subscribe member if criteria met.
               $subscription_manager->subscribe($entry['email'], $newsletter_id, FALSE, 'website');
-              //dpm($entry['email'], 'Subscribed to '.$newsletter_id);
             }
           }
         }
@@ -702,12 +718,64 @@ class SimpleConregRegistrationForm extends FormBase {
   }
 
 
+  /**
+   * Method to calculate price of all members, and subtract any discounts.
+   */
+  public function getAllMemberPrices($form_values, $memberQty, $typePrices, $addOnPrices, $symbol,
+                                     $discountEnabled, $discountFreeEvery) {
+    $fullPrice = 0;
+    $discountPrice = 0;
+    $totalPrice = 0;
+    $memberPrices = [];
+    $prices = [];
+    for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
+      // Check member price.
+      $memberPrices[$cnt] = $this->getMemberPrice($form_values, $cnt, $typePrices, $addOnPrices, $symbol);
+      list($price, $priceMessage, $basePrice) = $memberPrices[$cnt];
+      if ($basePrice > 0)
+        $prices[$cnt] = $basePrice;
+      //$members['member'.$cnt]['price'] = $price;
+      $fullPrice += $price;
+    }
+    // Sort prices array in reverse order.
+    $cnt = 0;
+    if ($discountEnabled && arsort($prices)) {
+      foreach ($prices as $memberNo => $curPrice) {
+        $cnt++;
+        // Check if discount applies (count divisible by number pre discount).
+        if ($cnt % ($discountFreeEvery + 1) == 0) {
+          $discountPrice += $curPrice;
+          list($price, $priceMessage, $basePrice) = $memberPrices[$cnt];
+          // Take base price off member price (but leave add-ons).
+          $newPrice = $price - $basePrice;
+          // New message. Be sure to include add-on price if there is one.
+          if ($newPrice == 0)
+            $message = $this->t('Free member!');
+          else
+            $message = $this->t('Free member! Price for add-on: @symbol@price', array(
+              '@symbol' => $symbol,
+              '@price' => $newPrice));
+          // Update member prices array.
+          $memberPrices[$memberNo] = [$newPrice, $message, $basePrice];
+        }
+      }
+    }
+    // Calculate total price with discounts.
+    $totalPrice = $fullPrice - $discountPrice;
+    return [$fullPrice, $discountPrice, $totalPrice, $memberPrices];
+  }
+
+
+  /**
+   * Method to return the price of a member
+   */
   public function getMemberPrice(array $form_values, $memberNo, $typePrices, $addOnPrices, $symbol) {
     $price = 0;
     // If type selected, look up value.
     if (!empty($form_values['members']['member'.$memberNo]['type'])) {
       $price = $typePrices[$form_values['members']['member'.$memberNo]['type']];
     }
+    $basePrice = $price;
     // If add on selected, look up value.
     if (!empty($form_values['members']['member'.$memberNo]['add_on'])) {
       $price += $addOnPrices[$form_values['members']['member'.$memberNo]['add_on']];
@@ -719,10 +787,11 @@ class SimpleConregRegistrationForm extends FormBase {
     }
     
     $priceMessage = $this->t('Price for member #@number: @symbol@price', array(
-        '@number' => $cnt,
+        '@number' => $memberNo,
         '@symbol' => $symbol,
         '@price' => $price));
-    return array($price, $priceMessage);
+    return array($price, $priceMessage, $basePrice);
   }
 
 }
+
