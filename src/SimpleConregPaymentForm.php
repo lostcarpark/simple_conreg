@@ -10,6 +10,7 @@ namespace Drupal\simple_conreg;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\Component\Utility\Xss;
 use Drupal\devel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -52,7 +53,7 @@ class SimpleConregPaymentForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $mid = NULL, $key = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $mid = NULL, $key = NULL, $name = NULL) {
     $config = $this->config('simple_conreg.settings');
 
     $form['#attached'] = array(
@@ -90,18 +91,31 @@ class SimpleConregPaymentForm extends FormBase {
 
     $form['intro'] = array(
       '#markup' => $config->get('payment_intro'),
+      '#prefix' => '<div id="intro">',
+      '#suffix' => '</div>',
     );
     
     $form['message'] = array(
       '#markup' => $this->t('Amount to pay: @currency@amount.', array('@currency'=>$config->get('payments.symbol'), '@amount'=>$amount)),
+      '#prefix' => '<div id="amount">',
+      '#suffix' => '</div>',
+    );
+    
+    $form['name'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Name on Card'),
+      '#default_value' => Xss::filter($name),
+      '#size' => 20,
+      '#maxlength' => 100,
+      '#attributes' => array('class' => array("card-name"), 'autocomplete' => 'off'),
     );
     
     $form['card_number'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Card Number'),
       '#size' => 20,
-      '#maxlength' => 16,
-      '#attributes' => array('class' => array("card-number")),
+      '#maxlength' => 20,
+      '#attributes' => array('class' => array("card-number", "cc-number"), 'autocomplete' => 'off'),
     );
     
     $form['cvc'] = array(
@@ -109,7 +123,7 @@ class SimpleConregPaymentForm extends FormBase {
       '#title' => $this->t('CVC'),
       '#size' => 4,
       '#maxlength' => 4,
-      '#attributes' => array('class' => array("card-cvc")),
+      '#attributes' => array('class' => array("card-cvc", "cc-cvc"), 'autocomplete' => 'off'),
     );
     
     $months = array();
@@ -118,20 +132,29 @@ class SimpleConregPaymentForm extends FormBase {
     }
     $form['expiry_month'] = array(
       '#type' => 'select',
-      '#title' => $this->t('Expiry (MM)'),
+      '#title' => $this->t('Expiry'),
       '#options' => $months,
-      '#attributes' => array('class' => array("card-expiry-month")),
+      '#attributes' => array('class' => array("card-expiry-month"), 'autocomplete' => 'off'),
     );
 
+    $form['separator'] = array(
+      '#markup' => $this->t('/'),
+      '#prefix' => '<span id="separator">',
+      '#suffix' => '</span>',
+    );
+
+    $firstYear = intval(date("Y"));
+    $lastYear = $firstYear + 10;
     $years = array();
-    for ($y=2016; $y<2026; $y++) {
+    for ($y=$firstYear; $y<$lastYear; $y++) {
       $years[$y] = $y;
     }
     $form['expiry_year'] = array(
       '#type' => 'select',
-      '#title' => $this->t('Expiry (YYYY)'),
+      '#title' => $this->t('Year'),
+      '#title_display' => 'invisible',
       '#options' => $years,
-      '#attributes' => array('class' => array("card-expiry-year")),
+      '#attributes' => array('class' => array("card-expiry-year"), 'autocomplete' => 'off'),
     );
     
     $form['stripeToken'] = array(
@@ -141,6 +164,14 @@ class SimpleConregPaymentForm extends FormBase {
 
     $form['security_message'] = array(
       '#markup' => $this->t('Your credit card details are sent directly and securely to our payment processor, Stripe. Your details are never received by or stored on our webserver.'),
+      '#prefix' => '<div id="security">',
+      '#suffix' => '</div>',
+    );
+
+    $form['security_message'] = array(
+      '#markup' => $this->t('Your credit card details are sent directly and securely to our payment processor, Stripe. Your details are never received by or stored on our webserver.'),
+      '#prefix' => '<div id="security">',
+      '#suffix' => '</div>',
     );
     
 
@@ -154,6 +185,7 @@ class SimpleConregPaymentForm extends FormBase {
   }
 
   public function afterBuild(array $form, FormStateInterface $form_state) {
+    unset($form['name']['#name']);
     unset($form['card_number']['#name']);
     unset($form['cvc']['#name']);
     unset($form['expiry_month']['#name']);
@@ -171,8 +203,10 @@ class SimpleConregPaymentForm extends FormBase {
     $amount = $form_state->get('payment_amount');
 
     try {
+      // Load the lead member to get email address to addach to payment, and later send confirmation email.
+      $member = SimpleConregStorage::load(array("mid"=>$mid));
+      
       // Stripe should now be autoloaded by Composer.
-      //require_once('stripe/init.php');
 
 		  // set your secret key: remember to change this to your live secret key in production
 		  // see your keys here https://manage.stripe.com/account
@@ -183,7 +217,7 @@ class SimpleConregPaymentForm extends FormBase {
         "amount" => $amount * 100, // amount in cents, again
         "currency" => $config->get('payments.currency'),
         "source" => $form_values["stripeToken"],
-        "description" => "Member ID ".$mid,
+        "description" => "Member ID ".$mid." for ".$member["email"],
       ));
 
       // Check that it was paid:
@@ -199,9 +233,6 @@ class SimpleConregPaymentForm extends FormBase {
         // Update all members in group using lead_mid.
         $entry = array('lead_mid' => $mid, 'is_paid' => 1, 'payment_id' => $payment_id);
         $return = SimpleConregStorage::updateByLeadMid($entry);
-
-        // Load the lead member to send confirmation email.
-        $member = SimpleConregStorage::load(array("mid"=>$mid));
 
         // Set up parameters for receipt email.
         $params = (array)$member;

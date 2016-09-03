@@ -63,7 +63,6 @@ class SimpleConregRegistrationForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
-    //dpm($form_values);
     $memberPrices = array();
     
     $config = $this->config('simple_conreg.settings');
@@ -620,7 +619,6 @@ class SimpleConregRegistrationForm extends FormBase {
         'payment_amount' => $totalPrice,
         'join_date' => time(),
       );
-      dpm($entry);
       // Add member details to parameters for email.
       $confirm_params["members"][$cnt] = $entry;
       // Insert to database table.
@@ -635,6 +633,7 @@ class SimpleConregRegistrationForm extends FormBase {
         // For first member, get key from insert statement to use for mead member ID.
         $lead_mid = $return;
         $lead_key = $rand_key;
+        $lead_name = trim($entry['first_name'].' '.$entry['last_name']);
         // Update first member with own member ID as lead member ID.
         $update = array('mid' => $lead_mid, 'lead_mid' => $lead_mid);
         $return = SimpleConregStorage::update($update);
@@ -658,7 +657,6 @@ class SimpleConregRegistrationForm extends FormBase {
                 $communications_methods[$entry['communication_method']]) {
               // Subscribe member if criteria met.
               $subscription_manager->subscribe($entry['email'], $newsletter_id, FALSE, 'website');
-              //dpm($entry['email'], 'Subscribed to '.$newsletter_id);
             }
           }
         }
@@ -697,7 +695,7 @@ class SimpleConregRegistrationForm extends FormBase {
     
     // Redirect to payment form.
     $form_state->setRedirect('simple_conreg_payment',
-      array('mid' => $lead_mid, 'key' => $lead_key)
+      array('mid' => $lead_mid, 'key' => $lead_key, 'name' => $lead_name)
     );
   }
 

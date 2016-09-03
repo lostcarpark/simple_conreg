@@ -30,7 +30,7 @@
 		$('#submitBtn').attr("disabled", "disabled");
 
 		// Get the values:
-		var ccNum = $('.card-number').val(), cvcNum = $('.card-cvc').val(), expMonth = $('.card-expiry-month').val(), expYear = $('.card-expiry-year').val();
+		var ccNum = $('.card-number').val(), cvcNum = $('.card-cvc').val(), expMonth = $('.card-expiry-month').val(), expYear = $('.card-expiry-year').val(), cardholderName = $('.card-name').val();
 
     // Set the Stripe public key, using setting received from Drupal.
     Stripe.setPublishableKey(drupalSettings.simple_conreg.payments.public_key);
@@ -63,7 +63,8 @@
 				number: ccNum,
 				cvc: cvcNum,
 				exp_month: expMonth,
-				exp_year: expYear
+				exp_year: expYear,
+				name: cardholderName
 			}, stripeResponseHandler);
 
 		}
