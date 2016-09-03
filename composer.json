@@ -4,7 +4,7 @@
   "description": "Allows a simple convention registration form.",
   "license": "GPL-2.0+",
   "require": {
-    "stripe/stripe-php": "dev-master"
+    "stripe/stripe-php": "~3.0"
   },
   "minimum-stability": "dev"
 }

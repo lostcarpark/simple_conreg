@@ -7,10 +7,11 @@ simple_conreg_register:
     _permission: 'convention registration'
 
 simple_conreg_payment:
-  path: 'members/payment/{mid}/{key}'
+  path: 'members/payment/{mid}/{key}/{name}'
   defaults:
     _title: 'Payment'
     _form: '\Drupal\simple_conreg\SimpleConregPaymentForm'
+    name: ''
   requirements:
     _permission: 'convention registration'
 

@@ -652,6 +652,7 @@ class SimpleConregRegistrationForm extends FormBase {
         // For first member, get key from insert statement to use for mead member ID.
         $lead_mid = $return;
         $lead_key = $rand_key;
+        $lead_name = trim($entry['first_name'].' '.$entry['last_name']);
         // Update first member with own member ID as lead member ID.
         $update = array('mid' => $lead_mid, 'lead_mid' => $lead_mid);
         $return = SimpleConregStorage::update($update);
@@ -713,7 +714,7 @@ class SimpleConregRegistrationForm extends FormBase {
     
     // Redirect to payment form.
     $form_state->setRedirect('simple_conreg_payment',
-      array('mid' => $lead_mid, 'key' => $lead_key)
+      array('mid' => $lead_mid, 'key' => $lead_key, 'name' => $lead_name)
     );
   }
 
