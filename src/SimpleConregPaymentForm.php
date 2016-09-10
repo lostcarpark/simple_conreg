@@ -226,6 +226,11 @@ class SimpleConregPaymentForm extends FormBase {
         $payment_id = $charge->id;
         drupal_set_message($this->t("Your payment has been accepted. Thank you for joining. Your payment confirmation ID is @payment", array('@payment' => $payment_id)));
         
+        // Since member record already loaded, update in memory.
+        $member['is_paid'] = 1;
+        $member['payment_id'] = $payment_id;
+        $member['payment_method'] = 'Stripe';
+        
         // First update the lead member (in case for some reason the lead_mid update failed).
         $entry = array('mid' => $mid, 'is_paid' => 1, 'payment_id' => $payment_id, 'payment_method' => 'Stripe');
         $return = SimpleConregStorage::update($entry);
