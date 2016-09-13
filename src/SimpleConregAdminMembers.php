@@ -38,14 +38,53 @@ class SimpleConregAdminMembers extends FormBase {
     $form_values = $form_state->getValues();
 
     $config = $this->config('simple_conreg.settings');
+    list($typeOptions, $typeNames, $typePrices) = SimpleConregOptions::memberTypes($config);
+    $badgeTypes = SimpleConregOptions::badgeTypes($config);
+    $displayOptions = SimpleConregOptions::display();
     $pageSize = $config->get('display.page_size');
+
+    $pageOptions = [];
+    switch($_GET['sort']) {
+      case 'desc':
+        $direction = 'DESC';
+        $pageOptions['sort'] = 'desc';
+        break;
+      default:
+        $direction = 'ASC';
+        break;
+    }
+    switch($_GET['order']) {
+      case 'MID':
+        $order = 'm.mid';
+        $pageOptions['order'] = 'MID';
+        break;
+      case 'First name':
+        $order = 'm.first_name';
+        $pageOptions['order'] = 'First name';
+        break;
+      case 'Last name':
+        $order = 'm.last_name';
+        $pageOptions['order'] = 'Last name';
+        break;
+      case 'Badge name':
+        $order = 'm.badge_name';
+        $pageOptions['order'] = 'Badge name';
+        break;
+      case 'Email':
+        $order = 'email';
+        $pageOptions['order'] = 'Email';
+        break;
+      default:
+        $order = 'member_no';
+        break;
+    }
 
     $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
     // If form values submitted, use the display value that was submitted over the passed in values.
     if (isset($form_values['display']))
       $display = $form_values['display'];
     elseif (empty($display)) {
-      // If display not submitted from form or passed in through URL, take last value from
+      // If display not submitted from form or passed in through URL, take last value from session.
       $display = $tempstore->get('display');
       if (empty($display))
         $display = 'approval'; // If still no display specified, default to awaiting approval.
@@ -88,15 +127,17 @@ class SimpleConregAdminMembers extends FormBase {
     );
 
     $headers = array(
-      t('First name'),
-      t('Last name'),
-      t('Email'),
-      t('Badge name'),
-      t('Display'),
-      t('Type'),
+      'mid' => ['data' => t('MID'), 'field' => 'm.mid'],
+      'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
+      'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
+      'email' => ['data' => t('Email'), 'field' => 'm.email'],
+      'badge_name' => ['data' => t('Badge name'), 'field' => 'm.badge_name'],
+      'display' =>  ['data' => t('Display'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
+      'member_type' =>  ['data' => t('Member type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
+      'badge_type' =>  ['data' => t('Badge type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       t('Paid'),
       t('Approved'),
-      t('Member no'),
+      'member_no' => ['data' => t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
       t('Update'),
     );
 
@@ -126,15 +167,30 @@ class SimpleConregAdminMembers extends FormBase {
       '#header' => $headers,
       '#attributes' => array('id' => 'simple-conreg-admin-member-list'),
       '#empty' => t('No entries available.'),
+      '#sticky' => TRUE,
     );      
 
     if ($display != 'custom')
-      list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($display, NULL, $page, $pageSize);
+      list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($display, NULL, $page, $pageSize, $order, $direction);
     elseif (!empty(trim($search)))
-      list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($display, $search, $page, $pageSize);
+      list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($display, $search, $page, $pageSize, $order, $direction);
     else {
       $pages = 0;
       $entries = [];
+    }
+    
+    // Check if current page greater than number of pages...
+    if ($page > $pages) {
+      // Look at making this redirect so correct page is in the URL, but tricky because we're in AJAX callback. For now just show last page.
+      $page = $pages;
+      // Refetch page data.
+      if ($display != 'custom')
+        list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($display, NULL, $page, $pageSize, $order, $direction);
+      elseif (!empty(trim($search)))
+        list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($display, $search, $page, $pageSize, $order, $direction);
+      // Page doesn't exist for current selection criteria, so go to last page of query.
+      // $form_state->setRedirect('simple_conreg_admin_members', ['display' => $display, 'page' => $pages], ['query' => $pageOptions]);
+      //return;
     }
 
     foreach ($entries as $entry) {
@@ -143,6 +199,9 @@ class SimpleConregAdminMembers extends FormBase {
       $is_paid = $entry['is_paid'];
       //$row = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $entry);
       $row = array();
+      $row['mid'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['mid']),
+      );
       $row['first_name'] = array(
         '#markup' => SafeMarkup::checkPlain($entry['first_name']),
       );
@@ -156,10 +215,13 @@ class SimpleConregAdminMembers extends FormBase {
         '#markup' => SafeMarkup::checkPlain($entry['badge_name']),
       );
       $row['display'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['display']),
+        '#markup' => SafeMarkup::checkPlain(isset($displayOptions[$entry['display']]) ? $displayOptions[$entry['display']] : $entry['display']),
       );
       $row['member_type'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['member_type']),
+        '#markup' => SafeMarkup::checkPlain(isset($typeNames[$entry['member_type']]) ? $typeNames[$entry['member_type']] : $entry['member_type']),
+      );
+      $row['badge_type'] = array(
+        '#markup' => SafeMarkup::checkPlain(isset($badgeTypes[$entry['badge_type']]) ? $badgeTypes[$entry['badge_type']] : $entry['badge_type']),
       );
       $row['is_paid'] = array(
         '#markup' => $is_paid ? $this->t('Yes') : $this->t('No'),
@@ -199,9 +261,13 @@ class SimpleConregAdminMembers extends FormBase {
       '#prefix' => '<div id="pager">',
       '#suffix' => '</div>',
     );
-    for ($page = 1; $page <= $pages; $page++) {
-      $form['pager']['page'.$page] = Link::createFromRoute($page, 'simple_conreg_admin_members', ['display' => $display, 'page' => $page])->toRenderable();
-      $form['pager']['page'.$page]['#prefix'] = ' ';
+    for ($p = 1; $p <= $pages; $p++) {
+      if ($p == $page)
+        $form['pager']['page'.$p]['#markup'] = $p;
+      else
+        $form['pager']['page'.$p] = Link::createFromRoute($p, 'simple_conreg_admin_members', ['display' => $display, 'page' => $p], ['query' => $pageOptions])->toRenderable();
+      $form['pager']['page'.$p]['#prefix'] = ' <span>';
+      $form['pager']['page'.$p]['#suffix'] = '</span> ';
     }
 
     $form['submit'] = array(

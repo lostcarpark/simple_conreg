@@ -42,7 +42,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
     $memberPrices = array();
 
     $config = $this->config('simple_conreg.settings');
-    list($typeOptions, $typePrices) = SimpleConregOptions::memberTypes($config);
+    list($typeOptions, $typeNames, $typePrices) = SimpleConregOptions::memberTypes($config);
     $badgeTypeOptions = SimpleConregOptions::badgeTypes($config);
     list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($config);
     $symbol = $config->get('payments.symbol');

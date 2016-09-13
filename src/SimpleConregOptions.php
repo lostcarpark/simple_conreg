@@ -23,15 +23,17 @@ class SimpleConregOptions {
     }
     $types = explode("\n", $config->get('member_types')); // One type per line.
     $typeOptions = [];
+    $typeNames = [];
     $typePrices = [];
     $defaultBadgeTypes = [];
     foreach ($types as $type) {
-      list($code, $desc, $price, $badgetype) = explode('|', $type);
+      list($code, $desc, $name, $price, $badgetype) = explode('|', $type);
       $typeOptions[$code] = $desc;
+      $typeNames[$code] = $name;
       $typePrices[$code] = $price;
       $defaultBadgeTypes[$code] = $badgetype;
     }
-    return array($typeOptions, $typePrices, $defaultBadgeTypes);
+    return array($typeOptions, $typeNames, $typePrices, $defaultBadgeTypes);
   }
 
   /**

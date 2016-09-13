@@ -37,23 +37,52 @@ class SimpleConregController extends ControllerBase {
   public function memberList() {
     $config = $this->config('simple_conreg.settings');
     $countryOptions = $this->getMemberCountries($config);
+    $types = SimpleConregOptions::badgeTypes();
+    $digits = $config->get('member_no_digits');
+
+    switch($_GET['sort']) {
+      case 'desc':
+        $direction = 'DESC';
+        break;
+      default:
+        $direction = 'ASC';
+        break;
+    }
+    switch($_GET['order']) {
+      case 'Name':
+        $order = 'name';
+        break;
+      case 'Country':
+        $order = 'country';
+        break;
+      case 'Type':
+        $order = 'badge_type';
+        break;
+      default:
+        $order = 'member_no';
+        break;
+    }
 
     $content = array();
 
     $content['message'] = array(
-      '#cache' => [
-        'tags' => ['simple-conreg-member-list'],
-      ],
+      '#cache' => ['tags' => ['simple-conreg-member-list']],
       '#markup' => $this->t('Members\' public details are listed below.'),
     );
 
-    $rows = array();
-    $headers = array(t('Member No'), t('Name'), t('Country'));
+    $rows = [];
+    $headers = [
+      'member_no' => ['data' => t('Member No'), 'field' => 'm.member_no', 'sort' => 'asc'],
+      'member_name' =>  ['data' => t('Name'), 'field' => 'name'],
+      'badge_type' =>  ['data' => t('Type'), 'field' => 'm.badge_type', 'class' => [RESPONSIVE_PRIORITY_LOW]],
+      'member_country' =>  ['data' => t('Country'), 'field' => 'm.country', 'class' => [RESPONSIVE_PRIORITY_MEDIUM]],
+    ];
     $total = 0;
 
     foreach ($entries = SimpleConregStorage::adminPublicListLoad() as $entry) {
       // Sanitize each entry.
-      $member = array('Member No' => $entry['badge_type'] . $entry['member_no']);
+      $member_no = sprintf("%0".$digits."d", $entry['member_no']);
+      $member = ['member_no' => $entry['badge_type'] . $member_no];
       switch ($entry['display']) {
         case 'F':
           $fullname = trim($entry['first_name']) . ' ' . trim($entry['last_name']);
@@ -68,10 +97,23 @@ class SimpleConregController extends ControllerBase {
           $member['name'] = t('Name withheld');
           break;
       }
+      $member['badge_type'] = trim($types[$entry['badge_type']]);
       $member['country'] = trim($countryOptions[$entry['country']]);
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $member);
+
+      // Set key to field to be sorted by.
+      if ($order == 'member_no')
+        $key = $member_no;
+      else
+        $key = $member[$order] . $member_no;  // Append member number to ensure uniqueness.
+      $rows[$key] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $member);
       $total++;
     }
+    
+    // Sort array by key.
+    if ($direction == 'DESC')
+      krsort($rows);
+    else
+      ksort($rows);
     
     $content['table'] = array(
       '#type' => 'table',
@@ -114,7 +156,7 @@ class SimpleConregController extends ControllerBase {
    */
   public function memberAdminMemberListSummary(&$content) {
 
-    list($types, $prices, $default) = SimpleConregOptions::memberTypes();
+    list($types, $typeNames, $prices, $default) = SimpleConregOptions::memberTypes();
     $rows = array();
     $headers = array(
       t('Member Type'), 
@@ -124,7 +166,7 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad() as $entry) {
       // Replace type code with description.
       if (isset($types[$entry['member_type']]))
-        $entry['member_type'] = $types[$entry['member_type']];
+        $entry['member_type'] = $typeNames[$entry['member_type']];
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
       $total += $entry['num'];
@@ -240,6 +282,42 @@ class SimpleConregController extends ControllerBase {
   public function memberAdminMemberList() {
     $content = array();
 
+    $pageOptions = [];
+    switch($_GET['sort']) {
+      case 'desc':
+        $direction = 'DESC';
+        $pageOptions['sort'] = 'desc';
+        break;
+      default:
+        $direction = 'ASC';
+        break;
+    }
+    switch($_GET['order']) {
+      case 'MID':
+        $order = 'm.mid';
+        $pageOptions['order'] = 'MID';
+        break;
+      case 'First name':
+        $order = 'm.first_name';
+        $pageOptions['order'] = 'First name';
+        break;
+      case 'Last name':
+        $order = 'm.last_name';
+        $pageOptions['order'] = 'Last name';
+        break;
+      case 'Badge name':
+        $order = 'm.badge_name';
+        $pageOptions['order'] = 'Badge name';
+        break;
+      case 'Email':
+        $order = 'm.email';
+        $pageOptions['order'] = 'Email';
+        break;
+      default:
+        $order = 'member_no';
+        break;
+    }
+
     $content['message'] = array(
       '#markup' => $this->t('Here is a list of all paid convention members.'),
     );
@@ -248,13 +326,14 @@ class SimpleConregController extends ControllerBase {
 
     $rows = array();
     $headers = array(
-      t('MID'), 
-      t('Type'), 
-      t('Member No'),
-      t('First Name'),
-      t('Last Name'),
-      t('Email'),
-      t('Badge Name'),
+      'mid' => ['data' => t('MID'), 'field' => 'm.mid'],
+      'member_type' =>  ['data' => t('Member type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
+      'member_no' => ['data' => t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
+      'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
+      'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
+      'email' => ['data' => t('Email'), 'field' => 'm.email'],
+      'badge_name' => ['data' => t('Badge name'), 'field' => 'm.badge_name'],
+      'badge_type' =>  ['data' => t('Badge type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       t('Street'),
       t('Street line 2'),
       t('City'),
@@ -263,7 +342,7 @@ class SimpleConregController extends ControllerBase {
       t('Country'),
       t('Phone'),
       t('Birth Date'),
-      t('Display'),
+      'display' =>  ['data' => t('Display'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       t('Communication Method'),
       t('Paid'),
       t('Price'),
@@ -271,7 +350,7 @@ class SimpleConregController extends ControllerBase {
       t('Date joined'),
     );
 
-    foreach ($entries = SimpleConregStorage::adminPaidMemberListLoad() as $entry) {
+    foreach ($entries = SimpleConregStorage::adminPaidMemberListLoad($direction, $order) as $entry) {
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
     }
@@ -280,6 +359,7 @@ class SimpleConregController extends ControllerBase {
       '#header' => $headers,
       '#rows' => $rows,
       '#empty' => t('No entries available.'),
+      '#sticky' => TRUE,
     );
     // Don't cache this page.
     $content['#cache']['max-age'] = 0;

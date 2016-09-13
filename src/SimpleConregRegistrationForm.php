@@ -66,7 +66,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $memberPrices = array();
     
     $config = $this->config('simple_conreg.settings');
-    list($typeOptions, $typePrices) = SimpleConregOptions::memberTypes($config);
+    list($typeOptions, $typeNames, $typePrices) = SimpleConregOptions::memberTypes($config);
     list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($config);
     $symbol = $config->get('payments.symbol');
     $countryOptions = SimpleConregOptions::memberCountries($config);
@@ -536,7 +536,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $symbol = $config->get('payments.symbol');
     $discountEnabled = $config->get('discount.enable');
     $discountFreeEvery = $config->get('discount.free_every');
-    list($typeOptions, $typePrices, $defaultBadgeTypes) = SimpleConregOptions::memberTypes($config);
+    list($typeOptions, $typeNames, $typePrices, $defaultBadgeTypes) = SimpleConregOptions::memberTypes($config);
     list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($config);
     
     // Find out number of members.

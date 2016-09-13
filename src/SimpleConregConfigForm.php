@@ -79,6 +79,8 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('payments.symbol'),
     );  
 
+    // Member Information Section.
+
     $form['simple_conreg_members'] = array(
       '#type' => 'fieldset',
       '#title' => $this->t('Member Information'),
@@ -98,6 +100,13 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#description' => $this->t('Put each badge type on a line with type code and description separated by | character (e.g. G|Guest).'),
       '#default_value' => $config->get('badge_types'),
     );
+
+    $form['simple_conreg_members']['digits'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Digits in Member Numbers'),
+      '#description' => $this->t('The number of digits to show in member numbers. Member numbers will be padded to this number with zeros, e.g. 0001.'),
+      '#default_value' => $config->get('member_no_digits'),
+    );  
 
     /* Intro text. */
 
@@ -506,6 +515,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('payments.symbol', trim($vals['simple_conreg_payments']['symbol']));
     $config->set('member_types', $vals['simple_conreg_members']['types']);
     $config->set('badge_types', $vals['simple_conreg_members']['badge_types']);
+    $config->set('member_no_digits', $vals['simple_conreg_members']['digits']);
     $config->set('registration_intro', $vals['simple_conreg_intros']['registration_intro']);
     $config->set('payment_intro', $vals['simple_conreg_intros']['payment_intro']);
     $config->set('fields.first_name_label', $vals['simple_conreg_fields']['first_name_label']);

@@ -204,7 +204,7 @@ class SimpleConregStorage {
     return $select;
   }
 
-  public static function adminMemberListLoad($condition, $search, $page=1, $pageSize=10) {
+  public static function adminMemberListLoad($condition, $search, $page=1, $pageSize=10, $order='m.mid', $direction='ASC') {
     // Escape search term to prevent dangerous characters.
     $esc_search = '%'.db_like($search).'%';
     
@@ -217,11 +217,15 @@ class SimpleConregStorage {
     $select->addField('m', 'badge_name');
     $select->addField('m', 'display');
     $select->addField('m', 'member_type');
+    $select->addField('m', 'badge_type');
     $select->addField('m', 'is_paid');
     $select->addField('m', 'is_approved');
     $select->addField('m', 'member_no');
     // Add selection criteria.
     $select = SimpleConregStorage::adminMemberListCondition($select, $condition, $esc_search);
+    // Sort by specified field and direction.
+    $select->orderby($order, $direction = $direction);
+    $select->orderby('m.mid', $direction = $direction);
     // Make sure we only get items 0-49, for scalability reasons.
     $select->range(($page-1) * $pageSize, $pageSize);
     
@@ -272,7 +276,7 @@ class SimpleConregStorage {
   }
 
 
-  public static function adminPaidMemberListLoad() {
+  public static function adminPaidMemberListLoad($direction = 'ASC', $order = 'm.member_no') {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'mid');
@@ -282,6 +286,7 @@ class SimpleConregStorage {
     $select->addField('m', 'last_name');
     $select->addField('m', 'email');
     $select->addField('m', 'badge_name');
+    $select->addField('m', 'badge_type');
     $select->addField('m', 'street');
     $select->addField('m', 'street2');
     $select->addField('m', 'city');
@@ -297,6 +302,7 @@ class SimpleConregStorage {
     $select->addField('m', 'is_approved');
     $select->addExpression('from_unixtime(join_date)', 'joined');
     $select->condition('m.is_paid', 1);
+    $select->orderby($order, $direction = $direction);
     // Make sure we only get items 0-49, for scalability reasons.
     //$select->range(0, 50);
 
