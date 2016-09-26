@@ -240,6 +240,14 @@ function simple_conreg_schema() {
         'default' => '',
         'description' => 'Payment confirmation code from Stripe or other payment system.',
       ),
+      // alter table simple_conreg_members add comment varchar(1) NULL after payment_id;
+      'comment' => array(
+        'type' => 'varchar',
+        'length' => 1024,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Admin comments about member.',
+      ),
       'add_on' => array(
         'type' => 'varchar',
         'length' => 255,
