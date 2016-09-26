@@ -283,6 +283,12 @@ class SimpleConregAdminMemberEdit extends FormBase {
       '#default_value' => $member['payment_id'],
     );
 
+    $form['member']['comment'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Comment'),
+      '#default_value' => $member['comment'],
+    );
+
     $join_timestamp = $member['join_date'];
     $join_date = gmdate("Y-m-d H:i:s", $join_timestamp);
     $form['member']['join_date'] = array(
@@ -373,6 +379,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
       'extra_flag2' => isset($form_values['member']['extra_flag2']) ?
           $form_values['member']['extra_flag2'] : 0,
       'is_paid' => $form_values['member']['is_paid'],
+      'comment' => $form_values['member']['comment'],
       'payment_method' => $form_values['member']['payment_method'],
       'member_price' => isset($form_values['member']['member_price']) && $form_values['member']['member_price'] != '' ?
         $form_values['member']['member_price'] : 0,
