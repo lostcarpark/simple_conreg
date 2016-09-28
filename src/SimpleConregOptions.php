@@ -28,10 +28,11 @@ class SimpleConregOptions {
     $defaultBadgeTypes = [];
     foreach ($types as $type) {
       list($code, $desc, $name, $price, $badgetype) = explode('|', $type);
-      $typeOptions[$code] = $desc;
-      $typeNames[$code] = $name;
-      $typePrices[$code] = $price;
-      $defaultBadgeTypes[$code] = $badgetype;
+      $code = trim($code);
+      $typeOptions[$code] = trim($desc);
+      $typeNames[$code] = trim($name);
+      $typePrices[$code] = trim($price);
+      $defaultBadgeTypes[$code] = trim($badgetype);
     }
     return array($typeOptions, $typeNames, $typePrices, $defaultBadgeTypes);
   }
@@ -49,7 +50,7 @@ class SimpleConregOptions {
     $badgeTypes = [];
     foreach ($types as $type) {
       list($code, $badgetype) = explode('|', $type);
-      $badgeTypes[$code] = $badgetype;
+      $badgeTypes[trim($code)] = trim($badgetype);
     }
     return $badgeTypes;
   }

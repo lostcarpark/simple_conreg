@@ -81,11 +81,12 @@ class SimpleConregController extends ControllerBase {
 
     foreach ($entries = SimpleConregStorage::adminPublicListLoad() as $entry) {
       // Sanitize each entry.
+      $badge_type = trim($entry['badge_type']);
       $member_no = sprintf("%0".$digits."d", $entry['member_no']);
-      $member = ['member_no' => $entry['badge_type'] . $member_no];
+      $member = ['member_no' => $badge_type . $member_no];
       switch ($entry['display']) {
         case 'F':
-          $fullname = trim($entry['first_name']) . ' ' . trim($entry['last_name']);
+          $fullname = trim(trim($entry['first_name']) . ' ' . trim($entry['last_name']));
           if ($fullname != trim($entry['badge_name']))
             $fullname .= ' (' . trim($entry['badge_name']) . ')';
           $member['name'] = $fullname;
@@ -97,7 +98,7 @@ class SimpleConregController extends ControllerBase {
           $member['name'] = t('Name withheld');
           break;
       }
-      $member['badge_type'] = trim($types[$entry['badge_type']]);
+      $member['badge_type'] = trim($types[$badge_type]);
       $member['country'] = trim($countryOptions[$entry['country']]);
 
       // Set key to field to be sorted by.
@@ -197,8 +198,9 @@ class SimpleConregController extends ControllerBase {
     $total = 0;
     foreach ($entries = SimpleConregStorage::adminMemberBadgeSummaryLoad() as $entry) {
       // Replace type code with description.
-      if (isset($types[$entry['badge_type']]))
-        $entry['badge_type'] = $types[$entry['badge_type']];
+      $badge_type = trim($entry['badge_type']);
+      if (isset($types[$badge_type]))
+        $entry['badge_type'] = $types[$badge_type];
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
       $total += $entry['num'];

@@ -217,11 +217,13 @@ class SimpleConregAdminMembers extends FormBase {
       $row['display'] = array(
         '#markup' => SafeMarkup::checkPlain(isset($displayOptions[$entry['display']]) ? $displayOptions[$entry['display']] : $entry['display']),
       );
+      $memberType = trim($entry['member_type']);
       $row['member_type'] = array(
-        '#markup' => SafeMarkup::checkPlain(isset($typeNames[$entry['member_type']]) ? $typeNames[$entry['member_type']] : $entry['member_type']),
+        '#markup' => SafeMarkup::checkPlain(isset($typeNames[$memberType]) ? $typeNames[$memberType] : $memberType),
       );
+      $badgeType = trim($entry['badge_type']);
       $row['badge_type'] = array(
-        '#markup' => SafeMarkup::checkPlain(isset($badgeTypes[$entry['badge_type']]) ? $badgeTypes[$entry['badge_type']] : $entry['badge_type']),
+        '#markup' => SafeMarkup::checkPlain(isset($badgeTypes[$badgeType]) ? $badgeTypes[$badgeType] : $badgeType),
       );
       $row['is_paid'] = array(
         '#markup' => $is_paid ? $this->t('Yes') : $this->t('No'),

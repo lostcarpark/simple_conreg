@@ -68,9 +68,10 @@ function simple_conreg_schema() {
         'default' => 0,
         'description' => "Member number - assigned once approved.",
       ),
+      // alter table simple_conreg_members modify column member_type varchar(4);
       'member_type' => array(
         'type' => 'varchar',
-        'length' => 1,
+        'length' => 4,
         'not null' => TRUE,
         'default' => '',
         'description' => 'Type of membership.',
@@ -119,9 +120,10 @@ function simple_conreg_schema() {
       ),
       // alter table simple_conreg_members add badge_type varchar(1) NULL after badge_name;
       // update simple_conreg_members set badge_type='A';
+      // alter table simple_conreg_members modify column badge_type varchar(4);
       'badge_type' => array(
         'type' => 'varchar',
-        'length' => 1,
+        'length' => 4,
         'not null' => TRUE,
         'default' => '',
         'description' => 'Type of Badge (e.g. Attending, Guest, Committee, Dealer).',
