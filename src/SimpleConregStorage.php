@@ -198,7 +198,8 @@ class SimpleConregStorage {
           ->condition('m.last_name', $search, 'LIKE')
           ->condition('m.badge_name', $search, 'LIKE')
           ->condition('m.email', $search, 'LIKE')
-          ->condition('m.payment_id', $search, 'LIKE');
+          ->condition('m.payment_id', $search, 'LIKE')
+          ->condition('m.comment', $search, 'LIKE');
         $select->condition($likes);
     }
     return $select;
