@@ -242,7 +242,7 @@ function simple_conreg_schema() {
         'default' => '',
         'description' => 'Payment confirmation code from Stripe or other payment system.',
       ),
-      // alter table simple_conreg_members add comment varchar(1) NULL after payment_id;
+      // alter table simple_conreg_members add comment varchar(1024) NULL after payment_id;
       'comment' => array(
         'type' => 'varchar',
         'length' => 1024,
@@ -283,6 +283,14 @@ function simple_conreg_schema() {
         'not null' => TRUE,
         'default' => 0,
         'description' => 'Unix timestamp for the date and time registered.',
+      ),
+      // alter table simple_conreg_members add is_deleted int NOT NULL default "0" after street;
+      'is_deleted' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'True if member is deleted.',
       ),
     ),
     'primary key' => array('mid'),

@@ -247,9 +247,13 @@ class SimpleConregAdminMembers extends FormBase {
       $row['link'] = array(
         '#type' => 'dropbutton',
         '#links' => array(
-          'simple_form' => array(
+          'edit_buttion' => array(
             'title' => $this->t('Edit'),
             'url' => Url::fromRoute('simple_conreg_admin_members_edit', ['mid' => $mid]),
+          ),
+          'delete_buttion' => array(
+            'title' => $this->t('Delete'),
+            'url' => Url::fromRoute('simple_conreg_admin_members_delete', ['mid' => $mid]),
           ),
         ),
       );

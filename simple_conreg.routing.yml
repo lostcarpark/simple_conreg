@@ -109,4 +109,13 @@ simple_conreg_admin_members_edit:
     _permission: 'manage convention members'
     mid: ^[0-9]+$
 
+simple_conreg_admin_members_delete:
+  path: 'admin/members/delete/{mid}'
+  defaults:
+    _title: 'Member Administration - Delete Member'
+    _form: '\Drupal\simple_conreg\SimpleConregAdminMemberDelete'
+  requirements:
+    _permission: 'manage convention members'
+    mid: ^[0-9]+$
+
 

@@ -133,6 +133,10 @@ class SimpleConregStorage {
     foreach ($entry as $field => $value) {
       $select->condition($field, $value);
     }
+    // Unless mid specified, only fetch members who don't have deleted flag spefied.
+    if (!array_key_exists("mid", $entry)) {
+      $select->condition("is_deleted", FALSE);
+    }
     // Return the result in object format.
     return $select->execute()->fetchAssoc();
   }
@@ -147,6 +151,7 @@ class SimpleConregStorage {
     $select->fields('members');
     $select->condition("mid", $mid);
     $select->condition("random_key", $key);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
 
     // Return the result in object format.
     if ($select->countQuery()->execute()->fetchField() > 0)
@@ -166,6 +171,7 @@ class SimpleConregStorage {
     $select->addField('m', 'display');
     $select->addField('m', 'country');
     $select->condition('m.is_approved', 1);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->orderBy('m.member_no');
     // Make sure we only get items 0-49, for scalability reasons.
     //$select->range(0, 50);
@@ -180,16 +186,20 @@ class SimpleConregStorage {
       case 'approval':
         $select->condition('m.is_paid', 1);
         $select->condition('m.is_approved', 0);
+        $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
         break;
       case 'approved':
         $select->condition('m.is_paid', 1);
         $select->condition('m.is_approved', 1);
+        $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
         break;
       case 'unpaid':
         $select->condition('m.is_paid', 0);
+        $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
         break;
       case 'all':
         // All members.
+        $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
         break;
       case 'custom':
         $likes = $select->orConditionGroup()
@@ -201,6 +211,7 @@ class SimpleConregStorage {
           ->condition('m.payment_id', $search, 'LIKE')
           ->condition('m.comment', $search, 'LIKE');
         $select->condition($likes);
+        $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     }
     return $select;
   }
@@ -249,6 +260,7 @@ class SimpleConregStorage {
     $select->addField('m', 'mid');
     $select->addField('m', 'member_no');
     $select->addField('m', 'is_approved');
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
     $members = array();
@@ -264,6 +276,7 @@ class SimpleConregStorage {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addExpression('MAX(m.member_no)');
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->condition('m.is_approved', 1);
     // Make sure we only get items 0-49, for scalability reasons.
     //$select->range(0, 50);
@@ -303,6 +316,7 @@ class SimpleConregStorage {
     $select->addField('m', 'is_approved');
     $select->addExpression('from_unixtime(join_date)', 'joined');
     $select->condition('m.is_paid', 1);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->orderby($order, $direction = $direction);
     // Make sure we only get items 0-49, for scalability reasons.
     //$select->range(0, 50);
@@ -318,6 +332,7 @@ class SimpleConregStorage {
     $select->addField('m', 'member_type');
     $select->addExpression('COUNT(m.mid)', 'num');
     $select->condition('m.is_paid', 1);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->groupby('m.member_type');
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
@@ -331,6 +346,7 @@ class SimpleConregStorage {
     $select->addField('m', 'badge_type');
     $select->addExpression('COUNT(m.mid)', 'num');
     $select->condition('m.is_paid', 1);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->groupby('m.badge_type');
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
@@ -344,6 +360,7 @@ class SimpleConregStorage {
     $select->addField('m', 'payment_method');
     $select->addExpression('COUNT(m.mid)', 'num');
     $select->condition('m.is_paid', 1);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->groupby('m.payment_method');
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
@@ -357,6 +374,7 @@ class SimpleConregStorage {
     $select->addField('m', 'member_price');
     $select->addExpression('COUNT(m.mid)', 'num');
     $select->condition('m.is_paid', 1);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->groupby('m.member_price');
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
@@ -370,6 +388,7 @@ class SimpleConregStorage {
     $select->addField('m', 'country');
     $select->addExpression('COUNT(m.mid)', 'num');
     $select->condition('m.is_paid', 1);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->groupby('m.country');
     $select->orderby('num', $direction = 'DESC');
     // Make sure we only get items 0-49, for scalability reasons.
@@ -401,6 +420,7 @@ class SimpleConregStorage {
     $select->addField('m', 'extra_flag2');
     $select->condition('m.is_paid', 1);
     $select->condition('m.add_on', "No thanks!", "!=");
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->orderBy('m.add_on');
     // Make sure we only get items 0-49, for scalability reasons.
     //$select->range(0, 50);
@@ -423,6 +443,7 @@ class SimpleConregStorage {
     $select->addField('m', 'is_paid');
     $select->addField('m', 'is_approved');
     $select->condition('m.extra_flag1', 1);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -442,6 +463,7 @@ class SimpleConregStorage {
     $select->addField('m', 'is_paid');
     $select->addField('m', 'is_approved');
     $select->condition('m.extra_flag2', 1);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -459,6 +481,7 @@ class SimpleConregStorage {
     $select->addExpression('MIN(m.communication_method)', 'method');
     $select->isNotNull('m.email');
     $select->condition('m.email', '', '<>');
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->isNotNull('m.communication_method');
     $select->groupby('m.email');
     
