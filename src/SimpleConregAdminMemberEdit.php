@@ -36,21 +36,36 @@ class SimpleConregAdminMemberEdit extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $mid = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $mid = NULL) {
+    // Store Event ID in form state.
+    $form_state->set('eid', $eid);
+
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
     $memberPrices = array();
 
-    $config = $this->config('simple_conreg.settings');
-    list($typeOptions, $typeNames, $typePrices) = SimpleConregOptions::memberTypes($config);
-    $badgeTypeOptions = SimpleConregOptions::badgeTypes($config);
-    list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($config);
+    // Get event configuration from config.
+    $config = $this->config('simple_conreg.settings.'.$eid);
+
+    list($typeOptions, $typeNames, $typePrices) = SimpleConregOptions::memberTypes($eid, $config);
+    $badgeTypeOptions = SimpleConregOptions::badgeTypes($eid, $config);
+    list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($eid, $config);
     $symbol = $config->get('payments.symbol');
-    $countryOptions = SimpleConregOptions::memberCountries($config);
+    $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
     $defaultCountry = $config->get('reference.default_country');
 
     if (isset($mid)) {    
-      $member = SimpleConregStorage::load(['mid' => $mid]);
+      $member = SimpleConregStorage::load(['eid' => $eid, 'mid' => $mid]);
+      // Check member exists.
+      if (count($member) < 3) {
+        // Event not in database. Display error.
+        $form['simple_conreg_event'] = array(
+          '#markup' => $this->t('Member not found. Please confirm member valid.'),
+          '#prefix' => '<h3>',
+          '#suffix' => '</h3>',
+        );
+        return parent::buildForm($form, $form_state);
+      }
     } else {
       $member = [];
     }
@@ -169,7 +184,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
       $form['member']['communication_method'] = array(
         '#type' => 'select',
         '#title' => $config->get('fields.communication_method_label'),
-        '#options' => SimpleConregOptions::communicationMethod(),
+        '#options' => SimpleConregOptions::communicationMethod($eid, $config),
         '#default_value' => (isset($member['communication_method']) ? $member['communication_method'] : 'E'),
         '#required' => TRUE,
       );
@@ -312,10 +327,10 @@ class SimpleConregAdminMemberEdit extends FormBase {
    */
 
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    
+    $eid = $form_state->get('eid');
     $mid = $form_state->get('mid');
     
-    $config = $this->config('simple_conreg.settings');
+    $config = $this->config('simple_conreg.settings.'.$eid);
     $form_values = $form_state->getValues();
 
     // If no date, use NULL.
@@ -326,7 +341,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
     }
 
     // Get the maximum member number from the database.
-    $max_member = SimpleConregStorage::loadMaxMemberNo();
+    $max_member = SimpleConregStorage::loadMaxMemberNo($eid);
     // Check if approved has been checked.
     if ($form_values['member']["is_approved"]) {
       if (empty($form_values['member']["member_no"])) {
@@ -440,7 +455,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
       $page = $tempstore->get('page');
 
       // Redirect to member list.
-      $form_state->setRedirect('simple_conreg_admin_members', ['display'=>$display, 'page'=>$page]);
+      $form_state->setRedirect('simple_conreg_admin_members', ['eid' => $eid, 'display' => $display, 'page' => $page]);
     }
   }
 

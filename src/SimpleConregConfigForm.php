@@ -32,8 +32,44 @@ class SimpleConregConfigForm extends ConfigFormBase {
   /** 
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
-    $config = $this->config('simple_conreg.settings');
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1) {
+    // Store Event ID in form state.
+    $form_state->set('eid', $eid);
+
+    // Fetch event name from Event table.
+    if (count($event = SimpleConregEventStorage::load(['eid' => $eid])) < 3) {
+      // Event not in database. Display error.
+      $form['simple_conreg_event'] = array(
+        '#markup' => $this->t('Event not found. Please contact site admin.'),
+        '#prefix' => '<h3>',
+        '#suffix' => '</h3>',
+      );
+      return parent::buildForm($form, $form_state);
+    }
+
+    // Get event configuration from config.
+    $config = $this->config('simple_conreg.settings.'.$eid);
+    if (empty($config->get('payments.system'))) {
+      $config = $this->config('simple_conreg.settings');
+    }
+
+    $form['simple_conreg_event'] = array(
+      '#type' => 'fieldset',
+      '#title' => $this->t('Event Details'),
+      '#tree' => TRUE,
+    );
+
+    $form['simple_conreg_event']['event_name'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Event name'),
+      '#default_value' => $event['event_name'],
+    );
+
+    $form['simple_conreg_event']['open'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Event registration open'),
+      '#default_value' => $event['is_open'],
+    );
 
     $form['simple_conreg_payments'] = array(
       '#type' => 'fieldset',
@@ -258,7 +294,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
 
     $form['simple_conreg_mandatory'] = array(
       '#type' => 'fieldset',
-      '#title' => $this->t('Field Labels'),
+      '#title' => $this->t('Mandatory Field'),
       '#tree' => TRUE,
     );
 
@@ -505,8 +541,17 @@ class SimpleConregConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
+
     $vals = $form_state->getValues();
-    $config = $this->config('simple_conreg.settings');
+    $event = [
+      'eid' => $eid,
+      'event_name' => trim($vals['simple_conreg_event']['event_name']),
+      'is_open' => $vals['simple_conreg_event']['open'],
+    ];
+    SimpleConregEventStorage::update($event);
+
+    $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.settings.'.$eid);
     $config->set('payments.system', $vals['simple_conreg_payments']['system']);
     $config->set('payments.mode', $vals['simple_conreg_payments']['mode']);
     $config->set('payments.private_key', trim($vals['simple_conreg_payments']['private_key']));

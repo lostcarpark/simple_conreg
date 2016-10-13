@@ -37,17 +37,31 @@ class SimpleConregAdminMemberDelete extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $mid = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $mid = NULL) {
+    // Store Event ID in form state.
+    $form_state->set('eid', $eid);
+
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
     $memberPrices = array();
 
-    $config = $this->config('simple_conreg.settings');
+    $config = $this->config('simple_conreg.settings.'.$eid);
 
     if (isset($mid)) {    
-      $member = SimpleConregStorage::load(['mid' => $mid]);
+      $member = SimpleConregStorage::load(['eid' => $eid, 'mid' => $mid, 'is_deleted' => 0]);
     } else {
       $member = [];
+    }
+
+    // Check member exists.
+    if (count($member) < 3) {
+      // Event not in database. Display error.
+      $form['simple_conreg_event'] = array(
+        '#markup' => $this->t('Member not found. Please confirm member valid.'),
+        '#prefix' => '<h3>',
+        '#suffix' => '</h3>',
+      );
+      return parent::buildForm($form, $form_state);
     }
 
     $form = array(
@@ -140,7 +154,7 @@ class SimpleConregAdminMemberDelete extends FormBase {
    */
 
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    
+    $eid = $form_state->get('eid');
     $mid = $form_state->get('mid');
     
     // Save the submitted entry, setting is_deleted to 1.
@@ -154,6 +168,6 @@ class SimpleConregAdminMemberDelete extends FormBase {
     }
     
     // Redirect to member list.
-    $form_state->setRedirect('simple_conreg_admin_members', ['display'=>$display, 'page'=>$page]);
+    $form_state->setRedirect('simple_conreg_admin_members', ['eid' => $eid, 'display' => $display, 'page' => $page]);
   }
 }

@@ -1,8 +1,9 @@
 simple_conreg_register:
-  path: 'members/register'
+  path: 'members/register/{eid}'
   defaults:
     _title: 'Registration'
     _form: '\Drupal\simple_conreg\SimpleConregRegistrationForm'
+    eid: 1
   requirements:
     _permission: 'convention registration'
 
@@ -16,75 +17,84 @@ simple_conreg_payment:
     _permission: 'convention registration'
 
 simple_conreg_thanks:
-  path: 'members/thanks'
+  path: 'members/thanks/{eid}'
   defaults:
     _title: 'Thank you'
     _controller: '\Drupal\simple_conreg\SimpleConregController::registrationThanks'
+    eid: 1
   requirements:
     _permission: 'convention registration'
 
 simple_conreg_list:
-  path: 'members/list'
+  path: 'members/list/{eid}'
   defaults:
     _title: 'Member List'
     _controller: '\Drupal\simple_conreg\SimpleConregController::memberList'
+    eid: 1
   requirements:
     _permission: 'convention registration'
 
 simple_conreg_config:
-  path: 'admin/config/simple_conreg'
+  path: 'admin/config/simple_conreg/{eid}'
   defaults:
     _title: 'Simple Convention Registration'
     _form: '\Drupal\simple_conreg\SimpleConregConfigForm'
+    eid: 1
   requirements:
     _permission: 'configure convention registration'
 
 simple_conreg_admin_member_list:
-  path: 'members/memberlist'
+  path: 'members/memberlist/{eid}'
   defaults:
     _title: 'Member List'
     _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminMemberList'
+    eid: 1
   requirements:
     _permission: 'view membership details'
 
 simple_conreg_admin_member_summary:
-  path: 'members/membersummary'
+  path: 'members/membersummary/{eid}'
   defaults:
     _title: 'Membership Summery'
     _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminMemberSummary'
+    eid: 1
   requirements:
     _permission: 'view membership summary'
 
 simple_conreg_admin_zz9_list:
-  path: 'members/zz9list'
+  path: 'members/zz9list/{eid}'
   defaults:
     _title: 'ZZ9 Member List'
     _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminZZ9List'
+    eid: 1
   requirements:
     _permission: 'view zz9 membership details'
 
 simple_conreg_admin_programme_list:
-  path: 'members/programmelist'
+  path: 'members/programmelist/{eid}'
   defaults:
     _title: 'Programme Participant List'
     _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminProgrammeList'
+    eid: 1
   requirements:
     _permission: 'view programme membership details'
 
 simple_conreg_admin_volunteer_list:
-  path: 'members/volunteerlist'
+  path: 'members/volunteerlist/{eid}'
   defaults:
     _title: 'Volunteer List'
     _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminVolunteerList'
+    eid: 1
   requirements:
     _permission: 'view volunteer membership details'
 
 
 simple_conreg_admin_members:
-  path: 'admin/members/list/{display}/{page}'
+  path: 'admin/members/list/{eid}/{display}/{page}'
   defaults:
     _title: 'Member Administration'
     _form: '\Drupal\simple_conreg\SimpleConregAdminMembers'
+    eid: 1
     display: 'approval'
     page: 1
   requirements:
@@ -93,27 +103,30 @@ simple_conreg_admin_members:
     page: ^[0-9]+$
 
 simple_conreg_admin_members_add:
-  path: 'admin/members/add'
+  path: 'admin/members/add/{eid}'
   defaults:
     _title: 'Member Administration - Add Member'
     _form: '\Drupal\simple_conreg\SimpleConregAdminMemberEdit'
+    eid: 1
   requirements:
     _permission: 'manage convention members'
 
 simple_conreg_admin_members_edit:
-  path: 'admin/members/edit/{mid}'
+  path: 'admin/members/edit/{eid}/{mid}'
   defaults:
     _title: 'Member Administration - Edit Member'
     _form: '\Drupal\simple_conreg\SimpleConregAdminMemberEdit'
+    eid: 1
   requirements:
     _permission: 'manage convention members'
     mid: ^[0-9]+$
 
 simple_conreg_admin_members_delete:
-  path: 'admin/members/delete/{mid}'
+  path: 'admin/members/delete/{eid}/{mid}'
   defaults:
     _title: 'Member Administration - Delete Member'
     _form: '\Drupal\simple_conreg\SimpleConregAdminMemberDelete'
+    eid: 1
   requirements:
     _permission: 'manage convention members'
     mid: ^[0-9]+$

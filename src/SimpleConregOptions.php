@@ -17,9 +17,9 @@ class SimpleConregOptions {
    *
    * Parameters: Optional config.
    */
-  public static function memberTypes(&$config = NULL) {
+  public static function memberTypes($eid, &$config = NULL) {
     if (is_null($config)) {
-      $config = \Drupal::config('simple_conreg.settings');
+      $config = \Drupal::config('simple_conreg.settings.'.$eid);
     }
     $types = explode("\n", $config->get('member_types')); // One type per line.
     $typeOptions = [];
@@ -42,9 +42,9 @@ class SimpleConregOptions {
    *
    * Parameters: Optional config.
    */
-  public static function badgeTypes(&$config = NULL) {
+  public static function badgeTypes($eid, &$config = NULL) {
     if (is_null($config)) {
-      $config = \Drupal::config('simple_conreg.settings');
+      $config = \Drupal::config('simple_conreg.settings.'.$eid);
     }
     $types = explode("\n", $config->get('badge_types')); // One type per line.
     $badgeTypes = [];
@@ -60,9 +60,9 @@ class SimpleConregOptions {
    *
    * Parameters: Optional config.
    */
-  public static function memberAddons(&$config = NULL) {
+  public static function memberAddons($eid, &$config = NULL) {
     if (is_null($config)) {
-      $config = \Drupal::config('simple_conreg.settings');
+      $config = \Drupal::config('simple_conreg.settings.'.$eid);
     }
     $addOns = explode("\n", $config->get('add_ons.options')); // One type per line.
     $addOnOptions = array();
@@ -80,9 +80,9 @@ class SimpleConregOptions {
    *
    * Parameters: Optional config.
    */
-  public static function memberCountries(&$config = NULL) {
+  public static function memberCountries($eid, &$config = NULL) {
     if (is_null($config)) {
-      $config = \Drupal::config('simple_conreg.settings');
+      $config = \Drupal::config('simple_conreg.settings.'.$eid);
     }
     $countries = explode("\n", $config->get('reference.countries')); // One country per line.
     $countryOptions = array();
@@ -105,9 +105,9 @@ class SimpleConregOptions {
   /**
    * Return list of communications methods (currently hard coded, will be editable later).
    */
-  public static function communicationMethod($config = NULL) {
+  public static function communicationMethod($eid, $config = NULL) {
     if (is_null($config)) {
-      $config = \Drupal::config('simple_conreg.settings');
+      $config = \Drupal::config('simple_conreg.settings.'.$eid);
     }
     $methods = explode("\n", $config->get('communications_method.options')); // One communications method per line.
     $methodOptions = array();

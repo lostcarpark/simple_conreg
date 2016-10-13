@@ -18,8 +18,8 @@ class SimpleConregController extends ControllerBase {
   /**
    * Display simple thank you page.
    */
-  public function registrationThanks() {
-    $config = $this->config('simple_conreg.settings');
+  public function registrationThanks($eid = 1) {
+    $config = $this->config('simple_conreg.settings.'.$eid);
     $countryOptions = $this->getMemberCountries($config);
 
     $content = array();
@@ -34,10 +34,10 @@ class SimpleConregController extends ControllerBase {
   /**
    * Render a list of entries in the database.
    */
-  public function memberList() {
-    $config = $this->config('simple_conreg.settings');
+  public function memberList($eid = 1) {
+    $config = $this->config('simple_conreg.settings.'.$eid);
     $countryOptions = $this->getMemberCountries($config);
-    $types = SimpleConregOptions::badgeTypes();
+    $types = SimpleConregOptions::badgeTypes($eid, $config);
     $digits = $config->get('member_no_digits');
 
     switch($_GET['sort']) {
@@ -79,7 +79,7 @@ class SimpleConregController extends ControllerBase {
     ];
     $total = 0;
 
-    foreach ($entries = SimpleConregStorage::adminPublicListLoad() as $entry) {
+    foreach ($entries = SimpleConregStorage::adminPublicListLoad($eid) as $entry) {
       // Sanitize each entry.
       $badge_type = trim($entry['badge_type']);
       $member_no = sprintf("%0".$digits."d", $entry['member_no']);
@@ -132,7 +132,7 @@ class SimpleConregController extends ControllerBase {
       t('Number of members'),
     );
     $total = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberCountrySummaryLoad() as $entry) {
+    foreach ($entries = SimpleConregStorage::adminMemberCountrySummaryLoad($eid) as $entry) {
       // Sanitize each entry.
       $entry['country'] = trim($countryOptions[$entry['country']]);
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
@@ -155,7 +155,7 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by member type to render array.
    */
-  public function memberAdminMemberListSummary(&$content) {
+  public function memberAdminMemberListSummary($eid, &$content) {
 
     list($types, $typeNames, $prices, $default) = SimpleConregOptions::memberTypes();
     $rows = array();
@@ -164,7 +164,7 @@ class SimpleConregController extends ControllerBase {
       t('Number of members'),
     );
     $total = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad() as $entry) {
+    foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
       // Replace type code with description.
       if (isset($types[$entry['member_type']]))
         $entry['member_type'] = $typeNames[$entry['member_type']];
@@ -187,7 +187,7 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by payment method to render array.
    */
-  public function memberAdminMemberListBadgeSummary(&$content) {
+  public function memberAdminMemberListBadgeSummary($eid, &$content) {
 
     $types = SimpleConregOptions::badgeTypes();
     $rows = array();
@@ -196,7 +196,7 @@ class SimpleConregController extends ControllerBase {
       t('Number of members'),
     );
     $total = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberBadgeSummaryLoad() as $entry) {
+    foreach ($entries = SimpleConregStorage::adminMemberBadgeSummaryLoad($eid) as $entry) {
       // Replace type code with description.
       $badge_type = trim($entry['badge_type']);
       if (isset($types[$badge_type]))
@@ -220,7 +220,7 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by badge type to render array.
    */
-  public function memberAdminMemberListPaymentMethodSummary(&$content) {
+  public function memberAdminMemberListPaymentMethodSummary($eid, &$content) {
 
     $rows = array();
     $headers = array(
@@ -228,7 +228,7 @@ class SimpleConregController extends ControllerBase {
       t('Number of members'),
     );
     $total = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberPaymentMethodSummaryLoad() as $entry) {
+    foreach ($entries = SimpleConregStorage::adminMemberPaymentMethodSummaryLoad($eid) as $entry) {
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
       $total += $entry['num'];
@@ -248,7 +248,7 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by badge type to render array.
    */
-  public function memberAdminMemberListAmountPaidSummary(&$content) {
+  public function memberAdminMemberListAmountPaidSummary($eid, &$content) {
 
     $rows = array();
     $headers = array(
@@ -258,7 +258,7 @@ class SimpleConregController extends ControllerBase {
     );
     $total = 0;
     $totalAmount = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberAmountPaidSummaryLoad() as $entry) {
+    foreach ($entries = SimpleConregStorage::adminMemberAmountPaidSummaryLoad($eid) as $entry) {
       // Calculate total received at that rate.
       $entry['total_paid'] = $entry['member_price'] * $entry['num'];
       // Sanitize each entry.
@@ -281,7 +281,7 @@ class SimpleConregController extends ControllerBase {
   /**
    * Render a list of paid convention members in the database.
    */
-  public function memberAdminMemberList() {
+  public function memberAdminMemberList($eid) {
     $content = array();
 
     $pageOptions = [];
@@ -324,7 +324,7 @@ class SimpleConregController extends ControllerBase {
       '#markup' => $this->t('Here is a list of all paid convention members.'),
     );
 
-    $this->memberAdminMemberListSummary($content);
+    $this->memberAdminMemberListSummary($eid, $content);
 
     $rows = array();
     $headers = array(
@@ -348,11 +348,12 @@ class SimpleConregController extends ControllerBase {
       t('Communication Method'),
       t('Paid'),
       t('Price'),
+      t('Comments'),
       t('Approved'),
       t('Date joined'),
     );
 
-    foreach ($entries = SimpleConregStorage::adminPaidMemberListLoad($direction, $order) as $entry) {
+    foreach ($entries = SimpleConregStorage::adminPaidMemberListLoad($eid, $direction, $order) as $entry) {
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
     }
@@ -372,28 +373,28 @@ class SimpleConregController extends ControllerBase {
   /**
    * Render a list of paid convention members in the database.
    */
-  public function memberAdminMemberSummary() {
+  public function memberAdminMemberSummary($eid) {
     $content = array();
 
     $content['message_member'] = array(
       '#markup' => $this->t('Summary by member type.'),
     );
-    $this->memberAdminMemberListSummary($content);
+    $this->memberAdminMemberListSummary($eid, $content);
 
     $content['message_badge_tyoe'] = array(
       '#markup' => $this->t('Summary by badge type.'),
     );
-    $this->memberAdminMemberListBadgeSummary($content);
+    $this->memberAdminMemberListBadgeSummary($eid, $content);
     
     $content['message_payment_method'] = array(
       '#markup' => $this->t('Summary by payment method.'),
     );
-    $this->memberAdminMemberListPaymentMethodSummary($content);
+    $this->memberAdminMemberListPaymentMethodSummary($eid, $content);
 
     $content['message_amount_paid'] = array(
       '#markup' => $this->t('Summary by amount paid.'),
     );
-    $this->memberAdminMemberListAmountPaidSummary($content);
+    $this->memberAdminMemberListAmountPaidSummary($eid, $content);
 
     // Don't cache this page.
     $content['#cache']['max-age'] = 0;
@@ -401,7 +402,7 @@ class SimpleConregController extends ControllerBase {
     return $content;
   }
 
-  public function memberAdminZZ9List() {
+  public function memberAdminZZ9List($eid) {
     $content = array();
 
     $content['message'] = array(
@@ -429,7 +430,7 @@ class SimpleConregController extends ControllerBase {
       t('Allow Members'),
     );
 
-    foreach ($entries = SimpleConregStorage::adminZZ9MemberListLoad() as $entry) {
+    foreach ($entries = SimpleConregStorage::adminZZ9MemberListLoad($eid) as $entry) {
       if ($zz9_option != $entry['add_on']) {
         if (!empty($zz9_option)) {
           $this->memberAdminZZ9ListTable($content, $zz9_option, $headers, $rows, $table++);
@@ -452,7 +453,7 @@ class SimpleConregController extends ControllerBase {
   /**
    * Render a list of paid convention members in the database.
    */
-  public function memberAdminProgrammeList() {
+  public function memberAdminProgrammeList($eid) {
     $content = array();
 
     $content['message'] = array(
@@ -472,7 +473,7 @@ class SimpleConregController extends ControllerBase {
       t('Approved'),
     );
 
-    foreach ($entries = SimpleConregStorage::adminProgrammeMemberListLoad() as $entry) {
+    foreach ($entries = SimpleConregStorage::adminProgrammeMemberListLoad($eid) as $entry) {
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
     }
@@ -491,7 +492,7 @@ class SimpleConregController extends ControllerBase {
   /**
    * Render a list of paid convention members in the database.
    */
-  public function memberAdminVolunteerList() {
+  public function memberAdminVolunteerList($eid) {
     $content = array();
 
     $content['message'] = array(
@@ -511,7 +512,7 @@ class SimpleConregController extends ControllerBase {
       t('Approved'),
     );
 
-    foreach ($entries = SimpleConregStorage::adminVolunteerMemberListLoad() as $entry) {
+    foreach ($entries = SimpleConregStorage::adminVolunteerMemberListLoad($eid) as $entry) {
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
     }

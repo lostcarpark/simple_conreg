@@ -42,6 +42,32 @@ function simple_conreg_install() {
  * @ingroup simple_conreg
  */
 function simple_conreg_schema() {
+  // create table simple_conreg_events (eid int auto_increment primary key, event_name varchar(255) not null, is_open tinyint not null default '1');
+  $schema['simple_conreg_events'] = array(
+    'description' => 'Stores events registration system .',
+    'fields' => array(
+      'eid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique member ID.',
+      ),
+      'event_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Name of the event.',
+      ),
+      'is_open' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+        'size' => 'tiny',
+        'description' => 'Set to 1 if event is open for registration.',
+      ),
+    ),
+  );
+
   $schema['simple_conreg_members'] = array(
     'description' => 'Stores member details for convention registrations.',
     'fields' => array(
@@ -49,6 +75,12 @@ function simple_conreg_schema() {
         'type' => 'serial',
         'not null' => TRUE,
         'description' => 'Primary Key: Unique member ID.',
+      ),
+      // alter table simple_conreg_members add eid int NOT NULL default '1' after mid;
+      'eid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Foreign Key: Event ID.',
       ),
       'lead_mid' => array(
         'type' => 'int',
@@ -284,7 +316,7 @@ function simple_conreg_schema() {
         'default' => 0,
         'description' => 'Unix timestamp for the date and time registered.',
       ),
-      // alter table simple_conreg_members add is_deleted int NOT NULL default "0" after street;
+      // alter table simple_conreg_members add is_deleted int NOT NULL default "0" after join_date;
       'is_deleted' => array(
         'type' => 'int',
         'not null' => FALSE,

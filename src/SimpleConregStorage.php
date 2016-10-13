@@ -160,7 +160,7 @@ class SimpleConregStorage {
       return FALSE;
   }
 
-  public static function adminPublicListLoad() {
+  public static function adminPublicListLoad($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'badge_type');
@@ -170,6 +170,7 @@ class SimpleConregStorage {
     $select->addField('m', 'badge_name');
     $select->addField('m', 'display');
     $select->addField('m', 'country');
+    $select->condition('m.eid', $eid);
     $select->condition('m.is_approved', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->orderBy('m.member_no');
@@ -181,7 +182,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  private static function adminMemberListCondition($select, $condition, $search) {
+  private static function adminMemberListCondition($eid, $select, $condition, $search) {
+    $select->condition('m.eid', $eid);
     switch ($condition) {
       case 'approval':
         $select->condition('m.is_paid', 1);
@@ -216,7 +218,7 @@ class SimpleConregStorage {
     return $select;
   }
 
-  public static function adminMemberListLoad($condition, $search, $page=1, $pageSize=10, $order='m.mid', $direction='ASC') {
+  public static function adminMemberListLoad($eid, $condition, $search, $page=1, $pageSize=10, $order='m.mid', $direction='ASC') {
     // Escape search term to prevent dangerous characters.
     $esc_search = '%'.db_like($search).'%';
     
@@ -234,7 +236,7 @@ class SimpleConregStorage {
     $select->addField('m', 'is_approved');
     $select->addField('m', 'member_no');
     // Add selection criteria.
-    $select = SimpleConregStorage::adminMemberListCondition($select, $condition, $esc_search);
+    $select = SimpleConregStorage::adminMemberListCondition($eid, $select, $condition, $esc_search);
     // Sort by specified field and direction.
     $select->orderby($order, $direction = $direction);
     $select->orderby('m.mid', $direction = $direction);
@@ -247,19 +249,21 @@ class SimpleConregStorage {
     // Run query to get total count.
     $select = db_select('simple_conreg_members', 'm');
     $select->addField('m', 'mid');
-    $select = SimpleConregStorage::adminMemberListCondition($select, $condition, $esc_search);
+    $select->condition('m.eid', $eid);
+    $select = SimpleConregStorage::adminMemberListCondition($eid, $select, $condition, $esc_search);
     $count = $select->countQuery()->execute()->fetchField();
     $pages = (int)(($count - 1) / $pageSize) + 1;
 
     return [$pages, $entries];
   }
 
-  public static function loadAllMemberNos() {
+  public static function loadAllMemberNos($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'mid');
     $select->addField('m', 'member_no');
     $select->addField('m', 'is_approved');
+    $select->condition('m.eid', $eid);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
@@ -272,10 +276,11 @@ class SimpleConregStorage {
     return $members;
   }
 
-  public static function loadMaxMemberNo() {
+  public static function loadMaxMemberNo($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addExpression('MAX(m.member_no)');
+    $select->condition('m.eid', $eid);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->condition('m.is_approved', 1);
     // Make sure we only get items 0-49, for scalability reasons.
@@ -290,7 +295,7 @@ class SimpleConregStorage {
   }
 
 
-  public static function adminPaidMemberListLoad($direction = 'ASC', $order = 'm.member_no') {
+  public static function adminPaidMemberListLoad($eid, $direction = 'ASC', $order = 'm.member_no') {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'mid');
@@ -313,8 +318,10 @@ class SimpleConregStorage {
     $select->addField('m', 'communication_method');
     $select->addField('m', 'is_paid');
     $select->addField('m', 'member_price');
+    $select->addField('m', 'comment');
     $select->addField('m', 'is_approved');
     $select->addExpression('from_unixtime(join_date)', 'joined');
+    $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->orderby($order, $direction = $direction);
@@ -326,11 +333,12 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberSummaryLoad() {
+  public static function adminMemberSummaryLoad($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'member_type');
     $select->addExpression('COUNT(m.mid)', 'num');
+    $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->groupby('m.member_type');
@@ -340,11 +348,12 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberBadgeSummaryLoad() {
+  public static function adminMemberBadgeSummaryLoad($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'badge_type');
     $select->addExpression('COUNT(m.mid)', 'num');
+    $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->groupby('m.badge_type');
@@ -359,6 +368,7 @@ class SimpleConregStorage {
     // Select these specific fields for the output.
     $select->addField('m', 'payment_method');
     $select->addExpression('COUNT(m.mid)', 'num');
+    $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->groupby('m.payment_method');
@@ -368,11 +378,12 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberAmountPaidSummaryLoad() {
+  public static function adminMemberAmountPaidSummaryLoad($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'member_price');
     $select->addExpression('COUNT(m.mid)', 'num');
+    $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->groupby('m.member_price');
@@ -382,11 +393,12 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberCountrySummaryLoad() {
+  public static function adminMemberCountrySummaryLoad($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'country');
     $select->addExpression('COUNT(m.mid)', 'num');
+    $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->groupby('m.country');
@@ -399,7 +411,7 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminZZ9MemberListLoad($condition) {
+  public static function adminZZ9MemberListLoad($eid, $condition) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'mid');
@@ -418,6 +430,7 @@ class SimpleConregStorage {
     $select->addField('m', 'add_on_info');
     $select->addField('m', 'extra_flag1');
     $select->addField('m', 'extra_flag2');
+    $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
     $select->condition('m.add_on', "No thanks!", "!=");
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
@@ -430,7 +443,7 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminProgrammeMemberListLoad() {
+  public static function adminProgrammeMemberListLoad($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'mid');
@@ -442,6 +455,7 @@ class SimpleConregStorage {
     $select->addField('m', 'badge_name');
     $select->addField('m', 'is_paid');
     $select->addField('m', 'is_approved');
+    $select->condition('m.eid', $eid);
     $select->condition('m.extra_flag1', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
 
@@ -450,7 +464,7 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminVolunteerMemberListLoad() {
+  public static function adminVolunteerMemberListLoad($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'mid');
@@ -462,6 +476,7 @@ class SimpleConregStorage {
     $select->addField('m', 'badge_name');
     $select->addField('m', 'is_paid');
     $select->addField('m', 'is_approved');
+    $select->condition('m.eid', $eid);
     $select->condition('m.extra_flag2', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
 
@@ -473,7 +488,7 @@ class SimpleConregStorage {
   /*
    * Function to return a list of members and communications methods for integration with Simplenews module.
    */
-  public static function adminSimplenewsSubscribeListLoad() {
+  public static function adminSimplenewsSubscribeListLoad($eid) {
     // Run this query: select email, min(communication_method) from simple_conreg_members where email is not null and email<>'' and communication_method is not null group by email;
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.

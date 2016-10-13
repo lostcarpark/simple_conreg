@@ -54,7 +54,17 @@ class SimpleConregPaymentForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $mid = NULL, $key = NULL, $name = NULL) {
-    $config = $this->config('simple_conreg.settings');
+    if (is_numeric($mid) && is_numeric($key) && SimpleConregStorage::checkMemberKey($mid, $key)) {
+      $member = SimpleConregStorage::load(array("mid"=>$mid));
+    } else {
+      $form['message'] = array(
+        '#markup' => $this->t('Invalid payment credentials. Please return to <a href="@url">registration page</a> and complete membership details.', array("@url" => "/members/register"))
+      );
+      return $form;
+    }
+    
+    $eid = $member['eid'];
+    $config = $this->config('simple_conreg.settings.'.$eid);
 
     $form['#attached'] = array(
       'library' => array('simple_conreg/conreg_payment'),
@@ -66,15 +76,6 @@ class SimpleConregPaymentForm extends FormBase {
       '#suffix' => '</div>',
     );
 
-    if (is_numeric($mid) && is_numeric($key) && SimpleConregStorage::checkMemberKey($mid, $key)) {
-      $member = SimpleConregStorage::load(array("mid"=>$mid));
-    } else {
-      $form['message'] = array(
-        '#markup' => $this->t('Invalid payment credentials. Please return to <a href="@url">registration page</a> and complete membership details.', array("@url" => "/members/register"))
-      );
-      return $form;
-    }
-
     if ($member->is_paid) {
       $form['message'] = array(
         '#markup' => $this->t('Your payment has been completed. Thank you for joining.')
@@ -83,6 +84,7 @@ class SimpleConregPaymentForm extends FormBase {
     }
 
     $form_state->set('mid', $mid);
+    $form_state->set('eid', $eid);
     $amount = $member["payment_amount"];
     $form_state->set('payment_amount', $amount);
 
@@ -197,10 +199,12 @@ class SimpleConregPaymentForm extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    $config = $this->config('simple_conreg.settings');
     $form_values = $form_state->getValues();
     $mid = $form_state->get('mid');
+    $eid = $form_state->get('eid');
     $amount = $form_state->get('payment_amount');
+
+    $config = $this->config('simple_conreg.settings.'.$eid);
 
     try {
       // Load the lead member to get email address to addach to payment, and later send confirmation email.
@@ -291,8 +295,9 @@ class SimpleConregPaymentForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
     // Redirect to payment form.
-    $form_state->setRedirect('simple_conreg_thanks');
+    $form_state->setRedirect('simple_conreg_thanks', ['eid' => $eid]);
   }
 }    
 

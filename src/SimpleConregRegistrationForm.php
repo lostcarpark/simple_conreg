@@ -60,16 +60,51 @@ class SimpleConregRegistrationForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1) {
+    // Store Event ID in form state.
+    $form_state->set('eid', $eid);
+
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
     $memberPrices = array();
-    
-    $config = $this->config('simple_conreg.settings');
-    list($typeOptions, $typeNames, $typePrices) = SimpleConregOptions::memberTypes($config);
-    list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($config);
+
+    // Fetch event name from Event table.
+    if (count($event = SimpleConregEventStorage::load(['eid' => $eid])) < 3) {
+      // Event not in database. Display error.
+      $form['simple_conreg_event'] = array(
+        '#markup' => $this->t('Event not found. Please contact site admin.'),
+        '#prefix' => '<h3>',
+        '#suffix' => '</h3>',
+      );
+      return parent::buildForm($form, $form_state);
+    }
+
+    if ($event['is_open'] == 0) {
+      // Event not configured. Display error.
+      $form['simple_conreg_event'] = array(
+        '#markup' => $this->t('Sorry. This event is not currently open for registration.'),
+        '#prefix' => '<h3>',
+        '#suffix' => '</h3>',
+      );
+      return parent::buildForm($form, $form_state);
+    }
+
+    // Get event configuration from config.
+    $config = $this->config('simple_conreg.settings.'.$eid);
+    if (empty($config->get('payments.system'))) {
+      // Event not configured. Display error.
+      $form['simple_conreg_event'] = array(
+        '#markup' => $this->t('Event not found. Please contact site admin.'),
+        '#prefix' => '<h3>',
+        '#suffix' => '</h3>',
+      );
+      return parent::buildForm($form, $form_state);
+    }
+
+    list($typeOptions, $typeNames, $typePrices) = SimpleConregOptions::memberTypes($eid, $config);
+    list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($eid, $config);
     $symbol = $config->get('payments.symbol');
-    $countryOptions = SimpleConregOptions::memberCountries($config);
+    $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
     $defaultCountry = $config->get('reference.default_country');
     // Check if discounts enabled.
     $discountEnabled = $config->get('discount.enable');
@@ -256,7 +291,7 @@ class SimpleConregRegistrationForm extends FormBase {
         $form['members']['member'.$cnt]['communication_method'] = array(
           '#type' => 'select',
           '#title' => $config->get('fields.communication_method_label'),
-          '#options' => SimpleConregOptions::communicationMethod(),
+          '#options' => SimpleConregOptions::communicationMethod($eid, $config),
           '#default_value' => 'E',
           '#required' => TRUE,
         );
@@ -500,6 +535,8 @@ class SimpleConregRegistrationForm extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
+
     $form_values = $form_state->getValues();
     $memberQty = $form_values['global']['member_quantity'];
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
@@ -530,14 +567,16 @@ class SimpleConregRegistrationForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
+
     $form_values = $form_state->getValues();
     
-    $config = $this->config('simple_conreg.settings');
+    $config = $this->config('simple_conreg.settings.'.$eid);
     $symbol = $config->get('payments.symbol');
     $discountEnabled = $config->get('discount.enable');
     $discountFreeEvery = $config->get('discount.free_every');
-    list($typeOptions, $typeNames, $typePrices, $defaultBadgeTypes) = SimpleConregOptions::memberTypes($config);
-    list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($config);
+    list($typeOptions, $typeNames, $typePrices, $defaultBadgeTypes) = SimpleConregOptions::memberTypes($eid, $config);
+    list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($eid, $config);
     
     // Find out number of members.
     $memberQty = $form_values['global']['member_quantity'];
@@ -600,6 +639,7 @@ class SimpleConregRegistrationForm extends FormBase {
       }
       // Save the submitted entry.
       $entry = array(
+        'eid' => $eid,
         'lead_mid' => $lead_mid,
         'random_key' => $rand_key,
         'member_type' => $member_type,

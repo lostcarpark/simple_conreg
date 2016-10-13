@@ -33,11 +33,14 @@ class SimpleConregAdminMembers extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $display = NULL, $page = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $display = NULL, $page = NULL) {
+    // Store Event ID in form state.
+    $form_state->set('eid', $eid);
+
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
 
-    $config = $this->config('simple_conreg.settings');
+    $config = $this->config('simple_conreg.settings.'.$eid);
     list($typeOptions, $typeNames, $typePrices) = SimpleConregOptions::memberTypes($config);
     $badgeTypes = SimpleConregOptions::badgeTypes($config);
     $displayOptions = SimpleConregOptions::display();
@@ -105,7 +108,7 @@ class SimpleConregAdminMembers extends FormBase {
       '#suffix' => '</div>',
     );
 
-    $form['add_link'] = Link::createFromRoute($this->t('Add new member'), 'simple_conreg_admin_members_add', ['mid' => $mid])->toRenderable();
+    $form['add_link'] = Link::createFromRoute($this->t('Add new member'), 'simple_conreg_admin_members_add', ['eid' => $eid])->toRenderable();
     $form['add_link']['#attributes'] = ['class' => ['button', 'button-action', 'button--primary', 'button--small']];
 
     $form['display'] = array(
@@ -171,9 +174,9 @@ class SimpleConregAdminMembers extends FormBase {
     );      
 
     if ($display != 'custom')
-      list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($display, NULL, $page, $pageSize, $order, $direction);
+      list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($eid, $display, NULL, $page, $pageSize, $order, $direction);
     elseif (!empty(trim($search)))
-      list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($display, $search, $page, $pageSize, $order, $direction);
+      list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($eid, $display, $search, $page, $pageSize, $order, $direction);
     else {
       $pages = 0;
       $entries = [];
@@ -185,9 +188,9 @@ class SimpleConregAdminMembers extends FormBase {
       $page = $pages;
       // Refetch page data.
       if ($display != 'custom')
-        list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($display, NULL, $page, $pageSize, $order, $direction);
+        list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($eid, $display, NULL, $page, $pageSize, $order, $direction);
       elseif (!empty(trim($search)))
-        list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($display, $search, $page, $pageSize, $order, $direction);
+        list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($eid, $display, $search, $page, $pageSize, $order, $direction);
       // Page doesn't exist for current selection criteria, so go to last page of query.
       // $form_state->setRedirect('simple_conreg_admin_members', ['display' => $display, 'page' => $pages], ['query' => $pageOptions]);
       //return;
@@ -249,11 +252,11 @@ class SimpleConregAdminMembers extends FormBase {
         '#links' => array(
           'edit_buttion' => array(
             'title' => $this->t('Edit'),
-            'url' => Url::fromRoute('simple_conreg_admin_members_edit', ['mid' => $mid]),
+            'url' => Url::fromRoute('simple_conreg_admin_members_edit', ['eid' => $eid, 'mid' => $mid]),
           ),
           'delete_buttion' => array(
             'title' => $this->t('Delete'),
-            'url' => Url::fromRoute('simple_conreg_admin_members_delete', ['mid' => $mid]),
+            'url' => Url::fromRoute('simple_conreg_admin_members_delete', ['eid' => $eid, 'mid' => $mid]),
           ),
         ),
       );
@@ -319,16 +322,17 @@ class SimpleConregAdminMembers extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-  	  $saved_members = SimpleConregStorage::loadAllMemberNos();
+  	  $saved_members = SimpleConregStorage::loadAllMemberNos($eid);
   }
 
   /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
     $form_values = $form_state->getValues();
-    $saved_members = SimpleConregStorage::loadAllMemberNos();
-    $max_member = SimpleConregStorage::loadMaxMemberNo();
+    $saved_members = SimpleConregStorage::loadAllMemberNos($eid);
+    $max_member = SimpleConregStorage::loadMaxMemberNo($eid);
     foreach ($form_values["table"] as $mid => $member) {
       if (($member["is_approved"] != $saved_members[$mid]["is_approved"]) ||
           ($member["is_approved"] && $member["member_no"] != $saved_members[$mid]["member_no"])) {
