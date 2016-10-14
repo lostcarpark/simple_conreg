@@ -11,6 +11,7 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\devel;
+use Drupal\simple_conreg\SimpleConregEventStorage;
 use Drupal\simple_conreg\SimpleConregStorage;
 use Drupal\simple_conreg\SimpleConregOptions;
 
@@ -27,7 +28,11 @@ function simple_conreg_help($route_name, RouteMatchInterface $route_match) {
 }
 
 function simple_conreg_mail($key, &$message, $params) {
-  $config = \Drupal::config('simple_conreg.settings');
+  $eid = $params['eid'];
+
+  $event = SimpleConregEventStorage::load(['eid' => $eid]);
+
+  $config = \Drupal::config('simple_conreg.settings.'.$eid);
   $symbol = $config->get('payments.symbol');
 
   // Get language message to be sent in.
@@ -93,11 +98,11 @@ function simple_conreg_mail($key, &$message, $params) {
       );
 
       // Set message subject, depending on key.
-      $site_name = \Drupal::config('system.site')->get('name');
+      $event_name = $event['event_name'];
       if ($key == 'organiser_copy_message') {
-        $message['subject'] = t('New member @member_name has registered for @site-name', array('@member_name' => trim($params['first'] . ' ' . $params['last']),'@site-name' => $site_name), $options);
+        $message['subject'] = t('New member @member_name has registered for @event-name', array('@member_name' => trim($params['first'] . ' ' . $params['last']),'@event-name' => $event_name), $options);
       } else {
-        $message['subject'] = t('Thank you for registering for @site-name', array('@site-name' => $site_name), $options);
+        $message['subject'] = t('Thank you for registering for @event-name', array('@event-name' => $event_name), $options);
       }
 
       // Replacement strings.
@@ -134,18 +139,17 @@ function simple_conreg_mail($key, &$message, $params) {
     case 'payment_message':
     case 'organiser_payment_message':
       // Set message subject, depending on key.
-      $site_name = \Drupal::config('system.site')->get('name');
+      $event_name = $event['event_name'];
       if ($key == 'organiser_payment_message') {
-        $message['subject'] = t('Payment received from @member_name for @site-name', array('@member_name' => $params['first_name'] . ' ' . $params['last_name'],'@site-name' => $site_name), $options);
+        $message['subject'] = t('Payment received from @member_name for @event-name', array('@member_name' => $params['first_name'] . ' ' . $params['last_name'],'@event-name' => $event_name), $options);
       } else {
-        $message['subject'] = t('Receipt for your payment for @site-name', array('@site-name' => $site_name), $options);
+        $message['subject'] = t('Receipt for your payment for @event-name', array('@event-name' => $event_name), $options);
       }
 
       $find = array("[first_name]", "[last_name]", "[email]", "[payment_amount]", "[payment_id]");
       $replace = array($params['first_name'], $params['last_name'], $params['email'], $symbol . $params['payment_amount'], $params['payment_id']);
       $message['body'][] = str_replace($find, $replace, $config->get('confirmation.pay_template'));
       break;
-
   }
   if (!empty($params['from'])) {
     $message['from'] = $params['from'];
@@ -181,7 +185,7 @@ function simple_conreg_form_alter(&$form, FormStateInterface $form_state, $form_
       $form['simple_conreg']['communications_methods'] = [
         '#type' => 'checkboxes',
         '#title' => t('Communications methods to subscribe to newsletter'),
-        '#options' => SimpleConregOptions::communicationMethod(),
+        '#options' => SimpleConregOptions::communicationMethod($eid),
         '#default_value' => $communications_methods,
       ];
 

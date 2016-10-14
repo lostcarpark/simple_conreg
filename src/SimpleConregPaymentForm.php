@@ -245,6 +245,7 @@ class SimpleConregPaymentForm extends FormBase {
 
         // Set up parameters for receipt email.
         $params = (array)$member;
+        $params['eid'] = $eid;
         $module = "simple_conreg";
         $key = "payment_message";
         $to = $member["email"];
