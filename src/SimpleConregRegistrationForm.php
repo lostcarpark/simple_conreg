@@ -593,6 +593,7 @@ class SimpleConregRegistrationForm extends FormBase {
     
     // Set up parameters for confirmation email.
     $confirm_params = array();
+    $confirm_params["eid"] = $eid;
     $confirm_params["quantity"] = $memberQty;
     $confirm_params["email"] = $form_values['members']['member1']['email'];
     $confirm_params["first"] = $form_values['members']['member1']['first_name'];
