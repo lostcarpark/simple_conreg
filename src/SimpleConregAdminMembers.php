@@ -41,8 +41,8 @@ class SimpleConregAdminMembers extends FormBase {
     $form_values = $form_state->getValues();
 
     $config = $this->config('simple_conreg.settings.'.$eid);
-    list($typeOptions, $typeNames, $typePrices) = SimpleConregOptions::memberTypes($config);
-    $badgeTypes = SimpleConregOptions::badgeTypes($config);
+    list($typeOptions, $typeNames, $typePrices) = SimpleConregOptions::memberTypes($eid, $config);
+    $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
     $displayOptions = SimpleConregOptions::display();
     $pageSize = $config->get('display.page_size');
 
