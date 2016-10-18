@@ -108,4 +108,20 @@ class SimpleConregEventStorage {
     return $select->execute()->fetchAssoc();
   }
 
+  /**
+   * Read all event(s) from the database and return associative array for option list.
+   *
+   */
+  public static function eventOptions() {
+    $select = db_select('simple_conreg_events', 'e');
+    // Select these specific fields for the output.
+    $select->addField('e', 'eid');
+    $select->addField('e', 'event_name');
+    $select->orderBy('e.event_name');
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
 }

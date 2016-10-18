@@ -250,13 +250,17 @@ class SimpleConregAdminMembers extends FormBase {
       $row['link'] = array(
         '#type' => 'dropbutton',
         '#links' => array(
-          'edit_buttion' => array(
+          'edit_buttin' => array(
             'title' => $this->t('Edit'),
             'url' => Url::fromRoute('simple_conreg_admin_members_edit', ['eid' => $eid, 'mid' => $mid]),
           ),
-          'delete_buttion' => array(
+          'delete_buttin' => array(
             'title' => $this->t('Delete'),
             'url' => Url::fromRoute('simple_conreg_admin_members_delete', ['eid' => $eid, 'mid' => $mid]),
+          ),
+          'transfer_buttin' => array(
+            'title' => $this->t('Transfer'),
+            'url' => Url::fromRoute('simple_conreg_admin_members_transfer', ['eid' => $eid, 'mid' => $mid]),
           ),
         ),
       );

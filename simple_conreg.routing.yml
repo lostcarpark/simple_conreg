@@ -121,6 +121,16 @@ simple_conreg_admin_members_edit:
     _permission: 'manage convention members'
     mid: ^[0-9]+$
 
+simple_conreg_admin_members_transfer:
+  path: 'admin/members/transfer/{eid}/{mid}'
+  defaults:
+    _title: 'Member Administration - Transfer Member'
+    _form: '\Drupal\simple_conreg\SimpleConregAdminMemberTransfer'
+    eid: 1
+  requirements:
+    _permission: 'manage convention members'
+    mid: ^[0-9]+$
+
 simple_conreg_admin_members_delete:
   path: 'admin/members/delete/{eid}/{mid}'
   defaults:
