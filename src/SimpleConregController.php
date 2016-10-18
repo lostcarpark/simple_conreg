@@ -156,8 +156,7 @@ class SimpleConregController extends ControllerBase {
    * Add a summary by member type to render array.
    */
   public function memberAdminMemberListSummary($eid, &$content) {
-
-    list($types, $typeNames, $prices, $default) = SimpleConregOptions::memberTypes();
+    list($types, $typeNames, $prices, $default) = SimpleConregOptions::memberTypes($eid);
     $rows = array();
     $headers = array(
       t('Member Type'), 
@@ -188,8 +187,7 @@ class SimpleConregController extends ControllerBase {
    * Add a summary by payment method to render array.
    */
   public function memberAdminMemberListBadgeSummary($eid, &$content) {
-
-    $types = SimpleConregOptions::badgeTypes();
+    $types = SimpleConregOptions::badgeTypes($eid);
     $rows = array();
     $headers = array(
       t('Badge Type'), 
@@ -221,7 +219,6 @@ class SimpleConregController extends ControllerBase {
    * Add a summary by badge type to render array.
    */
   public function memberAdminMemberListPaymentMethodSummary($eid, &$content) {
-
     $rows = array();
     $headers = array(
       t('Payment Method'),
@@ -249,7 +246,6 @@ class SimpleConregController extends ControllerBase {
    * Add a summary by badge type to render array.
    */
   public function memberAdminMemberListAmountPaidSummary($eid, &$content) {
-
     $rows = array();
     $headers = array(
       t('Amount Paid'), 

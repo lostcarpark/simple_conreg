@@ -55,7 +55,7 @@ simple_conreg_admin_member_list:
 simple_conreg_admin_member_summary:
   path: 'members/membersummary/{eid}'
   defaults:
-    _title: 'Membership Summery'
+    _title: 'Membership Summary'
     _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminMemberSummary'
     eid: 1
   requirements:
