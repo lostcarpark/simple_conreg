@@ -363,7 +363,7 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberPaymentMethodSummaryLoad() {
+  public static function adminMemberPaymentMethodSummaryLoad($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'payment_method');

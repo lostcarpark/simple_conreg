@@ -416,6 +416,8 @@ class SimpleConregAdminMemberEdit extends FormBase {
       $entry['mid'] = $mid;
       $return = SimpleConregStorage::update($entry);
     } else {
+      // Specify the event.
+      $entry['eid'] = $eid;
       // Insert to database table.
       $return = SimpleConregStorage::insert($entry);
     }
