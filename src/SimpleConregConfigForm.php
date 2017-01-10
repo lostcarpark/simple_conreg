@@ -486,6 +486,14 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#tree' => TRUE,
     );
 
+    // Template selection drop-down.
+    $form['simple_conreg_confirmation']['format_html'] = array(
+      '#type' => 'select',
+      '#title' => $this->t('Format for emails'),
+      '#options' => [0 => 'Plain text', 1 => 'HTML (still in development - do not use)'],
+      '#default_value' => $config->get('confirmation.format_html'),
+    );
+
     $form['simple_conreg_confirmation']['copy_us'] = array(
       '#type' => 'checkbox',
       '#title' => $this->t('Send a copy of the confirmation email to the below address.'),
@@ -511,7 +519,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#title' => $this->t('Copy email to'),
       '#description' => $this->t('Email address that an extra copy of the confirmation email gets sent to (leave blank if not required).'),
       '#default_value' => $config->get('confirmation.copy_email_to'),
-    );  
+    );
 
     $form['simple_conreg_confirmation']['reg_header'] = array(
       '#type' => 'textarea',
@@ -597,6 +605,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('thanks.thank_you_message', $vals['simple_conreg_thanks']['thank_you_message']);
     $config->set('discount.enable', $vals['simple_conreg_discount']['enable']);
     $config->set('discount.free_every', $vals['simple_conreg_discount']['free_every']);
+    $config->set('confirmation.format_html', $vals['simple_conreg_confirmation']['format_html']);
     $config->set('confirmation.copy_us', $vals['simple_conreg_confirmation']['copy_us']);
     $config->set('confirmation.from_name', $vals['simple_conreg_confirmation']['from_name']);
     $config->set('confirmation.from_email', $vals['simple_conreg_confirmation']['from_email']);

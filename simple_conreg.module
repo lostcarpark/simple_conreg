@@ -14,6 +14,7 @@ use Drupal\devel;
 use Drupal\simple_conreg\SimpleConregEventStorage;
 use Drupal\simple_conreg\SimpleConregStorage;
 use Drupal\simple_conreg\SimpleConregOptions;
+use Drupal\simple_conreg\SimpleConregEmailer;
 
 function simple_conreg_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
@@ -150,6 +151,13 @@ function simple_conreg_mail($key, &$message, $params) {
       $replace = array($params['first_name'], $params['last_name'], $params['email'], $symbol . $params['payment_amount'], $params['payment_id']);
       $message['body'][] = str_replace($find, $replace, $config->get('confirmation.pay_template'));
       break;
+    
+    // Use template handler.
+    case 'template':
+      dpm('Sending template email!');
+      SimpleConregEmailer::createEmail($message, $params);
+      break;
+
   }
   if (!empty($params['from'])) {
     $message['from'] = $params['from'];

@@ -135,4 +135,14 @@ class SimpleConregOptions {
            ];
   }
 
+  /**
+   * Return yes and no.
+   */
+  public static function yesNo() {
+    return [
+      0 => t('No'),
+      1 => t('Yes'),
+    ];
+  }
+
 }

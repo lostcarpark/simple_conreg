@@ -30,7 +30,7 @@ class SimpleConregAdminMemberTransfer extends FormBase {
    * {@inheritdoc}
    */
   public function getFormID() {
-    return 'simple_conreg_admin_member_delete';
+    return 'simple_conreg_admin_member_transfer';
   }
 
 

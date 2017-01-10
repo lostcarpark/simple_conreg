@@ -137,8 +137,31 @@ class SimpleConregStorage {
     if (!array_key_exists("mid", $entry)) {
       $select->condition("is_deleted", FALSE);
     }
-    // Return the result in object format.
+    // Return the result in associative array format.
     return $select->execute()->fetchAssoc();
+  }
+
+  /**
+   * Read from the database and return multiple rows using a filter array.
+   *
+   */
+  public static function loadAll($entry = array()) {
+    // Read all fields from the simple_conreg table.
+    $select = db_select('simple_conreg_members', 'members');
+    $select->fields('members');
+
+    // Add each field and value as a condition to this query.
+    foreach ($entry as $field => $value) {
+      $select->condition($field, $value);
+    }
+    // Unless mid specified, only fetch members who don't have deleted flag spefied.
+    if (!array_key_exists("mid", $entry)) {
+      $select->condition("is_deleted", FALSE);
+    }
+    // Return the result in associative array format.
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
   }
 
 
