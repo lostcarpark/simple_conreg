@@ -264,7 +264,7 @@ class SimpleConregAdminMemberEmail extends FormBase {
     );
 
     $form['email']['message']['body'] = array(
-      '#type' => 'textarea',
+      '#type' => 'text_format',
       '#title' => $this->t('Message body'),
       '#description' => $this->t('Text for the email body. you may use the following tokens: @tokens.', ['@tokens' => SimpleConregTokens::tokenHelp()]),
       '#default_value' => $params['body'],
