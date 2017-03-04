@@ -43,7 +43,7 @@ function simple_conreg_install() {
  */
 function simple_conreg_schema() {
   // create table simple_conreg_events (eid int auto_increment primary key, event_name varchar(255) not null, is_open tinyint not null default '1');
-  $schema['simple_conreg_events'] = array(
+/*  $schema['simple_conreg_events'] = array(
     'description' => 'Stores events registration system .',
     'fields' => array(
       'eid' => array(
@@ -68,6 +68,7 @@ function simple_conreg_schema() {
     ),
   );
 
+*/
   $schema['simple_conreg_members'] = array(
     'description' => 'Stores member details for convention registrations.',
     'fields' => array(

@@ -73,7 +73,7 @@ extras:
   flag2: 'I agree to allow you to give my address/email address to other ZZ9 members for use in organising local meetings.'
 
 thanks:
-  thank_you_message: 'Thank you for joining. Your payment reference is displayed above. You will also receive an email confirmation. If you don't see it, please check your Spam folder.'
+  thank_you_message: "Thank you for joining. Your payment reference is displayed above. You will also receive an email confirmation. If you don't see it, please check your Spam folder."
 
 reference:
   default_country: GB

@@ -414,7 +414,6 @@ class SimpleConregStorage {
   public static function adminZZ9MemberListLoad($eid, $condition) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
-    $select->addField('m', 'mid');
     $select->addField('m', 'first_name');
     $select->addField('m', 'last_name');
     $select->addField('m', 'email');
@@ -446,7 +445,6 @@ class SimpleConregStorage {
   public static function adminProgrammeMemberListLoad($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
-    $select->addField('m', 'mid');
     $select->addField('m', 'member_type');
     $select->addField('m', 'member_no');
     $select->addField('m', 'first_name');
@@ -467,7 +465,6 @@ class SimpleConregStorage {
   public static function adminVolunteerMemberListLoad($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
-    $select->addField('m', 'mid');
     $select->addField('m', 'member_type');
     $select->addField('m', 'member_no');
     $select->addField('m', 'first_name');

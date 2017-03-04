@@ -409,7 +409,6 @@ class SimpleConregController extends ControllerBase {
     $zz9_option = "";
     $rows = array();
     $headers = array(
-      t('MID'), 
       t('First Name'),
       t('Last Name'),
       t('Email'),
@@ -458,7 +457,6 @@ class SimpleConregController extends ControllerBase {
 
     $rows = array();
     $headers = array(
-      t('MID'), 
       t('Type'), 
       t('Member No'),
       t('First Name'),
@@ -497,7 +495,6 @@ class SimpleConregController extends ControllerBase {
 
     $rows = array();
     $headers = array(
-      t('MID'), 
       t('Type'), 
       t('Member No'),
       t('First Name'),

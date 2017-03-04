@@ -24,8 +24,8 @@
   title: View programme participant membership details
   description: Allow users to view lists of members who ticked "programme participant" (including private data)
   
-'view membership details':
-  title: View membership details
+'view volunteer membership details':
+  title: View volunteer membership details
   description: Allow users to view lists of members who ticked "volunteer" (including private data)
   
 'manage convention members':
