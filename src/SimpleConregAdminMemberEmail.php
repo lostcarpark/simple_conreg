@@ -82,19 +82,18 @@ class SimpleConregAdminMemberEmail extends FormBase {
 
     $previous_template = $form_state->get('default_template');
     $form_state->set('default_template', $default_template);
-dpm("Pref: $previous_template, Current $default_template");
 
     // If form submitted, use submitted values, otherwise use defaults.
     if (empty($params['from'] = $form_values['email']['message']['from_email']))
       $params['from'] = $from_default;
 
-    if ($previous_template != $default_template || empty($params['subject'] = $form_values['email']['message']['subject']))
+    if ($previous_template != $default_template || empty($params['subject'] = $form_values['email']['message']['subject'.$default_template]))
       $params['subject'] = $templates[$default_template]['subject'];
 
-    if ($previous_template != $default_template || empty($params['body'] = $form_values['email']['message']['body']['value']))
+    if ($previous_template != $default_template || empty($params['body'] = $form_values['email']['message']['body'.$default_template]['value']))
       $params['body'] = $templates[$default_template]['body'];
 
-    if ($previous_template != $default_template || empty($params['format'] = $form_values['email']['message']['body']['format']))
+    if ($previous_template != $default_template || empty($params['format'] = $form_values['email']['message']['body'.$default_template]['format']))
       $params['format'] = $templates[$default_template]['format'];
 
     // If tokens stored in form state, store in params to save looking up again.
@@ -116,19 +115,6 @@ dpm("Pref: $previous_template, Current $default_template");
       );
       return $form;
     }
-
-
-/*    $variables = [];
-    //$user = \Drupal::currentUser();
-//dpm($user);
-    $data = [];
-    //$data['user'] = $user;
-    $language_code = \Drupal::languageManager()->getDefaultLanguage()->getId();
-    $options['langcode'] = $language_code;
-//dpm($options);
-    user_mail_tokens($variables, $data, $options);
-//dpm($variables, 'Variables');
-*/
 
     $form = array(
       '#tree' => TRUE,
@@ -260,7 +246,7 @@ dpm("Pref: $previous_template, Current $default_template");
     if (empty($template = $form_values['template']['template_select'])) {
       $template = 1;
     }
-    $form['email']['message']['subject'] = array(
+    $form['email']['message']['subject'.$template] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Message subject'),
       '#default_value' => $params['subject'],
@@ -271,7 +257,7 @@ dpm("Pref: $previous_template, Current $default_template");
       ),
     );
 
-    $form['email']['message']['body'] = array(
+    $form['email']['message']['body'.$template] = array(
       //'#type' => 'textarea',
       '#type' => 'text_format',
       '#title' => $this->t('Message body'),
@@ -279,9 +265,12 @@ dpm("Pref: $previous_template, Current $default_template");
       '#default_value' => $params['body'],
       //'#value' => $params['body'],
       '#format' => $params['format'],
+      '#ajax' => array(
+        'wrapper' => 'preview',
+        'callback' => array($this, 'updateEmailPreview'),
+        'event' => 'change',
+      ),
     );
-    if ($previous_template != $default_template)
-      $form['email']['message']['body']['#value'] = $params['body'];  
 
     // Fields for writing email message.
     $form['email']['preview'] = array(
@@ -332,26 +321,21 @@ dpm("Pref: $previous_template, Current $default_template");
 
   // Callback function for Template drop down - load message fields with template.
   public function updateEmailTemplate(array $form, FormStateInterface $form_state) {
-    $form_values = $form_state->getValues();
+    /*$form_values = $form_state->getValues();
     $templates = $form_state->get('templates');
 
     if (!empty($template = $form_values['template']['template_select'])) {
-dpm($template);
       $params = $form_state->get('params');
-      $params['subject'] = $templates[$template]['subject'];
-      $params['body'] = $templates[$template]['body'];
+      $params['subject'] = $templates[$template]['subject'.$template];
+      $params['body'] = $templates[$template]['body'.$template];
       $message = [];
       SimpleConregEmailer::createEmail($message, $params);
       $params = $message['params'];
       $form_state->set('params', $params);
 
-      $form['email']['message']['subject']['#value'] = $params['subject'];
-      $form['email']['message']['body']['#type'] = "textarea";
-      $form['email']['message']['body']['#value'] = $form['email']['message']['body']['#default_value'];
-      $form['email']['message']['body']['#format'] = $params['format'];
       $form['email']['preview']['subject']['#markup'] = $this->t('Subject: @subject', ['@subject' => $message['subject']]);
       $form['email']['preview']['body']['#markup'] = $message['preview'];
-    }
+    }*/
     return $form['email'];
   }
 
@@ -365,7 +349,6 @@ dpm($template);
    */
 
   public function submitCancel(array &$form, FormStateInterface $form_state) {
-    dpm('Cancelled!');
     // Redirect to member list.
     $form_state->setRedirect('simple_conreg_admin_members', ['eid' => $eid, 'display' => $display, 'page' => $page]);
   }
@@ -378,14 +361,13 @@ dpm($template);
     $eid = $form_state->get('eid');
     $mid = $form_state->get('mid');
 
-    dpm('Submitted!');
-
     $form_values = $form_state->getValues();
+    $template = $form_values['template']['template_select'];
 
     $params = $form_state->get('params');
-    $params['subject'] = $form_values['email']['message']['subject'];
-    $params['body'] = $form_values['email']['message']['body']['value'];
-    $params['format'] = $form_values['email']['message']['body']['format'];
+    $params['subject'] = $form_values['email']['message']['subject'.$template];
+    $params['body'] = $form_values['email']['message']['body'.$template]['value'];
+    $params['format'] = $form_values['email']['message']['body'.$template]['format'];
     $module = "simple_conreg";
     $key = "template";
     $to = $params["to"];
@@ -393,8 +375,6 @@ dpm($template);
     $send_now = TRUE;
     // Send confirmation email to member.
     $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $language_code, $params);
-    //unset($result['params']);
-    //dpm($result);
     
     // Redirect to member list.
     $form_state->setRedirect('simple_conreg_admin_members', ['eid' => $eid, 'display' => $display, 'page' => $page]);

@@ -154,7 +154,6 @@ function simple_conreg_mail($key, &$message, $params) {
     
     // Use template handler.
     case 'template':
-      dpm('Sending template email!');
       SimpleConregEmailer::createEmail($message, $params);
       break;
 
@@ -166,7 +165,6 @@ function simple_conreg_mail($key, &$message, $params) {
 }
 
 function simple_conreg_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-  //dpm($form_id);
 
   switch ($form_id) {
     case "simplenews_newsletter_edit_form":
@@ -206,7 +204,6 @@ function simple_conreg_form_alter(&$form, FormStateInterface $form_state, $form_
 function simple_conreg_simplenews_form_submit ($form, FormStateInterface $form_state) {
   $form_values = $form_state->getValues();
   
-  //dpm($form_values);
   $newsletter_id = $form_values['id'];
   $active = $form_values['simple_conreg']['active'];
   $communications_methods = $form_values['simple_conreg']['communications_methods'];
@@ -223,7 +220,6 @@ function simple_conreg_simplenews_form_submit ($form, FormStateInterface $form_s
     if (\Drupal::moduleHandler()->moduleExists('simplenews')) {
       // Get unique convention member email addresses.
       $members = SimpleConregStorage::adminSimplenewsSubscribeListLoad();
-      //dpm($members, 'Members');
     
       // Get Drupal SimpleNews subscription manager.
       $subscription_manager = \Drupal::service('simplenews.subscription_manager');
@@ -235,11 +231,9 @@ function simple_conreg_simplenews_form_submit ($form, FormStateInterface $form_s
             $communications_methods[$member['method']]) {
           // Subscribe member if criteria met.
           $subscription_manager->subscribe($member['email'], $newsletter_id, FALSE, 'website');
-          //dpm($member['email'], 'Subscribed');
         } else {
           // Unsubscribe member if criteria don't match.
           $subscription_manager->unsubscribe($member['email'], $newsletter_id, FALSE, 'website');
-          //dpm($member['email'], 'Unsubscribed');
         }
       }
     }
