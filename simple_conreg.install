@@ -333,5 +333,68 @@ function simple_conreg_schema() {
     ),
   );
 
+  // create table simple_conreg_option_groups (eid int auto_increment primary key, event_name varchar(255) not null, is_open tinyint not null default '1');
+  $schema['simple_conreg_option_groups'] = array(
+    'description' => 'Stores groups of field options.',
+    'fields' => array(
+      'grpid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique group ID.',
+      ),
+      'eid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Foreign Key: Event ID.',
+      ),
+      'fieldset' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => '.',
+      ),
+      'field_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Name of the linked form field.',
+      ),
+      'group_title' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Title to be displayed for the field group.',
+      ),
+      'is_open' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+        'size' => 'tiny',
+        'description' => 'Set to 1 if event is open for registration.',
+      ),
+    ),
+    'primary key' => array('mid'),
+    'indexes' => array(
+      'name' => array('last_name', 'first_name'),
+      'lead_mid' => array('lead_mid'),
+    ),
+  );
+
+  // create table simple_conreg_option_options (eid int auto_increment primary key, event_name varchar(255) not null, is_open tinyint not null default '1');
+  $schema['simple_conreg_option_options'] = array(
+    'description' => 'Stores groups of field options.',
+    'fields' => array(
+      'optid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique option ID.',
+      ),
+      'grpid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Foreign Key: Event ID.',
+      ),
+
   return $schema;
 }
