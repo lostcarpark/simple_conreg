@@ -173,7 +173,7 @@ class SimpleConregTokens {
   }
 
   public static function previewTokens($message, $tokens, $use_plain = FALSE) {
-    return str_replace("\n", "<br />", SimpleConregTokens::applyTokens($message, $tokens, $use_false));
+    return SimpleConregTokens::applyTokens($message, $tokens, $use_false);
   }
 
 }

@@ -67,10 +67,11 @@ class SimpleConregConfigEmailTemplates extends ConfigFormBase {
       );
 
       $form['templates']['template'.$template]['body'] = array(
-        '#type' => 'textarea',
+        '#type' => 'text_format',
         '#title' => $this->t('Body'),
-      '#description' => $this->t('Text for the email body. you may use the following tokens: @tokens.', ['@tokens' => SimpleConregTokens::tokenHelp()]),
+        '#description' => $this->t('Text for the email body. you may use the following tokens: @tokens.', ['@tokens' => SimpleConregTokens::tokenHelp()]),
         '#default_value' => $config->get('template'.$template.'body'),
+        '#format' => $config->get('template'.$template.'format'),
       );  
     }
 
@@ -91,10 +92,11 @@ class SimpleConregConfigEmailTemplates extends ConfigFormBase {
     $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.email_templates');
     $count = 0;
     foreach ($vals['templates'] as $key => $template) {
-      if (!empty($template['subject']) || !empty($template['body'])) {
+      if (!empty($template['subject']) || !empty($template['body']['value'])) {
         $count++;
         $config->set('template'.$count.'subject', $template['subject']);
-        $config->set('template'.$count.'body', $template['body']);
+        $config->set('template'.$count.'body', $template['body']['value']);
+        $config->set('template'.$count.'format', $template['body']['format']);
       }
     }
     $config->set('count', $count);

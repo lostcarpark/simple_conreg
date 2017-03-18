@@ -69,25 +69,33 @@ class SimpleConregAdminMemberEmail extends FormBase {
     for ($template = 1; $template <= $count; $template++) {
       $subject = $template_config->get('template'.$template.'subject');
       $body = $template_config->get('template'.$template.'body');
+      $format = $template_config->get('template'.$template.'format');
       $options[$template] = $subject;
-      $templates[$template] = ['subject' => $subject, 'body' => $body];
+      $templates[$template] = ['subject' => $subject, 'body' => $body, 'format' => $format];
     }
     // Store templates to form state.
     $form_state->set('templates', $templates);
 
     // Check if default template selected.
-    if (NULL == $default_template = $form_values['templates']['template_select'])
+    if (NULL == $default_template = $form_values['template']['template_select'])
       $default_template = 1;
+
+    $previous_template = $form_state->get('default_template');
+    $form_state->set('default_template', $default_template);
+dpm("Pref: $previous_template, Current $default_template");
 
     // If form submitted, use submitted values, otherwise use defaults.
     if (empty($params['from'] = $form_values['email']['message']['from_email']))
       $params['from'] = $from_default;
 
-    if (empty($params['subject'] = $form_values['email']['message']['subject']))
+    if ($previous_template != $default_template || empty($params['subject'] = $form_values['email']['message']['subject']))
       $params['subject'] = $templates[$default_template]['subject'];
 
-    if (empty($params['body'] = $form_values['email']['message']['body']))
+    if ($previous_template != $default_template || empty($params['body'] = $form_values['email']['message']['body']['value']))
       $params['body'] = $templates[$default_template]['body'];
+
+    if ($previous_template != $default_template || empty($params['format'] = $form_values['email']['message']['body']['format']))
+      $params['format'] = $templates[$default_template]['format'];
 
     // If tokens stored in form state, store in params to save looking up again.
     if (NULL != $tokens = $form_state->get('tokens'))
@@ -264,11 +272,16 @@ class SimpleConregAdminMemberEmail extends FormBase {
     );
 
     $form['email']['message']['body'] = array(
+      //'#type' => 'textarea',
       '#type' => 'text_format',
       '#title' => $this->t('Message body'),
       '#description' => $this->t('Text for the email body. you may use the following tokens: @tokens.', ['@tokens' => SimpleConregTokens::tokenHelp()]),
       '#default_value' => $params['body'],
-    );  
+      //'#value' => $params['body'],
+      '#format' => $params['format'],
+    );
+    if ($previous_template != $default_template)
+      $form['email']['message']['body']['#value'] = $params['body'];  
 
     // Fields for writing email message.
     $form['email']['preview'] = array(
@@ -323,6 +336,7 @@ class SimpleConregAdminMemberEmail extends FormBase {
     $templates = $form_state->get('templates');
 
     if (!empty($template = $form_values['template']['template_select'])) {
+dpm($template);
       $params = $form_state->get('params');
       $params['subject'] = $templates[$template]['subject'];
       $params['body'] = $templates[$template]['body'];
@@ -332,7 +346,9 @@ class SimpleConregAdminMemberEmail extends FormBase {
       $form_state->set('params', $params);
 
       $form['email']['message']['subject']['#value'] = $params['subject'];
-      $form['email']['message']['body']['#value'] = $params['body'];
+      $form['email']['message']['body']['#type'] = "textarea";
+      $form['email']['message']['body']['#value'] = $form['email']['message']['body']['#default_value'];
+      $form['email']['message']['body']['#format'] = $params['format'];
       $form['email']['preview']['subject']['#markup'] = $this->t('Subject: @subject', ['@subject' => $message['subject']]);
       $form['email']['preview']['body']['#markup'] = $message['preview'];
     }
@@ -368,7 +384,8 @@ class SimpleConregAdminMemberEmail extends FormBase {
 
     $params = $form_state->get('params');
     $params['subject'] = $form_values['email']['message']['subject'];
-    $params['body'] = $form_values['email']['message']['body'];
+    $params['body'] = $form_values['email']['message']['body']['value'];
+    $params['format'] = $form_values['email']['message']['body']['format'];
     $module = "simple_conreg";
     $key = "template";
     $to = $params["to"];
