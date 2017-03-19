@@ -43,19 +43,18 @@ function simple_conreg_install() {
  */
 function simple_conreg_schema() {
   // create table simple_conreg_events (eid int auto_increment primary key, event_name varchar(255) not null, is_open tinyint not null default '1');
-/*  $schema['simple_conreg_events'] = array(
-    'description' => 'Stores events registration system .',
+  $schema['simple_conreg_events'] = array(
+    'description' => 'Stores events on the registration system.',
     'fields' => array(
       'eid' => array(
         'type' => 'serial',
         'not null' => TRUE,
-        'description' => 'Primary Key: Unique member ID.',
+        'description' => 'Primary Key: Unique event ID.',
       ),
       'event_name' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-        'default' => '',
         'description' => 'Name of the event.',
       ),
       'is_open' => array(
@@ -66,9 +65,10 @@ function simple_conreg_schema() {
         'description' => 'Set to 1 if event is open for registration.',
       ),
     ),
+    'primary key' => array('gid'),
   );
 
-*/
+
   $schema['simple_conreg_members'] = array(
     'description' => 'Stores member details for convention registrations.',
     'fields' => array(
@@ -333,7 +333,7 @@ function simple_conreg_schema() {
     ),
   );
 
-  // create table simple_conreg_option_groups (eid int auto_increment primary key, event_name varchar(255) not null, is_open tinyint not null default '1');
+  // create table simple_conreg_option_groups (grpid int auto_increment primary key, eid int not null, fieldset int not null, field_name varchar(255) not null, group_title varchar(255) not null, is_open tinyint not null default '1');
   $schema['simple_conreg_option_groups'] = array(
     'description' => 'Stores groups of field options.',
     'fields' => array(
@@ -374,16 +374,12 @@ function simple_conreg_schema() {
         'description' => 'Set to 1 if event is open for registration.',
       ),
     ),
-    'primary key' => array('mid'),
-    'indexes' => array(
-      'name' => array('last_name', 'first_name'),
-      'lead_mid' => array('lead_mid'),
-    ),
+    'primary key' => array('grpid'),
   );
 
-  // create table simple_conreg_option_options (eid int auto_increment primary key, event_name varchar(255) not null, is_open tinyint not null default '1');
-  $schema['simple_conreg_option_options'] = array(
-    'description' => 'Stores groups of field options.',
+  // create table simple_conreg_options (optid int auto_increment primary key, grpid int not null, option_title varchar(255) not null, detail_title varchar(255) not null, detail_is_required tinyint not null default '1', weight int not null default '1');
+  $schema['simple_conreg_options'] = array(
+    'description' => 'Stores field option details.',
     'fields' => array(
       'optid' => array(
         'type' => 'serial',
@@ -393,8 +389,70 @@ function simple_conreg_schema() {
       'grpid' => array(
         'type' => 'int',
         'not null' => TRUE,
+        'description' => 'Foreign Key: Group ID, the option group this option belongs to.',
+      ),
+      'option_title' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Text title of the option checkbox.',
+      ),
+      'detail_title' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Text title of the option detail textbox.',
+      ),
+      'detail_is_required' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+        'size' => 'tiny',
+        'description' => 'Set to 1 if the detail should be a required field.',
+      ),
+      'weight' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+        'description' => 'Weight, to control order in checkbox list - biggest number goes to the bottom.',
+      ),
+    ),
+    'primary key' => array('optid'),
+  );
+
+  // create table simple_conreg_member_options (mid int not null, optid int not null, is_selected tinyint not null default '1', option_detail varchar(255), primary key (mid, optid));
+  $schema['simple_conreg_member_options'] = array(
+    'description' => 'Stores member option choices.',
+    'fields' => array(
+      'mid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
         'description' => 'Foreign Key: Event ID.',
       ),
+      'optid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Foreign Key: Event ID.',
+      ),
+      'is_selected' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+        'size' => 'tiny',
+        'description' => 'Set to 1 if option has been selected.',
+      ),
+      'option_detail' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Optional text details entered for the option.',
+      ),
+    ),
+    'primary key' => array('mid', 'grpid'),
+  );
 
   return $schema;
 }
