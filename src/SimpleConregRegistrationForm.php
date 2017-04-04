@@ -157,6 +157,8 @@ class SimpleConregRegistrationForm extends FormBase {
       '#suffix' => '</div>',
     );
 
+    $optionCallbacks = [];
+
     for ($cnt=1; $cnt<=$memberQty; $cnt++) {
       $form['members']['member'.$cnt] = array(
         '#type' => 'fieldset',
@@ -393,6 +395,9 @@ class SimpleConregRegistrationForm extends FormBase {
           '#title' => $config->get('extras.flag2'),
         );
       }
+      
+      $callback = [$this, 'updateMemberOptionFields'];
+      SimpleConregFieldOptions::addOptionFields($eid, 1, $form['members']['member'.$cnt], $form_values['members']['member'.$cnt], $optionCallbacks, $callback, $cnt);
     }
 
     $form['payment'] = array(
@@ -431,6 +436,7 @@ class SimpleConregRegistrationForm extends FormBase {
       '#value' => t('Proceed to payment page'),
     );
 
+    $form_state->set('option_callbacks', $optionCallbacks);
     $form_state->set('total_price', $totalPrice);
     return $form;
   }
@@ -483,6 +489,22 @@ class SimpleConregRegistrationForm extends FormBase {
     }
 
     return $ajax_response;
+  }
+
+  // Callback function for option fields - add/remove detail field.
+  public function updateMemberOptionFields(array $form, FormStateInterface $form_state) {
+    // Get the triggering element.    
+    $trigger = $form_state->getTriggeringElement()['#name'];
+    // Get array of items to return, keyed by trigering element.
+    $optionCallbacks = $form_state->get('option_callbacks');
+    $callback = $optionCallbacks[$trigger];
+    // Build the index of the element to return.
+    switch ($callback[0]) {
+      case 'group':
+        return $form['members']['member'.$callback[1]][$callback[2]];
+      case 'detail':
+        return $form['members']['member'.$callback[1]][$callback[2]]['options']['container_'.$callback[3]];
+    }
   }
 
   // Function to validate fields as you type (currently unused).
@@ -602,6 +624,10 @@ class SimpleConregRegistrationForm extends FormBase {
     $confirm_params['from'] = $config->get('confirmation.from_name').' <'.$config->get('confirmation.from_email').'>';
     
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
+      $fieldset = 1;
+      $optionVals = [];
+      SimpleConregFieldOptions::procesOptionFields($eid, $fieldset, $form_values['members']['member'.$cnt], $optionVals);
+    
       // Check member price.
       list($price, $priceMessage) = $memberPrices[$cnt];
 
@@ -685,6 +711,8 @@ class SimpleConregRegistrationForm extends FormBase {
       $return = SimpleConregStorage::insert($entry);
       
       if ($return) {
+        // Now we have the member ID we can save the field options.
+        SimpleConregFieldOptions::insertOptionFields($return, $optionVals);
         drupal_set_message(t('Thank you for registering @first_name @last_name.',
                              array('@first_name' => $entry['first_name'],
                                    '@last_name' => $entry['last_name'])));
