@@ -47,11 +47,25 @@ class SimpleConregConfigForm extends ConfigFormBase {
       return parent::buildForm($form, $form_state);
     }
 
-    // Get event configuration from config.
-    $config = $this->config('simple_conreg.settings.'.$eid);
-    if (empty($config->get('payments.system'))) {
-      $config = $this->config('simple_conreg.settings');
+    $prevFieldset = $form_state->get('fieldset');
+    $prevContainer = "fieldset_container_$prevFieldset";
+
+    // Get fieldset from submitted form values.
+    $vals = $form_state->getValues();
+    $curFieldset = $vals['fieldset'];
+    if (empty($curFieldset))
+      $curFieldset = 0;
+    $fieldsetContainer = "fieldset_container_$curFieldset";
+    $form_state->set('fieldset', $curFieldset);
+    
+    // If fieldset has changed, save subbmitted field set values to previous field set.
+    if ($prevFieldset != $curFieldset) {
+      SimpleConregConfig::saveFieldsetConfig($eid, $prevFieldset, $vals[$prevContainer]);
     }
+
+    // Get config for event and fieldset.    
+    $config = SimpleConregConfig::getConfig($eid);
+    $fieldsetConfig = SimpleConregConfig::getFieldsetConfig($eid, $curFieldset);
 
     $form['simple_conreg_event'] = array(
       '#type' => 'fieldset',
@@ -126,7 +140,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $form['simple_conreg_members']['types'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Member types'),
-      '#description' => $this->t('Put each membership type on a line with type code, description, price and default badge type separated by | character (e.d. J|Junior Attending|$50|A).'),
+      '#description' => $this->t('Put each membership type on a line with type code, description, name, price,  default badge type, and fieldset number separated by | character (e.d. J|Junior Attending|Junior|50|A|1).'),
       '#default_value' => $config->get('member_types'),
     );
 
@@ -166,149 +180,241 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('payment_intro'),
     );
 
+    /* Select fieldset. */
+
+    $fieldsetOptions = [ 0 => 'Default' ];
+    for ($cnt = 1; $cnt <=5; $cnt++) $fieldsetOptions[$cnt] = $cnt;
+    $form['fieldset'] = array(
+      '#type' => 'select',
+      '#title' => $this->t('Current fieldset'),
+      '#description' => $this->t('Note: changing fieldset saves the current fieldset values.'),
+      '#options' => $fieldsetOptions,
+      '#default_value' => 0,
+      '#ajax' => array(
+        'wrapper' => 'fieldset_container',
+        'callback' => array($this, 'updateFieldsetCallback'),
+        'event' => 'change',
+      ),
+    );
+
+    $form[$fieldsetContainer] = array(
+      '#prefix' => '<div id="fieldset_container">',
+      '#suffix' => '</div>',
+      '#tree' => TRUE,
+    );
+
     /* Field labels. */
 
-    $form['simple_conreg_fields'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields'] = array(
       '#type' => 'fieldset',
       '#title' => $this->t('Field Labels'),
       '#tree' => TRUE,
     );
 
-    $form['simple_conreg_fields']['first_name_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['first_name_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('First name label (required)'),
-      '#default_value' => $config->get('fields.first_name_label'),
+      '#default_value' => $fieldsetConfig->get('fields.first_name_label'),
       '#required' => TRUE,
     );
 
-    $form['simple_conreg_fields']['last_name_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['last_name_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Last name label (required)'),
-      '#default_value' => $config->get('fields.last_name_label'),
+      '#default_value' => $fieldsetConfig->get('fields.last_name_label'),
       '#required' => TRUE,
     );
 
-    $form['simple_conreg_fields']['email_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['email_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Email address label (required)'),
-      '#default_value' => $config->get('fields.email_label'),
+      '#default_value' => $fieldsetConfig->get('fields.email_label'),
       '#required' => TRUE,
     );
 
-    $form['simple_conreg_fields']['membership_type_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['membership_type_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Type of membership label (required)'),
-      '#default_value' => $config->get('fields.membership_type_label'),
+      '#default_value' => $fieldsetConfig->get('fields.membership_type_label'),
       '#required' => TRUE,
     );
 
-    $form['simple_conreg_fields']['badge_name_option_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['badge_name_option_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Badge name option label (required)'),
-      '#default_value' => $config->get('fields.badge_name_option_label'),
+      '#default_value' => $fieldsetConfig->get('fields.badge_name_option_label'),
       '#required' => TRUE,
     );
 
-    $form['simple_conreg_fields']['badge_name_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['badge_name_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Badge name label (required)'),
-      '#default_value' => $config->get('fields.badge_name_label'),
+      '#default_value' => $fieldsetConfig->get('fields.badge_name_label'),
       '#required' => TRUE,
     );
 
-    $form['simple_conreg_fields']['badge_name_description'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['badge_name_description'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Badge name description'),
-      '#default_value' => $config->get('fields.badge_name_description'),
+      '#default_value' => $fieldsetConfig->get('fields.badge_name_description'),
       '#maxlength' => 255, 
     );
 
-    $form['simple_conreg_fields']['display_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['display_label'] = array(
       '#type' => 'textfield',
-      '#title' => $this->t('Display name on membership list label (required)'),
-      '#default_value' => $config->get('fields.display_label'),
-      '#required' => TRUE,
+      '#title' => $this->t('Display name on membership list label (leave blank if member type not to be displayed)'),
+      '#default_value' => $fieldsetConfig->get('fields.display_label'),
     );
 
-    $form['simple_conreg_fields']['communication_method_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['display_description'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Display name on membership list description (description below display name field; if display name blank, this text will be displayed in place of the field)'),
+      '#default_value' => $fieldsetConfig->get('fields.display_description'),
+    );
+
+    $form[$fieldsetContainer]['simple_conreg_fields']['communication_method_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Communication method label (leave empty to remove field)'),
-      '#default_value' => $config->get('fields.communication_method_label'),
+      '#default_value' => $fieldsetConfig->get('fields.communication_method_label'),
     );
 
-    $form['simple_conreg_fields']['same_address_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['same_address_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Same address as member 1 label (leave empty to remove field)'),
-      '#default_value' => $config->get('fields.same_address_label'),
+      '#default_value' => $fieldsetConfig->get('fields.same_address_label'),
     );
 
-    $form['simple_conreg_fields']['street_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['street_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Street address label (leave empty to remove field)'),
-      '#default_value' => $config->get('fields.street_label'),
+      '#default_value' => $fieldsetConfig->get('fields.street_label'),
     );
 
-    $form['simple_conreg_fields']['street2_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['street2_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Street address line 2 label (leave empty to remove field)'),
-      '#default_value' => $config->get('fields.street2_label'),
+      '#default_value' => $fieldsetConfig->get('fields.street2_label'),
     );
 
-    $form['simple_conreg_fields']['city_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['city_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Town/city label (leave empty to remove field)'),
-      '#default_value' => $config->get('fields.city_label'),
+      '#default_value' => $fieldsetConfig->get('fields.city_label'),
     );
 
-    $form['simple_conreg_fields']['county_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['county_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('County/state label (leave empty to remove field)'),
-      '#default_value' => $config->get('fields.county_label'),
+      '#default_value' => $fieldsetConfig->get('fields.county_label'),
     );
 
-    $form['simple_conreg_fields']['postcode_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['postcode_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Postal code label (leave empty to remove field)'),
-      '#default_value' => $config->get('fields.postcode_label'),
+      '#default_value' => $fieldsetConfig->get('fields.postcode_label'),
     );
 
-    $form['simple_conreg_fields']['country_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['country_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Country label (leave empty to remove field)'),
-      '#default_value' => $config->get('fields.country_label'),
+      '#default_value' => $fieldsetConfig->get('fields.country_label'),
     );
 
-    $form['simple_conreg_fields']['phone_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['phone_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Phone number label (leave empty to remove field)'),
-      '#default_value' => $config->get('fields.phone_label'),
+      '#default_value' => $fieldsetConfig->get('fields.phone_label'),
     );
 
-    $form['simple_conreg_fields']['birth_date_label'] = array(
+    $form[$fieldsetContainer]['simple_conreg_fields']['birth_date_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Date of birth label (leave empty to remove field)'),
-      '#default_value' => $config->get('fields.birth_date_label'),
+      '#default_value' => $fieldsetConfig->get('fields.birth_date_label'),
     );
 
     /* Mandatory fields. */
 
-    $form['simple_conreg_mandatory'] = array(
+    $form[$fieldsetContainer]['simple_conreg_mandatory'] = array(
       '#type' => 'fieldset',
       '#title' => $this->t('Mandatory Field'),
       '#tree' => TRUE,
     );
 
-    $form['simple_conreg_mandatory']['first_name'] = array(
+    $form[$fieldsetContainer]['simple_conreg_mandatory']['first_name'] = array(
       '#type' => 'checkbox',
       '#title' => $this->t('First name mandatory'),
-      '#default_value' => $config->get('fields.first_name_mandatory'),
+      '#default_value' => $fieldsetConfig->get('fields.first_name_mandatory'),
     );
 
-    $form['simple_conreg_mandatory']['last_name'] = array(
+    $form[$fieldsetContainer]['simple_conreg_mandatory']['last_name'] = array(
       '#type' => 'checkbox',
       '#title' => $this->t('Last name mandatory'),
-      '#default_value' => $config->get('fields.last_name_mandatory'),
+      '#default_value' => $fieldsetConfig->get('fields.last_name_mandatory'),
     );
+
+    $form[$fieldsetContainer]['simple_conreg_mandatory']['street'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Street address mandatory'),
+      '#default_value' => $fieldsetConfig->get('fields.street_mandatory'),
+    );
+
+    $form[$fieldsetContainer]['simple_conreg_mandatory']['street2'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Street address 2 mandatory'),
+      '#default_value' => $fieldsetConfig->get('fields.street2_mandatory'),
+    );
+
+    $form[$fieldsetContainer]['simple_conreg_mandatory']['city'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Town/City mandatory'),
+      '#default_value' => $fieldsetConfig->get('fields.city'),
+    );
+
+    $form[$fieldsetContainer]['simple_conreg_mandatory']['county'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('County/State mandatory'),
+      '#default_value' => $fieldsetConfig->get('fields.county_mandatory'),
+    );
+
+    $form[$fieldsetContainer]['simple_conreg_mandatory']['postcode'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Postal code mandatory'),
+      '#default_value' => $fieldsetConfig->get('fields.postcode_mandatory'),
+    );
+
+    $form[$fieldsetContainer]['simple_conreg_mandatory']['country'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Country mandatory'),
+      '#default_value' => $fieldsetConfig->get('fields.country_mandatory'),
+    );
+
+    $form[$fieldsetContainer]['simple_conreg_mandatory']['birth_date_name'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Date of birth mandatory'),
+      '#default_value' => $fieldsetConfig->get('fields.birth_date_mandatory'),
+    );
+
+
+    /*
+     * Fields for extra flags.
+     */
+    $form[$fieldsetContainer]['simple_conreg_extras'] = array(
+      '#type' => 'fieldset',
+      '#title' => $this->t('Extras'),
+      '#tree' => TRUE,
+    );
+
+    $form[$fieldsetContainer]['simple_conreg_extras']['flag1'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Flag 1 label'),
+      '#default_value' => $fieldsetConfig->get('extras.flag1'),
+    );  
+
+    $form[$fieldsetContainer]['simple_conreg_extras']['flag2'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Flag 2 label'),
+      '#default_value' => $fieldsetConfig->get('extras.flag2'),
+    );  
 
 
     /*
@@ -373,24 +479,6 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#type' => 'textarea',
       '#title' => $this->t('Description'),
       '#default_value' => $config->get('add_on_info.description'),
-    );  
-
-    $form['simple_conreg_extras'] = array(
-      '#type' => 'fieldset',
-      '#title' => $this->t('Extras'),
-      '#tree' => TRUE,
-    );
-
-    $form['simple_conreg_extras']['flag1'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Flag 1 label'),
-      '#default_value' => $config->get('extras.flag1'),
-    );  
-
-    $form['simple_conreg_extras']['flag2'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Flag 2 label'),
-      '#default_value' => $config->get('extras.flag2'),
     );  
 
     /*
@@ -544,7 +632,16 @@ class SimpleConregConfigForm extends ConfigFormBase {
 
     return parent::buildForm($form, $form_state);
   }
-  
+
+  // Callback function for "fieldset" drop down.
+  public function updateFieldsetCallback(array $form, FormStateInterface $form_state) {
+    $fieldset = $form_state->getValue('fieldset');
+    if (empty($fieldset))
+      $fieldset = 0;
+    $fieldsetContainer = "fieldset_container_$fieldset";
+    return $form[$fieldsetContainer];
+  }
+
   /** 
    * {@inheritdoc}
    */
@@ -571,34 +668,12 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('member_no_digits', $vals['simple_conreg_members']['digits']);
     $config->set('registration_intro', $vals['simple_conreg_intros']['registration_intro']);
     $config->set('payment_intro', $vals['simple_conreg_intros']['payment_intro']);
-    $config->set('fields.first_name_label', $vals['simple_conreg_fields']['first_name_label']);
-    $config->set('fields.last_name_label', $vals['simple_conreg_fields']['last_name_label']);
-    $config->set('fields.email_label', $vals['simple_conreg_fields']['email_label']);
-    $config->set('fields.membership_type_label', $vals['simple_conreg_fields']['membership_type_label']);
-    $config->set('fields.badge_name_option_label', $vals['simple_conreg_fields']['badge_name_option_label']);
-    $config->set('fields.badge_name_label', $vals['simple_conreg_fields']['badge_name_label']);
-    $config->set('fields.badge_name_description', $vals['simple_conreg_fields']['badge_name_description']);
-    $config->set('fields.display_label', $vals['simple_conreg_fields']['display_label']);
-    $config->set('fields.communication_method_label', $vals['simple_conreg_fields']['communication_method_label']);
-    $config->set('fields.same_address_label', $vals['simple_conreg_fields']['same_address_label']);
-    $config->set('fields.street_label', $vals['simple_conreg_fields']['street_label']);
-    $config->set('fields.street2_label', $vals['simple_conreg_fields']['street2_label']);
-    $config->set('fields.city_label', $vals['simple_conreg_fields']['city_label']);
-    $config->set('fields.county_label', $vals['simple_conreg_fields']['county_label']);
-    $config->set('fields.postcode_label', $vals['simple_conreg_fields']['postcode_label']);
-    $config->set('fields.country_label', $vals['simple_conreg_fields']['country_label']);
-    $config->set('fields.phone_label', $vals['simple_conreg_fields']['phone_label']);
-    $config->set('fields.birth_date_label', $vals['simple_conreg_fields']['birth_date_label']);
-    $config->set('fields.first_name_mandatory', $vals['simple_conreg_mandatory']['first_name']);
-    $config->set('fields.last_name_mandatory', $vals['simple_conreg_mandatory']['last_name']);
     $config->set('communications_method.options', $vals['simple_conreg_communication']['options']);
     $config->set('add_ons.label', $vals['simple_conreg_addons']['label']);
     $config->set('add_ons.description', $vals['simple_conreg_addons']['description']);
     $config->set('add_ons.options', $vals['simple_conreg_addons']['options']);
     $config->set('add_on_info.label', $vals['simple_conreg_addon_info']['label']);
     $config->set('add_on_info.description', $vals['simple_conreg_addon_info']['description']);
-    $config->set('extras.flag1', $vals['simple_conreg_extras']['flag1']);
-    $config->set('extras.flag2', $vals['simple_conreg_extras']['flag2']);
     $config->set('display.page_size', $vals['simple_conreg_display']['page_size']);
     $config->set('reference.default_country', $vals['simple_conreg_reference']['default_country']);
     $config->set('reference.countries', $vals['simple_conreg_reference']['countries']);
@@ -614,6 +689,10 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('confirmation.reg_footer', $vals['simple_conreg_confirmation']['reg_footer']);
     $config->set('confirmation.pay_template', $vals['simple_conreg_confirmation']['pay_template']);
     $config->save();
+
+    $fieldset = $vals['fieldset'];
+    $fieldsetContainer = "fieldset_container_$fieldset";
+    SimpleConregConfig::saveFieldsetConfig($eid, $fieldset, $vals[$fieldsetContainer]);
 
     parent::submitForm($form, $form_state);
   }

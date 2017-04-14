@@ -89,8 +89,8 @@ class SimpleConregRegistrationForm extends FormBase {
       return parent::buildForm($form, $form_state);
     }
 
-    // Get event configuration from config.
-    $config = $this->config('simple_conreg.settings.'.$eid);
+    // Get config for event and fieldset.    
+    $config = SimpleConregConfig::getConfig($eid);
     if (empty($config->get('payments.system'))) {
       // Event not configured. Display error.
       $form['simple_conreg_event'] = array(
@@ -101,7 +101,7 @@ class SimpleConregRegistrationForm extends FormBase {
       return parent::buildForm($form, $form_state);
     }
 
-    list($typeOptions, $typeNames, $typePrices) = SimpleConregOptions::memberTypes($eid, $config);
+    list($typeOptions, $types) = SimpleConregOptions::memberTypes($eid, $config);
     list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($eid, $config);
     $symbol = $config->get('payments.symbol');
     $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
@@ -117,7 +117,7 @@ class SimpleConregRegistrationForm extends FormBase {
     
     // Calculate price for all members.
     list($fullPrice, $discountPrice, $totalPrice, $memberPrices) =
-      $this->getAllMemberPrices($form_values, $memberQty, $typePrices, $addOnPrices, $symbol, $discountEnabled, $discountFreeEvery);
+      $this->getAllMemberPrices($form_values, $memberQty, $types, $addOnPrices, $symbol, $discountEnabled, $discountFreeEvery);
   
     $form = array(
       '#tree' => TRUE,
@@ -158,8 +158,27 @@ class SimpleConregRegistrationForm extends FormBase {
     );
 
     $optionCallbacks = [];
+    // Array to store fieldset for each member.
+    $memberFieldsets = [];
+    // Get the previous fieldsets to compare.
+    $prevFieldsets = $form_state->get('member_fieldsets');
+    $memberFieldsetChanged = FALSE;
 
     for ($cnt=1; $cnt<=$memberQty; $cnt++) {
+      // Get the fieldset config for the current member type, or if none defined, get the default fieldset config.
+      if (!empty($memberType = $form_values['members']['member'.$cnt]['type'])) {
+        $fieldsetConfig = $types[$memberType]['config'];
+        $memberFieldsets[$cnt] = $types[$memberType]['fieldset'];
+      }
+      // No fieldset config found, so use default.
+      if (empty($fieldsetConfig)) {
+        $fieldsetConfig = SimpleConregConfig::getFieldsetConfig($eid, 0);
+        $memberFieldsets[$cnt] = 0;
+      }
+      if ($memberFieldsets[$cnt] != $prevFieldsets[$cnt]) {
+        $memberFieldsetChanged = TRUE;
+      }
+
       $form['members']['member'.$cnt] = array(
         '#type' => 'fieldset',
         '#title' => $this->t('Member @number', array('@number' => $cnt)),
@@ -167,27 +186,27 @@ class SimpleConregRegistrationForm extends FormBase {
 
       $form['members']['member'.$cnt]['first_name'] = array(
         '#type' => 'textfield',
-        '#title' => $config->get('fields.first_name_label'),
+        '#title' => $fieldsetConfig->get('fields.first_name_label'),
         '#size' => 29,
         '#attributes' => array(
           'id' => "edit-members-member$cnt-first-name",
           'class' => array('edit-members-first-name')),
-        '#required' => ($config->get('fields.first_name_mandatory') ? TRUE : FALSE),
+        '#required' => ($fieldsetConfig->get('fields.first_name_mandatory') ? TRUE : FALSE),
       );
 
       $form['members']['member'.$cnt]['last_name'] = array(
         '#type' => 'textfield',
-        '#title' => $config->get('fields.last_name_label'),
+        '#title' => $fieldsetConfig->get('fields.last_name_label'),
         '#size' => 29,
         '#attributes' => array(
           'id' => "edit-members-member$cnt-last-name",
           'class' => array('edit-members-last-name')),
-        '#required' => ($config->get('fields.last_name_mandatory') ? TRUE : FALSE),
+        '#required' => ($fieldsetConfig->get('fields.last_name_mandatory') ? TRUE : FALSE),
       );
 
       $form['members']['member'.$cnt]['email'] = array(
         '#type' => 'email',
-        '#title' => $config->get('fields.email_label'),
+        '#title' => $fieldsetConfig->get('fields.email_label'),
       );
       if ($cnt==1) {
         $form['members']['member'.$cnt]['email']['#required'] = TRUE;
@@ -198,10 +217,11 @@ class SimpleConregRegistrationForm extends FormBase {
 
       $form['members']['member'.$cnt]['type'] = array(
         '#type' => 'select',
-        '#title' => $config->get('fields.membership_type_label'),
+        '#title' => $fieldsetConfig->get('fields.membership_type_label'),
         '#options' => $typeOptions,
         '#required' => TRUE,
         '#ajax' => array(
+          'wrapper' => 'regform',
           'callback' => array($this, 'updateMemberPriceCallback'),
           'event' => 'change',
         ),
@@ -247,8 +267,8 @@ class SimpleConregRegistrationForm extends FormBase {
 
       $form['members']['member'.$cnt]['badge_name_option'] = array(
         '#type' => 'radios',
-        '#title' => $config->get('fields.badge_name_option_label'),
-        '#description' => $config->get('fields.badge_name_description'),
+        '#title' => $fieldsetConfig->get('fields.badge_name_option_label'),
+        '#description' => $fieldsetConfig->get('fields.badge_name_description'),
         '#options' => array('N' => $this->t('Full name on badge'),
                             'F' => $this->t('First name only'),
                             'O' => $this->t('Other badge name')),
@@ -272,7 +292,7 @@ class SimpleConregRegistrationForm extends FormBase {
           $form_values['members']['member'.$cnt]['badge_name_option']=='O') {
         $form['members']['member'.$cnt]['badge_name']['other'] = array(
           '#type' => 'textfield',
-          '#title' => $config->get('fields.badge_name_label'),
+          '#title' => $fieldsetConfig->get('fields.badge_name_label'),
           '#required' => TRUE,
           '#attributes' => array(
             'id' => "edit-members-member$cnt-badge-name",
@@ -280,29 +300,37 @@ class SimpleConregRegistrationForm extends FormBase {
         );
       }
 
-      $form['members']['member'.$cnt]['display'] = array(
-        '#type' => 'select',
-        '#title' => $config->get('fields.display_label'),
-        '#description' => $this->t('Select how you would like to appear on the membership list.'),
-        '#options' => SimpleConregOptions::display(),
-        '#default_value' => 'F',
-        '#required' => TRUE,
-      );
+      if (!empty($fieldsetConfig->get('fields.display_label'))) {
+        $form['members']['member'.$cnt]['display'] = array(
+          '#type' => 'select',
+          '#title' => $fieldsetConfig->get('fields.display_label'),
+          '#description' => $fieldsetConfig->get('fields.display_description'),
+          '#options' => SimpleConregOptions::display(),
+          '#default_value' => 'F',
+          '#required' => TRUE,
+        );
+      } else {
+        $form['members']['member'.$cnt]['display'] = array(
+          '#prefix' => '<div id="memberDisplayMessage'.$cnt.'">',
+          '#suffix' => '</div>',
+          '#markup' => $fieldsetConfig->get('fields.display_description'),
+        );
+      }
 
-      if (!empty($config->get('fields.communication_method_label'))) {
+      if (!empty($fieldsetConfig->get('fields.communication_method_label'))) {
         $form['members']['member'.$cnt]['communication_method'] = array(
           '#type' => 'select',
-          '#title' => $config->get('fields.communication_method_label'),
+          '#title' => $fieldsetConfig->get('fields.communication_method_label'),
           '#options' => SimpleConregOptions::communicationMethod($eid, $config),
           '#default_value' => 'E',
           '#required' => TRUE,
         );
       }
 
-      if ($cnt > 1 && !empty($config->get('fields.same_address_label'))) {
+      if ($cnt > 1 && !empty($fieldsetConfig->get('fields.same_address_label'))) {
         $form['members']['member'.$cnt]['same_address'] = array(
           '#type' => 'checkbox',
-          '#title' => $config->get('fields.same_address_label'),
+          '#title' => $fieldsetConfig->get('fields.same_address_label'),
           '#ajax' => array(
             'callback' => array($this, 'updateMemberAddressCallback'),
             'event' => 'change',
@@ -322,82 +350,88 @@ class SimpleConregRegistrationForm extends FormBase {
 
       // Always show address for member 1, and for other members if "same" box isn't checked.
       if ($cnt == 1 || !$same) {
-        if (!empty($config->get('fields.street_label'))) {
+        if (!empty($fieldsetConfig->get('fields.street_label'))) {
           $form['members']['member'.$cnt]['address']['street'] = array(
             '#type' => 'textfield',
-            '#title' => $config->get('fields.street_label'),
+            '#title' => $fieldsetConfig->get('fields.street_label'),
+            '#required' => ($fieldsetConfig->get('fields.street_mandatory') ? TRUE : FALSE),
           );
         }
 
-        if (!empty($config->get('fields.street2_label'))) {
+        if (!empty($fieldsetConfig->get('fields.street2_label'))) {
           $form['members']['member'.$cnt]['address']['street2'] = array(
             '#type' => 'textfield',
-            '#title' => $config->get('fields.street2_label'),
+            '#title' => $fieldsetConfig->get('fields.street2_label'),
+            '#required' => ($fieldsetConfig->get('fields.street2_mandatory') ? TRUE : FALSE),
           );
         }
 
-        if (!empty($config->get('fields.city_label'))) {
+        if (!empty($fieldsetConfig->get('fields.city_label'))) {
           $form['members']['member'.$cnt]['address']['city'] = array(
             '#type' => 'textfield',
-            '#title' => $config->get('fields.city_label'),
+            '#title' => $fieldsetConfig->get('fields.city_label'),
+            '#required' => ($fieldsetConfig->get('fields.city_mandatory') ? TRUE : FALSE),
           );
         }
 
-        if (!empty($config->get('fields.county_label'))) {
+        if (!empty($fieldsetConfig->get('fields.county_label'))) {
           $form['members']['member'.$cnt]['address']['county'] = array(
             '#type' => 'textfield',
-            '#title' => $config->get('fields.county_label'),
+            '#title' => $fieldsetConfig->get('fields.county_label'),
+            '#required' => ($fieldsetConfig->get('fields.county_mandatory') ? TRUE : FALSE),
           );
         }
 
-        if (!empty($config->get('fields.postcode_label'))) {
+        if (!empty($fieldsetConfig->get('fields.postcode_label'))) {
           $form['members']['member'.$cnt]['address']['postcode'] = array(
             '#type' => 'textfield',
-            '#title' => $config->get('fields.postcode_label'),
+            '#title' => $fieldsetConfig->get('fields.postcode_label'),
+            '#required' => ($fieldsetConfig->get('fields.postcode_mandatory') ? TRUE : FALSE),
           );
         }
 
-        if (!empty($config->get('fields.country_label'))) {
+        if (!empty($fieldsetConfig->get('fields.country_label'))) {
           $form['members']['member'.$cnt]['address']['country'] = array(
             '#type' => 'select',
-            '#title' => $config->get('fields.country_label'),
+            '#title' => $fieldsetConfig->get('fields.country_label'),
             '#options' => $countryOptions,
             '#default_value' => $defaultCountry,
-            '#required' => TRUE,
+            '#required' => ($fieldsetConfig->get('fields.country_mandatory') ? TRUE : FALSE),
           );
         }
       }
 
-      if (!empty($config->get('fields.phone_label'))) {
+      if (!empty($fieldsetConfig->get('fields.phone_label'))) {
         $form['members']['member'.$cnt]['phone'] = array(
           '#type' => 'tel',
-          '#title' => $config->get('fields.phone_label'),
+          '#title' => $fieldsetConfig->get('fields.phone_label'),
         );
       }
 
-      if (!empty($config->get('fields.birth_date_label'))) {
+      if (!empty($fieldsetConfig->get('fields.birth_date_label'))) {
         $form['members']['member'.$cnt]['birth_date'] = array(
           '#type' => 'date',
-          '#title' => $config->get('fields.birth_date_label'),
+          '#title' => $fieldsetConfig->get('fields.birth_date_label'),
+          '#required' => ($fieldsetConfig->get('fields.birth_date_mandatory') ? TRUE : FALSE),
         );
       }
 
-      if (!empty($config->get('extras.flag1'))) {
+      if (!empty($fieldsetConfig->get('extras.flag1'))) {
         $form['members']['member'.$cnt]['extra_flag1'] = array(
           '#type' => 'checkbox',
-          '#title' => $config->get('extras.flag1'),
+          '#title' => $fieldsetConfig->get('extras.flag1'),
         );
       }
 
-      if (!empty($config->get('extras.flag2'))) {
+      if (!empty($fieldsetConfig->get('extras.flag2'))) {
         $form['members']['member'.$cnt]['extra_flag2'] = array(
           '#type' => 'checkbox',
-          '#title' => $config->get('extras.flag2'),
+          '#title' => $fieldsetConfig->get('extras.flag2'),
         );
       }
       
       $callback = [$this, 'updateMemberOptionFields'];
-      SimpleConregFieldOptions::addOptionFields($eid, 1, $form['members']['member'.$cnt], $form_values['members']['member'.$cnt], $optionCallbacks, $callback, $cnt);
+      SimpleConregFieldOptions::addOptionFields($eid, $types[$memberType]['fieldset'], $form['members']['member'.$cnt], $form_values['members']['member'.$cnt], $optionCallbacks, $callback, $cnt);
     }
 
     $form['payment'] = array(
@@ -436,6 +470,8 @@ class SimpleConregRegistrationForm extends FormBase {
       '#value' => t('Proceed to payment page'),
     );
 
+    $form_state->set('member_fieldsets', $memberFieldsets);
+    $form_state->set('fieldset_changed', $memberFieldsetChanged);
     $form_state->set('option_callbacks', $optionCallbacks);
     $form_state->set('total_price', $totalPrice);
     return $form;
@@ -444,13 +480,25 @@ class SimpleConregRegistrationForm extends FormBase {
   // Callback function for "number of members" drop down.
   public function updateMemberQuantityCallback(array $form, FormStateInterface $form_state) {
     // Form rebuilt with required number of members before callback. Return new form.
-    //$ajax_response = new AjaxResponse();
-    //$ajax_response->addCommand(new HtmlCommand('#regform', render($form)));
     return $form;
   }
 
   // Callback function for "member type" and "add-on" drop-downs. Replace price fields.
   public function updateMemberPriceCallback(array $form, FormStateInterface $form_state) {
+    // Check if fieldset has changed, which will require a full form refresh to update the member fields.
+    $memberFieldsetChanged = $form_state->get('fieldset_changed');
+    dpm($memberFieldsetChanged, "changed");
+    if ($memberFieldsetChanged) {
+      // Get the triggering element.    
+      $trigger = $form_state->getTriggeringElement()['#name'];
+      if (preg_match("/^members\[member(\d+)\]\[(\w+)\]/", $trigger, $matches)) {
+        // If the triggering element is the type drop-down, return the whole form;
+        if ($matches[2] == 'type') {
+          return $form;
+        }
+      }
+    }
+    // Member fieldset has not changed, so we only need to update the prices.
     $ajax_response = new AjaxResponse();
     // Calculate price for each member.
     $memberQty = $form_state->getValue(array('global', 'member_quantity'));
@@ -593,11 +641,11 @@ class SimpleConregRegistrationForm extends FormBase {
 
     $form_values = $form_state->getValues();
     
-    $config = $this->config('simple_conreg.settings.'.$eid);
+    $config = SimpleConregConfig::getConfig($eid);
     $symbol = $config->get('payments.symbol');
     $discountEnabled = $config->get('discount.enable');
     $discountFreeEvery = $config->get('discount.free_every');
-    list($typeOptions, $typeNames, $typePrices, $defaultBadgeTypes) = SimpleConregOptions::memberTypes($eid, $config);
+    list($typeOptions, $types) = SimpleConregOptions::memberTypes($eid, $config);
     list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($eid, $config);
     
     // Find out number of members.
@@ -606,7 +654,7 @@ class SimpleConregRegistrationForm extends FormBase {
     
     // Can't rely on price sent back from form, so recalculate.
     list($fullPrice, $discountPrice, $totalPrice, $memberPrices) =
-      $this->getAllMemberPrices($form_values, $memberQty, $typePrices, $addOnPrices, $symbol, $discountEnabled, $discountFreeEvery);
+      $this->getAllMemberPrices($form_values, $memberQty, $types, $addOnPrices, $symbol, $discountEnabled, $discountFreeEvery);
     
     // Gather the current user so the new record has ownership.
     $account = \Drupal::currentUser();
@@ -674,7 +722,8 @@ class SimpleConregRegistrationForm extends FormBase {
         'last_name' => $form_values['members']['member'.$cnt]['last_name'],
         'badge_name' => $badge_name,
         'badge_type' => $badge_type,
-        'display' => $form_values['members']['member'.$cnt]['display'],
+        'display' => empty($form_values['members']['member'.$cnt]['display']) ?
+            'N' : $form_values['members']['member'.$cnt]['display'],
         'communication_method' => isset($form_values['members']['member'.$cnt]['communication_method']) ?
             $form_values['members']['member'.$cnt]['communication_method'] : '',
         'email' => $form_values['members']['member'.$cnt]['email'],
@@ -791,7 +840,7 @@ class SimpleConregRegistrationForm extends FormBase {
   /**
    * Method to calculate price of all members, and subtract any discounts.
    */
-  public function getAllMemberPrices($form_values, $memberQty, $typePrices, $addOnPrices, $symbol,
+  public function getAllMemberPrices($form_values, $memberQty, $types, $addOnPrices, $symbol,
                                      $discountEnabled, $discountFreeEvery) {
     $fullPrice = 0;
     $discountPrice = 0;
@@ -800,7 +849,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $prices = [];
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
       // Check member price.
-      $memberPrices[$cnt] = $this->getMemberPrice($form_values, $cnt, $typePrices, $addOnPrices, $symbol);
+      $memberPrices[$cnt] = $this->getMemberPrice($form_values, $cnt, $types, $addOnPrices, $symbol);
       list($price, $priceMessage, $basePrice) = $memberPrices[$cnt];
       if ($basePrice > 0)
         $prices[$cnt] = $basePrice;
@@ -839,11 +888,12 @@ class SimpleConregRegistrationForm extends FormBase {
   /**
    * Method to return the price of a member
    */
-  public function getMemberPrice(array $form_values, $memberNo, $typePrices, $addOnPrices, $symbol) {
+  public function getMemberPrice(array $form_values, $memberNo, $types, $addOnPrices, $symbol) {
     $price = 0;
     // If type selected, look up value.
     if (!empty($form_values['members']['member'.$memberNo]['type'])) {
-      $price = $typePrices[$form_values['members']['member'.$memberNo]['type']];
+      $memberType = $form_values['members']['member'.$memberNo]['type'];
+      $price = $types[$memberType]['price'];
     }
     $basePrice = $price;
     // If add on selected, look up value.

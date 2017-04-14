@@ -19,22 +19,32 @@ class SimpleConregOptions {
    */
   public static function memberTypes($eid, &$config = NULL) {
     if (is_null($config)) {
-      $config = \Drupal::config('simple_conreg.settings.'.$eid);
+      $config = SimpleConregConfig::getConfig($eid);
     }
+
     $types = explode("\n", $config->get('member_types')); // One type per line.
+    $typeVals = [];
     $typeOptions = [];
-    $typeNames = [];
-    $typePrices = [];
-    $defaultBadgeTypes = [];
     foreach ($types as $type) {
-      list($code, $desc, $name, $price, $badgetype) = explode('|', $type);
+      list($code, $desc, $name, $price, $badgetype, $fieldset) = explode('|', $type);
       $code = trim($code);
+      $fieldset = trim($fieldset);
+      if (empty($fieldset)) {
+        $fieldset = 0;
+      }
+      // Put description in specific array for populating drop-down.
       $typeOptions[$code] = trim($desc);
-      $typeNames[$code] = trim($name);
-      $typePrices[$code] = trim($price);
-      $defaultBadgeTypes[$code] = trim($badgetype);
+      // Put all other values in an associative array.
+      $typeVals[$code] = [
+        'name' => trim($name),
+        'description' => trim($desc),
+        'price' => trim($price),
+        'badgetype' => trim($badgetype),
+        'fieldset' => trim($fieldset),
+        'config' => SimpleConregConfig::getFieldsetConfig($eid, $fieldset),
+      ];
     }
-    return array($typeOptions, $typeNames, $typePrices, $defaultBadgeTypes);
+    return [$typeOptions, $typeVals];
   }
 
   /**
@@ -44,7 +54,7 @@ class SimpleConregOptions {
    */
   public static function badgeTypes($eid, &$config = NULL) {
     if (is_null($config)) {
-      $config = \Drupal::config('simple_conreg.settings.'.$eid);
+      $config = SimpleConregConfig::getConfig($eid);
     }
     $types = explode("\n", $config->get('badge_types')); // One type per line.
     $badgeTypes = [];
@@ -62,7 +72,7 @@ class SimpleConregOptions {
    */
   public static function memberAddons($eid, &$config = NULL) {
     if (is_null($config)) {
-      $config = \Drupal::config('simple_conreg.settings.'.$eid);
+      $config = SimpleConregConfig::getConfig($eid);
     }
     $addOns = explode("\n", $config->get('add_ons.options')); // One type per line.
     $addOnOptions = array();
@@ -82,7 +92,7 @@ class SimpleConregOptions {
    */
   public static function memberCountries($eid, &$config = NULL) {
     if (is_null($config)) {
-      $config = \Drupal::config('simple_conreg.settings.'.$eid);
+      $config = SimpleConregConfig::getConfig($eid);
     }
     $countries = explode("\n", $config->get('reference.countries')); // One country per line.
     $countryOptions = array();
@@ -107,7 +117,7 @@ class SimpleConregOptions {
    */
   public static function communicationMethod($eid, $config = NULL) {
     if (is_null($config)) {
-      $config = \Drupal::config('simple_conreg.settings.'.$eid);
+      $config = SimpleConregConfig::getConfig($eid);
     }
     $methods = explode("\n", $config->get('communications_method.options')); // One communications method per line.
     $methodOptions = array();
