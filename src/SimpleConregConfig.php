@@ -59,14 +59,11 @@ class SimpleConregConfig {
    */
   public static function saveFieldsetConfig($eid, $fieldset, $vals) {
     // Get an editable config for the specified fieldset.
-    dd($fieldset, 'saving');
     if (!empty($fieldset)) {
       $configName = 'simple_conreg.settings.'.$eid.'.fieldset.'.$fieldset;
     } else {
       $configName = 'simple_conreg.settings.'.$eid;
     }
-    dd($configName, "Saving config");
-    dd($vals['simple_conreg_fields']['first_name_label'], 'first name saving');
     $config = \Drupal::service('config.factory')->getEditable($configName);
     $config->set('fields.first_name_label', $vals['simple_conreg_fields']['first_name_label']);
     $config->set('fields.last_name_label', $vals['simple_conreg_fields']['last_name_label']);

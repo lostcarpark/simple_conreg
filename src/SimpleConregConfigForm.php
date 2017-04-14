@@ -388,7 +388,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $fieldsetConfig->get('fields.country_mandatory'),
     );
 
-    $form[$fieldsetContainer]['simple_conreg_mandatory']['birth_date_name'] = array(
+    $form[$fieldsetContainer]['simple_conreg_mandatory']['birth_date'] = array(
       '#type' => 'checkbox',
       '#title' => $this->t('Date of birth mandatory'),
       '#default_value' => $fieldsetConfig->get('fields.birth_date_mandatory'),

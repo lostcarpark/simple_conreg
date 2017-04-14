@@ -487,7 +487,6 @@ class SimpleConregRegistrationForm extends FormBase {
   public function updateMemberPriceCallback(array $form, FormStateInterface $form_state) {
     // Check if fieldset has changed, which will require a full form refresh to update the member fields.
     $memberFieldsetChanged = $form_state->get('fieldset_changed');
-    dpm($memberFieldsetChanged, "changed");
     if ($memberFieldsetChanged) {
       // Get the triggering element.    
       $trigger = $form_state->getTriggeringElement()['#name'];
