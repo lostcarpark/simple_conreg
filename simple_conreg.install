@@ -244,7 +244,16 @@ function simple_conreg_schema() {
         'scale' => 2,
         'not null' => TRUE,
         'default' => 0.0,
-        'description' => 'Price for this member.',
+        'description' => 'Price for this member (excluding add-on).',
+      ),
+      // alter table simple_conreg_members add member_total numeric(10,2) NOT NULL default "0" after member_price;
+      'member_total' => array(
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 2,
+        'not null' => TRUE,
+        'default' => 0.0,
+        'description' => 'Total price for member (including add-on).',
       ),
       'is_paid' => array(
         'type' => 'int',
@@ -266,7 +275,7 @@ function simple_conreg_schema() {
         'scale' => 2,
         'not null' => TRUE,
         'default' => 0.0,
-        'description' => 'Total amount received.',
+        'description' => 'Total amount received for all members in group.',
       ),
       'payment_id' => array(
         'type' => 'varchar',
@@ -289,6 +298,15 @@ function simple_conreg_schema() {
         'not null' => FALSE,
         'default' => '',
         'description' => 'Optional addons to membership.',
+      ),
+      // alter table simple_conreg_members add add_on_price numeric(10,2) NOT NULL default "0" after add_on;
+      'add_on_price' => array(
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 2,
+        'not null' => TRUE,
+        'default' => 0.0,
+        'description' => 'Price of add-on for this member.',
       ),
       'add_on_info' => array(
         'type' => 'varchar',

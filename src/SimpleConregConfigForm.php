@@ -443,6 +443,12 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#tree' => TRUE,
     );
 
+    $form['simple_conreg_addons']['global'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Global add-on (uncheck for add-on per member)'),
+      '#default_value' => $config->get('add_ons.global'),
+    );
+
     $form['simple_conreg_addons']['label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Label'),
@@ -479,6 +485,24 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#type' => 'textarea',
       '#title' => $this->t('Description'),
       '#default_value' => $config->get('add_on_info.description'),
+    );  
+
+    $form['simple_conreg_addon_free'] = array(
+      '#type' => 'fieldset',
+      '#title' => $this->t('Add-on Free Input Amount'),
+      '#tree' => TRUE,
+    );
+
+    $form['simple_conreg_addon_free']['label'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Label'),
+      '#default_value' => $config->get('add_on_free.label'),
+    );  
+
+    $form['simple_conreg_addon_free']['description'] = array(
+      '#type' => 'textarea',
+      '#title' => $this->t('Description'),
+      '#default_value' => $config->get('add_on_free.description'),
     );  
 
     /*
@@ -669,11 +693,14 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('registration_intro', $vals['simple_conreg_intros']['registration_intro']);
     $config->set('payment_intro', $vals['simple_conreg_intros']['payment_intro']);
     $config->set('communications_method.options', $vals['simple_conreg_communication']['options']);
+    $config->set('add_ons.global', $vals['simple_conreg_addons']['global']);
     $config->set('add_ons.label', $vals['simple_conreg_addons']['label']);
     $config->set('add_ons.description', $vals['simple_conreg_addons']['description']);
     $config->set('add_ons.options', $vals['simple_conreg_addons']['options']);
     $config->set('add_on_info.label', $vals['simple_conreg_addon_info']['label']);
     $config->set('add_on_info.description', $vals['simple_conreg_addon_info']['description']);
+    $config->set('add_on_free.label', $vals['simple_conreg_addon_free']['label']);
+    $config->set('add_on_free.description', $vals['simple_conreg_addon_free']['description']);
     $config->set('display.page_size', $vals['simple_conreg_display']['page_size']);
     $config->set('reference.default_country', $vals['simple_conreg_reference']['default_country']);
     $config->set('reference.countries', $vals['simple_conreg_reference']['countries']);
