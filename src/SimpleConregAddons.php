@@ -29,7 +29,6 @@ class SimpleConregAddons {
         $id = "member_addon_info_".$member;
       else
         $id = "global_addon_info";
-  dd($id);
   
       if (!empty($config->get('add_ons.label'))) {
         $addon['option'] = array(
