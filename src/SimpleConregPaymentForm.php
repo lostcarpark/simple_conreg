@@ -53,7 +53,7 @@ class SimpleConregPaymentForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $mid = NULL, $key = NULL, $name = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $mid = NULL, $key = NULL, $name = NULL, $postcode = NULL) {
     if (is_numeric($mid) && is_numeric($key) && SimpleConregStorage::checkMemberKey($mid, $key)) {
       $member = SimpleConregStorage::load(array("mid"=>$mid));
     } else {
@@ -110,6 +110,15 @@ class SimpleConregPaymentForm extends FormBase {
       '#size' => 20,
       '#maxlength' => 100,
       '#attributes' => array('class' => array("card-name"), 'autocomplete' => 'off'),
+    );
+    
+    $form['postcode'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Postal/Zip code'),
+      '#default_value' => Xss::filter($postcode),
+      '#size' => 20,
+      '#maxlength' => 20,
+      '#attributes' => array('class' => array("postcode"), 'autocomplete' => 'off'),
     );
     
     $form['card_number'] = array(

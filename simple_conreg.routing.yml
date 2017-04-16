@@ -9,11 +9,12 @@ simple_conreg_register:
     eid: ^[0-9]+$
 
 simple_conreg_payment:
-  path: 'members/payment/{mid}/{key}/{name}'
+  path: 'members/payment/{mid}/{key}/{name}/{postcode}'
   defaults:
     _title: 'Payment'
     _form: '\Drupal\simple_conreg\SimpleConregPaymentForm'
     name: ''
+    postcode: ''
   requirements:
     _permission: 'convention registration'
     mid: ^[0-9]+$

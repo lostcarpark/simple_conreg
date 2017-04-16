@@ -129,6 +129,19 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('payments.symbol'),
     );  
 
+    $form['simple_conreg_payments']['show_name'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Display name field on payment form'),
+      '#default_value' => $fieldsetConfig->get('payments.name'),
+    );
+
+    $form['simple_conreg_payments']['show_postcode'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Display postcode field on payment form'),
+      '#default_value' => $fieldsetConfig->get('payments.postcode'),
+    );
+
+
     // Member Information Section.
 
     $form['simple_conreg_members'] = array(
@@ -711,6 +724,8 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('payments.public_key', trim($vals['simple_conreg_payments']['public_key']));
     $config->set('payments.currency', trim($vals['simple_conreg_payments']['currency']));
     $config->set('payments.symbol', trim($vals['simple_conreg_payments']['symbol']));
+    $config->set('payments.name', trim($vals['simple_conreg_payments']['name']));
+    $config->set('payments.postcode', trim($vals['simple_conreg_payments']['postcode']));
     $config->set('member_types', $vals['simple_conreg_members']['types']);
     $config->set('badge_types', $vals['simple_conreg_members']['badge_types']);
     $config->set('member_no_digits', $vals['simple_conreg_members']['digits']);

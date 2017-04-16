@@ -766,7 +766,7 @@ class SimpleConregRegistrationForm extends FormBase {
             $form_values['members']['member'.$cnt]['phone'] : '',
         'birth_date' => $birth_date,
         'age' => isset($form_values['members']['member'.$cnt]['age']) ?
-            $form_values['members']['member'.$cnt]['age'] : '',
+            $form_values['members']['member'.$cnt]['age'] : 0,
         'add_on' => $addOn,
         'add_on_info' => $addOnInfo,
         'extra_flag1' => isset($form_values['members']['member'.$cnt]['extra_flag1']) ?
@@ -796,6 +796,7 @@ class SimpleConregRegistrationForm extends FormBase {
         $lead_mid = $return;
         $lead_key = $rand_key;
         $lead_name = trim($entry['first_name'].' '.$entry['last_name']);
+        $lead_postcode = trim($entry['postcode']);
         // Update first member with own member ID as lead member ID.
         $update = array('mid' => $lead_mid, 'lead_mid' => $lead_mid);
         $return = SimpleConregStorage::update($update);
@@ -857,7 +858,7 @@ class SimpleConregRegistrationForm extends FormBase {
     
     // Redirect to payment form.
     $form_state->setRedirect('simple_conreg_payment',
-      array('mid' => $lead_mid, 'key' => $lead_key, 'name' => $lead_name)
+      array('mid' => $lead_mid, 'key' => $lead_key, 'name' => $lead_name, 'postcode' => $lead_postcode)
     );
   }
 
