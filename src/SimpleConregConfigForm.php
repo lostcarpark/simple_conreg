@@ -332,6 +332,24 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $fieldsetConfig->get('fields.birth_date_label'),
     );
 
+    $form[$fieldsetContainer]['simple_conreg_fields']['age_label'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Age label (leave empty to remove field)'),
+      '#default_value' => $fieldsetConfig->get('fields.age_label'),
+    );
+
+    $form[$fieldsetContainer]['simple_conreg_fields']['age_min'] = array(
+      '#type' => 'number',
+      '#title' => $this->t('Minimum age'),
+      '#default_value' => $fieldsetConfig->get('fields.age_min'),
+    );
+
+    $form[$fieldsetContainer]['simple_conreg_fields']['age_max'] = array(
+      '#type' => 'number',
+      '#title' => $this->t('Maximum age'),
+      '#default_value' => $fieldsetConfig->get('fields.age_max'),
+    );
+
     /* Mandatory fields. */
 
     $form[$fieldsetContainer]['simple_conreg_mandatory'] = array(
@@ -392,6 +410,12 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#type' => 'checkbox',
       '#title' => $this->t('Date of birth mandatory'),
       '#default_value' => $fieldsetConfig->get('fields.birth_date_mandatory'),
+    );
+
+    $form[$fieldsetContainer]['simple_conreg_mandatory']['age'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Age mandatory'),
+      '#default_value' => $fieldsetConfig->get('fields.age_mandatory'),
     );
 
 

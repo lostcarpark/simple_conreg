@@ -391,6 +391,20 @@ class SimpleConregRegistrationForm extends FormBase {
         );
       }
 
+      if (!empty($fieldsetConfig->get('fields.age_label'))) {
+        $ageOptions = [];
+        $min = $fieldsetConfig->get('fields.age_min');
+        $max = $fieldsetConfig->get('fields.age_max');
+        for ($age=$min; $age<=$max; $age++)
+          $ageOptions[$age] = $age;
+        $form['members']['member'.$cnt]['age'] = array(
+          '#type' => 'select',
+          '#title' => $fieldsetConfig->get('fields.age_label'),
+          '#options' => $ageOptions,
+          '#required' => ($fieldsetConfig->get('fields.age_mandatory') ? TRUE : FALSE),
+        );
+      }
+
       if (!empty($fieldsetConfig->get('extras.flag1'))) {
         $form['members']['member'.$cnt]['extra_flag1'] = array(
           '#type' => 'checkbox',
@@ -751,6 +765,8 @@ class SimpleConregRegistrationForm extends FormBase {
         'phone' => isset($form_values['members']['member'.$cnt]['phone']) ?
             $form_values['members']['member'.$cnt]['phone'] : '',
         'birth_date' => $birth_date,
+        'age' => isset($form_values['members']['member'.$cnt]['age']) ?
+            $form_values['members']['member'.$cnt]['age'] : '',
         'add_on' => $addOn,
         'add_on_info' => $addOnInfo,
         'extra_flag1' => isset($form_values['members']['member'.$cnt]['extra_flag1']) ?

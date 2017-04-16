@@ -231,6 +231,13 @@ function simple_conreg_schema() {
         'not null' => FALSE,
         'description' => 'SQL datetime for the member\'s date of birth.',
       ),
+      // alter table simple_conreg_members add age int NULL default "0" after birth_date;
+      'age' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+        'description' => 'Age of member.',
+      ),
       'is_volunteer' => array(
         'type' => 'int',
         'not null' => TRUE,

@@ -84,6 +84,9 @@ class SimpleConregConfig {
     $config->set('fields.country_label', $vals['simple_conreg_fields']['country_label']);
     $config->set('fields.phone_label', $vals['simple_conreg_fields']['phone_label']);
     $config->set('fields.birth_date_label', $vals['simple_conreg_fields']['birth_date_label']);
+    $config->set('fields.age_label', $vals['simple_conreg_fields']['age_label']);
+    $config->set('fields.age_min', $vals['simple_conreg_fields']['age_min']);
+    $config->set('fields.age_max', $vals['simple_conreg_fields']['age_max']);
     $config->set('fields.first_name_mandatory', $vals['simple_conreg_mandatory']['first_name']);
     $config->set('fields.last_name_mandatory', $vals['simple_conreg_mandatory']['last_name']);
     $config->set('fields.street_mandatory', $vals['simple_conreg_mandatory']['street']);
@@ -93,6 +96,7 @@ class SimpleConregConfig {
     $config->set('fields.postcode_mandatory', $vals['simple_conreg_mandatory']['postcode']);
     $config->set('fields.country_mandatory', $vals['simple_conreg_mandatory']['country']);
     $config->set('fields.birth_date_mandatory', $vals['simple_conreg_mandatory']['birth_date']);
+    $config->set('fields.age_mandatory', $vals['simple_conreg_mandatory']['age']);
     $config->set('extras.flag1', $vals['simple_conreg_extras']['flag1']);
     $config->set('extras.flag2', $vals['simple_conreg_extras']['flag2']);
     $config->save();
