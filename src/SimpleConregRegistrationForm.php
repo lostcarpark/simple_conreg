@@ -121,6 +121,7 @@ class SimpleConregRegistrationForm extends FormBase {
   
     $form = array(
       '#tree' => TRUE,
+      '#cache' => ['max-age' => 0],
       '#prefix' => '<div id="regform">',
       '#suffix' => '</div>',
       '#attached' => array(
