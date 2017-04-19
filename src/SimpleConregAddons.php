@@ -68,11 +68,11 @@ class SimpleConregAddons {
           '#description' => $config->get('add_on_free.description'),
           '#default_value' => '0',
           '#min' => 0,
-          '#ajax' => array(
+/*          '#ajax' => array(
             'callback' => $callback,
-            'event' => 'change',
+            'event' => 'blur',
             'target' => $id,
-          ),
+          ),*/
         );
       }
     }

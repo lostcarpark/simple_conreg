@@ -307,7 +307,7 @@ function simple_conreg_schema() {
         'description' => 'Optional addons to membership.',
       ),
       // alter table simple_conreg_members add add_on_price numeric(10,2) default "0" after add_on;
-      // alter table simple_conreg_members modify add_on_price numeric(10,2);
+      // alter table simple_conreg_members modify add_on_price numeric(10,2) default "0";
       'add_on_price' => array(
         'type' => 'numeric',
         'precision' => 10,

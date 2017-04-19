@@ -460,6 +460,15 @@ class SimpleConregRegistrationForm extends FormBase {
                    ['@symbol' => $symbol, '@total' => $totalPrice]),
     );
 
+    $form['payment']['update'] = array(
+      '#type' => 'button',
+      '#value' => t('Update total'),
+      '#ajax' => array(
+        'callback' => [$this, 'updateMemberPriceCallback'],
+        'target' => 'Pricing',
+      ),
+    );
+
     $form['payment']['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Proceed to payment page'),
@@ -640,6 +649,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $eid = $form_state->get('eid');
 
     $form_values = $form_state->getValues();
+    dd($form_values);
     
     $config = SimpleConregConfig::getConfig($eid);
     $symbol = $config->get('payments.symbol');
