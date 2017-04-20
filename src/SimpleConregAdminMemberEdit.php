@@ -47,7 +47,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
     // Get event configuration from config.
     $config = $this->config('simple_conreg.settings.'.$eid);
 
-    list($typeOptions, $typeNames, $typePrices) = SimpleConregOptions::memberTypes($eid, $config);
+    list($typeOptions, $typeVals) = SimpleConregOptions::memberTypes($eid, $config);
     $badgeTypeOptions = SimpleConregOptions::badgeTypes($eid, $config);
     list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($eid, $config);
     $symbol = $config->get('payments.symbol');
@@ -256,6 +256,14 @@ class SimpleConregAdminMemberEdit extends FormBase {
       );
     }
 
+    if (!empty($config->get('fields.age_label'))) {
+      $form['member']['age'] = array(
+        '#type' => 'number',
+        '#title' => $config->get('fields.birth_date_label'),
+        '#default_value' => $member['birth_date'],
+      );
+    }
+
     if (!empty($config->get('extras.flag1'))) {
       $form['member']['extra_flag1'] = array(
         '#type' => 'checkbox',
@@ -290,6 +298,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
       '#type' => 'number',
       '#title' => $this->t('Price'),
       '#default_value' => $member['member_price'],
+      '#step' => '0.01',
     );
 
     $form['member']['payment_id'] = array(

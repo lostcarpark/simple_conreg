@@ -52,7 +52,7 @@ class SimpleConregTokens {
     }
 
     // Labels for display option and communications method. Will add to config later.
-    list($typeOptions, $typeNames) = SimpleConregOptions::memberTypes($eid, $config);
+    list($typeOptions, $typeVals) = SimpleConregOptions::memberTypes($eid, $config);
     $displayOptions = SimpleConregOptions::display();
     $communicationOptions = SimpleConregOptions::communicationMethod($eid, $config);
     $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
@@ -68,7 +68,7 @@ class SimpleConregTokens {
       $members[$index]['is_paid'] = $yesNoOptions[$val['is_paid']];
       $members[$index]['display'] = $displayOptions[$val['display']];
       $members[$index]['member_price'] = $symbol . $val['member_price'];
-      $members[$index]['member_type'] = $typeNames[$val['member_type']];
+      $members[$index]['member_type'] = (isset($typeNames[$val['member_type']]) ? $typeNames[$val['member_type']]['name'] : $val['member_type']);
       if (!empty($val['communication_method']))
         $members[$index]['communication_method'] = $communicationOptions[$val['communication_method']];
       $members[$index]['country'] = $countryOptions[$val['country']];

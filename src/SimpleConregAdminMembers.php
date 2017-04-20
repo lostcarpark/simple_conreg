@@ -41,7 +41,7 @@ class SimpleConregAdminMembers extends FormBase {
     $form_values = $form_state->getValues();
 
     $config = $this->config('simple_conreg.settings.'.$eid);
-    list($typeOptions, $typeNames, $typePrices) = SimpleConregOptions::memberTypes($eid, $config);
+    list($typeOptions, $typeVals) = SimpleConregOptions::memberTypes($eid, $config);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
     $displayOptions = SimpleConregOptions::display();
     $pageSize = $config->get('display.page_size');
@@ -222,7 +222,7 @@ class SimpleConregAdminMembers extends FormBase {
       );
       $memberType = trim($entry['member_type']);
       $row['member_type'] = array(
-        '#markup' => SafeMarkup::checkPlain(isset($typeNames[$memberType]) ? $typeNames[$memberType] : $memberType),
+        '#markup' => SafeMarkup::checkPlain(isset($typeVals[$memberType]['name']) ? $typeVals[$memberType]['name'] : $memberType),
       );
       $badgeType = trim($entry['badge_type']);
       $row['badge_type'] = array(

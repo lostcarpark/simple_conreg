@@ -321,7 +321,6 @@ class SimpleConregStorage {
   public static function adminPaidMemberListLoad($eid, $direction = 'ASC', $order = 'm.member_no') {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
-    $select->addField('m', 'mid');
     $select->addField('m', 'member_type');
     $select->addField('m', 'member_no');
     $select->addField('m', 'first_name');
@@ -337,12 +336,14 @@ class SimpleConregStorage {
     $select->addField('m', 'country');
     $select->addField('m', 'phone');
     $select->addField('m', 'birth_date');
+    $select->addField('m', 'age');
     $select->addField('m', 'display');
     $select->addField('m', 'communication_method');
     $select->addField('m', 'is_paid');
     $select->addField('m', 'member_price');
     $select->addField('m', 'comment');
     $select->addField('m', 'is_approved');
+    $select->addField('m', 'mid');
     $select->addExpression('from_unixtime(join_date)', 'joined');
     $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);

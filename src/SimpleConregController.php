@@ -106,7 +106,9 @@ class SimpleConregController extends ControllerBase {
         $key = $member_no;
       else
         $key = $member[$order] . $member_no;  // Append member number to ensure uniqueness.
-      $rows[$key] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $member);
+      if (!empty($entry['display']) && $entry['display'] != 'N' && !empty($entry['country'])) {
+        $rows[$key] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $member);
+      }
       $total++;
     }
     
@@ -133,10 +135,12 @@ class SimpleConregController extends ControllerBase {
     );
     $total = 0;
     foreach ($entries = SimpleConregStorage::adminMemberCountrySummaryLoad($eid) as $entry) {
-      // Sanitize each entry.
-      $entry['country'] = trim($countryOptions[$entry['country']]);
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
-      $total += $entry['num'];
+      if (!empty($entry['country'])) {
+        // Sanitize each entry.
+        $entry['country'] = trim($countryOptions[$entry['country']]);
+        $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+        $total += $entry['num'];
+      }
     }
     //Add a row for the total.
     $rows[] = array(t("Total"), $total);
@@ -156,7 +160,7 @@ class SimpleConregController extends ControllerBase {
    * Add a summary by member type to render array.
    */
   public function memberAdminMemberListSummary($eid, &$content) {
-    list($types, $typeNames, $prices, $default) = SimpleConregOptions::memberTypes($eid);
+    list($types, $typeVals) = SimpleConregOptions::memberTypes($eid);
     $rows = array();
     $headers = array(
       t('Member Type'), 
@@ -166,7 +170,7 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
       // Replace type code with description.
       if (isset($types[$entry['member_type']]))
-        $entry['member_type'] = $typeNames[$entry['member_type']];
+        $entry['member_type'] = ($typeVals[$entry['member_type']] ? $typeVals[$entry['member_type']]['name'] : $entry['member_type']);
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
       $total += $entry['num'];
@@ -278,6 +282,15 @@ class SimpleConregController extends ControllerBase {
    * Render a list of paid convention members in the database.
    */
   public function memberAdminMemberList($eid) {
+    $config = SimpleConregConfig::getConfig($eid);
+    $countryOptions = $this->getMemberCountries($config);
+    list($memberOptions, $memberTypes) = SimpleConregOptions::memberTypes($eid, $config);
+    $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
+    $communicationsOptions = SimpleConregOptions::communicationMethod($eid, $config);
+    $displayOptions = SimpleConregOptions::display();
+    $yesNo = SimpleConregOptions::yesNo();
+    $digits = $config->get('member_no_digits');
+
     $content = array();
 
     $pageOptions = [];
@@ -324,7 +337,6 @@ class SimpleConregController extends ControllerBase {
 
     $rows = array();
     $headers = array(
-      'mid' => ['data' => t('MID'), 'field' => 'm.mid'],
       'member_type' =>  ['data' => t('Member type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       'member_no' => ['data' => t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
       'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
@@ -340,16 +352,27 @@ class SimpleConregController extends ControllerBase {
       t('Country'),
       t('Phone'),
       t('Birth Date'),
+      t('Age'),
       'display' =>  ['data' => t('Display'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       t('Communication Method'),
       t('Paid'),
       t('Price'),
       t('Comments'),
       t('Approved'),
+      'mid' => ['data' => t('Internal ID'), 'field' => 'm.mid', 'class' => [RESPONSIVE_PRIORITY_LOW]],
       t('Date joined'),
     );
 
     foreach ($entries = SimpleConregStorage::adminPaidMemberListLoad($eid, $direction, $order) as $entry) {
+      if (!empty($entry['member_no']))
+        $entry['member_no'] = sprintf("%0".$digits."d", $entry['member_no']);
+      $entry['member_type'] = isset($memberTypes[$entry['member_type']]) ? $memberTypes[$entry['member_type']]['name'] : $entry['member_type'];
+      $entry['badge_type'] = isset($badgeTypes[$entry['badge_type']]) ? $badgeTypes[$entry['badge_type']] : $entry['badge_type'];
+      $entry['country'] = isset($countryOptions[$entry['country']]) ? $countryOptions[$entry['country']] : $entry['country'];
+      $entry['communication_method'] = isset($communicationsOptions[$entry['communication_method']]) ? $communicationsOptions[$entry['communication_method']] : $entry['communication_method'];
+      $entry['display'] = isset($displayOptions[$entry['display']]) ? $displayOptions[$entry['display']] : $entry['display'];
+      $entry['is_paid'] = isset($yesNo[$entry['is_paid']]) ? $yesNo[$entry['is_paid']] : $entry['is_paid'];
+      $entry['is_approved'] = isset($yesNo[$entry['is_approved']]) ? $yesNo[$entry['is_approved']] : $entry['is_approved'];
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
     }
