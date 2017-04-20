@@ -66,13 +66,9 @@ class SimpleConregAddons {
           '#type' => 'number',
           '#title' => $config->get('add_on_free.label'),
           '#description' => $config->get('add_on_free.description'),
-          '#default_value' => '0',
+          '#default_value' => '0.00',
+          '#step' => '0.01',
           '#min' => 0,
-          '#ajax' => array(
-            'callback' => $callback,
-            'event' => 'change',
-            'target' => $id,
-          ),
         );
       }
     }
