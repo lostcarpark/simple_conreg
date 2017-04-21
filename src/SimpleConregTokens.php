@@ -42,7 +42,7 @@ class SimpleConregTokens {
   public static function getTokens($eid, $mid) {
     $tokens = [];
     $event = SimpleConregEventStorage::load(['eid' => $eid]);
-    $config = \Drupal::config('simple_conreg.settings.'.$eid);
+    $config = SimpleConregConfig::getConfig($eid);
     $symbol = $config->get('payments.symbol');
     // Get all members registered by subject member.
     $members = SimpleConregStorage::loadAll(['eid' => $eid, 'lead_mid' => $mid, 'is_deleted' => 0]);
@@ -68,6 +68,9 @@ class SimpleConregTokens {
       $members[$index]['is_paid'] = $yesNoOptions[$val['is_paid']];
       $members[$index]['display'] = $displayOptions[$val['display']];
       $members[$index]['member_price'] = $symbol . $val['member_price'];
+      $members[$index]['member_total'] = $symbol . $val['member_total'];
+      $members[$index]['payment_amount'] = $symbol . $val['payment_amount'];
+      $members[$index]['add_on_price'] = $symbol . $val['add_on_price'];
       $members[$index]['member_type'] = (isset($typeNames[$val['member_type']]) ? $typeNames[$val['member_type']]['name'] : $val['member_type']);
       if (!empty($val['communication_method']))
         $members[$index]['communication_method'] = $communicationOptions[$val['communication_method']];
@@ -122,25 +125,31 @@ class SimpleConregTokens {
       'country' => 'fields.country_label',
       'phone' => 'fields.phone_label',
       'birth_date' => 'fields.birth_date_label',
+      'age' => 'fields.age_label',
       'member_type' => 'fields.member_type_label',
-      'add_on' => 'add_ons.label',
-      'add_on_info' => 'add_on_info.label',
       'extra_flag1' => 'extras.flag1',
       'extra_flag2' => 'extras.flag2',
     );
-    $dispay = "";
+    $addon_labels = array(
+      'add_on' => 'add_ons.label',
+      'add_on_info' => 'add_on_info.label',
+      'add_on_price' => 'add_on_free.label',
+    );
+    $display = '<table>';
     $plain_display = "";
     $member_no = 0;
     foreach ($members as $index => $cur_member) {
+      // Get fieldset config for member type.
+      $memberType = $cur_member['member_type'];
+      $fieldsetConfig = $typeVals[$memberType]['config'];
       // Look up labels for fields to email.
-      $display .= '<table>';
       $member_no ++;
       $member_heading = t('Member @number', ['@number' => $member_no]);
-      $display .= '<th colspan="2">'.$member_heading.'</th>';
+      $display .= '<tr><th colspan="2">'.$member_heading.'</th></tr>';
       $plain_display .= "\n$member_heading\n";
       foreach ($confirm_labels as $key=>$val) {
-        if (!empty($config->get($val))) {
-          $label = $config->get($val);
+        if (!empty($fieldsetConfig->get($val))) {
+          $label = $fieldsetConfig->get($val);
           $display .= '<tr><td>'.$label.'</td><td>'.$cur_member[$key].'</td></tr>';
           $plain_display .= $label.":\t".$cur_member[$key]."\n";
         }
@@ -149,8 +158,25 @@ class SimpleConregTokens {
       $label = t('Price for member');
       $display .= '<tr><td>'.$label.'</td><td>'.$cur_member['member_price'].'</td></tr>';
       $plain_display .= $label.":\t".$cur_member['member_price']."\n";
-      $display .= "</table>";
+      // Add on details.
+      $global = $config->get('add_ons.global');
+      if ($global && $member_no == 1 || !$global) {
+        foreach ($addon_labels as $key=>$val) {
+          if (!empty($config->get($val))) {
+            $label = $config->get($val);
+            $display .= '<tr><td>'.$label.'</td><td>'.$cur_member[$key].'</td></tr>';
+            $plain_display .= $label.":\t".$cur_member[$key]."\n";
+          }
+        }
+      }
     }
+    $label = t('Total');
+    $display .= '<tr><th colspan="2">'.$label.'</th></tr>';
+    $plain_display .= "\n$label\n";
+    $label = t('Total amount to pay');
+    $display .= '<tr><td>'.$label.'</td><td>'.$leader['payment_amount'].'</td></tr>';
+    $plain_display .= $label.":\t".$leader['payment_amount']."\n";
+    $display .= '</table>';
     $tokens['[member_details]'] = $display;
     $plain['[member_details]'] = $plain_display;
     return ['html' => $tokens, 'plain' => $plain, 'vals' => $member];

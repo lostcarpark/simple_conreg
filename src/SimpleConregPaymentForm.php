@@ -103,23 +103,27 @@ class SimpleConregPaymentForm extends FormBase {
       '#suffix' => '</div>',
     );
     
-    $form['name'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Name on Card'),
-      '#default_value' => Xss::filter($name),
-      '#size' => 20,
-      '#maxlength' => 100,
-      '#attributes' => array('class' => array("card-name"), 'autocomplete' => 'off'),
-    );
+    if ($config->get('payments.name')) {
+      $form['name'] = array(
+        '#type' => 'textfield',
+        '#title' => $this->t('Name on Card'),
+        '#default_value' => Xss::filter($name),
+        '#size' => 20,
+        '#maxlength' => 100,
+        '#attributes' => array('class' => array("card-name"), 'autocomplete' => 'off'),
+      );
+    }
     
-    $form['postcode'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Postal/Zip code'),
-      '#default_value' => Xss::filter($postcode),
-      '#size' => 20,
-      '#maxlength' => 20,
-      '#attributes' => array('class' => array("postcode"), 'autocomplete' => 'off'),
-    );
+    if ($config->get('payments.postcode')) {
+      $form['postcode'] = array(
+        '#type' => 'textfield',
+        '#title' => $this->t('Postal/Zip code'),
+        '#default_value' => Xss::filter($postcode),
+        '#size' => 20,
+        '#maxlength' => 20,
+        '#attributes' => array('class' => array("postcode"), 'autocomplete' => 'off'),
+      );
+    }
     
     $form['card_number'] = array(
       '#type' => 'textfield',
@@ -178,13 +182,6 @@ class SimpleConregPaymentForm extends FormBase {
       '#prefix' => '<div id="security">',
       '#suffix' => '</div>',
     );
-
-    $form['security_message'] = array(
-      '#markup' => $this->t('Your credit card details are sent directly and securely to our payment processor, Stripe. Your details are never received by or stored on our webserver.'),
-      '#prefix' => '<div id="security">',
-      '#suffix' => '</div>',
-    );
-    
 
     $form['submit'] = array(
       '#type' => 'submit',
@@ -253,27 +250,28 @@ class SimpleConregPaymentForm extends FormBase {
         $return = SimpleConregStorage::updateByLeadMid($entry);
 
         // Set up parameters for receipt email.
-        $params = (array)$member;
-        $params['eid'] = $eid;
+        $params = ['eid' => $eid, 'mid' => $mid];
+        $params['subject'] = $config->get('confirmation.template_subject');
+        $params['body'] = $config->get('confirmation.template_body');
+        $params['format'] = $config->get('confirmation.template_format');
         $module = "simple_conreg";
-        $key = "payment_message";
+        $key = "template";
         $to = $member["email"];
         $language_code = \Drupal::languageManager()->getDefaultLanguage()->getId();
-        $params['from'] = $config->get('confirmation.from_name').' <'.$config->get('confirmation.from_email').'>';
         $send_now = TRUE;
-        // Send receipt email to member.
-        $result = $this->mailManager->mail($module, $key, $to, $language_code, $params);
+        // Send confirmation email to member.
+        $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $language_code, $params);
 
         // If copy_us checkbox checked, send a copy to us.
         if ($config->get('confirmation.copy_us')) {
-          $key = "organiser_payment_message";
+          $params['subject'] = $config->get('confirmation.notification_subject');
           $to = $config->get('confirmation.from_email');
           $result = $this->mailManager->mail($module, $key, $to, $language_code, $params);
         }
 
         // If copy email to field provided, send an extra copy to us.
         if (!empty($config->get('confirmation.copy_email_to'))) {
-          $key = "organiser_payment_message";
+          $params['subject'] = $config->get('confirmation.notification_subject');
           $to = $config->get('confirmation.copy_email_to');
           $result = $this->mailManager->mail($module, $key, $to, $language_code, $params);
         }

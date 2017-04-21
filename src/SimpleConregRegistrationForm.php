@@ -793,7 +793,7 @@ class SimpleConregRegistrationForm extends FormBase {
                                    '@last_name' => $entry['last_name'])));
       }
       if ($cnt == 1) {
-        // For first member, get key from insert statement to use for mead member ID.
+        // For first member, get key from insert statement to use for lead member ID.
         $lead_mid = $return;
         $lead_key = $rand_key;
         $lead_name = trim($entry['first_name'].' '.$entry['last_name']);
@@ -827,36 +827,6 @@ class SimpleConregRegistrationForm extends FormBase {
       }
     }
 
-    // Add payment URL to confirmation params (couldn't do before saving as keys weren't known).
-    $confirm_params["payment_url"] = \Drupal\Core\Url::fromRoute('simple_conreg_payment',
-      array('mid' => $lead_mid, 'key' => $lead_key),
-      array('absolute' => TRUE)
-    )->toString();
-
-    $module = "simple_conreg";
-    $key = "confirmation_message";
-    $to = $confirm_params["email"];
-    $language_code = \Drupal::languageManager()->getDefaultLanguage()->getId();
-    $send_now = TRUE;
-    // Send confirmation email to member.
-    $result = $this->mailManager->mail($module, $key, $to, $language_code, $confirm_params);
-
-    // If copy_us checkbox checked, send a copy to us.
-    if ($config->get('confirmation.copy_us')) {
-      // Send a copy of confirmation email to organiser.
-      $key = "organiser_copy_message";
-      $to = $config->get('confirmation.from_email');
-      $result = $this->mailManager->mail($module, $key, $to, $language_code, $confirm_params);
-    }
-    
-    // If copy email to field provided, send an extra copy to us.
-    if (!empty($config->get('confirmation.copy_email_to'))) {
-      // Send a copy of confirmation email to organiser.
-      $key = "organiser_copy_message";
-      $to = $config->get('confirmation.copy_email_to');
-      $result = $this->mailManager->mail($module, $key, $to, $language_code, $confirm_params);
-    }
-    
     // Redirect to payment form.
     $form_state->setRedirect('simple_conreg_payment',
       array('mid' => $lead_mid, 'key' => $lead_key, 'name' => $lead_name, 'postcode' => $lead_postcode)

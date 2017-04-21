@@ -132,13 +132,13 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $form['simple_conreg_payments']['show_name'] = array(
       '#type' => 'checkbox',
       '#title' => $this->t('Display name field on payment form'),
-      '#default_value' => $fieldsetConfig->get('payments.name'),
+      '#default_value' => $config->get('payments.name'),
     );
 
     $form['simple_conreg_payments']['show_postcode'] = array(
       '#type' => 'checkbox',
       '#title' => $this->t('Display postcode field on payment form'),
-      '#default_value' => $fieldsetConfig->get('payments.postcode'),
+      '#default_value' => $config->get('payments.postcode'),
     );
 
 
@@ -670,26 +670,25 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('confirmation.copy_email_to'),
     );
 
-    $form['simple_conreg_confirmation']['reg_header'] = array(
-      '#type' => 'textarea',
-      '#title' => $this->t('Confirmation message header'),
-      '#description' => $this->t('Text for the confirmation email header. Registration details will appear below the header. you may use the following tokens: [first_name], [last_name], [pay_url].'),
-      '#default_value' => $config->get('confirmation.reg_header'),
-    );  
-
-    $form['simple_conreg_confirmation']['reg_footer'] = array(
-      '#type' => 'textarea',
-      '#title' => $this->t('Confirmation message footer'),
-      '#description' => $this->t('Text for the confirmation email footer. Registration details will appear above the footer. you may use the following tokens: [first_name], [last_name], [pay_url].'),
-      '#default_value' => $config->get('confirmation.reg_footer'),
+    $form['simple_conreg_confirmation']['template_subject'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Confiramtion email subject'),
+      '#default_value' => $config->get('confirmation.template_subject'),
     );
 
-    $form['simple_conreg_confirmation']['pay_template'] = array(
-      '#type' => 'textarea',
-      '#title' => $this->t('Payment receipt template'),
-      '#description' => $this->t('Text for the payment receipt template. you may use the following tokens: [first_name], [last_name], [amount].'),
-      '#default_value' => $config->get('confirmation.pay_template'),
+    $form['simple_conreg_confirmation']['template_body'] = array(
+      '#type' => 'text_format',
+      '#title' => $this->t('Confiramtion email body'),
+      '#description' => $this->t('Text for the email body. you may use the following tokens: @tokens.', ['@tokens' => SimpleConregTokens::tokenHelp()]),
+      '#default_value' => $config->get('confirmation.template_body'),
+      '#format' => $config->get('confirmation.template_format'),
     );  
+
+    $form['simple_conreg_confirmation']['notification_subject'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Admin notification subject'),
+      '#default_value' => $config->get('confirmation.notification_subject'),
+    );
 
     return parent::buildForm($form, $form_state);
   }
@@ -724,8 +723,8 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('payments.public_key', trim($vals['simple_conreg_payments']['public_key']));
     $config->set('payments.currency', trim($vals['simple_conreg_payments']['currency']));
     $config->set('payments.symbol', trim($vals['simple_conreg_payments']['symbol']));
-    $config->set('payments.name', trim($vals['simple_conreg_payments']['name']));
-    $config->set('payments.postcode', trim($vals['simple_conreg_payments']['postcode']));
+    $config->set('payments.name', trim($vals['simple_conreg_payments']['show_name']));
+    $config->set('payments.postcode', trim($vals['simple_conreg_payments']['show_postcode']));
     $config->set('member_types', $vals['simple_conreg_members']['types']);
     $config->set('badge_types', $vals['simple_conreg_members']['badge_types']);
     $config->set('member_no_digits', $vals['simple_conreg_members']['digits']);
@@ -751,9 +750,10 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('confirmation.from_name', $vals['simple_conreg_confirmation']['from_name']);
     $config->set('confirmation.from_email', $vals['simple_conreg_confirmation']['from_email']);
     $config->set('confirmation.copy_email_to', $vals['simple_conreg_confirmation']['copy_email_to']);
-    $config->set('confirmation.reg_header', $vals['simple_conreg_confirmation']['reg_header']);
-    $config->set('confirmation.reg_footer', $vals['simple_conreg_confirmation']['reg_footer']);
-    $config->set('confirmation.pay_template', $vals['simple_conreg_confirmation']['pay_template']);
+    $config->set('confirmation.template_subject', $vals['simple_conreg_confirmation']['template_subject']);
+    $config->set('confirmation.template_body', $vals['simple_conreg_confirmation']['template_body']['value']);
+    $config->set('confirmation.template_format', $vals['simple_conreg_confirmation']['template_body']['format']);
+    $config->set('confirmation.notification_subject', $vals['simple_conreg_confirmation']['notification_subject']);
     $config->save();
 
     $fieldset = $vals['fieldset'];

@@ -46,7 +46,11 @@ class SimpleConregEmailer {
         $message['body'][] = \Drupal\Component\Render\PlainTextOutput::renderFromHtml("There's no telling what will happen with \"this\" or this & this>.");
         $message['body'][] = htmlspecialchars_decode(check_markup(SimpleConregTokens::applyTokens($params['body'], $tokens, TRUE), ENT_QUOTES, $format));  // Plain text version of body.
       }
-      if (!empty($params['from'])) {
+      if (empty($params['from'])) {
+        $from = $config->get('confirmation.from_name')." <".$config->get('confirmation.from_email').">";
+        $message['from'] = $from;
+        $message['headers']['From'] = $from;
+      } else {
         $message['from'] = $params['from'];
         $message['headers']['From'] = $params['from'];
       }
