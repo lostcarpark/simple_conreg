@@ -417,6 +417,24 @@ class SimpleConregStorage {
     return $entries;
   }
 
+  public static function adminMemberAddOns($eid) {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'first_name');
+    $select->addField('m', 'last_name');
+    $select->addField('m', 'add_on');
+    $select->addField('m', 'add_on_info');
+    $select->addField('m', 'add_on_price');
+    $select->condition('m.eid', $eid);
+    $select->condition('m.is_paid', 1);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+    $select->condition("add_on_price", 0, ">"); // Only list members if they have an add-on.
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
   public static function adminMemberCountrySummaryLoad($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.

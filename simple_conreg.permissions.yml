@@ -16,6 +16,10 @@
   title: View membership details
   description: Allow users to view lists of members (including private data)
   
+'view membership add-ons':
+  title: View membership add-ons
+  description: Allow users to view lists of members add-ons (including private data)
+  
 'view membership summary':
   title: View membership summary
   description: Allow users to view membership summary (including financial data)

@@ -78,6 +78,16 @@ simple_conreg_admin_member_summary:
     _permission: 'view membership summary'
     eid: ^[0-9]+$
 
+simple_conreg_admin_member_addons:
+  path: 'members/add-ons/{eid}'
+  defaults:
+    _title: 'Member Add-Ons'
+    _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminMemberAddOns'
+    eid: 1
+  requirements:
+    _permission: 'view membership add-ons'
+    eid: ^[0-9]+$
+
 simple_conreg_admin_zz9_list:
   path: 'members/zz9list/{eid}'
   defaults:

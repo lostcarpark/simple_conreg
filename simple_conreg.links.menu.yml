@@ -37,6 +37,11 @@ simple_conreg.member_list:
   route_name: simple_conreg_admin_member_list
   weight: 2
 
+simple_conreg.member_addons:
+  title: Member Add-Ons
+  route_name: simple_conreg_admin_member_addons
+  weight: 3
+
 simple_conreg.member_summary:
   title: Membership Summary
   route_name: simple_conreg_admin_member_summary
