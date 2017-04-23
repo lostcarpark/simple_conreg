@@ -17,7 +17,9 @@ class SimpleConregEmailer {
   // Function to create an email for specified member.
   public static function createEmail(&$message, $params) {
     // Only proceed if Event and Member provided.
-    if (NULL != $eid = $params['eid'] && NULL != $mid = $params['mid']) {
+    $eid = $params['eid'];
+    $mid = $params['mid'];
+    if (isset($eid) && isset($mid)) {
       if (!isset($tokens))
         $tokens = SimpleConregTokens::getTokens($eid, $mid);
       // If address is empty, use the lead member address, and add a note to the start of the body.
