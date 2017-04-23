@@ -103,7 +103,7 @@ class SimpleConregTokens {
 
     // Add payment URL to tokens.
     $payment_url = \Drupal\Core\Url::fromRoute('simple_conreg_payment',
-      array('mid' => $member['lead_mid'], 'key' => $leader['random_key']),
+      array('mid' => $member['lead_mid'], 'key' => $leader['random_key'], 'name' => $tokens['[full_name]'], 'postcode' => $leader['postcode']),
       array('absolute' => TRUE)
     )->toString();
     $tokens["[payment_url]"] = '<a href="'.$payment_url.'">'.$payment_url.'</a>';
