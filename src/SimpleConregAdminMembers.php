@@ -82,12 +82,12 @@ class SimpleConregAdminMembers extends FormBase {
         break;
     }
 
-    $displayOptions = ['approval' => $this->t('Paid members awaiting approval'),
-                      'approved' => $this->t('Paid and approved members'),
-                      'unpaid' => $this->t('Unpaid members'),
-                      'all' => $this->t('All members'),
-                      'custom' => $this->t('Custom search'),
-                      ];
+    $options = ['approval' => $this->t('Paid members awaiting approval'),
+                'approved' => $this->t('Paid and approved members'),
+                'unpaid' => $this->t('Unpaid members'),
+                'all' => $this->t('All members'),
+                'custom' => $this->t('Custom search'),
+               ];
 
     $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
     // If form values submitted, use the display value that was submitted over the passed in values.
@@ -97,8 +97,8 @@ class SimpleConregAdminMembers extends FormBase {
       // If display not submitted from form or passed in through URL, take last value from session.
       $display = $tempstore->get('display');
     }
-    if (empty($display) || !array_key_exists($display, $displayOptions))
-      $display = key($displayOptions); // If still no display specified, or invalid option, default to first key in displayOptions.
+    if (empty($display) || !array_key_exists($display, $options))
+      $display = key($options); // If still no display specified, or invalid option, default to first key in displayOptions.
 
     $tempstore->set('display', $display);
     $tempstore->set('page', $page);

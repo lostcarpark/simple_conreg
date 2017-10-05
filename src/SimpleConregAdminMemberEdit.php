@@ -449,6 +449,13 @@ class SimpleConregAdminMemberEdit extends FormBase {
       $entry['eid'] = $eid;
       // Insert to database table.
       $return = SimpleConregStorage::insert($entry);
+      
+      // After saving new member, get key from insert statement to use for lead member ID.
+      $lead_mid = $return;
+      $lead_key = $rand_key;
+      // Update member with own member ID as lead member ID.
+      $update = array('mid' => $lead_mid, 'lead_mid' => $lead_mid);
+      $return = SimpleConregStorage::update($update);
     }
     if ($return) {
 

@@ -78,11 +78,11 @@ class SimpleConregAdminCheckIn extends FormBase {
         break;
     }
 
-    $displayOptions = ['not_checked' => $this->t('Members to be checked in'),
-                      'checked_in' => $this->t('Already checked in members'),
-                      'all' => $this->t('All members'),
-                      'custom' => $this->t('Custom search'),
-                      ];
+    $options = ['not_checked' => $this->t('Members to be checked in'),
+                'checked_in' => $this->t('Already checked in members'),
+                'all' => $this->t('All members'),
+                'custom' => $this->t('Custom search'),
+               ];
 
     $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
     // If form values submitted, use the display value that was submitted over the passed in values.
@@ -92,8 +92,8 @@ class SimpleConregAdminCheckIn extends FormBase {
       // If display not submitted from form or passed in through URL, take last value from session.
       $display = $tempstore->get('check_in_display');
     }
-    if (empty($display) || !array_key_exists($display, $displayOptions))
-      $display = key($displayOptions); // If still no display specified, or invalid option, default to first key in displayOptions.
+    if (empty($display) || !array_key_exists($display, $options))
+      $display = key($options); // If still no display specified, or invalid option, default to first key in displayOptions.
 
     // Save the display options.
     $tempstore->set('check_in_display', $display);
