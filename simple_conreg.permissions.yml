@@ -39,3 +39,8 @@
 'manage convention members':
   title: Manage convention members
   description: Allow users to approve, add and update members
+  
+'check in convention members':
+  title: Manage convention members
+  description: Allow users to check in members arriving at the convention
+

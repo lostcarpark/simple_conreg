@@ -343,12 +343,17 @@ class SimpleConregAdminMemberEmail extends FormBase {
   public function updateEmailPreview(array $form, FormStateInterface $form_state) {
     return $form['email']['preview'];
   }
-  
+
   /*
    * Submit handler for cancel button.
    */
 
   public function submitCancel(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
+    // Get session state to return to correct page.
+    $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
+    $display = $tempstore->get('display');
+    $page = $tempstore->get('page');
     // Redirect to member list.
     $form_state->setRedirect('simple_conreg_admin_members', ['eid' => $eid, 'display' => $display, 'page' => $page]);
   }
@@ -373,6 +378,10 @@ class SimpleConregAdminMemberEmail extends FormBase {
     $to = $params["to"];
     $language_code = \Drupal::languageManager()->getDefaultLanguage()->getId();
     $send_now = TRUE;
+    // Get session state to return to correct page.
+    $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
+    $display = $tempstore->get('display');
+    $page = $tempstore->get('page');
     // Send confirmation email to member.
     $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $language_code, $params);
     

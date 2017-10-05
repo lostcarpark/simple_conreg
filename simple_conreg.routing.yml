@@ -130,7 +130,7 @@ simple_conreg_admin_members:
   requirements:
     _permission: 'manage convention members'
     eid: ^[0-9]+$
-    display: ^[a-z]+$
+    display: ^[a-z_]+$
     page: ^[0-9]+$
 
 simple_conreg_admin_members_add:
@@ -187,4 +187,17 @@ simple_conreg_admin_members_email:
     eid: ^[0-9]+$
     mid: ^[0-9]+$
 
+simple_conreg_admin_checkin:
+  path: 'admin/members/checkin/{eid}/{display}/{page}'
+  defaults:
+    _title: 'Member Checkin'
+    _form: '\Drupal\simple_conreg\SimpleConregAdminCheckIn'
+    eid: 1
+    display: 'search'
+    page: 1
+  requirements:
+    _permission: 'check in convention members'
+    eid: ^[0-9]+$
+    display: ^[a-z_]+$
+    page: ^[0-9]+$
 

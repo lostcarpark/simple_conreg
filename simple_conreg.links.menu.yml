@@ -32,6 +32,12 @@ simple_conreg.admin.add:
   weight: 0
   parent: simple_conreg.admin.members
 
+simple_conreg.admin.checkin:
+  title: Membership Check In
+  route_name: simple_conreg_admin_checkin
+  weight: 5
+  parent: simple_conreg.register
+
 simple_conreg.member_list:
   title: Membership List
   route_name: simple_conreg_admin_member_list
@@ -45,21 +51,21 @@ simple_conreg.member_addons:
 simple_conreg.member_summary:
   title: Membership Summary
   route_name: simple_conreg_admin_member_summary
-  weight: 5
+  weight: 6
   parent: simple_conreg.register
 
 simple_conreg.zz9_member_list:
   title: ZZ9 Membership List
   route_name: simple_conreg_admin_zz9_list
-  weight: 8
+  weight: 10
 
 simple_conreg.programme_list:
   title: Programme Participant List
   route_name: simple_conreg_admin_programme_list
-  weight: 6
+  weight: 7
 
 simple_conreg.volunteer_list:
   title: Volunteer List
   route_name: simple_conreg_admin_volunteer_list
-  weight: 7
+  weight: 8
 

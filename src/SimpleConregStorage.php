@@ -227,23 +227,28 @@ class SimpleConregStorage {
         $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
         break;
       case 'custom':
-        $likes = $select->orConditionGroup()
-          ->condition('m.member_no', $search, 'LIKE')
-          ->condition('m.first_name', $search, 'LIKE')
-          ->condition('m.last_name', $search, 'LIKE')
-          ->condition('m.badge_name', $search, 'LIKE')
-          ->condition('m.email', $search, 'LIKE')
-          ->condition('m.payment_id', $search, 'LIKE')
-          ->condition('m.comment', $search, 'LIKE');
-        $select->condition($likes);
+        $words = explode(' ', trim($search));
+        foreach ($words as $word) {
+          if ($word != '') {
+            // Escape search word to prevent dangerous characters.
+            $esc_word = '%'.db_like($word).'%';
+            $likes = $select->orConditionGroup()
+              ->condition('m.member_no', $esc_word, 'LIKE')
+              ->condition('m.first_name', $esc_word, 'LIKE')
+              ->condition('m.last_name', $esc_word, 'LIKE')
+              ->condition('m.badge_name', $esc_word, 'LIKE')
+              ->condition('m.email', $esc_word, 'LIKE')
+              ->condition('m.payment_id', $esc_word, 'LIKE')
+              ->condition('m.comment', $esc_word, 'LIKE');
+            $select->condition($likes);
+          }
+        }
         $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     }
     return $select;
   }
 
   public static function adminMemberListLoad($eid, $condition, $search, $page=1, $pageSize=10, $order='m.mid', $direction='ASC') {
-    // Escape search term to prevent dangerous characters.
-    $esc_search = '%'.db_like($search).'%';
     
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
@@ -259,7 +264,7 @@ class SimpleConregStorage {
     $select->addField('m', 'is_approved');
     $select->addField('m', 'member_no');
     // Add selection criteria.
-    $select = SimpleConregStorage::adminMemberListCondition($eid, $select, $condition, $esc_search);
+    $select = SimpleConregStorage::adminMemberListCondition($eid, $select, $condition, $search);
     // Sort by specified field and direction.
     $select->orderby($order, $direction = $direction);
     $select->orderby('m.mid', $direction = $direction);
@@ -273,19 +278,115 @@ class SimpleConregStorage {
     $select = db_select('simple_conreg_members', 'm');
     $select->addField('m', 'mid');
     $select->condition('m.eid', $eid);
-    $select = SimpleConregStorage::adminMemberListCondition($eid, $select, $condition, $esc_search);
+    $select = SimpleConregStorage::adminMemberListCondition($eid, $select, $condition, $search);
     $count = $select->countQuery()->execute()->fetchField();
     $pages = (int)(($count - 1) / $pageSize) + 1;
 
     return [$pages, $entries];
   }
 
+
+  private static function adminMemberCheckInListCondition($eid, $select, $condition, $search) {
+    $select->condition('m.eid', $eid);
+    switch ($condition) {
+      case 'not_checked':
+        $select->condition('m.is_paid', 1);
+        $select->condition('m.is_checked_in', 0);
+        $select->condition("m.is_deleted", FALSE); //Only include members who aren't deleted.
+        break;
+      case 'checked_in':
+        $select->condition('m.is_paid', 1);
+        $select->condition('m.is_checked_in', 1);
+        $select->condition("m.is_deleted", FALSE); //Only include members who aren't deleted.
+        break;
+      case 'all':
+        // All members.
+        //$select->condition('m.is_paid', 1);
+        $select->condition("m.is_deleted", FALSE); //Only include members who aren't deleted.
+        break;
+      case 'custom':
+        $words = explode(' ', trim($search));
+        foreach ($words as $word) {
+          if ($word != '') {
+            // Escape search word to prevent dangerous characters.
+            $esc_word = '%'.db_like($word).'%';
+            $likes = $select->orConditionGroup()
+              ->condition('m.member_no', $esc_word, 'LIKE')
+              ->condition('l.member_no', $esc_word, 'LIKE')
+              ->condition('m.first_name', $esc_word, 'LIKE')
+              ->condition('l.first_name', $esc_word, 'LIKE')
+              ->condition('m.last_name', $esc_word, 'LIKE')
+              ->condition('l.last_name', $esc_word, 'LIKE')
+              ->condition('m.badge_name', $esc_word, 'LIKE')
+              ->condition('l.badge_name', $esc_word, 'LIKE')
+              ->condition('m.email', $esc_word, 'LIKE')
+              ->condition('l.email', $esc_word, 'LIKE')
+              ->condition('m.payment_id', $esc_word, 'LIKE')
+              ->condition('l.payment_id', $esc_word, 'LIKE')
+              ->condition('m.comment', $esc_word, 'LIKE')
+              ->condition('l.comment', $esc_word, 'LIKE');
+            $select->condition($likes);
+          }
+        }
+        //$select->condition('m.is_paid', 1);
+        $select->condition("m.is_deleted", FALSE); //Only include members who aren't deleted.
+    }
+    return $select;
+  }
+
+  /*
+   * Get member list for check in listing.
+   */
+  public static function adminMemberCheckInListLoad($eid, $condition, $search, $page=1, $pageSize=10, $order='m.mid', $direction='ASC') {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'mid');
+    $select->addField('m', 'member_no');
+    $select->addField('m', 'first_name');
+    $select->addField('m', 'last_name');
+    $select->addField('m', 'email');
+    $select->addField('m', 'badge_name');
+    $select->addField('m', 'member_type');
+    $select->addField('m', 'badge_type');
+    $select->addField('m', 'comment');
+    $select->addField('m', 'is_paid');
+    $select->addField('m', 'is_checked_in');
+    $select->addExpression("concat(l.first_name, ' ', l.last_name)", 'registered_by');
+    $select->join('simple_conreg_members', 'l', 'm.lead_mid = l.mid');
+    // Add selection criteria.
+    $select = SimpleConregStorage::adminMemberCheckInListCondition($eid, $select, $condition, $search);
+    // Sort by specified field and direction.
+    $select->orderby($order, $direction = $direction);
+    $select->orderby('m.mid', $direction = $direction);
+    // Make sure we only get items 0-49, for scalability reasons.
+    $select->range(($page-1) * $pageSize, $pageSize);
+    
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    // Run query to get total count.
+    $select = db_select('simple_conreg_members', 'm');
+    $select->addField('m', 'mid');
+    $select->join('simple_conreg_members', 'l', 'm.lead_mid = l.mid');
+    $select->condition('m.eid', $eid);
+    $select = SimpleConregStorage::adminMemberCheckInListCondition($eid, $select, $condition, $search);
+    $count = $select->countQuery()->execute()->fetchField();
+    $pages = (int)(($count - 1) / $pageSize) + 1;
+
+    return [$pages, $entries];
+  }
+  
+  
+  
+  
+  
   public static function loadAllMemberNos($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'mid');
     $select->addField('m', 'member_no');
     $select->addField('m', 'is_approved');
+    $select->addField('m', 'is_checked_in');
     $select->condition('m.eid', $eid);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
 

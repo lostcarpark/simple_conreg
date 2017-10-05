@@ -343,6 +343,27 @@ function simple_conreg_schema() {
         'default' => 0,
         'description' => 'Unix timestamp for the date and time registered.',
       ),
+      // alter table simple_conreg_members add is_checked_in int NOT NULL default "0" after join_date;
+      'is_checked_in' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'True if member has checked in at convention.',
+      ),
+      // alter table simple_conreg_members add check_in_date int NOT NULL default "0" after is_checked_in;
+      'check_in_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp for the date and time member was checked in.',
+      ),
+      // alter table simple_conreg_members add check_in_by int NULL after check_in_date;
+      'check_in_by' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => 'The Drupal user ID who checked the member in.',
+      ),      
       // alter table simple_conreg_members add is_deleted int NOT NULL default "0" after join_date;
       'is_deleted' => array(
         'type' => 'int',

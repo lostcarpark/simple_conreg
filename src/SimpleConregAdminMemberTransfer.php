@@ -160,8 +160,28 @@ class SimpleConregAdminMemberTransfer extends FormBase {
       '#value' => t('Transfer member'),
     );
 
+    $form['cancel'] = array(
+      '#type' => 'submit',
+      '#value' => t('Cancel'),
+      '#submit' => [[$this, 'submitCancel']],
+    );
+
     $form_state->set('mid', $mid);
     return $form;
+  }
+
+  /*
+   * Submit handler for cancel button.
+   */
+
+  public function submitCancel(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
+    // Get session state to return to correct page.
+    $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
+    $display = $tempstore->get('display');
+    $page = $tempstore->get('page');
+    // Redirect to member list.
+    $form_state->setRedirect('simple_conreg_admin_members', ['eid' => $eid, 'display' => $display, 'page' => $page]);
   }
 
   /*
@@ -184,6 +204,10 @@ class SimpleConregAdminMemberTransfer extends FormBase {
       $return = SimpleConregStorage::update($entry);
     }
     
+    // Get session state to return to correct page.
+    $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
+    $display = $tempstore->get('display');
+    $page = $tempstore->get('page');
     // Redirect to member list.
     $form_state->setRedirect('simple_conreg_admin_members', ['eid' => $eid, 'display' => $display, 'page' => $page]);
   }
