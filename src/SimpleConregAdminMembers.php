@@ -121,7 +121,7 @@ class SimpleConregAdminMembers extends FormBase {
     $form['display'] = array(
       '#type' => 'select',
       '#title' => $this->t('Select '),
-      '#options' => $displayOptions,
+      '#options' => $options,
       '#default_value' => $display,
       '#required' => TRUE,
       '#ajax' => array(
