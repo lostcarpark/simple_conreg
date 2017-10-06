@@ -313,6 +313,13 @@ class SimpleConregAdminMemberEdit extends FormBase {
       '#default_value' => $member['comment'],
     );
 
+    $form['member']['is_checked_in'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Checked In'),
+      '#description' => $this->t('Only tick if adding member at convention and they are present.'),
+      '#default_value' => $member['is_checked_in'],
+    );
+
     $join_timestamp = $member['join_date'];
     $join_date = gmdate("Y-m-d H:i:s", $join_timestamp);
     $form['member']['join_date'] = array(
@@ -428,7 +435,14 @@ class SimpleConregAdminMemberEdit extends FormBase {
       'member_price' => isset($form_values['member']['member_price']) && $form_values['member']['member_price'] != '' ?
         $form_values['member']['member_price'] : 0,
       'payment_id' => $form_values['member']['payment_id'],
+      'is_checked_in' => $form_values["member"]["is_checked_in"], 
     );
+    
+    
+    if ($form_values["member"]["is_checked_in"]) {
+      $entry['check_in_date'] = time();
+      $entry['check_in_by'] = $uid;
+    }
 
     // If Join Date specified, use it. If not, use current date/time.
     if (!isset($form_values['member']['join_date']) || $form_values['member']['join_date'] == '')

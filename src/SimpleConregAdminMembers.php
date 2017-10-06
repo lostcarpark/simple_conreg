@@ -132,7 +132,6 @@ class SimpleConregAdminMembers extends FormBase {
     );
 
     $headers = array(
-      'mid' => ['data' => t('MID'), 'field' => 'm.mid'],
       'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
       'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
       'email' => ['data' => t('Email'), 'field' => 'm.email'],
@@ -204,9 +203,6 @@ class SimpleConregAdminMembers extends FormBase {
       $is_paid = $entry['is_paid'];
       //$row = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $entry);
       $row = array();
-      $row['mid'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['mid']),
-      );
       $row['first_name'] = array(
         '#markup' => SafeMarkup::checkPlain($entry['first_name']),
       );
