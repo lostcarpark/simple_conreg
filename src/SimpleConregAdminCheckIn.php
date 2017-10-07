@@ -88,7 +88,7 @@ class SimpleConregAdminCheckIn extends FormBase {
     // If form values submitted, use the display value that was submitted over the passed in values.
     if (isset($form_values['display']))
       $display = $form_values['display'];
-    elseif (empty($display)) {
+    elseif (empty($form_values['display'])) {
       // If display not submitted from form or passed in through URL, take last value from session.
       $display = $tempstore->get('check_in_display');
     }
