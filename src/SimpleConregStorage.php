@@ -518,6 +518,21 @@ class SimpleConregStorage {
     return $entries;
   }
 
+  public static function adminMemberCheckInSummaryLoad($eid) {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'is_checked_in');
+    $select->addExpression('COUNT(m.mid)', 'num');
+    $select->condition('m.eid', $eid);
+    $select->condition('m.is_paid', 1);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+    $select->groupby('m.is_checked_in');
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
   public static function adminMemberAddOns($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.

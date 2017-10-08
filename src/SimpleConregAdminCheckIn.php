@@ -18,10 +18,48 @@ use Drupal\Core\URL;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\devel;
 
+
 /**
  * Simple form to add an entry, with all the interesting fields.
  */
 class SimpleConregAdminCheckIn extends FormBase {
+
+
+  /**
+   * Add a summary by check-in status to render array.
+   */
+  public function CheckInSummary($eid, &$content) {
+    $descriptions = [
+      0 => 'Not Checked In',
+      1 => 'Checked In',
+    ];
+    $rows = [];
+    $headers = [
+      t('Status'), 
+      t('Number of members'),
+    ];
+    $total = 0;
+    foreach ($entries = SimpleConregStorage::adminMemberCheckInSummaryLoad($eid) as $entry) {
+      // Replace type code with description.
+      $status = trim($entry['is_checked_in']);
+      if (isset($descriptions[$status]))
+        $entry['is_checked_in'] = $descriptions[$status];
+      // Sanitize each entry.
+      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $total += $entry['num'];
+    }
+    //Add a row for the total.
+    $rows[] = array(t("Total"), $total);
+    $content['check_in_summary'] = array(
+      '#type' => 'table',
+      '#header' => $headers,
+      '#rows' => $rows,
+      '#empty' => t('No entries available.'),
+    );
+
+    return $content;
+  }
+
 
   /**
    * {@inheritdoc}
@@ -110,6 +148,8 @@ class SimpleConregAdminCheckIn extends FormBase {
       '#prefix' => '<div id="memberform">',
       '#suffix' => '</div>',
     );
+
+    $this->CheckInSummary($eid, $form);
 
     $form['display'] = array(
       '#type' => 'select',
