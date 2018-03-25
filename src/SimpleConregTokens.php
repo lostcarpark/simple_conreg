@@ -66,7 +66,7 @@ class SimpleConregTokens {
 
       $typeVals = null;
       // Replace codes with values in member data.
-      SimpleConregTokens::replaceMemberCodes($members, $typeVals);
+      SimpleConregTokens::replaceMemberCodes($eid, $config, $members, $typeVals);
       $member = $members[0];
       
       // If member is not group lead, we need to get payment URL and possibly email from leader.
@@ -113,7 +113,7 @@ class SimpleConregTokens {
             $members = SimpleConregStorage::loadAll(['eid' => $eid, 'mid' => $mid, 'is_deleted' => 0]);
           }
           // Replace codes with values in member data.
-          SimpleConregTokens::replaceMemberCodes($members, $typeVals);
+          SimpleConregTokens::replaceMemberCodes($eid, $config, $members, $typeVals);
           // Add member 
           SimpleConregTokens::getMemberDetailsToken($config, $typeVals, $members, $member_no, $display, $plain_display);
         }
@@ -125,7 +125,7 @@ class SimpleConregTokens {
     return ['html' => $tokens, 'plain' => $plain, 'vals' => $member];
   }
 
-  public static function replaceMemberCodes(&$members, &$typeVals) {
+  public static function replaceMemberCodes($eid, &$config, &$members, &$typeVals) {
     // Labels for display option and communications method. Will add to config later.
     list($typeOptions, $typeVals) = SimpleConregOptions::memberTypes($eid, $config);
     $displayOptions = SimpleConregOptions::display();
@@ -155,7 +155,6 @@ class SimpleConregTokens {
   }
 
   public static function getMemberDetailsToken(&$config, &$typeVals, $members, &$member_seq, &$display, &$plain_display) {
-
     // List of fields to add to mail for each member.
     $confirm_labels = array(
       'first_name' => 'fields.first_name_label',
