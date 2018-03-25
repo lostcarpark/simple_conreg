@@ -211,8 +211,8 @@ class SimpleConregTokens {
       $global = $config->get('add_ons.global');
       if ($global && $member_no == 1 || !$global) {
         foreach ($addon_labels as $key=>$val) {
-          if (!empty($config->get($val))) {
-            $label = $config->get($val);
+          if (!empty($fieldsetConfig->get($val))) {
+            $label = $fieldsetConfig->get($val);
             $display .= '<tr><td>'.$label.'</td><td>'.$cur_member[$key].'</td></tr>';
             $plain_display .= $label.":\t".$cur_member[$key]."\n";
           }
