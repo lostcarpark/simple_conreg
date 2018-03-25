@@ -19,7 +19,6 @@ class SimpleConregEmailer {
     // Only proceed if Event and Member provided.
     $eid = $params['eid'];
     $mid = $params['mid'];
-    //dpm($params, "createEmail");
     if (isset($eid)) {
       if (!isset($tokens))
         $tokens = SimpleConregTokens::getTokens($eid, $mid);
@@ -39,7 +38,6 @@ class SimpleConregEmailer {
       //$params = array_merge($params, $tokens['vals']);
       // Add tokens to params for later reuse.
       $params['tokens'] = $tokens;
-      //dpm($params, "Token Params");
       // Store params in message to return.
       $message['params'] = $params;
       $message['subject'] = SimpleConregTokens::applyTokens($params['subject'], $tokens);
@@ -54,8 +52,8 @@ class SimpleConregEmailer {
         //$message['body'][] = check_markup($body, $format);  // HTML version of message body.
         $message['plain'] = \Drupal\Component\Utility\SafeMarkup::checkPlain(SimpleConregTokens::applyTokens($params['body'], $tokens, TRUE));  // Plain text version of body.
       } else {
-        $message['body'][] = \Drupal\Component\Render\PlainTextOutput::renderFromHtml("There's no telling what will happen with \"this\" or this & this>.");
-        $message['body'][] = htmlspecialchars_decode(check_markup(SimpleConregTokens::applyTokens($params['body'], $tokens, TRUE), ENT_QUOTES, $format));  // Plain text version of body.
+        //$message['body'][] = \Drupal\Component\Render\PlainTextOutput::renderFromHtml("There's no telling what will happen with \"this\" or this & this>.");
+        $message['body'][] = \Drupal\Component\Utility\SafeMarkup::checkPlain(SimpleConregTokens::applyTokens($params['body'], $tokens, TRUE));  // Plain text version of body.
       }
       if (empty($params['from'])) {
         $from = $config->get('confirmation.from_name')." <".$config->get('confirmation.from_email').">";
@@ -65,7 +63,6 @@ class SimpleConregEmailer {
         $message['from'] = $params['from'];
         $message['headers']['From'] = $params['from'];
       }
-      //dpm($message, "Message");
     }
   }
 

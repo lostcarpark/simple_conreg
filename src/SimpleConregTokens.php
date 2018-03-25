@@ -67,7 +67,6 @@ class SimpleConregTokens {
       $typeVals = null;
       // Replace codes with values in member data.
       SimpleConregTokens::replaceMemberCodes($members, $typeVals);
-      //dpm($typeVals);
       $member = $members[0];
       
       // If member is not group lead, we need to get payment URL and possibly email from leader.

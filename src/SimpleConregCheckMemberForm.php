@@ -136,7 +136,6 @@ class SimpleConregCheckMemberForm extends FormBase {
     $eid = $form_state->get('eid');
     $config = SimpleConregConfig::getConfig($eid);
     $form_values = $form_state->getValues();
-    //dpm($form_values['email']);
 
     // Set up parameters for receipt email.
     $params = ['eid' => $eid];
@@ -165,7 +164,6 @@ class SimpleConregCheckMemberForm extends FormBase {
     $to = $form_values['email'];
     $language_code = \Drupal::languageManager()->getDefaultLanguage()->getId();
     $send_now = TRUE;
-    //dpm($params);
     // Send confirmation email to member.
     $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $language_code, $params);
 
