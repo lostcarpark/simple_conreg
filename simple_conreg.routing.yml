@@ -40,6 +40,16 @@ simple_conreg_list:
     _permission: 'convention registration'
     eid: ^[0-9]+$
 
+simple_conreg_check:
+  path: 'members/check/{eid}'
+  defaults:
+    _title: 'Check Membership'
+    _form: '\Drupal\simple_conreg\SimpleConregCheckMemberForm'
+    eid: 1
+  requirements:
+    _permission: 'check membership'
+    eid: ^[0-9]+$
+
 simple_conreg_config:
   path: 'admin/config/simple_conreg/{eid}'
   defaults:

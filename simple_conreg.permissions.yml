@@ -4,6 +4,10 @@
   title: Register for convention
   description: Allow users to register and view other members
 
+'check membership':
+  title: Check membership
+  description: Allow users to check if they have registered
+
 'configure convention registration':
   title: Configure convention registration
   description: Allow users to change registration configuration settings

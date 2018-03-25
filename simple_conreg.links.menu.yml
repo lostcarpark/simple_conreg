@@ -8,6 +8,12 @@ simple_conreg.list:
   weight: 0
   parent: simple_conreg.register
 
+simple_conreg.check:
+  title: Check Membership
+  route_name: simple_conreg_check
+  weight: 1
+  parent: simple_conreg.register
+
 simple_conreg.config:
   title: Registration Config
   route_name: simple_conreg_config

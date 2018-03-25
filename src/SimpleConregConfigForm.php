@@ -690,6 +690,43 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('confirmation.notification_subject'),
     );
 
+    /* Intro text. */
+
+    $form['simple_conreg_member_check'] = array(
+      '#type' => 'fieldset',
+      '#title' => $this->t('Member Check Settings'),
+      '#tree' => TRUE,
+    );
+
+    $form['simple_conreg_member_check']['member_check_intro'] = array(
+      '#type' => 'textarea',
+      '#title' => $this->t('Member check introduction'),
+      '#description' => $this->t('Introductory message to be displayed at the top of the member check page.'),
+      '#default_value' => $config->get('member_check.intro'),
+    );
+
+    $form['simple_conreg_member_check']['confirm_subject'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Member check email subject'),
+      '#default_value' => $config->get('member_check.confirm_subject'),
+    );
+
+    $form['simple_conreg_member_check']['confirm_body'] = array(
+      '#type' => 'text_format',
+      '#title' => $this->t('Member check confiramtion email body'),
+      '#description' => $this->t('Text for the email body. you may use the following tokens: @tokens.', ['@tokens' => SimpleConregTokens::tokenHelp()]),
+      '#default_value' => $config->get('member_check.confirm_body'),
+      '#format' => $config->get('member_check.confirm_format'),
+    );  
+
+    $form['simple_conreg_member_check']['unknown_body'] = array(
+      '#type' => 'text_format',
+      '#title' => $this->t('Member check confiramtion email body'),
+      '#description' => $this->t('Text for the unknown body, to be sent if no member found for email address.'),
+      '#default_value' => $config->get('member_check.unknown_body'),
+      '#format' => $config->get('member_check.unknown_format'),
+    );  
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -754,6 +791,12 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('confirmation.template_body', $vals['simple_conreg_confirmation']['template_body']['value']);
     $config->set('confirmation.template_format', $vals['simple_conreg_confirmation']['template_body']['format']);
     $config->set('confirmation.notification_subject', $vals['simple_conreg_confirmation']['notification_subject']);
+    $config->set('member_check.intro', $vals['simple_conreg_member_check']['member_check_intro']);
+    $config->set('member_check.confirm_subject', $vals['simple_conreg_member_check']['confirm_subject']);
+    $config->set('member_check.confirm_body', $vals['simple_conreg_member_check']['confirm_body']['value']);
+    $config->set('member_check.confirm_format', $vals['simple_conreg_member_check']['confirm_body']['format']);
+    $config->set('member_check.unknown_body', $vals['simple_conreg_member_check']['unknown_body']['value']);
+    $config->set('member_check.unknown_format', $vals['simple_conreg_member_check']['unknown_body']['format']);
     $config->save();
 
     $fieldset = $vals['fieldset'];
