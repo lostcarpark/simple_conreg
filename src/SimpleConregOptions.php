@@ -26,23 +26,25 @@ class SimpleConregOptions {
     $typeVals = [];
     $typeOptions = [];
     foreach ($types as $type) {
-      list($code, $desc, $name, $price, $badgetype, $fieldset) = explode('|', $type);
-      $code = trim($code);
-      $fieldset = trim($fieldset);
-      if (empty($fieldset)) {
-        $fieldset = 0;
+      if (!empty($type)) {
+        list($code, $desc, $name, $price, $badgetype, $fieldset) = explode('|', $type);
+        $code = trim($code);
+        $fieldset = trim($fieldset);
+        if (empty($fieldset)) {
+          $fieldset = 0;
+        }
+        // Put description in specific array for populating drop-down.
+        $typeOptions[$code] = trim($desc);
+        // Put all other values in an associative array.
+        $typeVals[$code] = [
+          'name' => trim($name),
+          'description' => trim($desc),
+          'price' => trim($price),
+          'badgetype' => trim($badgetype),
+          'fieldset' => trim($fieldset),
+          'config' => SimpleConregConfig::getFieldsetConfig($eid, $fieldset),
+        ];
       }
-      // Put description in specific array for populating drop-down.
-      $typeOptions[$code] = trim($desc);
-      // Put all other values in an associative array.
-      $typeVals[$code] = [
-        'name' => trim($name),
-        'description' => trim($desc),
-        'price' => trim($price),
-        'badgetype' => trim($badgetype),
-        'fieldset' => trim($fieldset),
-        'config' => SimpleConregConfig::getFieldsetConfig($eid, $fieldset),
-      ];
     }
     return [$typeOptions, $typeVals];
   }
@@ -97,8 +99,10 @@ class SimpleConregOptions {
     $countries = explode("\n", $config->get('reference.countries')); // One country per line.
     $countryOptions = array();
     foreach ($countries as $country) {
-      list($code, $name) = explode('|', $country);
-      $countryOptions[$code] = $name;
+      if (!empty($country)) {
+        list($code, $name) = explode('|', $country);
+        $countryOptions[$code] = $name;
+      }
     }
     return $countryOptions;
   }

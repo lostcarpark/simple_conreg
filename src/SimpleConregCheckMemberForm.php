@@ -153,10 +153,14 @@ class SimpleConregCheckMemberForm extends FormBase {
       $params['mid'] = $mids;
       $params['body'] = $config->get('member_check.confirm_body');
       $params['format'] = $config->get('member_check.confirm_format');
+      
+      $info = 'Member details found and sent to @email.';
     }
     else {
       $params['body'] = $config->get('member_check.unknown_body');
       $params['format'] = $config->get('member_check.unknown_format');
+      
+      $info = 'Member details not found for @email.';
     }
 
     $module = "simple_conreg";
@@ -167,9 +171,11 @@ class SimpleConregCheckMemberForm extends FormBase {
     // Send confirmation email to member.
     $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $language_code, $params);
 
+    // Log an event to show a member check occurred.
+    \Drupal::logger('simple_conreg')->info($info, ['@email' => $form_values['email']]);
+
     // Display a status message to let user know an email has been sent.
-    //MessengerInterface::addMessage($this->t('@email', ['@email' => $form_values['email']]));
-    drupal_set_message($this->t('An email has been sent to @email. If you don\'t find it, please check your spam folder.', ['@email' => $form_values['email']]));
+    \Drupal::messenger()->addMessage($this->t('An email has been sent to @email. If you don\'t find it, please check your spam folder.', ['@email' => $form_values['email']]));
   }
 
 

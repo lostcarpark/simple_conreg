@@ -41,7 +41,6 @@ class SimpleConregFieldOptionStorage {
       $fieldOptions[$entry['field_name']]['options'][$entry['optid']]['detail'] = $entry['detail_title'];
       $fieldOptions[$entry['field_name']]['options'][$entry['optid']]['required'] = $entry['detail_is_required'];
     }
-    //dpm($fieldOptions);
 
     return $fieldOptions;
   }

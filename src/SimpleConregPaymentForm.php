@@ -10,6 +10,7 @@ namespace Drupal\simple_conreg;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Component\Utility\Xss;
 use Drupal\devel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -234,7 +235,7 @@ class SimpleConregPaymentForm extends FormBase {
       if ($charge->paid == true) {
 
         $payment_id = $charge->id;
-        drupal_set_message($this->t("Your payment has been accepted. Thank you for joining. Your payment confirmation ID is @payment", array('@payment' => $payment_id)));
+        \Drupal::messenger()->addMessage($this->t("Your payment has been accepted. Thank you for joining. Your payment confirmation ID is @payment", array('@payment' => $payment_id)));
         
         // Since member record already loaded, update in memory.
         $member['is_paid'] = 1;

@@ -15,6 +15,7 @@ use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\node\NodeInterface;
 use Drupal\devel;
@@ -788,9 +789,9 @@ class SimpleConregRegistrationForm extends FormBase {
       if ($return) {
         // Now we have the member ID we can save the field options.
         SimpleConregFieldOptions::insertOptionFields($return, $optionVals);
-        drupal_set_message(t('Thank you for registering @first_name @last_name.',
-                             array('@first_name' => $entry['first_name'],
-                                   '@last_name' => $entry['last_name'])));
+        \Drupal::messenger()->addMessage(t('Thank you for registering @first_name @last_name.',
+                                           array('@first_name' => $entry['first_name'],
+                                                 '@last_name' => $entry['last_name'])));
       }
       if ($cnt == 1) {
         // For first member, get key from insert statement to use for lead member ID.

@@ -11,6 +11,107 @@ namespace Drupal\simple_conreg;
 
 class SimpleConregTokens {
 
+  var $eid;
+  var $mid;
+  var $html;
+  var $plain;
+  var $event;
+  var $config;
+  var $symbol;
+  var $typevals;
+  var $display;
+  var $plain_display;
+
+
+  public function __construct($eid = 1, $mid = null)
+  {
+    $this->eid = $eid;
+    $this->mid = $mid;
+
+    $this->html = [];
+    $this->event = SimpleConregEventStorage::load(['eid' => $eid]);
+    $this->config = SimpleConregConfig::getConfig($eid);
+    $this->symbol = $this->config->get('payments.symbol');
+
+    $this->html['[site_name]'] = \Drupal::config('system.site')->get('name');
+    $this->html['[event_name]'] = $this->event['event_name'];
+    $this->html['[event_email]'] = $this->config->get('confirmation.from_email');
+
+    // Only fetch member details if mid set.
+    if (isset($mid)) {
+      if (is_array($mid)) {
+        $extra_mids = array_slice($mid, 1); // Store any extra member IDs for later.
+        $mid = $mid[0];
+      }
+      // Get all members registered by subject member.
+      $members = SimpleConregStorage::loadAll(['eid' => $eid, 'lead_mid' => $mid, 'is_deleted' => 0]);
+      // If no records returned, member is not group leader, so get member details.
+      if (count($members) == 0) {
+        $members = SimpleConregStorage::loadAll(['eid' => $eid, 'mid' => $mid, 'is_deleted' => 0]);
+      }
+
+      $this->typeVals = null;
+      // Replace codes with values in member data.
+      $this->replaceMemberCodes($members);
+      $this->vals = $members[0];
+      
+      // If member is not group lead, we need to get payment URL and possibly email from leader.
+      if ($this->vals['mid'] != $this->vals['lead_mid']) {
+        $leader = SimpleConregStorage::load(['eid' => $eid, 'mid' => $member['lead_mid'], 'is_deleted' => 0]);
+      } else {
+        $leader = $this->vals;
+      }
+      $this->html['[lead_key]'] = $leader['random_key'];
+      $this->html['[lead_email]'] = $leader['email'];
+
+      // Add tokens for all member fields.
+      foreach ($this->vals as $field => $value) {
+        $this->html["[$field]"] = $value;
+      }
+      $this->html['[full_name]'] = trim($this->vals['first_name'] . ' ' . $this->vals['last_name']);
+
+      // Copy all tokens into plain version. Later tokens may contain HTML.
+      $this->plain = $this->html;
+
+      // Add payment URL to tokens.
+      if (!empty($leader['random_key'])) {
+        $payment_url = \Drupal\Core\Url::fromRoute('simple_conreg_payment',
+          array('mid' => $leader['lead_mid'], 'key' => $leader['random_key'], 'name' => $this->html['[full_name]'], 'postcode' => $leader['postcode']),
+          array('absolute' => TRUE)
+        )->toString();
+        $this->html["[payment_url]"] = '<a href="'.$payment_url.'">'.$payment_url.'</a>';
+        $plain["[payment_url]"] = $payment_url;
+      } else {
+        $tokens["[payment_url]"] = '';
+        $plain["[payment_url]"] = '';
+      }
+
+      $this->display = '';
+      $this->plain_display = '';
+      $member_no = 0;
+      $this->getMemberDetailsToken($members, $member_no);
+
+      // Loop through any additional members registered and add them to the member details.
+      if (isset($extra_mids)) {
+        foreach($extra_mids as $mid) {
+          $members = SimpleConregStorage::loadAll(['eid' => $eid, 'lead_mid' => $mid, 'is_deleted' => 0]);
+          // If no records returned, member is not group leader, so get member details.
+          if (count($members) == 0) {
+            $members = SimpleConregStorage::loadAll(['eid' => $eid, 'mid' => $mid, 'is_deleted' => 0]);
+          }
+          // Replace codes with values in member data.
+          $this->replaceMemberCodes($members);
+          // Add member 
+          $this->getMemberDetailsToken($members, $member_no);
+        }
+      }
+
+      $this->html['[member_details]'] = $this->display;
+      $this->plain['[member_details]'] = $this->plain_display;
+    }
+  }
+
+
   // Function to return help text containing allowed tokens.
   public static function tokenHelp() {
     $tokens = 
@@ -41,96 +142,12 @@ class SimpleConregTokens {
 
 
 
-  public static function getTokens($eid, $mid = NULL) {
-    $tokens = [];
-    $event = SimpleConregEventStorage::load(['eid' => $eid]);
-    $config = SimpleConregConfig::getConfig($eid);
-    $symbol = $config->get('payments.symbol');
-    
-    $tokens['[site_name]'] = \Drupal::config('system.site')->get('name');
-    $tokens['[event_name]'] = $event['event_name'];
-    $tokens['[event_email]'] = $config->get('confirmation.from_email');
-
-    // Only fetch member details if mid set.
-    if (isset($mid)) {
-      if (is_array($mid)) {
-        $extra_mids = array_slice($mid, 1); // Store any extra member IDs for later.
-        $mid = $mid[0];
-      }
-      // Get all members registered by subject member.
-      $members = SimpleConregStorage::loadAll(['eid' => $eid, 'lead_mid' => $mid, 'is_deleted' => 0]);
-      // If no records returned, member is not group leader, so get member details.
-      if (count($members) == 0) {
-        $members = SimpleConregStorage::loadAll(['eid' => $eid, 'mid' => $mid, 'is_deleted' => 0]);
-      }
-
-      $typeVals = null;
-      // Replace codes with values in member data.
-      SimpleConregTokens::replaceMemberCodes($eid, $config, $members, $typeVals);
-      $member = $members[0];
-      
-      // If member is not group lead, we need to get payment URL and possibly email from leader.
-      if ($member['mid'] != $member['lead_mid']) {
-        $leader = SimpleConregStorage::load(['eid' => $eid, 'mid' => $member['lead_mid'], 'is_deleted' => 0]);
-      } else {
-        $leader = $member;
-      }
-      $tokens['[lead_key]'] = $leader['random_key'];
-      $tokens['[lead_email]'] = $leader['email'];
-
-      // Add tokens for all member fields.
-      foreach ($member as $field => $value) {
-        $tokens["[$field]"] = $value;
-      }
-      $tokens['[full_name]'] = trim($member['first_name'] . ' ' . $member['last_name']);
-
-      $plain = $tokens;
-
-      // Add payment URL to tokens.
-      if (!empty($leader['random_key'])) {
-        $payment_url = \Drupal\Core\Url::fromRoute('simple_conreg_payment',
-          array('mid' => $member['lead_mid'], 'key' => $leader['random_key'], 'name' => $tokens['[full_name]'], 'postcode' => $leader['postcode']),
-          array('absolute' => TRUE)
-        )->toString();
-        $tokens["[payment_url]"] = '<a href="'.$payment_url.'">'.$payment_url.'</a>';
-        $plain["[payment_url]"] = $payment_url;
-      } else {
-        $tokens["[payment_url]"] = '';
-        $plain["[payment_url]"] = '';
-      }
-
-      $display = '';
-      $plain_display = '';
-      $member_no = 0;
-      SimpleConregTokens::getMemberDetailsToken($config, $typeVals, $members, $member_no, $display, $plain_display);
-
-      // Loop through any additional members registered and add them to the member details.
-      if (isset($extra_mids)) {
-        foreach($extra_mids as $mid) {
-          $members = SimpleConregStorage::loadAll(['eid' => $eid, 'lead_mid' => $mid, 'is_deleted' => 0]);
-          // If no records returned, member is not group leader, so get member details.
-          if (count($members) == 0) {
-            $members = SimpleConregStorage::loadAll(['eid' => $eid, 'mid' => $mid, 'is_deleted' => 0]);
-          }
-          // Replace codes with values in member data.
-          SimpleConregTokens::replaceMemberCodes($eid, $config, $members, $typeVals);
-          // Add member 
-          SimpleConregTokens::getMemberDetailsToken($config, $typeVals, $members, $member_no, $display, $plain_display);
-        }
-      }
-
-      $tokens['[member_details]'] = $display;
-      $plain['[member_details]'] = $plain_display;
-    }
-    return ['html' => $tokens, 'plain' => $plain, 'vals' => $member];
-  }
-
-  public static function replaceMemberCodes($eid, &$config, &$members, &$typeVals) {
+  public function replaceMemberCodes(&$members) {
     // Labels for display option and communications method. Will add to config later.
-    list($typeOptions, $typeVals) = SimpleConregOptions::memberTypes($eid, $config);
+    list($typeOptions, $this->typeVals) = SimpleConregOptions::memberTypes($this->eid, $this->config);
     $displayOptions = SimpleConregOptions::display();
-    $communicationOptions = SimpleConregOptions::communicationMethod($eid, $config);
-    $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
+    $communicationOptions = SimpleConregOptions::communicationMethod($this->eid, $this->config);
+    $countryOptions = SimpleConregOptions::memberCountries($this->eid, $this->config);
     $yesNoOptions = SimpleConregOptions::yesNo();
     
     foreach ($members as $index => $val) {
@@ -141,11 +158,12 @@ class SimpleConregTokens {
       $members[$index]['is_approved'] = $yesNoOptions[$val['is_approved']];
       $members[$index]['is_paid'] = $yesNoOptions[$val['is_paid']];
       $members[$index]['display'] = $displayOptions[$val['display']];
-      $members[$index]['member_price'] = $symbol . $val['member_price'];
-      $members[$index]['member_total'] = $symbol . $val['member_total'];
-      $members[$index]['payment_amount'] = $symbol . $val['payment_amount'];
-      $members[$index]['add_on_price'] = $symbol . $val['add_on_price'];
-      $members[$index]['member_type'] = (isset($typeNames[$val['member_type']]) ? $typeNames[$val['member_type']]['name'] : $val['member_type']);
+      $members[$index]['member_price'] = $this->symbol . $val['member_price'];
+      $members[$index]['member_total'] = $this->symbol . $val['member_total'];
+      $members[$index]['payment_amount'] = $this->symbol . $val['payment_amount'];
+      $members[$index]['add_on_price'] = $this->symbol . $val['add_on_price'];
+      $members[$index]['raw_member_type'] = $members[$index]['member_type'];
+      $members[$index]['member_type'] = (isset($this->typeVals[$val['member_type']]) ? $this->typeVals[$val['member_type']]['name'] : $val['member_type']);
       if (!empty($val['communication_method']))
         $members[$index]['communication_method'] = $communicationOptions[$val['communication_method']];
       $members[$index]['country'] = $countryOptions[$val['country']];
@@ -154,7 +172,7 @@ class SimpleConregTokens {
     }
   }
 
-  public static function getMemberDetailsToken(&$config, &$typeVals, $members, &$member_seq, &$display, &$plain_display) {
+  public function getMemberDetailsToken($members, &$member_seq) {
     // List of fields to add to mail for each member.
     $confirm_labels = array(
       'first_name' => 'fields.first_name_label',
@@ -183,68 +201,72 @@ class SimpleConregTokens {
     );
 
     $reg_date = t('Registered on @date', ['@date' => format_date($members[0]['join_date'])]);
-    $display .= '<h3>' . $reg_date . '</h3>';
-    $plain_display .= "\n$reg_date\n";
-    $display .= '<table>';
+    $this->display .= '<h3>' . $reg_date . '</h3>';
+    $this->plain_display .= "\n$reg_date\n";
+    $this->display .= '<table>';
     foreach ($members as $index => $cur_member) {
       // Get fieldset config for member type.
-      $memberType = $cur_member['member_type'];
-      $fieldsetConfig = $typeVals[$memberType]['config'];
+      $memberType = $cur_member['raw_member_type'];
+      $fieldsetConfig = $this->typeVals[$memberType]['config'];
       // Look up labels for fields to email.
       $member_seq ++;
       $member_heading = t('Member @seq', ['@seq' => $member_seq]);
-      $display .= '<tr><th colspan="2">'.$member_heading.'</th></tr>';
-      $plain_display .= "\n$member_heading\n";
+      $this->display .= '<tr><th colspan="2">'.$member_heading.'</th></tr>';
+      $this->plain_display .= "\n$member_heading\n";
       foreach ($confirm_labels as $key=>$val) {
         if (!empty($fieldsetConfig->get($val))) {
           $label = $fieldsetConfig->get($val);
-          $display .= '<tr><td>'.$label.'</td><td>'.$cur_member[$key].'</td></tr>';
-          $plain_display .= $label.":\t".$cur_member[$key]."\n";
+          $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member[$key].'</td></tr>';
+          $this->plain_display .= $label.":\t".$cur_member[$key]."\n";
         }
       }
       // Add price with static label.
       $label = t('Price for member');
-      $display .= '<tr><td>'.$label.'</td><td>'.$cur_member['member_price'].'</td></tr>';
-      $plain_display .= $label.":\t".$cur_member['member_price']."\n";
+      $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member['member_price'].'</td></tr>';
+      $this->plain_display .= $label.":\t".$cur_member['member_price']."\n";
       // Add on details.
-      $global = $config->get('add_ons.global');
+      $global = $this->config->get('add_ons.global');
       if ($global && $member_no == 1 || !$global) {
         foreach ($addon_labels as $key=>$val) {
           if (!empty($fieldsetConfig->get($val))) {
             $label = $fieldsetConfig->get($val);
-            $display .= '<tr><td>'.$label.'</td><td>'.$cur_member[$key].'</td></tr>';
-            $plain_display .= $label.":\t".$cur_member[$key]."\n";
+            $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member[$key].'</td></tr>';
+            $this->plain_display .= $label.":\t".$cur_member[$key]."\n";
           }
         }
       }
     }
     $label = t('Total');
-    $display .= '<tr><th colspan="2">'.$label.'</th></tr>';
-    $plain_display .= "\n$label\n";
+    $this->display .= '<tr><th colspan="2">'.$label.'</th></tr>';
+    $this->plain_display .= "\n$label\n";
     $label = t('Total amount to pay');
-    $display .= '<tr><td>'.$label.'</td><td>'.$leader['payment_amount'].'</td></tr>';
-    $plain_display .= $label.":\t".$members[0]['payment_amount']."\n";
-    $display .= '</table>';
+    $this->display .= '<tr><td>'.$label.'</td><td>'.$this->vals['payment_amount'].'</td></tr>';
+    $this->plain_display .= $label.":\t".$this->vals['payment_amount']."\n";
+    $this->display .= '</table>';
   }
 
-  public static function applyTokens($message, $tokens, $use_plain = FALSE) {
+  public function applyTokens($message, $use_plain = FALSE) {
     // Select which set of tokens to use.
     if ($use_plain)
-      $apply = $tokens['plain'];
+      $apply = $this->plain;
     else
-      $apply = $tokens['html'];
-    // Split tokens into two arrays for find and replace.
-    $find = [];
-    $replace = [];
-    foreach($apply as $key => $val) {
-      $find[] = $key;
-      $replace[] = $val;
-    }
-    return str_replace($find, $replace, $message);
+      $apply = $this->html;
+    if (is_array($apply)) {
+      // Split tokens into two arrays for find and replace.
+      $find = [];
+      $replace = [];
+      foreach($apply as $key => $val) {
+        $find[] = $key;
+        $replace[] = $val;
+      }
+      return str_replace($find, $replace, $message);
+      }
+    else
+      return $message;
   }
 
-  public static function previewTokens($message, $tokens, $use_plain = FALSE) {
-    return SimpleConregTokens::applyTokens($message, $tokens, $use_plain);
+  public function previewTokens($message, $use_plain = FALSE) {
+    return $this->applyTokens($message, $use_plain);
   }
 
 }

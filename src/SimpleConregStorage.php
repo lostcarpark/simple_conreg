@@ -5,6 +5,7 @@
  * Contains \Drupal\simple_conreg\SimpleConregStorage
  */
 
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\devel;
 
 namespace Drupal\simple_conreg;
@@ -40,7 +41,7 @@ class SimpleConregStorage {
           ->execute();
     }
     catch (\Exception $e) {
-      drupal_set_message(t('db_insert failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('db_insert failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');
@@ -68,7 +69,7 @@ class SimpleConregStorage {
           ->execute();
     }
     catch (\Exception $e) {
-      drupal_set_message(t('db_update failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('db_update failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');
@@ -96,7 +97,7 @@ class SimpleConregStorage {
           ->execute();
     }
     catch (\Exception $e) {
-      drupal_set_message(t('db_update failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('db_update failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');

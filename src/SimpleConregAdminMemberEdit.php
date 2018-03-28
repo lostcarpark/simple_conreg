@@ -15,6 +15,7 @@ use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\node\NodeInterface;
 use Drupal\devel;
@@ -491,11 +492,11 @@ class SimpleConregAdminMemberEdit extends FormBase {
                 $communications_methods[$entry['communication_method']]) {
               // Subscribe member if criteria met.
               $subscription_manager->subscribe($entry['email'], $newsletter_id, FALSE, 'website');
-              drupal_set_message($this->t('Subscribed %email to %newsletter.', ['%email' => $entry['email'], '%newsletter' => $newsletter_id]));
+              \Drupal::messenger()->addMessage($this->t('Subscribed %email to %newsletter.', ['%email' => $entry['email'], '%newsletter' => $newsletter_id]));
             } else {
               // Unsubscribe member if criteria not met (their communications method may have changed).
               $subscription_manager->unsubscribe($entry['email'], $newsletter_id, FALSE, 'website');
-              drupal_set_message($this->t('Unsubscribed %email from %newsletter.', ['%email' => $entry['email'], '%newsletter' => $newsletter_id]));
+              \Drupal::messenger()->addMessage($this->t('Unsubscribed %email from %newsletter.', ['%email' => $entry['email'], '%newsletter' => $newsletter_id]));
             }
           }
         }
