@@ -12,10 +12,13 @@ namespace Drupal\simple_conreg;
 class SimpleConregFieldOptionStorage {
 
   /*
-   * Function to return a list of members and communications methods for integration with Simplenews module.
+   * Function to return a list of options to add to form display.
    */
   public static function getFieldOptions($eid, $fieldset) {
-    // Run this query: select email, min(communication_method) from simple_conreg_members where email is not null and email<>'' and communication_method is not null group by email;
+    // Run this query:
+    // select g.grpid, g.field_name, g.group_title, o.optid, o.option_title, o.detail_title, o.detail_is_required
+    // from simple_conreg_option_groups g inner join simple_conreg_options o on g.grpid=o.grpid inner join simple_conreg_fieldset_options f on o.optid=f.optid
+    // where g.eid=1 and f.fieldset=1 order by g.grpid, o.weight;
     $select = db_select('simple_conreg_option_groups', 'g');
     $select->join('simple_conreg_options', 'o', 'g.grpid=o.grpid');
     $select->join('simple_conreg_fieldset_options', 'f', 'o.optid=f.optid');
@@ -31,6 +34,7 @@ class SimpleConregFieldOptionStorage {
     if (isset($fieldset))
       $select->condition("f.fieldset", $fieldset);
     $select->orderBy('g.grpid');
+    $select->orderBy('o.weight');
     
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
     
@@ -59,6 +63,45 @@ class SimpleConregFieldOptionStorage {
           ->execute();
       }
     }
+  }
+  
+  /*
+   * Function to return a list of options for specified member.
+   */
+  public static function getMemberOptions($eid, $mid) {
+    // Run this query:
+    // select g.field_name, g.group_title, o.option_title, o.detail_title, m.option_detail
+    // from simple_conreg_option_groups g inner join simple_conreg_options o on g.grpid=o.grpid inner join simple_conreg_member_options m on o.optid=m.optid
+    // where g.eid=1 and m.mid=97 and m.is_selected=1 order by g.grpid, o.weight;
+    $select = db_select('simple_conreg_option_groups', 'g');
+    $select->join('simple_conreg_options', 'o', 'g.grpid=o.grpid');
+    $select->join('simple_conreg_member_options', 'm', 'o.optid=m.optid');
+    // Select these specific fields for the output.
+    $select->addField('g', 'field_name');
+    $select->addField('g', 'group_title');
+    $select->addField('o', 'optid');
+    $select->addField('o', 'option_title');
+    $select->addField('o', 'detail_title');
+    $select->addField('m', 'option_detail');
+    $select->condition('g.eid', $eid);
+    $select->condition('m.mid', $mid);
+    $select->condition('m.is_selected', 1);
+    if (isset($fieldset))
+      $select->condition("f.fieldset", $fieldset);
+    $select->orderBy('g.grpid');
+    $select->orderBy('o.weight');
+    
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+    
+    $memberOptions = [];
+    foreach ($entries as $entry) {
+      $memberOptions[$entry['field_name']]['title'] = $entry['group_title'];
+      $memberOptions[$entry['field_name']]['options'][$entry['optid']]['option_title'] = $entry['option_title'];
+      $memberOptions[$entry['field_name']]['options'][$entry['optid']]['detail_title'] = $entry['detail_title'];
+      $memberOptions[$entry['field_name']]['options'][$entry['optid']]['option_detail'] = $entry['option_detail'];
+    }
+
+    return $memberOptions;
   }
 
 }

@@ -208,6 +208,8 @@ class SimpleConregTokens {
       // Get fieldset config for member type.
       $memberType = $cur_member['raw_member_type'];
       $fieldsetConfig = $this->typeVals[$memberType]['config'];
+      // Get member options from database.
+      $memberOptions = SimpleConregFieldOptionStorage::getMemberOptions($this->eid, $cur_member['mid']);
       // Look up labels for fields to email.
       $member_seq ++;
       $member_heading = t('Member @seq', ['@seq' => $member_seq]);
@@ -218,8 +220,37 @@ class SimpleConregTokens {
           $label = $fieldsetConfig->get($val);
           $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member[$key].'</td></tr>';
           $this->plain_display .= $label.":\t".$cur_member[$key]."\n";
+
+          if (isset($memberOptions[$key])) {
+            $this->display .= '<tr><td colspan="2">'.$memberOptions[$key]['title'].'</td></tr>';
+            $this->plain_display .= $memberOptions[$key]['title']."\n";
+            foreach ($memberOptions[$key]['options'] as $option) {
+              $this->display .= '<tr><td>'.$option['option_title'].'</td><td>'.t('Yes').'</td></tr>';
+              $this->plain_display .= $option['option_title'].":\t".t('Yes')."\n";
+              if (isset($option['option_detail'])) {
+                $this->display .= '<tr><td>'.$option['detail_title'].'</td><td>'.$option['option_detail'].'</td></tr>';
+                $this->plain_display .= $option['detail_title'].":\t".$option['option_detail']."\n";
+              }            
+            }
+            unset($memberOptions[$key]);
+          }
         }
       }
+
+      // If any extra member options, add them to end of display...
+      foreach ($memberOptions as $memberOption) {
+        $this->display .= '<tr><td colspan="2">'.$memberOption['title'].'</td></tr>';
+        $this->plain_display .= $memberOption['title']."\n";
+        foreach ($memberOption['options'] as $option) {
+          $this->display .= '<tr><td>'.$option['option_title'].'</td><td>'.t('Yes').'</td></tr>';
+          $this->plain_display .= $option['option_title'].":\t".t('Yes')."\n";
+          if (isset($option['option_detail'])) {
+            $this->display .= '<tr><td>'.$option['detail_title'].'</td><td>'.$option['option_detail'].'</td></tr>';
+            $this->plain_display .= $option['detail_title'].":\t".$option['option_detail']."\n";
+          }            
+        }
+      }      
+
       // Add price with static label.
       $label = t('Price for member');
       $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member['member_price'].'</td></tr>';

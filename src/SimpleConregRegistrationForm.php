@@ -676,7 +676,14 @@ class SimpleConregRegistrationForm extends FormBase {
     $confirm_params['from'] = $config->get('confirmation.from_name').' <'.$config->get('confirmation.from_email').'>';
     
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
-      $fieldset = 1;
+      // Look up the member type, and get the default badge type for member type.
+      $member_type = $form_values['members']['member'.$cnt]['type'];
+      if (isset($defaultBadgeTypes[$member_type])) {
+        $badge_type = $defaultBadgeTypes[$member_type];
+      } else
+        $badge_type = 'A'; // This shouldn't happen, but if no default badge type found, hard code to A.
+
+      $fieldset = $types[$member_type]['fieldset'];
       $optionVals = [];
       SimpleConregFieldOptions::procesOptionFields($eid, $fieldset, $form_values['members']['member'.$cnt], $optionVals);
     
@@ -703,13 +710,6 @@ class SimpleConregRegistrationForm extends FormBase {
           $memberTotal += $freeAmount;
         }
       }
-
-      // Look up the member type, and get the default badge type for member type.
-      $member_type = $form_values['members']['member'.$cnt]['type'];
-      if (isset($defaultBadgeTypes[$member_type])) {
-        $badge_type = $defaultBadgeTypes[$member_type];
-      } else
-        $badge_type = 'A'; // This shouldn't happen, but if no default badge type found, hard code to A.
 
       // Check whether to use name or "other" badge name...
       switch($form_values['members']['member'.$cnt]['badge_name_option']) {

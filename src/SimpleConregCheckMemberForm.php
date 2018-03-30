@@ -118,6 +118,7 @@ class SimpleConregCheckMemberForm extends FormBase {
     $form['submit'] = array(
       '#type' => 'submit',
       '#value' => $this->t('Check member details'),
+      '#attributes' => array("onclick" => "jQuery(this).attr('disabled', true); jQuery(this).parents('form').submit();"),
     );
     return $form;
   }
