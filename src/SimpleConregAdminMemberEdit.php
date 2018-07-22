@@ -37,9 +37,22 @@ class SimpleConregAdminMemberEdit extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $mid = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $mid = NULL, $admin = FALSE) {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
+
+    // If not admin, make sure 
+    $user = \Drupal::currentUser();
+    $email = $user->getEmail();
+    if (!$admin && !SimpleConregStorage::memberPortalIsAllowedEdit($eid, $mid, $email)) {
+      // Event not in database. Display error.
+      $form['simple_conreg_event'] = array(
+        '#markup' => $this->t('Sorry, you may not edit this member.'),
+        '#prefix' => '<h3>',
+        '#suffix' => '</h3>',
+      );
+      return $form;
+    }
 
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
@@ -65,7 +78,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
           '#prefix' => '<h3>',
           '#suffix' => '</h3>',
         );
-        return parent::buildForm($form, $form_state);
+        return $form;
       }
     } else {
       $member = [];
@@ -85,18 +98,20 @@ class SimpleConregAdminMemberEdit extends FormBase {
       '#title' => $this->t('Member details'),
     );
 
-    $form['member']['is_approved'] = array(
-      '#type' => 'checkbox',
-      '#title' => $this->t('Approved'),
-      '#default_value' => $member['is_approved'],
-    );
+    if ($admin) {
+      $form['member']['is_approved'] = array(
+        '#type' => 'checkbox',
+        '#title' => $this->t('Approved'),
+        '#default_value' => $member['is_approved'],
+      );
 
-    $form['member']['member_no'] = array(
-      '#type' => 'number',
-      '#title' => $this->t('Member number'),
-      '#description' => $this->t('Check approved and leave blank to auto assign.'),
-      '#default_value' => ($member['member_no'] ? $member['member_no'] : ''),
-    );
+      $form['member']['member_no'] = array(
+        '#type' => 'number',
+        '#title' => $this->t('Member number'),
+        '#description' => $this->t('Check approved and leave blank to auto assign.'),
+        '#default_value' => ($member['member_no'] ? $member['member_no'] : ''),
+      );
+    }
 
     $form['member']['first_name'] = array(
       '#type' => 'textfield',
@@ -145,7 +160,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
       );
 
       if (!empty($config->get('add_on_info.label'))) {
-        $form['member']['add_on_extra']['info'] = array(
+        $form['member']['add_on_extra'] = array(
           '#type' => 'textfield',
           '#title' => $config->get('add_on_info.label'),
           '#description' => $config->get('add_on_info.description'),
@@ -308,27 +323,49 @@ class SimpleConregAdminMemberEdit extends FormBase {
       '#default_value' => $member['payment_id'],
     );
 
-    $form['member']['comment'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Comment'),
-      '#default_value' => $member['comment'],
-    );
+    if ($admin) {
+      $form['member']['comment'] = array(
+        '#type' => 'textfield',
+        '#title' => $this->t('Comment'),
+        '#default_value' => $member['comment'],
+      );
 
-    $form['member']['is_checked_in'] = array(
-      '#type' => 'checkbox',
-      '#title' => $this->t('Checked In'),
-      '#description' => $this->t('Only tick if adding member at convention and they are present.'),
-      '#default_value' => $member['is_checked_in'],
-    );
+      $form['member']['is_checked_in'] = array(
+        '#type' => 'checkbox',
+        '#title' => $this->t('Checked In'),
+        '#description' => $this->t('Only tick if adding member at convention and they are present.'),
+        '#default_value' => $member['is_checked_in'],
+      );
 
-    $join_timestamp = $member['join_date'];
-    $join_date = gmdate("Y-m-d H:i:s", $join_timestamp);
-    $form['member']['join_date'] = array(
-      '#type' => 'date',
-      '#title' => $this->t('Date joined'),
-      '#description' => $this->t('Leave blank to set to current date.'),
-      '#default_value' => $join_date,
-    );
+      $join_timestamp = $member['join_date'];
+      $join_date = gmdate("Y-m-d H:i:s", $join_timestamp);
+      $form['member']['join_date'] = array(
+        '#type' => 'date',
+        '#title' => $this->t('Date joined'),
+        '#description' => $this->t('Leave blank to set to current date.'),
+        '#default_value' => $join_date,
+      );
+    }
+
+    // If not admin, turn any non-editable fields into Items.
+    if (!$admin) {
+      foreach ($form['member'] as $fieldname => $field) {
+        if (is_array($field) && isset($field['#type']) && empty($config->get('member_editable.'.$fieldname))) {
+          switch ($field['#type']) {
+            case 'select':
+              $form['member'][$fieldname]['#markup'] = $field['#options'][$field['#default_value']];
+              break;
+            case 'checkbox':
+              $form['member'][$fieldname]['#markup'] = ($field['#default_value'] ? $this->t('Yes') : $this->t('No'));
+              break;
+            default:
+              $form['member'][$fieldname]['#markup'] = $field['#default_value'];
+          }
+          $form['member'][$fieldname]['#type'] = 'item';
+        }
+      }
+    }
+
 
     $form['payment']['submit'] = array(
       '#type' => 'submit',
@@ -424,8 +461,8 @@ class SimpleConregAdminMemberEdit extends FormBase {
       'birth_date' => $birth_date,
       'add_on' => isset($form_values['member']['add_on']) ?
           $form_values['member']['add_on'] : '',
-      'add_on_info' => isset($form_values['member']['add_on_extra']['info']) ?
-          $form_values['member']['add_on_extra']['info'] : '',
+      'add_on_info' => isset($form_values['member']['add_on_extra']) ?
+          $form_values['member']['add_on_extra'] : '',
       'extra_flag1' => isset($form_values['member']['extra_flag1']) ?
           $form_values['member']['extra_flag1'] : 0,
       'extra_flag2' => isset($form_values['member']['extra_flag2']) ?

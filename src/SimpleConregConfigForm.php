@@ -398,7 +398,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $form[$fieldsetContainer]['simple_conreg_mandatory']['city'] = array(
       '#type' => 'checkbox',
       '#title' => $this->t('Town/City mandatory'),
-      '#default_value' => $fieldsetConfig->get('fields.city'),
+      '#default_value' => $fieldsetConfig->get('fields.city_mandatory'),
     );
 
     $form[$fieldsetContainer]['simple_conreg_mandatory']['county'] = array(
@@ -431,7 +431,6 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $fieldsetConfig->get('fields.age_mandatory'),
     );
 
-
     /*
      * Fields for extra flags.
      */
@@ -453,6 +452,123 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $fieldsetConfig->get('extras.flag2'),
     );  
 
+
+    /* Member editable fields. */
+
+    $form['simple_conreg_member_edit'] = array(
+      '#type' => 'fieldset',
+      '#title' => $this->t('Member self editable fields'),
+      '#tree' => TRUE,
+    );
+
+    $form['simple_conreg_member_edit']['first_name'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('First name'),
+      '#default_value' => $fieldsetConfig->get('member_editable.first_name'),
+    );
+
+    $form['simple_conreg_member_edit']['last_name'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Last name'),
+      '#default_value' => $fieldsetConfig->get('member_editable.last_name'),
+    );
+
+    $form['simple_conreg_member_edit']['badge_name'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Badge name'),
+      '#default_value' => $fieldsetConfig->get('member_editable.badge_name'),
+    );
+
+    $form['simple_conreg_member_edit']['display'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Display on public member lists'),
+      '#default_value' => $fieldsetConfig->get('member_editable.display'),
+    );
+
+    $form['simple_conreg_member_edit']['communication_method'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Communications method'),
+      '#default_value' => $fieldsetConfig->get('member_editable.communication_method'),
+    );
+
+    $form['simple_conreg_member_edit']['street'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Street address'),
+      '#default_value' => $fieldsetConfig->get('member_editable.street'),
+    );
+
+    $form['simple_conreg_member_edit']['street2'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Street address 2'),
+      '#default_value' => $fieldsetConfig->get('member_editable.street2'),
+    );
+
+    $form['simple_conreg_member_edit']['city'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Town/City'),
+      '#default_value' => $fieldsetConfig->get('member_editable.city'),
+    );
+
+    $form['simple_conreg_member_edit']['county'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('County/State'),
+      '#default_value' => $fieldsetConfig->get('member_editable.county'),
+    );
+
+    $form['simple_conreg_member_edit']['postcode'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Postal code'),
+      '#default_value' => $fieldsetConfig->get('member_editable.postcode'),
+    );
+
+    $form['simple_conreg_member_edit']['country'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Country'),
+      '#default_value' => $fieldsetConfig->get('member_editable.country'),
+    );
+
+    $form['simple_conreg_mandatory']['birth_date'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Date of birth'),
+      '#default_value' => $fieldsetConfig->get('member_editable.birth_date'),
+    );
+
+    $form['simple_conreg_member_edit']['phone'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Phone'),
+      '#default_value' => $fieldsetConfig->get('member_editable.phone'),
+    );
+
+    $form['simple_conreg_member_edit']['birth_date'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Date of Birth'),
+      '#default_value' => $fieldsetConfig->get('member_editable.birth_date'),
+    );
+
+    $form['simple_conreg_member_edit']['age'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Age'),
+      '#default_value' => $fieldsetConfig->get('member_editable.age'),
+    );
+
+    $form['simple_conreg_member_edit']['add_on_extra'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Add-on Extra Information'),
+      '#default_value' => $fieldsetConfig->get('member_editable.add_on_extra'),
+    );
+
+    $form['simple_conreg_member_edit']['extra_flag1'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Extra Flag 1'),
+      '#default_value' => $fieldsetConfig->get('member_editable.extra_flag1'),
+    );
+    
+    $form['simple_conreg_member_edit']['extra_flag2'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Extra Flag 2'),
+      '#default_value' => $fieldsetConfig->get('member_editable.extra_flag2'),
+    );
+    
 
     /*
      * Fields for communications method options.
@@ -690,7 +806,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('confirmation.notification_subject'),
     );
 
-    /* Intro text. */
+    /* Member check introduction and message templates. */
 
     $form['simple_conreg_member_check'] = array(
       '#type' => 'fieldset',
@@ -768,6 +884,23 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('registration_intro', $vals['simple_conreg_intros']['registration_intro']);
     $config->set('payment_intro', $vals['simple_conreg_intros']['payment_intro']);
     $config->set('communications_method.options', $vals['simple_conreg_communication']['options']);
+    $config->set('member_editable.first_name', $vals['simple_conreg_member_edit']['first_name']);
+    $config->set('member_editable.last_name', $vals['simple_conreg_member_edit']['last_name']);
+    $config->set('member_editable.badge_name', $vals['simple_conreg_member_edit']['badge_name']);
+    $config->set('member_editable.display', $vals['simple_conreg_member_edit']['display']);
+    $config->set('member_editable.communication_method', $vals['simple_conreg_member_edit']['communication_method']);
+    $config->set('member_editable.street', $vals['simple_conreg_member_edit']['street']);
+    $config->set('member_editable.street2', $vals['simple_conreg_member_edit']['street2']);
+    $config->set('member_editable.city', $vals['simple_conreg_member_edit']['city']);
+    $config->set('member_editable.county', $vals['simple_conreg_member_edit']['county']);
+    $config->set('member_editable.postcode', $vals['simple_conreg_member_edit']['postcode']);
+    $config->set('member_editable.country', $vals['simple_conreg_member_edit']['country']);
+    $config->set('member_editable.phone', $vals['simple_conreg_member_edit']['phone']);
+    $config->set('member_editable.birth_date', $vals['simple_conreg_member_edit']['birth_date']);
+    $config->set('member_editable.age', $vals['simple_conreg_member_edit']['age']);
+    $config->set('member_editable.add_on_extra', $vals['simple_conreg_member_edit']['add_on_extra']);
+    $config->set('member_editable.extra_flag1', $vals['simple_conreg_member_edit']['extra_flag1']);
+    $config->set('member_editable.extra_flag2', $vals['simple_conreg_member_edit']['extra_flag2']);
     $config->set('add_ons.global', $vals['simple_conreg_addons']['global']);
     $config->set('add_ons.label', $vals['simple_conreg_addons']['label']);
     $config->set('add_ons.description', $vals['simple_conreg_addons']['description']);

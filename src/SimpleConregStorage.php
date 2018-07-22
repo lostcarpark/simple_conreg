@@ -206,6 +206,51 @@ class SimpleConregStorage {
     return $entries;
   }
 
+  public static function memberPortalLoad($eid, $email) {
+    $select = db_select('simple_conreg_members', 'm');
+    $select->join('simple_conreg_members', 'l', 'm.lead_mid=l.mid');
+    // Select these specific fields for the output.
+    $select->addField('m', 'mid');
+    $select->addField('m', 'member_no');
+    $select->addField('m', 'first_name');
+    $select->addField('m', 'last_name');
+    $select->addField('m', 'badge_name');
+    $select->addField('m', 'member_type');
+    $select->condition('m.eid', $eid);
+    $select->condition('m.is_paid', 1);
+    $select->condition("m.is_deleted", FALSE); //Only include members who aren't deleted.
+    $select->condition(db_or()->condition("m.email", $email)->condition("l.email", $email));
+    $select->orderBy('m.member_no');
+    // Make sure we only get items 0-49, for scalability reasons.
+    //$select->range(0, 50);
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  public static function memberPortalIsAllowedEdit($eid, $mid, $email) {
+    $select = db_select('simple_conreg_members', 'm');
+    $select->join('simple_conreg_members', 'l', 'm.lead_mid=l.mid');
+    // Select these specific fields for the output.
+    $select->addField('m', 'email');
+    $select->addField('l', 'email', 'lead_email');
+    $select->condition('m.mid', $mid);
+    $select->condition('m.eid', $eid);
+    $select->condition('m.is_paid', 1);
+    $select->condition("m.is_deleted", FALSE); //Only include members who aren't deleted.
+    $select->condition(db_or()->condition("m.email", $email)->condition("l.email", $email));
+    $select->orderBy('m.member_no');
+    // Make sure we only get items 0-49, for scalability reasons.
+    //$select->range(0, 50);
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+    if (count($entries) > 0 and ($entries[0]['email'] == $email || $entries[0]['lead_email']))
+      return TRUE;
+
+    return FALSE;
+  }
+
   private static function adminMemberListCondition($eid, $select, $condition, $search) {
     $select->condition('m.eid', $eid);
     switch ($condition) {

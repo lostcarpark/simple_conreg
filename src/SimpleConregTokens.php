@@ -57,12 +57,16 @@ class SimpleConregTokens {
       
       // If member is not group lead, we need to get payment URL and possibly email from leader.
       if ($this->vals['mid'] != $this->vals['lead_mid']) {
-        $leader = SimpleConregStorage::load(['eid' => $eid, 'mid' => $member['lead_mid'], 'is_deleted' => 0]);
+        $leader = SimpleConregStorage::load(['eid' => $eid, 'mid' => $this->vals['lead_mid'], 'is_deleted' => 0]);
       } else {
         $leader = $this->vals;
       }
       $this->html['[lead_key]'] = $leader['random_key'];
       $this->html['[lead_email]'] = $leader['email'];
+
+      $userTokens = SimpleConregUser::getUserTokens($eid, $this->vals['email']);
+      foreach($userTokens as $key=>$val)
+        $this->html[$key] = $val;
 
       // Add tokens for all member fields.
       foreach ($this->vals as $field => $value) {
@@ -80,10 +84,15 @@ class SimpleConregTokens {
           array('absolute' => TRUE)
         )->toString();
         $this->html["[payment_url]"] = '<a href="'.$payment_url.'">'.$payment_url.'</a>';
-        $plain["[payment_url]"] = $payment_url;
+        $this->plain["[payment_url]"] = $payment_url;
       } else {
-        $tokens["[payment_url]"] = '';
-        $plain["[payment_url]"] = '';
+        $this->html["[payment_url]"] = '';
+        $this->plain["[payment_url]"] = '';
+      }
+
+      // Convert Login URL 
+      if (!empty($this->html['login_url'])) {
+        $this->html['login_url'] = '<a href="'.$this->html['login_url'].'">'.$this->html['login_url'].'</a>';
       }
 
       $this->display = '';
@@ -136,6 +145,7 @@ class SimpleConregTokens {
        '[payment_id]',
        '[payment_url]',
        '[member_details]',
+       '[login_url]',
       ];
     return t("Available tokens: @tokens", ['@tokens' => implode(', ', $tokens)]);
   }
@@ -199,7 +209,7 @@ class SimpleConregTokens {
       'add_on_info' => 'add_on_info.label',
       'add_on_price' => 'add_on_free.label',
     );
-
+    
     $reg_date = t('Registered on @date', ['@date' => format_date($members[0]['join_date'])]);
     $this->display .= '<h3>' . $reg_date . '</h3>';
     $this->plain_display .= "\n$reg_date\n";
@@ -216,7 +226,7 @@ class SimpleConregTokens {
       $this->display .= '<tr><th colspan="2">'.$member_heading.'</th></tr>';
       $this->plain_display .= "\n$member_heading\n";
       foreach ($confirm_labels as $key=>$val) {
-        if (!empty($fieldsetConfig->get($val))) {
+        if (!empty($fieldsetConfig) && !empty($fieldsetConfig->get($val))) {
           $label = $fieldsetConfig->get($val);
           $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member[$key].'</td></tr>';
           $this->plain_display .= $label.":\t".$cur_member[$key]."\n";

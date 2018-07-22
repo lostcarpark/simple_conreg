@@ -50,6 +50,28 @@ simple_conreg_check:
     _permission: 'check membership'
     eid: ^[0-9]+$
 
+simple_conreg_portal:
+  path: 'members/portal/{eid}'
+  defaults:
+    _title: 'Member Portal'
+    _form: '\Drupal\simple_conreg\SimpleConregMemberPortalForm'
+    eid: 1
+  requirements:
+    _permission: 'access member portal'
+    eid: ^[0-9]+$
+
+simple_conreg_portal_edit:
+  path: 'members/portal/edit/{eid}/{mid}'
+  defaults:
+    _title: 'Member Administration - Edit Member'
+    _form: '\Drupal\simple_conreg\SimpleConregAdminMemberEdit'
+    eid: 1
+    admin: 0
+  requirements:
+    _permission: 'access member portal'
+    eid: ^[0-9]+$
+    mid: ^[0-9]+$
+
 simple_conreg_config:
   path: 'admin/config/simple_conreg/{eid}'
   defaults:
@@ -149,6 +171,8 @@ simple_conreg_admin_members_add:
     _title: 'Member Administration - Add Member'
     _form: '\Drupal\simple_conreg\SimpleConregAdminMemberEdit'
     eid: 1
+    mid: NULL
+    admin: 1
   requirements:
     _permission: 'manage convention members'
     eid: ^[0-9]+$
@@ -159,6 +183,7 @@ simple_conreg_admin_members_edit:
     _title: 'Member Administration - Edit Member'
     _form: '\Drupal\simple_conreg\SimpleConregAdminMemberEdit'
     eid: 1
+    admin: 1
   requirements:
     _permission: 'manage convention members'
     eid: ^[0-9]+$
