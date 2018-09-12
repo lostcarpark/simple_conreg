@@ -40,7 +40,7 @@ class SimpleConregController extends ControllerBase {
     $types = SimpleConregOptions::badgeTypes($eid, $config);
     $digits = $config->get('member_no_digits');
 
-    switch($_GET['sort']) {
+    switch(isset($_GET['sort']) ? $_GET['sort'] : '') {
       case 'desc':
         $direction = 'DESC';
         break;
@@ -48,7 +48,7 @@ class SimpleConregController extends ControllerBase {
         $direction = 'ASC';
         break;
     }
-    switch($_GET['order']) {
+    switch(isset($_GET['order']) ? $_GET['order'] : '') {
       case 'Name':
         $order = 'name';
         break;
@@ -99,7 +99,7 @@ class SimpleConregController extends ControllerBase {
           break;
       }
       $member['badge_type'] = trim($types[$badge_type]);
-      $member['country'] = trim($countryOptions[$entry['country']]);
+      $member['country'] = trim(isset($countryOptions[$entry['country']]) ? $countryOptions[$entry['country']] : $entry['country']);
 
       // Set key to field to be sorted by.
       if ($order == 'member_no')
@@ -160,7 +160,7 @@ class SimpleConregController extends ControllerBase {
    * Add a summary by member type to render array.
    */
   public function memberAdminMemberListSummary($eid, &$content) {
-    list($types, $typeVals) = SimpleConregOptions::memberTypes($eid);
+    $types = SimpleConregOptions::memberTypes($eid);
     $rows = array();
     $headers = array(
       t('Member Type'), 
@@ -169,8 +169,8 @@ class SimpleConregController extends ControllerBase {
     $total = 0;
     foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
       // Replace type code with description.
-      if (isset($types[$entry['member_type']]))
-        $entry['member_type'] = ($typeVals[$entry['member_type']] ? $typeVals[$entry['member_type']]['name'] : $entry['member_type']);
+      if (isset($types->types[$entry['base_type']]))
+        $entry['base_type'] = (isset($types->types[$entry['base_type']]) ? $types->types[$entry['base_type']]->name : $entry['base_type']);
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
       $total += $entry['num'];
@@ -210,6 +210,33 @@ class SimpleConregController extends ControllerBase {
     //Add a row for the total.
     $rows[] = array(t("Total"), $total);
     $content['badge_summary'] = array(
+      '#type' => 'table',
+      '#header' => $headers,
+      '#rows' => $rows,
+      '#empty' => t('No entries available.'),
+    );
+
+    return $content;
+  }
+
+  /**
+   * Add a summary by payment method to render array.
+   */
+  public function memberAdminMemberListDaysSummary($eid, &$content) {
+    $rows = array();
+    $headers = array(
+      t('Days'), 
+      t('Number of members'),
+    );
+    $total = 0;
+    foreach ($entries = SimpleConregStorage::adminMemberDaysSummaryLoad($eid) as $entry) {
+      // Sanitize each entry.
+      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $total += $entry['num'];
+    }
+    //Add a row for the total.
+    $rows[] = array(t("Total"), $total);
+    $content['days_summary'] = array(
       '#type' => 'table',
       '#header' => $headers,
       '#rows' => $rows,
@@ -284,7 +311,7 @@ class SimpleConregController extends ControllerBase {
   public function memberAdminMemberList($eid) {
     $config = SimpleConregConfig::getConfig($eid);
     $countryOptions = $this->getMemberCountries($config);
-    list($memberOptions, $memberTypes) = SimpleConregOptions::memberTypes($eid, $config);
+    $types = SimpleConregOptions::memberTypes($eid, $config);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
     $communicationsOptions = SimpleConregOptions::communicationMethod($eid, $config);
     $displayOptions = SimpleConregOptions::display();
@@ -294,7 +321,7 @@ class SimpleConregController extends ControllerBase {
     $content = array();
 
     $pageOptions = [];
-    switch($_GET['sort']) {
+    switch(isset($_GET['sort']) ? $_GET['sort'] : '') {
       case 'desc':
         $direction = 'DESC';
         $pageOptions['sort'] = 'desc';
@@ -303,7 +330,7 @@ class SimpleConregController extends ControllerBase {
         $direction = 'ASC';
         break;
     }
-    switch($_GET['order']) {
+    switch(isset($_GET['order']) ? $_GET['order'] : '') {
       case 'MID':
         $order = 'm.mid';
         $pageOptions['order'] = 'MID';
@@ -337,7 +364,8 @@ class SimpleConregController extends ControllerBase {
 
     $rows = array();
     $headers = array(
-      'member_type' =>  ['data' => t('Member type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
+      'base_type' =>  ['data' => t('Member type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
+      'days_desc' =>  ['data' => t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       'member_no' => ['data' => t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
       'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
       'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
@@ -366,7 +394,7 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminPaidMemberListLoad($eid, $direction, $order) as $entry) {
       if (!empty($entry['member_no']))
         $entry['member_no'] = sprintf("%0".$digits."d", $entry['member_no']);
-      $entry['member_type'] = isset($memberTypes[$entry['member_type']]) ? $memberTypes[$entry['member_type']]['name'] : $entry['member_type'];
+      $entry['base_type'] = isset($types->types[$entry['base_type']]) ? $types->types[$entry['base_type']]->name : $entry['base_type'];
       $entry['badge_type'] = isset($badgeTypes[$entry['badge_type']]) ? $badgeTypes[$entry['badge_type']] : $entry['badge_type'];
       $entry['country'] = isset($countryOptions[$entry['country']]) ? $countryOptions[$entry['country']] : $entry['country'];
       $entry['communication_method'] = isset($communicationsOptions[$entry['communication_method']]) ? $communicationsOptions[$entry['communication_method']] : $entry['communication_method'];
@@ -404,6 +432,7 @@ class SimpleConregController extends ControllerBase {
       '#markup' => $this->t('Summary by badge type.'),
     );
     $this->memberAdminMemberListBadgeSummary($eid, $content);
+    $this->memberAdminMemberListDaysSummary($eid, $content);
     
     $content['message_payment_method'] = array(
       '#markup' => $this->t('Summary by payment method.'),

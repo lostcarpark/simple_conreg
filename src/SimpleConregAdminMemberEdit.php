@@ -48,7 +48,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
     // Get event configuration from config.
     $config = $this->config('simple_conreg.settings.'.$eid);
 
-    list($typeOptions, $typeVals) = SimpleConregOptions::memberTypes($eid, $config);
+    $types = SimpleConregOptions::memberTypes($eid, $config);
     $badgeTypeOptions = SimpleConregOptions::badgeTypes($eid, $config);
     list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($eid, $config);
     $symbol = $config->get('payments.symbol');
@@ -129,8 +129,8 @@ class SimpleConregAdminMemberEdit extends FormBase {
     $form['member']['type'] = array(
       '#type' => 'select',
       '#title' => $config->get('fields.membership_type_label'),
-      '#options' => $typeOptions,
-      '#default_value' => $member['member_type'],
+      '#options' => $types->privateOptions,
+      '#default_value' => $member['base_type'],
       '#required' => TRUE,
     );
 

@@ -33,6 +33,9 @@ class SimpleConregTokens {
     $this->config = SimpleConregConfig::getConfig($eid);
     $this->symbol = $this->config->get('payments.symbol');
 
+    $types = SimpleConregOptions::memberTypes($this->eid, $this->config);
+    $this->typeVals = $types->types;
+
     $this->html['[site_name]'] = \Drupal::config('system.site')->get('name');
     $this->html['[event_name]'] = $this->event['event_name'];
     $this->html['[event_email]'] = $this->config->get('confirmation.from_email');
@@ -50,7 +53,6 @@ class SimpleConregTokens {
         $members = SimpleConregStorage::loadAll(['eid' => $eid, 'mid' => $mid, 'is_deleted' => 0]);
       }
 
-      $this->typeVals = null;
       // Replace codes with values in member data.
       $this->replaceMemberCodes($members);
       $this->vals = $members[0];
@@ -88,8 +90,8 @@ class SimpleConregTokens {
 
       $this->display = '';
       $this->plain_display = '';
-      $member_no = 0;
-      $this->getMemberDetailsToken($members, $member_no);
+      $member_seq = 0;
+      $this->getMemberDetailsToken($members, $member_seq);
 
       // Loop through any additional members registered and add them to the member details.
       if (isset($extra_mids)) {
@@ -102,7 +104,7 @@ class SimpleConregTokens {
           // Replace codes with values in member data.
           $this->replaceMemberCodes($members);
           // Add member 
-          $this->getMemberDetailsToken($members, $member_no);
+          $this->getMemberDetailsToken($members, $member_seq);
         }
       }
 
@@ -144,7 +146,8 @@ class SimpleConregTokens {
 
   public function replaceMemberCodes(&$members) {
     // Labels for display option and communications method. Will add to config later.
-    list($typeOptions, $this->typeVals) = SimpleConregOptions::memberTypes($this->eid, $this->config);
+    $types = SimpleConregOptions::memberTypes($this->eid, $this->config);
+    $this->typeVals = $types->types;
     $displayOptions = SimpleConregOptions::display();
     $communicationOptions = SimpleConregOptions::communicationMethod($this->eid, $this->config);
     $countryOptions = SimpleConregOptions::memberCountries($this->eid, $this->config);
@@ -163,7 +166,7 @@ class SimpleConregTokens {
       $members[$index]['payment_amount'] = $this->symbol . $val['payment_amount'];
       $members[$index]['add_on_price'] = $this->symbol . $val['add_on_price'];
       $members[$index]['raw_member_type'] = $members[$index]['member_type'];
-      $members[$index]['member_type'] = (isset($this->typeVals[$val['member_type']]) ? $this->typeVals[$val['member_type']]['name'] : $val['member_type']);
+      $members[$index]['member_type'] = (isset($this->typeVals[$val['member_type']]) ? $this->typeVals[$val['member_type']]->name : $val['member_type']);
       if (!empty($val['communication_method']))
         $members[$index]['communication_method'] = $communicationOptions[$val['communication_method']];
       $members[$index]['country'] = $countryOptions[$val['country']];
@@ -173,6 +176,11 @@ class SimpleConregTokens {
   }
 
   public function getMemberDetailsToken($members, &$member_seq) {
+    // If types not set, fetch them.
+    if (!isset($this->typeVals)) {
+      $types = SimpleConregOptions::memberTypes($this->eid, $this->config);
+      $this->typeVals = $types->types;
+    }
     // List of fields to add to mail for each member.
     $confirm_labels = array(
       'first_name' => 'fields.first_name_label',
@@ -206,8 +214,8 @@ class SimpleConregTokens {
     $this->display .= '<table>';
     foreach ($members as $index => $cur_member) {
       // Get fieldset config for member type.
-      $memberType = $cur_member['raw_member_type'];
-      $fieldsetConfig = $this->typeVals[$memberType]['config'];
+      $memberType = $cur_member['base_type'];
+      $fieldsetConfig = $this->typeVals[$memberType]->config;
       // Get member options from database.
       $memberOptions = SimpleConregFieldOptionStorage::getMemberOptions($this->eid, $cur_member['mid']);
       // Look up labels for fields to email.
@@ -257,7 +265,7 @@ class SimpleConregTokens {
       $this->plain_display .= $label.":\t".$cur_member['member_price']."\n";
       // Add on details.
       $global = $this->config->get('add_ons.global');
-      if ($global && $member_no == 1 || !$global) {
+      if ($global && $member_seq == 1 || !$global) {
         foreach ($addon_labels as $key=>$val) {
           if (!empty($fieldsetConfig->get($val))) {
             $label = $fieldsetConfig->get($val);

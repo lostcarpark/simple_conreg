@@ -69,6 +69,8 @@ class SimpleConregConfig {
     $config->set('fields.last_name_label', $vals['simple_conreg_fields']['last_name_label']);
     $config->set('fields.email_label', $vals['simple_conreg_fields']['email_label']);
     $config->set('fields.membership_type_label', $vals['simple_conreg_fields']['membership_type_label']);
+    $config->set('fields.membership_days_label', $vals['simple_conreg_fields']['membership_days_label']);
+    $config->set('fields.membership_days_description', $vals['simple_conreg_fields']['membership_days_description']);
     $config->set('fields.badge_name_option_label', $vals['simple_conreg_fields']['badge_name_option_label']);
     $config->set('fields.badge_name_label', $vals['simple_conreg_fields']['badge_name_label']);
     $config->set('fields.badge_name_description', $vals['simple_conreg_fields']['badge_name_description']);

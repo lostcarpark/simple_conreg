@@ -101,13 +101,39 @@ function simple_conreg_schema() {
         'default' => 0,
         'description' => "Member number - assigned once approved.",
       ),
-      // alter table simple_conreg_members modify column member_type varchar(4);
+      // alter table simple_conreg_members modify column member_type varchar(16);
       'member_type' => array(
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Type of membership.',
+      ),
+      // alter table simple_conreg_members add base_type varchar(4) NULL after member_type;
+      // update simple_conreg_members set base_type = member_type;
+      'base_type' => array(
         'type' => 'varchar',
         'length' => 4,
         'not null' => TRUE,
         'default' => '',
-        'description' => 'Type of membership.',
+        'description' => 'Member type witout any day modifiers',
+      ),
+      // alter table simple_conreg_members add days varchar(16) NULL after base_type;
+      'days' => array(
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Selected day codes separated by |',
+      ),
+      // alter table simple_conreg_members add days_desc varchar(32) NULL after days;
+      // update simple_conreg_members set days_desc='Weekend';
+      'days_desc' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Description of selected days',
       ),
       // alter table simple_conreg_members add communication_method varchar(1) NULL after member_type;
       'communication_method' => array(

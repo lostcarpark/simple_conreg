@@ -79,7 +79,7 @@ class SimpleConregAdminCheckIn extends FormBase {
     $form_values = $form_state->getValues();
 
     $config = $this->config('simple_conreg.settings.'.$eid);
-    list($typeOptions, $typeVals) = SimpleConregOptions::memberTypes($eid, $config);
+    $types = SimpleConregOptions::memberTypes($eid, $config);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
     $displayOptions = SimpleConregOptions::display();
     $pageSize = $config->get('display.page_size');
@@ -172,6 +172,7 @@ class SimpleConregAdminCheckIn extends FormBase {
       'badge_name' => ['data' => t('Badge name'), 'field' => 'm.badge_name'],
       'registered_by' =>  ['data' => t('Registered By'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       'member_type' =>  ['data' => t('Member type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
+      'days' =>  ['data' => t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       'badge_type' =>  ['data' => t('Badge type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       'comment' =>  ['data' => t('Comment'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       t('Paid'),
@@ -255,9 +256,12 @@ class SimpleConregAdminCheckIn extends FormBase {
       $row['display'] = array(
         '#markup' => SafeMarkup::checkPlain($entry['registered_by']),
       );
-      $memberType = trim($entry['member_type']);
+      $memberType = trim($entry['base_type']);
       $row['member_type'] = array(
-        '#markup' => SafeMarkup::checkPlain(isset($typeVals[$memberType]['name']) ? $typeVals[$memberType]['name'] : $memberType),
+        '#markup' => SafeMarkup::checkPlain(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
+      );
+      $row['days'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['days_desc']),
       );
       $badgeType = trim($entry['badge_type']);
       $row['badge_type'] = array(

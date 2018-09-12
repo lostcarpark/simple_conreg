@@ -77,7 +77,7 @@ class SimpleConregFieldOptions {
             '#prefix' => '<div id="'.$id.'">',
             '#suffix' => '</div>',
           ];
-          if (!empty($optionDetails['detail']) && $memberVals[$key]['options'][$optid]) {
+          if (isset($optionDetails['detail']) && !empty($optionDetails['detail']) && $memberVals[$key]['options'][$optid]) {
             $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid] = [
               '#type' => 'textfield',
               '#title' => $optionDetails['detail'],
@@ -105,12 +105,14 @@ class SimpleConregFieldOptions {
     foreach ($memberVals as $key=>$fieldVal) {
       if (array_key_exists($key, $fieldOptions)) {
         // Put the field value back in its parent, so the values look like they would if options hadn't been added.
-        $memberVals[$key] = $fieldVal[$key];
+        if (isset($fieldVal[$key]))
+          $memberVals[$key] = $fieldVal[$key];
         foreach ($fieldOptions[$key]['options'] as $optid=>$optionDetails) {
-          $optionVals[$optid] = [
-            'option' => $fieldVal['options'][$optid],
-            'detail' => $fieldVal['options']['container_'.$optid]['detail_'.$optid],
-          ];
+          if (isset($fieldVal['options'][$optid]))
+            $optionVals[$optid] = [
+              'option' => $fieldVal['options'][$optid],
+              'detail' => (isset($fieldVal['options']['container_'.$optid]['detail_'.$optid]) ? $fieldVal['options']['container_'.$optid]['detail_'.$optid] : ''),
+            ];
         }
       }
     }

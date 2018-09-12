@@ -153,7 +153,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $form['simple_conreg_members']['types'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Member types'),
-      '#description' => $this->t('Put each membership type on a line with type code, description, name, price,  default badge type, and fieldset number separated by | character (e.d. J|Junior Attending|Junior|50|A|1).'),
+      '#description' => $this->t('Put each membership type on a line with type code, description, name, price,  default badge type, and fieldset number separated by | character (e.g. J|Junior Attending|Junior|50|A|1). Optionally, add a field per day, consisting of Day Code~Description~Short Name~Price (e.g. Sa~Saturday~Sat~25)'),
       '#default_value' => $config->get('member_types'),
     );
 
@@ -250,6 +250,20 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#title' => $this->t('Type of membership label (required)'),
       '#default_value' => $fieldsetConfig->get('fields.membership_type_label'),
       '#required' => TRUE,
+    );
+
+    $form[$fieldsetContainer]['simple_conreg_fields']['membership_days_label'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Membership days label (required)'),
+      '#default_value' => $fieldsetConfig->get('fields.membership_days_label'),
+      '#required' => TRUE,
+    );
+
+    $form[$fieldsetContainer]['simple_conreg_fields']['membership_days_description'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Membership days description'),
+      '#default_value' => $fieldsetConfig->get('fields.membership_days_description'),
+      '#maxlength' => 255, 
     );
 
     $form[$fieldsetContainer]['simple_conreg_fields']['badge_name_option_label'] = array(

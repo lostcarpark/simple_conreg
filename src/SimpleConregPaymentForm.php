@@ -77,7 +77,7 @@ class SimpleConregPaymentForm extends FormBase {
       '#suffix' => '</div>',
     );
 
-    if ($member->is_paid) {
+    if ($member['is_paid']) {
       $form['message'] = array(
         '#markup' => $this->t('Your payment has been completed. Thank you for joining.')
       );

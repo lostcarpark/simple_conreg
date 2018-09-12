@@ -24,29 +24,55 @@ class SimpleConregOptions {
 
     $types = explode("\n", $config->get('member_types')); // One type per line.
     $typeVals = [];
-    $typeOptions = [];
+    $publicOptions = [];
+    $privateOptions = [];
     foreach ($types as $type) {
       if (!empty($type)) {
-        list($code, $desc, $name, $price, $badgetype, $fieldset) = explode('|', $type);
+        $typeFields = array_pad(explode('|', $type), 8, '');
+        list($code, $desc, $name, $price, $badgeType, $fieldset, $active, $defaultDays) = $typeFields;
+        // Remove any extra spacing.
         $code = trim($code);
         $fieldset = trim($fieldset);
+        // If fieldset not specified, use 0.
         if (empty($fieldset)) {
           $fieldset = 0;
         }
-        // Put description in specific array for populating drop-down.
-        $typeOptions[$code] = trim($desc);
+        $days = null;
+        // If extra fields, they will contain day details.
+        $days = [];
+        $dayOptions = [];
+        $fieldCount = count($typeFields);
+        if ($fieldCount > 8) {
+          for ($fieldNo = 8; $fieldNo < $fieldCount; $fieldNo++) {
+            list($dayCode, $dayDesc, $dayName, $dayPrice) = array_pad(explode('~', $typeFields[$fieldNo]), 4, '');
+              $dayOptions[$dayCode] = $dayDesc;
+              $days[$dayCode] = (object)[
+                'name' => $dayName,
+                'description' => $dayDesc,
+                'price' => $dayPrice,
+              ];
+          }
+        }
+        // Put description in specific array for populating drop-down. Put all options in private array, but only active options in public array.
+        $privateOptions[$code] = trim($desc);
+        if ($active)
+          $publicOptions[$code] = trim($desc);
         // Put all other values in an associative array.
-        $typeVals[$code] = [
+        $typeVals[$code] = (object)[
           'name' => trim($name),
           'description' => trim($desc),
           'price' => trim($price),
-          'badgetype' => trim($badgetype),
+          'badgeType' => trim($badgeType),
           'fieldset' => trim($fieldset),
+          'active' => $active,
+          'defauleDays' => $defaultDays,
           'config' => SimpleConregConfig::getFieldsetConfig($eid, $fieldset),
+          'days' => $days,
+          'dayOptions' => $dayOptions,
         ];
       }
     }
-    return [$typeOptions, $typeVals];
+    return (object)['publicOptions' => $publicOptions, 'privateOptions' => $privateOptions, 'types' => $typeVals];
   }
 
   /**
@@ -61,8 +87,8 @@ class SimpleConregOptions {
     $types = explode("\n", $config->get('badge_types')); // One type per line.
     $badgeTypes = [];
     foreach ($types as $type) {
-      list($code, $badgetype) = explode('|', $type);
-      $badgeTypes[trim($code)] = trim($badgetype);
+      list($code, $badgeType) = explode('|', $type);
+      $badgeTypes[trim($code)] = trim($badgeType);
     }
     return $badgeTypes;
   }
