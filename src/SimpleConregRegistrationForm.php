@@ -245,6 +245,8 @@ class SimpleConregRegistrationForm extends FormBase {
             '#title' => $fieldsetConfig->get('fields.membership_days_label'),
             '#description' => $fieldsetConfig->get('fields.membership_days_description'),
             '#options' => $types->types[$currentType]->dayOptions,
+            '#attributes' => array(
+              'class' => array('edit-members-days')),
             '#ajax' => array(
               'wrapper' => 'regform',
               'callback' => array($this, 'updateMemberPriceCallback'),
@@ -812,7 +814,6 @@ class SimpleConregRegistrationForm extends FormBase {
       // Add member details to parameters for email.
       $confirm_params["members"][$cnt] = $entry;
       // Insert to database table.
-dd($entry);
       $return = SimpleConregStorage::insert($entry);
       
       if ($return) {
@@ -939,12 +940,24 @@ dd($entry);
     $days = '';
     $daysDesc = isset($types[$memberType]) ? $types[$memberType]->defauleDays : '';
     if (isset($types[$memberType]->days)) {
-      foreach($types[$memberType]->days as $dayCode => $dayOptions) {
-        if (isset($form_values['members']['member'.$memberNo]['dayOptions']['days'][$dayCode]) && $form_values['members']['member'.$memberNo]['dayOptions']['days'][$dayCode]) {
-          $daysPrice += $dayOptions->price;
-          $dayTypes .= $dayCode;
-          $dayCodes[] = $dayCode;
-          $dayNames[] = $dayOptions->name;
+dd($memberType);
+dd($form_values['members']['member'.$memberNo]['dayOptions']['days']);
+      // If day code = type code, whole weekend selected.
+      if (isset($form_values['members']['member'.$memberNo]['dayOptions']['days'][$memberType]) && $form_values['members']['member'.$memberNo]['dayOptions']['days'][$memberType]) {
+        $daysPrice = $price;
+      }
+      else {
+dd($types[$memberType]->days, "Days");
+        foreach($types[$memberType]->days as $dayCode => $dayOptions) {
+          if (isset($form_values['members']['member'.$memberNo]['dayOptions']['days'][$dayCode]) && $form_values['members']['member'.$memberNo]['dayOptions']['days'][$dayCode]) {
+dd($dayOptions->price, "option price");
+dd($dayCode, "checked");
+            $daysPrice += $dayOptions->price;
+            $dayTypes .= $dayCode;
+            $dayCodes[] = $dayCode;
+            $dayNames[] = $dayOptions->name;
+dd($daysPrice, "Days price");
+          }
         }
       }
       if ($daysPrice > 0 and $daysPrice < $price) {
