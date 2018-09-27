@@ -47,8 +47,6 @@ class SimpleConregOptions {
           $defaultDays = $dayName;
         }
         $fieldCount = count($typeFields);
-//dd($fieldCount, "Field count");
-//dd($typeFields, "Fields");
         if ($fieldCount > 8) {
           for ($fieldNo = 8; $fieldNo < $fieldCount; $fieldNo++) {
             list($dayCode, $dayDesc, $dayName, $dayPrice) = array_pad(explode('~', $typeFields[$fieldNo]), 4, '');
@@ -60,7 +58,6 @@ class SimpleConregOptions {
               ];
           }
         }
-//dd($days, "Days");
         // Put description in specific array for populating drop-down. Put all options in private array, but only active options in public array.
         $privateOptions[$code] = trim($desc);
         if ($active)

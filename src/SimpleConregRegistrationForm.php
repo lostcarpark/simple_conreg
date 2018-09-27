@@ -940,23 +940,17 @@ class SimpleConregRegistrationForm extends FormBase {
     $days = '';
     $daysDesc = isset($types[$memberType]) ? $types[$memberType]->defauleDays : '';
     if (isset($types[$memberType]->days)) {
-dd($memberType);
-dd($form_values['members']['member'.$memberNo]['dayOptions']['days']);
       // If day code = type code, whole weekend selected.
       if (isset($form_values['members']['member'.$memberNo]['dayOptions']['days'][$memberType]) && $form_values['members']['member'.$memberNo]['dayOptions']['days'][$memberType]) {
         $daysPrice = $price;
       }
       else {
-dd($types[$memberType]->days, "Days");
         foreach($types[$memberType]->days as $dayCode => $dayOptions) {
           if (isset($form_values['members']['member'.$memberNo]['dayOptions']['days'][$dayCode]) && $form_values['members']['member'.$memberNo]['dayOptions']['days'][$dayCode]) {
-dd($dayOptions->price, "option price");
-dd($dayCode, "checked");
             $daysPrice += $dayOptions->price;
             $dayTypes .= $dayCode;
             $dayCodes[] = $dayCode;
             $dayNames[] = $dayOptions->name;
-dd($daysPrice, "Days price");
           }
         }
       }
