@@ -893,7 +893,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $freeAmount = isset($form_values['payment']['global_add_on']['free_amount']) ? $form_values['payment']['global_add_on']['free_amount'] : '';
     if (!empty($freeAmount))
       $fullPrice += $freeAmount;
-    // Sort prices array in reverse order.
+    // Sort prices array in reverse order, but keep indexes so memberPrices array can be referenced.
     $cnt = 0;
     if ($discountEnabled && arsort($prices)) {
       foreach ($prices as $memberNo => $curPrice) {
@@ -902,14 +902,14 @@ class SimpleConregRegistrationForm extends FormBase {
         if ($cnt % ($discountFreeEvery + 1) == 0) {
           $discountPrice += $curPrice;
           // Take base price off member price (but leave add-ons).
-          $memberPrices[$memberNo]->price = $memberPrices[$memberNo]->$price - $memberPrices[$memberNo]->$basePrice;
+          $memberPrices[$memberNo]->price = $memberPrices[$memberNo]->price - $curPrice;
           // New message. Be sure to include add-on price if there is one.
-          if ($newPrice == 0)
+          if ($memberPrices[$memberNo]->price == 0)
             $memberPrices[$memberNo]->priceMessage = $this->t('Free member!');
           else
             $memberPrices[$memberNo]->priceMessage = $this->t('Free member! Price for add-on: @symbol@price', array(
               '@symbol' => $symbol,
-              '@price' => $newPrice));
+              '@price' => $memberPrices[$memberNo]->price));
         }
       }
     }

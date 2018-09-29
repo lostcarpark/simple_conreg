@@ -47,7 +47,7 @@ class SimpleConregAdminMembers extends FormBase {
     $pageSize = $config->get('display.page_size');
 
     $pageOptions = [];
-    switch($_GET['sort']) {
+    switch(isset($_GET['sort']) ? $_GET['sort'] : '') {
       case 'desc':
         $direction = 'DESC';
         $pageOptions['sort'] = 'desc';
@@ -56,7 +56,7 @@ class SimpleConregAdminMembers extends FormBase {
         $direction = 'ASC';
         break;
     }
-    switch($_GET['order']) {
+    switch(isset($_GET['order']) ? $_GET['order'] : '') {
       case 'MID':
         $order = 'm.mid';
         $pageOptions['order'] = 'MID';
