@@ -866,6 +866,18 @@ class SimpleConregRegistrationForm extends FormBase {
     );
   }
 
+  /**
+   * Callback for sorting member prices.
+   */
+  public function MemberPriceCompare($a, $b)
+  {
+    if ($a->basePrice == $b->basePrice) {
+      if ($a->memberNo == $b->memberNo)
+        return 0; // Should never actually happen.
+      return ($a->memberNo < $b->memberNo ? -1 : 1);
+    }
+    return ($a->basePrice > $b->basePrice ? -1 : 1);
+  }
 
   /**
    * Method to calculate price of all members, and subtract any discounts.
@@ -881,8 +893,8 @@ class SimpleConregRegistrationForm extends FormBase {
       // Check member price.
       $memberPrices[$cnt] = $this->getMemberPrice($form_values, $cnt, $types, $addOnPrices, $symbol);
       if ($memberPrices[$cnt]->basePrice > 0)
-        $prices[$cnt] = $memberPrices[$cnt]->basePrice;
-      //$members['member'.$cnt]['price'] = $price;
+        $prices[] = (object)['memberNo' => $memberPrices[$cnt]->memberNo,
+                             'basePrice' => $memberPrices[$cnt]->basePrice];
       $fullPrice += $memberPrices[$cnt]->price;
     }
     // If global add on selected, look up value.
@@ -895,21 +907,21 @@ class SimpleConregRegistrationForm extends FormBase {
       $fullPrice += $freeAmount;
     // Sort prices array in reverse order, but keep indexes so memberPrices array can be referenced.
     $cnt = 0;
-    if ($discountEnabled && arsort($prices)) {
-      foreach ($prices as $memberNo => $curPrice) {
+    if ($discountEnabled && usort($prices, [$this, 'MemberPriceCompare'])) {
+      foreach ($prices as $curPrice) {
         $cnt++;
         // Check if discount applies (count divisible by number pre discount).
         if ($cnt % ($discountFreeEvery + 1) == 0) {
-          $discountPrice += $curPrice;
+          $discountPrice += $curPrice->basePrice;
           // Take base price off member price (but leave add-ons).
-          $memberPrices[$memberNo]->price = $memberPrices[$memberNo]->price - $curPrice;
+          $memberPrices[$curPrice->memberNo]->price = $memberPrices[$curPrice->memberNo]->price - $curPrice->basePrice;
           // New message. Be sure to include add-on price if there is one.
-          if ($memberPrices[$memberNo]->price == 0)
-            $memberPrices[$memberNo]->priceMessage = $this->t('Free member!');
+          if ($memberPrices[$curPrice->memberNo]->price == 0)
+            $memberPrices[$curPrice->memberNo]->priceMessage = $this->t('Free member!');
           else
-            $memberPrices[$memberNo]->priceMessage = $this->t('Free member! Price for add-on: @symbol@price', array(
+            $memberPrices[$curPrice->memberNo]->priceMessage = $this->t('Free member! Price for add-on: @symbol@price', array(
               '@symbol' => $symbol,
-              '@price' => $memberPrices[$memberNo]->price));
+              '@price' => $memberPrices[$curPrice->memberNo]->price));
         }
       }
     }
@@ -917,6 +929,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $totalPrice = $fullPrice - $discountPrice;
     return [$fullPrice, $discountPrice, $totalPrice, $memberPrices];
   }
+  
 
 
   /**
@@ -989,6 +1002,7 @@ class SimpleConregRegistrationForm extends FormBase {
         '@price' => $price]);
 
     return (object)[
+      'memberNo' => $memberNo,
       'price' => $price,
       'priceMessage' => $priceMessage,
       'basePrice' => $basePrice,
