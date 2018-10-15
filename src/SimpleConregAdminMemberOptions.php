@@ -91,27 +91,6 @@ class SimpleConregAdminMemberOptions extends FormBase {
       'option_detail' => ['data' => t('Detail'), 'field' => 'm.option_detail'],
     );
 
-    // If display 
-    if ($display == 'custom') {
-      $form['search'] = array(
-        '#type' => 'textfield',
-        '#title' => $this->t('Custom search term'),
-        '#default_value' => trim($search),
-      );
-      
-      $form['search_button'] = array(
-        '#type' => 'button',
-        '#value' => t('Search'),
-        '#attributes' => array('id' => "searchBtn"),
-        '#validate' => array(),
-        '#submit' => array('::search'),
-        '#ajax' => array(
-          'wrapper' => 'memberform',
-          'callback' => array($this, 'updateDisplayCallback'),
-        ),
-      );
-    }
-
     $form['table'] = array(
       '#type' => 'table',
       '#header' => $headers,
@@ -134,8 +113,8 @@ class SimpleConregAdminMemberOptions extends FormBase {
         $row['email'] = array(
           '#markup' => SafeMarkup::checkPlain($entry['email']),
         );
-        $row['option_detail'] = array(
-          '#markup' => $entry['badge_name'] ? $this->t('Yes') : $this->t('No'),
+        $row['is_selected'] = array(
+          '#markup' => $entry['is_selected'] ? $this->t('Yes') : $this->t('No'),
         );
         $row['option_detail'] = array(
           '#markup' => SafeMarkup::checkPlain($entry['option_detail']),
