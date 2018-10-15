@@ -78,6 +78,18 @@ simple_conreg_admin_member_list:
     _permission: 'view membership details'
     eid: ^[0-9]+$
 
+simple_conreg_admin_member_options:
+  path: 'admin/members/options/{eid}/{option}'
+  defaults:
+    _title: 'Member Options'
+    _form: '\Drupal\simple_conreg\SimpleConregAdminMemberOptions'
+    eid: 1
+    option: 0
+  requirements:
+    _permission: 'view membership options'
+    eid: ^[0-9]+$
+    option: ^[0-9]*$
+
 simple_conreg_admin_member_summary:
   path: 'members/membersummary/{eid}'
   defaults:

@@ -32,6 +32,12 @@ simple_conreg.admin.members:
   weight: 4
   parent: simple_conreg.register
 
+simple_conreg.admin.options:
+  title: Membership Selected Options
+  route_name: simple_conreg_admin_member_options
+  weight: 6
+  parent: simple_conreg.register
+
 simple_conreg.admin.add:
   title: Add Member
   route_name: simple_conreg_admin_members_add
