@@ -242,12 +242,12 @@ class SimpleConregAdminMembers extends FormBase {
       );
       if (empty($entry["member_no"]))
         $entry["member_no"] = "";
-      $row["member_no"] = array(
-        '#type' => 'textfield',
-        '#title' => t('Member No'),
-        '#title_display' => 'invisible',
-        '#size' => 5,
-        '#default_value' => $entry['member_no'],
+        $row["member_no"] = array(
+          '#type' => 'textfield',
+          '#title' => t('Member No'),
+          '#title_display' => 'invisible',
+          '#size' => 5,
+          '#default_value' => $entry['member_no'],
       );
       $row['link'] = array(
         '#type' => 'dropbutton',

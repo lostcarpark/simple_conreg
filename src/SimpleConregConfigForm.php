@@ -164,6 +164,13 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('badge_types'),
     );
 
+    $form['simple_conreg_members']['days'] = array(
+      '#type' => 'textarea',
+      '#title' => $this->t('Days'),
+      '#description' => $this->t('Put each day type on a line with day code and description separated by | character (e.g. Sa|Saturday).'),
+      '#default_value' => $config->get('days'),
+    );
+
     $form['simple_conreg_members']['digits'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Digits in Member Numbers'),
@@ -778,6 +785,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('payments.postcode', trim($vals['simple_conreg_payments']['show_postcode']));
     $config->set('member_types', $vals['simple_conreg_members']['types']);
     $config->set('badge_types', $vals['simple_conreg_members']['badge_types']);
+    $config->set('days', $vals['simple_conreg_members']['days']);
     $config->set('member_no_digits', $vals['simple_conreg_members']['digits']);
     $config->set('registration_intro', $vals['simple_conreg_intros']['registration_intro']);
     $config->set('payment_intro', $vals['simple_conreg_intros']['payment_intro']);

@@ -26,6 +26,7 @@ class SimpleConregOptions {
     $typeVals = [];
     $publicOptions = [];
     $privateOptions = [];
+    $publicNames = [];
     foreach ($types as $type) {
       if (!empty($type)) {
         $typeFields = array_pad(explode('|', $type), 8, '');
@@ -60,8 +61,10 @@ class SimpleConregOptions {
         }
         // Put description in specific array for populating drop-down. Put all options in private array, but only active options in public array.
         $privateOptions[$code] = trim($desc);
-        if ($active)
+        if ($active) {
           $publicOptions[$code] = trim($desc);
+          $publicNames[$code] = trim($name);
+        }
         // Put all other values in an associative array.
         $typeVals[$code] = (object)[
           'name' => trim($name),
@@ -70,14 +73,14 @@ class SimpleConregOptions {
           'badgeType' => trim($badgeType),
           'fieldset' => trim($fieldset),
           'active' => $active,
-          'defauleDays' => $defaultDays,
+          'defaultDays' => $defaultDays,
           'config' => SimpleConregConfig::getFieldsetConfig($eid, $fieldset),
           'days' => $days,
           'dayOptions' => $dayOptions,
         ];
       }
     }
-    return (object)['publicOptions' => $publicOptions, 'privateOptions' => $privateOptions, 'types' => $typeVals];
+    return (object)['publicOptions' => $publicOptions, 'privateOptions' => $privateOptions, 'publicNames' => $publicNames, 'types' => $typeVals];
   }
 
   /**
@@ -96,6 +99,24 @@ class SimpleConregOptions {
       $badgeTypes[trim($code)] = trim($badgeType);
     }
     return $badgeTypes;
+  }
+
+  /**
+   * Return list of days from config.
+   *
+   * Parameters: Optional config.
+   */
+  public static function days($eid, &$config = NULL) {
+    if (is_null($config)) {
+      $config = SimpleConregConfig::getConfig($eid);
+    }
+    $dayLines = explode("\n", $config->get('days')); // One type per line.
+    $days = [];
+    foreach ($dayLines as $dayLine) {
+      list($dayCode, $dayName) = explode('|', $dayLine);
+      $days[trim($dayCode)] = trim($dayName);
+    }
+    return $days;
   }
 
   /**

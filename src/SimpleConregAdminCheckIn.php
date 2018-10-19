@@ -81,68 +81,27 @@ class SimpleConregAdminCheckIn extends FormBase {
     $config = $this->config('simple_conreg.settings.'.$eid);
     $types = SimpleConregOptions::memberTypes($eid, $config);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
+    $days = SimpleConregOptions::days($eid, $config);
     $displayOptions = SimpleConregOptions::display();
+    $communicationMethods = SimpleConregOptions::communicationMethod();
     $pageSize = $config->get('display.page_size');
 
-    $pageOptions = [];
-    switch($_GET['sort']) {
-      case 'desc':
-        $direction = 'DESC';
-        $pageOptions['sort'] = 'desc';
-        break;
-      default:
-        $direction = 'ASC';
-        break;
+    $action = $form_state->get("action");
+    if (isset($action) && !empty($action)) {
+      switch ($action) {
+        case "payCash":
+          $toPay = $form_state->get("topay");
+          return $this->buildCashForm($toPay);
+          break;
+        case "checkIn":
+          $toPay = $form_state->get("topay");
+          return $this->buildConfirmForm($eid, $toPay);
+          break;
+      }
     }
-    switch($_GET['order']) {
-      case 'First name':
-        $order = 'm.first_name';
-        $pageOptions['order'] = 'First name';
-        break;
-      case 'Last name':
-        $order = 'm.last_name';
-        $pageOptions['order'] = 'Last name';
-        break;
-      case 'Badge name':
-        $order = 'm.badge_name';
-        $pageOptions['order'] = 'Badge name';
-        break;
-      case 'Email':
-        $order = 'email';
-        $pageOptions['order'] = 'Email';
-        break;
-      default:
-        $order = 'member_no';
-        break;
-    }
-
-    $options = ['not_checked' => $this->t('Members to be checked in'),
-                'checked_in' => $this->t('Already checked in members'),
-                'all' => $this->t('All members'),
-                'custom' => $this->t('Custom search'),
-               ];
-
-    $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
-    // If form values submitted, use the display value that was submitted over the passed in values.
-    if (isset($form_values['display']))
-      $display = $form_values['display'];
-    elseif (empty($form_values['display'])) {
-      // If display not submitted from form or passed in through URL, take last value from session.
-      $display = $tempstore->get('check_in_display');
-    }
-    if (empty($display) || !array_key_exists($display, $options))
-      $display = key($options); // If still no display specified, or invalid option, default to first key in displayOptions.
-
-    // Save the display options.
-    $tempstore->set('check_in_display', $display);
-    $tempstore->set('check_in_page', $page);
-
 
     if (isset($form_values['search']))
-      $search = $form_values['search'];
-    else
-      $search = $tempstore->get('search');
-    $tempstore->set('search', $search);
+      $search = trim($form_values['search']);
 
     $form = array(
       '#prefix' => '<div id="memberform">',
@@ -150,19 +109,6 @@ class SimpleConregAdminCheckIn extends FormBase {
     );
 
     $this->CheckInSummary($eid, $form);
-
-    $form['display'] = array(
-      '#type' => 'select',
-      '#title' => $this->t('Select '),
-      '#options' => $options,
-      '#default_value' => $display,
-      '#required' => TRUE,
-      '#ajax' => array(
-        'wrapper' => 'memberform',
-        'callback' => array($this, 'updateDisplayCallback'),
-        'event' => 'change',
-      ),
-    );
 
     $headers = array(
       'member_no' => ['data' => t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
@@ -176,30 +122,27 @@ class SimpleConregAdminCheckIn extends FormBase {
       'badge_type' =>  ['data' => t('Badge type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       'comment' =>  ['data' => t('Comment'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       t('Paid'),
-      t('Checked In'),
+      t('Select'),
       t('Action'),
     );
 
-    // If display 
-    if ($display == 'custom') {
-      $form['search'] = array(
-        '#type' => 'textfield',
-        '#title' => $this->t('Custom search term'),
-        '#default_value' => trim($search),
-      );
-      
-      $form['search_button'] = array(
-        '#type' => 'button',
-        '#value' => t('Search'),
-        '#attributes' => array('id' => "searchBtn"),
-        '#validate' => array(),
-        '#submit' => array('::search'),
-        '#ajax' => array(
-          'wrapper' => 'memberform',
-          'callback' => array($this, 'updateDisplayCallback'),
-        ),
-      );
-    }
+    $form['search'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Custom search term'),
+      '#default_value' => trim($search),
+    );
+    
+    $form['search_button'] = array(
+      '#type' => 'button',
+      '#value' => t('Search'),
+      '#attributes' => array('id' => "searchBtn"),
+      '#validate' => array(),
+      '#submit' => array('::search'),
+      '#ajax' => array(
+        'wrapper' => 'memberform',
+        'callback' => array($this, 'updateDisplayCallback'),
+      ),
+    );
 
     $form['table'] = array(
       '#type' => 'table',
@@ -209,38 +152,109 @@ class SimpleConregAdminCheckIn extends FormBase {
       '#sticky' => TRUE,
     );      
 
-    if ($display != 'custom')
-      list($pages, $entries) = SimpleConregStorage::adminMemberCheckInListLoad($eid, $display, NULL, $page, $pageSize, $order, $direction);
-    elseif (!empty(trim($search)))
-      list($pages, $entries) = SimpleConregStorage::adminMemberCheckInListLoad($eid, $display, $search, $page, $pageSize, $order, $direction);
-    else {
-      $pages = 0;
-      $entries = [];
+    // Only check database if search filled in.
+    if (!empty($search)) {
+      $entries = SimpleConregStorage::adminMemberCheckInListLoad($eid, $search);
+
+      foreach ($entries as $entry) {
+        $mid = $entry['mid'];
+        // Sanitize each entry.
+        $is_paid = $entry['is_paid'];
+        //$row = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $entry);
+        $row = array();
+        $row['mid'] = array(
+          '#markup' => SafeMarkup::checkPlain($entry['member_no']),
+        );
+        $row['first_name'] = array(
+          '#markup' => SafeMarkup::checkPlain($entry['first_name']),
+        );
+        $row['last_name'] = array(
+          '#markup' => SafeMarkup::checkPlain($entry['last_name']),
+        );
+        $row['email'] = array(
+          '#markup' => SafeMarkup::checkPlain($entry['email']),
+        );
+        $row['badge_name'] = array(
+          '#markup' => SafeMarkup::checkPlain($entry['badge_name']),
+        );
+        $row['registered_by'] = array(
+          '#markup' => SafeMarkup::checkPlain($entry['registered_by']),
+        );
+        $memberType = trim($entry['base_type']);
+        $row['member_type'] = array(
+          '#markup' => SafeMarkup::checkPlain(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
+        );
+        $row['days'] = array(
+          '#markup' => SafeMarkup::checkPlain($entry['days_desc']),
+        );
+        $badgeType = trim($entry['badge_type']);
+        $row['badge_type'] = array(
+          '#markup' => SafeMarkup::checkPlain(isset($badgeTypes[$badgeType]) ? $badgeTypes[$badgeType] : $badgeType),
+        );
+        $row['comment'] = array(
+          '#markup' => SafeMarkup::checkPlain(trim(substr($entry['comment'], 0, 20))),
+        );
+        $row['is_paid'] = array(
+          '#markup' => $is_paid ? $this->t('Yes') : $this->t('No'),
+        );
+        $row["is_checked_in"] = array(
+          //'#attributes' => array('name' => 'is_approved_'.$mid, 'id' => 'edit_is_approved_'.$mid),
+          '#type' => 'checkbox',
+          '#title' => t('Is Checked In'),
+          '#title_display' => 'invisible',
+          '#default_value' => $entry['is_checked_in'],
+        );
+  /*      $row['link'] = array(
+          '#type' => 'dropbutton',
+          '#links' => array(
+            'edit_button' => array(
+              'title' => $this->t('View'),
+              'url' => Url::fromRoute ('simple_conreg_admin_members_edit', ['eid' => $eid, 'mid' => $mid]),
+            ),
+          ),
+        );*/
+
+        $form['table'][$mid] = $row;
+      }
     }
+
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Check-in Selected'),
+      '#submit' => [[$this, 'checkInSubmit']],
+      '#attributes' => array('id' => "submitBtn"),
+    );
+
+    $headers = array(
+      'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
+      'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
+      'email' => ['data' => t('Email'), 'field' => 'm.email'],
+      'badge_name' => ['data' => t('Badge name'), 'field' => 'm.badge_name'],
+      'display' => ['data' => t('On website'), 'field' => 'm.display'],
+      'communication_method' => ['data' => t('Contact'), 'field' => 'm.communication_method'],
+      'member_type' =>  ['data' => t('Member type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
+      'days' =>  ['data' => t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
+      'price' => ['data' => t('Price'), 'field' => 'm.member_total'],
+      t('Select'),
+      /*t('Action'),*/
+    );
+
+    $form['unpaid'] = array(
+      '#type' => 'table',
+      '#header' => $headers,
+      '#attributes' => array('id' => 'simple-conreg-admin-member-list'),
+      '#empty' => t('No entries available.'),
+      '#sticky' => TRUE,
+    );
     
-    // Check if current page greater than number of pages...
-    if ($page > $pages) {
-      // Look at making this redirect so correct page is in the URL, but tricky because we're in AJAX callback. For now just show last page.
-      $page = $pages;
-      // Refetch page data.
-      if ($display != 'custom')
-        list($pages, $entries) = SimpleConregStorage::adminMemberCheckInListLoad($eid, $display, NULL, $page, $pageSize, $order, $direction);
-      elseif (!empty(trim($search)))
-        list($pages, $entries) = SimpleConregStorage::adminMemberCheckInListLoad($eid, $display, $search, $page, $pageSize, $order, $direction);
-      // Page doesn't exist for current selection criteria, so go to last page of query.
-      // $form_state->setRedirect('simple_conreg_admin_members', ['display' => $display, 'page' => $pages], ['query' => $pageOptions]);
-      //return;
-    }
+    $entries = SimpleConregStorage::adminMemberUnpaidListLoad($eid);
 
     foreach ($entries as $entry) {
       $mid = $entry['mid'];
       // Sanitize each entry.
       $is_paid = $entry['is_paid'];
       //$row = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $entry);
-      $row = array();
-      $row['mid'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['member_no']),
-      );
+      $row = [];
       $row['first_name'] = array(
         '#markup' => SafeMarkup::checkPlain($entry['first_name']),
       );
@@ -254,7 +268,10 @@ class SimpleConregAdminCheckIn extends FormBase {
         '#markup' => SafeMarkup::checkPlain($entry['badge_name']),
       );
       $row['display'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['registered_by']),
+        '#markup' => SafeMarkup::checkPlain(isset($displayOptions[$entry['display']]) ? $displayOptions[$entry['display']] : $entry['display']),
+      );
+      $row['communication_method'] = array(
+        '#markup' => SafeMarkup::checkPlain(isset($communicationMethods[$entry['communication_method']]) ? $communicationMethods[$entry['communication_method']] : $entry['communication_method']),
       );
       $memberType = trim($entry['base_type']);
       $row['member_type'] = array(
@@ -263,66 +280,194 @@ class SimpleConregAdminCheckIn extends FormBase {
       $row['days'] = array(
         '#markup' => SafeMarkup::checkPlain($entry['days_desc']),
       );
-      $badgeType = trim($entry['badge_type']);
-      $row['badge_type'] = array(
-        '#markup' => SafeMarkup::checkPlain(isset($badgeTypes[$badgeType]) ? $badgeTypes[$badgeType] : $badgeType),
+      $row['price'] = array(
+        '#markup' => SafeMarkup::checkPlain($entry['member_total']),
       );
-      $row['comment'] = array(
-        '#markup' => SafeMarkup::checkPlain(trim(substr($entry['comment'], 0, 20))),
-      );
-      $row['is_paid'] = array(
-        '#markup' => $is_paid ? $this->t('Yes') : $this->t('No'),
-      );
-      $row["is_checked_in"] = array(
+      $row["is_selected"] = array(
         //'#attributes' => array('name' => 'is_approved_'.$mid, 'id' => 'edit_is_approved_'.$mid),
         '#type' => 'checkbox',
         '#title' => t('Is Checked In'),
         '#title_display' => 'invisible',
-        '#default_value' => $entry['is_checked_in'],
+        '#default_value' => 0,
       );
 /*      $row['link'] = array(
         '#type' => 'dropbutton',
         '#links' => array(
           'edit_button' => array(
-            'title' => $this->t('Edit'),
+            'title' => $this->t('View'),
             'url' => Url::fromRoute ('simple_conreg_admin_members_edit', ['eid' => $eid, 'mid' => $mid]),
-          ),
-          'delete_button' => array(
-            'title' => $this->t('Delete'),
-            'url' => Url::fromRoute('simple_conreg_admin_members_delete', ['eid' => $eid, 'mid' => $mid]),
-          ),
-          'transfer_button' => array(
-            'title' => $this->t('Transfer'),
-            'url' => Url::fromRoute('simple_conreg_admin_members_transfer', ['eid' => $eid, 'mid' => $mid]),
-          ),
-          'email_button' => array(
-            'title' => $this->t('Send email'),
-            'url' => Url::fromRoute('simple_conreg_admin_members_email', ['eid' => $eid, 'mid' => $mid]),
           ),
         ),
       );*/
 
-      $form['table'][$mid] = $row;
+      $form['unpaid'][$mid] = $row;
     }
     
-    $form['pager'] = array(
-      '#markup' => $this->t('Page:'),
-      '#prefix' => '<div id="pager">',
-      '#suffix' => '</div>',
+    
+    // Extra table row with blank form for new member.
+    $row = [];
+    $row["first_name"] = [
+      '#type' => 'textfield',
+      '#title' => t('First Name'),
+      '#title_display' => 'invisible',
+      '#size' => 15,
+    ];
+    $row["last_name"] = [
+      '#type' => 'textfield',
+      '#title' => t('Last Name'),
+      '#title_display' => 'invisible',
+      '#size' => 15,
+    ];
+    $row["email"] = [
+      '#type' => 'textfield',
+      '#title' => t('Email'),
+      '#title_display' => 'invisible',
+      '#size' => 15,
+    ];
+    $row["badge_name"] = [
+      '#type' => 'textfield',
+      '#title' => t('Badge Name'),
+      '#title_display' => 'invisible',
+      '#size' => 15,
+    ];
+    $row['display'] = array(
+      '#type' => 'select',
+      '#title' => $this->t('On Website'),
+      '#options' => $displayOptions,
+      '#title_display' => 'invisible',
+    );    
+    $row['communication_method'] = array(
+      '#type' => 'select',
+      '#title' => $this->t('Contact'),
+      '#options' => $communicationMethods,
+      '#title_display' => 'invisible',
+    );    
+    $row['memberType'] = array(
+      '#type' => 'select',
+      '#title' => $this->t('Member Type'),
+      '#options' => $types->publicNames,
+      '#title_display' => 'invisible',
     );
-    for ($p = 1; $p <= $pages; $p++) {
-      if ($p == $page)
-        $form['pager']['page'.$p]['#markup'] = $p;
-      else
-        $form['pager']['page'.$p] = Link::createFromRoute($p, 'simple_conreg_admin_checkin', ['eid' => $eid, 'display' => $display, 'page' => $p], ['query' => $pageOptions])->toRenderable();
-      $form['pager']['page'.$p]['#prefix'] = ' <span>';
-      $form['pager']['page'.$p]['#suffix'] = '</span> ';
-    }
-
-    $form['submit'] = array(
+    $row['days'] = array(
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Days'),
+      '#options' => $days,
+      '#title_display' => 'invisible',
+    );
+    $row['price']=[];
+    $row['add'] = array(
       '#type' => 'submit',
-      '#value' => t('Save Changes'),
-      '#attributes' => array('id' => "submitBtn"),
+      '#value' => $this->t('Add'),
+      '#submit' => [[$this, 'addMember']],
+    );    
+    $form['unpaid']['add'] = $row;
+
+    $form['cash'] = array(
+      '#type' => 'submit',
+      '#value' => $this->t('Pay Cash'),
+      '#submit' => [[$this, 'payCash']],
+    );    
+
+    $form['card'] = array(
+      '#type' => 'submit',
+      '#value' => $this->t('Pay Credit Card'),
+      '#submit' => [[$this, 'payCard']],
+    );    
+
+    return $form;
+  }
+  
+  //
+  // Set up markup fields to display cash payment.
+  //
+  public function buildCashForm($toPay) {
+    $form = [];
+    $form['intro'] = [
+      '#type' => 'markup',
+      '#markup' => $this->t('Please confirm cash received from:'),
+      '#prefix' => '<div><h3>',
+      '#suffix' => '</h3></div>',
+    ];
+    $total_price = 0;
+    foreach ($toPay as $mid) {
+      if ($member = SimpleConregStorage::load(['mid' => $mid])) {
+        $form['member'.$mid] = [
+          '#type' => 'markup',
+          '#markup' => $this->t('Member @first @last to pay @total',
+            ['@first' => $member['first_name'],
+             '@last' => $member['last_name'],
+             '@total' => $member['member_total'],
+            ]),
+          '#prefix' => '<div>',
+          '#suffix' => '</div>',
+        ];
+        $total_price += $member['member_total'];
+      }
+    }
+    $form['total'] = [
+      '#type' => 'markup',
+      '#markup' => $this->t('Total to pay @total', ['@total' => $total_price]),
+      '#prefix' => '<div><h4>',
+      '#suffix' => '</h4></div>',
+    ];
+    $form['confirm'] = array(
+      '#type' => 'submit',
+      '#value' => $this->t('Confirm Cash Payment'),
+      '#submit' => [[$this, 'confirmPayCash']],
+    );  
+    $form['cancel'] = array(
+      '#type' => 'submit',
+      '#value' => $this->t('Cancel'),
+      '#submit' => [[$this, 'cancelAction']],
+    );
+    return $form;
+  }
+
+  //
+  // Set up markup fields to display check-in confirm.
+  //
+  public function buildConfirmForm($eid, $toPay) {
+    $form = [];
+    $form['intro'] = [
+      '#type' => 'markup',
+      '#markup' => $this->t('Please confirm badges for:'),
+      '#prefix' => '<div><h3>',
+      '#suffix' => '</h3></div>',
+    ];
+    $maxMemberNo = SimpleConregStorage::loadMaxMemberNo($eid);
+    foreach ($toPay as $mid) {
+      if ($member = SimpleConregStorage::load(['mid' => $mid])) {
+        $update = ['mid' => $mid];
+        if (!(isset($member['is_confirmed']) && $member['is_approved']))
+          $update['is_approved'] = 1;
+        if (isset($member['member_no']) && $member['member_no'])
+          $member_no = $member['member_no'];
+        else {
+          $member_no = ++$maxMemberNo;
+          $update['member_no'] = $member_no;
+        }
+        SimpleConregStorage::update($update);
+        $form['member'.$mid] = [
+          '#type' => 'markup',
+          '#markup' => $this->t('Badge number @memberno for @first @last',
+            ['@memberno' => $member_no,
+             '@first' => $member['first_name'],
+             '@last' => $member['last_name'],
+            ]),
+          '#prefix' => '<div>',
+          '#suffix' => '</div>',
+        ];
+      }
+    }
+    $form['confirm'] = array(
+      '#type' => 'submit',
+      '#value' => $this->t('Confirm Check-In'),
+      '#submit' => [[$this, 'confirmCheckInSubmit']],
+    );  
+    $form['cancel'] = array(
+      '#type' => 'submit',
+      '#value' => $this->t('Cancel'),
+      '#submit' => [[$this, 'cancelAction']],
     );
     return $form;
   }
@@ -357,6 +502,218 @@ class SimpleConregAdminCheckIn extends FormBase {
   public function search(array &$form, FormStateInterface $form_state) {
     $form_state->setRebuild();
   }
+  
+  public function addMember(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
+    $config = SimpleConregConfig::getConfig($eid);
+    $types = SimpleConregOptions::memberTypes($eid, $config);
+    $days = SimpleConregOptions::days($eid, $config);
+    $form_values = $form_state->getValues();
+    // Assign random key for payment URL.
+    $rand_key = mt_rand();
+    if (!empty($form_values['unpaid']['add']['badge_name']))
+      $badge_name = trim($form_values['unpaid']['add']['badge_name']);
+    else
+      $badge_name = trim($form_values['unpaid']['add']['first_name'].' '.$form_values['unpaid']['add']['last_name']);
+    // Work out price.
+    $baseType = $form_values['unpaid']['add']['memberType'];
+    $memberType = $baseType;
+    $price = $types->types[$baseType]->price;
+    $daysPrice = 0;
+    $memberDays = '';
+    $memberDayDescs = $types->types[$baseType]->defaultDays;
+    $daysSel = [];
+    $daysDescs = [];
+    foreach ($form_values['unpaid']['add']['days'] as $key => $val) {
+      if (!empty($val) && isset($types->types[$memberType]->days[$key])) {
+        $daysPrice += $types->types[$memberType]->days[$key]->price;
+        $daysSel[] = $key;
+        $daysDescs[] = $days[$key];
+      }
+    }
+    
+    if ($daysPrice >0 and $daysPrice < $price) {
+      $price = $daysPrice;
+      $memberType = $baseType.implode('', $daysSel);
+      $memberDays = implode('|', $daysSel);
+      $memberDayDescs = implode(', ', $daysDescs);
+    }
+    // Save the submitted entry.
+    $entry = array(
+      'eid' => $eid,
+      'lead_mid' => 0,
+      'random_key' => $rand_key,
+      'member_type' => $memberType,
+      'base_type' => $baseType,
+      'days' => $memberDays,
+      'days_desc' => $memberDayDescs,
+      'first_name' => $form_values['unpaid']['add']['first_name'],
+      'last_name' => $form_values['unpaid']['add']['last_name'],
+      'badge_name' => $badge_name,
+      'badge_type' => 'A',
+      'display' => empty($form_values['unpaid']['add']['display']) ?
+          'N' : $form_values['unpaid']['add']['display'],
+      'communication_method' => isset($form_values['unpaid']['add']['communication_method']) ?
+          $form_values['unpaid']['add']['communication_method'] : '',
+      'email' => $form_values['unpaid']['add']['email'],
+      'member_price' => $price,
+      'member_total' => $price,
+      'add_on_price' => 0,
+      'payment_amount' => $price,
+      'join_date' => time(),
+    );
+    // Insert to database table.
+    $return = SimpleConregStorage::insert($entry);
+    
+    if ($return) {
+      // Update member with own member ID as lead member ID.
+      $update = array('mid' => $return, 'lead_mid' => $return);
+      $return = SimpleConregStorage::update($update);
+      // Clear form fields.
+      $form_state->setUserInput([]);
+    }
+    $form_state->setRebuild();
+  }
+  
+  public function checkInSubmit(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
+    $config = SimpleConregConfig::getConfig($eid);
+    $form_values = $form_state->getValues();
+
+    $toPay = [];
+    foreach ($form_values["table"] as $mid => $member) {
+      if (isset($member["is_checked_in"]) && $member["is_checked_in"]) {
+        $toPay[] = $mid;
+      }
+    }
+    if (count($toPay)) {
+      $form_state->set("action", "checkIn");
+      $form_state->set("topay", $toPay);
+    }
+    $form_state->setRebuild();
+  }
+
+  public function payCash(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
+    $config = SimpleConregConfig::getConfig($eid);
+    $types = SimpleConregOptions::memberTypes($eid, $config);
+    $days = SimpleConregOptions::days($eid, $config);
+    $form_values = $form_state->getValues();
+
+    $toPay = [];
+    foreach ($form_values["unpaid"] as $mid => $member) {
+      if (isset($member["is_selected"]) && $member["is_selected"]) {
+        $toPay[] = $mid;
+      }
+    }
+    // No need to proceed unless members have been selected.
+    if (count($toPay)) {
+      $form_state->set("action", "payCash");
+      $form_state->set("topay", $toPay);
+    }
+    $form_state->setRebuild();
+  }
+
+  public function confirmPayCash(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
+    $config = SimpleConregConfig::getConfig($eid);
+    $types = SimpleConregOptions::memberTypes($eid, $config);
+    $days = SimpleConregOptions::days($eid, $config);
+    $form_values = $form_state->getValues();
+
+    $payment_amount = 0;
+    $lead_mid = 0;
+    $toPay = $form_state->get("topay");
+    // Loop through selected members to get lead and total price.
+    foreach ($toPay as $mid) {
+      if ($member = SimpleConregStorage::load(['mid' => $mid])) {
+        // Make first member lead member.
+        if ($lead_mid == 0)
+          $lead_mid = $mid;
+        $payment_amount += $member['member_total'];
+      }
+    }
+    // Loop again to update members.
+    foreach ($toPay as $mid) {
+      $update = [
+        'mid' => $mid,
+        'lead_mid' => $lead_mid,
+        'payment_amount' => $payment_amount,
+        'payment_method' => 'Cash',
+        'is_paid' => 1,
+      ];
+      SimpleConregStorage::update($update);
+    }
+    $form_state->set('action', 'checkIn');
+    $form_state->setRebuild();
+  }
+
+  public function confirmCheckInSubmit(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
+    $config = SimpleConregConfig::getConfig($eid);
+    $types = SimpleConregOptions::memberTypes($eid, $config);
+    $days = SimpleConregOptions::days($eid, $config);
+    $form_values = $form_state->getValues();
+    $toPay = $form_state->get("topay");
+    // Loop through members and mark checked in.
+    foreach ($toPay as $mid) {
+      $update = [
+        'mid' => $mid,
+        'is_checked_in' => 1,
+      ];
+      SimpleConregStorage::update($update);
+    }
+    $form_state->set('action', 'checkin');
+    $form_state->setRebuild();
+  }
+  
+  public function payCard(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
+    $config = SimpleConregConfig::getConfig($eid);
+    $types = SimpleConregOptions::memberTypes($eid, $config);
+    $days = SimpleConregOptions::days($eid, $config);
+    $form_values = $form_state->getValues();
+
+    $payment_amount = 0;
+    $lead_mid = 0;
+    $toPay = $form_state->get("topay");
+    // Loop through selected members to get lead and total price.
+    foreach ($form_values["unpaid"] as $mid => $member) {
+      if (isset($member["is_selected"]) && $member["is_selected"]) {
+        if ($member = SimpleConregStorage::load(['mid' => $mid])) {
+          // Make first member lead member.
+          if ($lead_mid == 0) {
+            $lead_mid = $mid;
+            $lead_key = $member['random_key'];
+          }
+          $payment_amount += $member['member_total'];
+        }
+      }
+    }
+    // Loop again to update members.
+    foreach ($form_values["unpaid"] as $mid => $member) {
+      if (isset($member["is_selected"]) && $member["is_selected"]) {
+        $update = [
+          'mid' => $mid,
+          'lead_mid' => $lead_mid,
+          'payment_amount' => $payment_amount,
+        ];
+        SimpleConregStorage::update($update);
+      }
+    }
+    ($lead_key, $lead_mid);
+    if ($lead_mid)
+      // Redirect to payment form.
+      $form_state->setRedirect('simple_conreg_payment',
+        array('mid' => $lead_mid, 'key' => $lead_key)
+      );
+  }
+
+  public function cancelAction(array &$form, FormStateInterface $form_state) {
+    $form_state->set('action', '');
+    $form_state->setRebuild();
+  }
+
 
   /**
    * {@inheritdoc}

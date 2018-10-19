@@ -772,7 +772,7 @@ class SimpleConregRegistrationForm extends FormBase {
         'member_type' => $memberPrices[$cnt]->memberType,
         'base_type' => $memberPrices[$cnt]->baseType,
         'days' => $memberPrices[$cnt]->days,
-        'days_desc' => $memberPrices[$cnt]->daysDesc,
+        'days_desc' => trim($memberPrices[$cnt]->daysDesc),
         'first_name' => $form_values['members']['member'.$cnt]['first_name'],
         'last_name' => $form_values['members']['member'.$cnt]['last_name'],
         'badge_name' => $badge_name,
@@ -951,7 +951,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $dayNames = [];
     // Default days to none selected.
     $days = '';
-    $daysDesc = isset($types[$memberType]) ? $types[$memberType]->defauleDays : '';
+    $daysDesc = isset($types[$memberType]) ? $types[$memberType]->defaultDays : '';
     if (isset($types[$memberType]->days)) {
       // If day code = type code, whole weekend selected.
       if (isset($form_values['members']['member'.$memberNo]['dayOptions']['days'][$memberType]) && $form_values['members']['member'.$memberNo]['dayOptions']['days'][$memberType]) {
