@@ -701,7 +701,6 @@ class SimpleConregAdminCheckIn extends FormBase {
         SimpleConregStorage::update($update);
       }
     }
-    ($lead_key, $lead_mid);
     if ($lead_mid)
       // Redirect to payment form.
       $form_state->setRedirect('simple_conreg_payment',
