@@ -46,10 +46,13 @@ class SimpleConregAdminMemberOptions extends FormBase {
     $displayOptions = SimpleConregOptions::display();
     $pageSize = $config->get('display.page_size');
 
-    $optionList = SimpleConregStorage::adminOptionListLoad();
+    $optionList = SimpleConregFieldOptionStorage::adminOptionListLoad();
     $options = [];
+    $user = \Drupal::currentUser();
     foreach ($optionList as $val) {
-      $options[$val['optid']] = $val['option_title'];
+      if ($user->hasPermission('view field option ' . $val['optid'])) {
+        $options[$val['optid']] = $val['option_title'];
+      }
     }
 
     $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
@@ -100,7 +103,7 @@ class SimpleConregAdminMemberOptions extends FormBase {
     );      
 
     if (!empty($selOption)) {
-      $entries = SimpleConregStorage::adminOptionMemberListLoad($eid, $selOption);
+      $entries = SimpleConregFieldOptionStorage::adminOptionMemberListLoad($eid, $selOption);
 
       foreach ($entries as $entry) {
         $row = array();
@@ -153,48 +156,8 @@ class SimpleConregAdminMemberOptions extends FormBase {
     return $form;
   }
 
-  public function search(array &$form, FormStateInterface $form_state) {
-    $form_state->setRebuild();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-  	  $saved_members = SimpleConregStorage::loadAllMemberNos($eid);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $eid = $form_state->get('eid');
-    $form_values = $form_state->getValues();
-    $saved_members = SimpleConregStorage::loadAllMemberNos($eid);
-    $max_member = SimpleConregStorage::loadMaxMemberNo($eid);
-    foreach ($form_values["table"] as $mid => $member) {
-      if (($member["is_approved"] != $saved_members[$mid]["is_approved"]) ||
-          ($member["is_approved"] && $member["member_no"] != $saved_members[$mid]["member_no"])) {
-        if ($member["is_approved"]) {
-	        if (empty($member["member_no"])) {
-	          // No member no specified, so assign next one.
-	          $max_member++;
-	          $member_no = $max_member;
-	        } else {
-	          // Member no specified. Adjust next member no.
-	          $member_no = $member["member_no"];
-	          if ($member_no > $max_member)
-	            $max_member = $member_no;
-	        }
-	      } else {
-	        // No member number for unapproved members.
-	        $member_no = 0;
-	      }
-        $entry = array('mid' => $mid, 'is_approved' => $member["is_approved"], 'member_no' => $member_no);
-        $return = SimpleConregStorage::update($entry);
-      }
-    }
-    \Drupal\Core\Cache\Cache::invalidateTags(['simple-conreg-member-list']);
   }
+
 }    
 

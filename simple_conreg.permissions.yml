@@ -52,3 +52,5 @@
   title: Manage convention members
   description: Allow users to check in members arriving at the convention
 
+permission_callbacks:
+  - Drupal\simple_conreg\SimpleConregFieldOptions::permissions

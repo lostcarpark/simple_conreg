@@ -127,5 +127,25 @@ class SimpleConregFieldOptions {
     SimpleConregFieldOptionStorage::insertMemberOptions($mid, $options);
   }
 
+  /**
+   * Get permissions for ConReg field options.
+   *
+   * @return array
+   *   Permissions array.
+   */
+  public function permissions() {
+    $permissions = [];
+
+    foreach (SimpleConregFieldOptionStorage::adminOptionListLoad() as $option) {
+      $permissions += [
+        'view field option ' . $option['optid'] => [
+          'title' => t('View data for field option %option', array('%option' => $option['option_title'])),
+        ]
+      ];
+    }
+
+    return $permissions;
+  }
+
 }
 

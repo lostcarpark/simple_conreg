@@ -104,5 +104,47 @@ class SimpleConregFieldOptionStorage {
     return $memberOptions;
   }
 
+  /*
+   * Function to return a list of members who have ticked specified option.
+   *
+   * select * from simple_conreg_options;
+   */
+  public static function adminOptionListLoad() {
+    $select = db_select('simple_conreg_options', 'o');
+    // Select these specific fields for the output.
+    $select->addField('o', 'optid');
+    $select->addField('o', 'option_title');
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  /*
+   * Function to return a list of members who have ticked specified option.
+   *
+   * select m.first_name, m.last_name, m.email, o.is_selected, o.option_detail
+   * from simple_conreg_members m inner join simple_conreg_member_options o on m.mid=o.mid
+   * where m.eid=1 and m.is_paid=1 and m.is_deleted=0 and o.optid=1;
+   */
+  public static function adminOptionMemberListLoad($eid, $optid) {
+    $select = db_select('simple_conreg_members', 'm');
+    $select->join('simple_conreg_member_options', 'o', 'm.mid=o.mid');
+    // Select these specific fields for the output.
+    $select->addField('m', 'first_name');
+    $select->addField('m', 'last_name');
+    $select->addField('m', 'email');
+    $select->addField('o', 'is_selected');
+    $select->addField('o', 'option_detail');
+    $select->condition('m.eid', $eid);
+    $select->condition('o.optid', $optid);
+    $select->condition("is_paid", TRUE); //Only include members have paid.
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
 }
 
