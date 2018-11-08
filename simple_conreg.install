@@ -65,7 +65,7 @@ function simple_conreg_schema() {
         'description' => 'Set to 1 if event is open for registration.',
       ),
     ),
-    'primary key' => array('gid'),
+    'primary key' => array('eid'),
   );
 
 
@@ -520,7 +520,7 @@ function simple_conreg_schema() {
         'description' => 'Optional text details entered for the option.',
       ),
     ),
-    'primary key' => array('mid', 'grpid'),
+    'primary key' => array('mid', 'optid'),
   );
 
   return $schema;
