@@ -452,10 +452,14 @@ class SimpleConregController extends ControllerBase {
     );
     $this->memberAdminMemberListSummary($eid, $content);
 
-    $content['message_badge_tyoe'] = array(
+    $content['message_badge_type'] = array(
       '#markup' => $this->t('Summary by badge type.'),
     );
     $this->memberAdminMemberListBadgeSummary($eid, $content);
+
+    $content['message_days'] = array(
+      '#markup' => $this->t('Summary by day.'),
+    );
     $this->memberAdminMemberListDaysSummary($eid, $content);
     
     $content['message_payment_method'] = array(
