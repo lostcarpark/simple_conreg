@@ -17,6 +17,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\node\NodeInterface;
 use Drupal\devel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -50,6 +51,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
 
     $types = SimpleConregOptions::memberTypes($eid, $config);
     $badgeTypeOptions = SimpleConregOptions::badgeTypes($eid, $config);
+    $days = SimpleConregOptions::days($eid, $config);
     list($addOnOptions, $addOnPrices) = SimpleConregOptions::memberAddons($eid, $config);
     $symbol = $config->get('payments.symbol');
     $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
@@ -130,8 +132,20 @@ class SimpleConregAdminMemberEdit extends FormBase {
       '#type' => 'select',
       '#title' => $config->get('fields.membership_type_label'),
       '#options' => $types->privateOptions,
-      '#default_value' => $member['base_type'],
+      '#default_value' => $member['member_type'],
       '#required' => TRUE,
+    );
+
+    $dayVals = [];
+    if (isset($member['days'])) {
+      foreach(explode('|', $member['days']) as $day)
+        $dayVals[] = $day;
+    }
+    $form['member']['days'] = array(
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Days'),
+      '#options' => $days,
+      '#default_value' => $dayVals,
     );
 
     if (!empty($config->get('add_ons.label'))) {
@@ -321,13 +335,11 @@ class SimpleConregAdminMemberEdit extends FormBase {
       '#default_value' => $member['is_checked_in'],
     );
 
-    $join_timestamp = $member['join_date'];
-    $join_date = gmdate("Y-m-d H:i:s", $join_timestamp);
     $form['member']['join_date'] = array(
-      '#type' => 'date',
+      '#type' => 'datetime',
       '#title' => $this->t('Date joined'),
       '#description' => $this->t('Leave blank to set to current date.'),
-      '#default_value' => $join_date,
+      '#default_value' => DrupalDateTime::createFromTimestamp($member['join_date']),
     );
 
     $form['payment']['submit'] = array(
@@ -366,9 +378,15 @@ class SimpleConregAdminMemberEdit extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
     $mid = $form_state->get('mid');
-    
+
     $config = $this->config('simple_conreg.settings.'.$eid);
     $form_values = $form_state->getValues();
+dd($form_values['member']['days']);
+    $memberDays = [];
+    foreach($form_values['member']['days'] as $key=>$val) {
+      if ($val)
+        $memberDays[] = $key;
+    }
 
     // If no date, use NULL.
     if (isset($form_values['member']['birth_date']) && preg_match("/^(\d{4})-(\d{2})-(\d{2})$/", $form_values['member']['birth_date'])) {
@@ -399,6 +417,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
       'is_approved' => $form_values['member']['is_approved'],
       'member_no' => $member_no,
       'member_type' => $form_values['member']['type'],
+      'days' => implode('|', $memberDays),
       'first_name' => $form_values['member']['first_name'],
       'last_name' => $form_values['member']['last_name'],
       'badge_name' => $form_values['member']['badge_name'],
@@ -445,15 +464,14 @@ class SimpleConregAdminMemberEdit extends FormBase {
       $entry['check_in_by'] = $uid;
     }
 
+    $join_date = $form_values['member']['join_date']->getTimestamp();
+dd($join_date);
     // If Join Date specified, use it. If not, use current date/time.
-    if (!isset($form_values['member']['join_date']) || $form_values['member']['join_date'] == '')
+    if ($join_date == 0)
       $entry['join_date'] = time();
-    elseif ($join_timestamp = strtotime($form_values['member']['join_date']))
-      // Date specified, and successfully converted into timestamp.
-      $entry['join_date'] = $join_timestamp;
     else
-      // Invalid date format, so default to current time.
-      $entry['join_date'] = time();
+      // Date specified, and successfully converted into timestamp.
+      $entry['join_date'] = $join_date;
 
     if (isset($mid)) {
       // Update the member record.

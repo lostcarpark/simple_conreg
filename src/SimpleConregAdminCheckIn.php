@@ -180,12 +180,20 @@ class SimpleConregAdminCheckIn extends FormBase {
         $row['registered_by'] = array(
           '#markup' => SafeMarkup::checkPlain($entry['registered_by']),
         );
-        $memberType = trim($entry['base_type']);
+        $memberType = trim($entry['member_type']);
         $row['member_type'] = array(
           '#markup' => SafeMarkup::checkPlain(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
         );
+        if (!empty($entry['days'])) {
+          $dayDescs = [];
+          foreach(explode('|', $entry['days']) as $day) {
+            $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
+          }
+          $memberDays = implode(', ', $dayDescs);
+        } else
+          $memberDays = '';
         $row['days'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['days_desc']),
+          '#markup' => SafeMarkup::checkPlain($memberDays),
         );
         $badgeType = trim($entry['badge_type']);
         $row['badge_type'] = array(
@@ -273,12 +281,20 @@ class SimpleConregAdminCheckIn extends FormBase {
       $row['communication_method'] = array(
         '#markup' => SafeMarkup::checkPlain(isset($communicationMethods[$entry['communication_method']]) ? $communicationMethods[$entry['communication_method']] : $entry['communication_method']),
       );
-      $memberType = trim($entry['base_type']);
+      $memberType = trim($entry['member_type']);
       $row['member_type'] = array(
         '#markup' => SafeMarkup::checkPlain(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
       );
+      if (!empty($entry['days'])) {
+        $dayDescs = [];
+        foreach(explode('|', $entry['days']) as $day) {
+          $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
+        }
+        $memberDays = implode(', ', $dayDescs);
+      } else
+        $memberDays = '';
       $row['days'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['days_desc']),
+        '#markup' => SafeMarkup::checkPlain($memberDays),
       );
       $row['price'] = array(
         '#markup' => SafeMarkup::checkPlain($entry['member_total']),
@@ -516,12 +532,11 @@ class SimpleConregAdminCheckIn extends FormBase {
     else
       $badge_name = trim($form_values['unpaid']['add']['first_name'].' '.$form_values['unpaid']['add']['last_name']);
     // Work out price.
-    $baseType = $form_values['unpaid']['add']['memberType'];
-    $memberType = $baseType;
-    $price = $types->types[$baseType]->price;
+    $memberType = $form_values['unpaid']['add']['memberType'];
+    $price = $types->types[$memberType]->price;
     $daysPrice = 0;
     $memberDays = '';
-    $memberDayDescs = $types->types[$baseType]->defaultDays;
+    $memberDayDescs = $types->types[$memberType]->defaultDays;
     $daysSel = [];
     $daysDescs = [];
     foreach ($form_values['unpaid']['add']['days'] as $key => $val) {
@@ -534,9 +549,7 @@ class SimpleConregAdminCheckIn extends FormBase {
     
     if ($daysPrice >0 and $daysPrice < $price) {
       $price = $daysPrice;
-      $memberType = $baseType.implode('', $daysSel);
       $memberDays = implode('|', $daysSel);
-      $memberDayDescs = implode(', ', $daysDescs);
     }
     // Save the submitted entry.
     $entry = array(
@@ -544,9 +557,7 @@ class SimpleConregAdminCheckIn extends FormBase {
       'lead_mid' => 0,
       'random_key' => $rand_key,
       'member_type' => $memberType,
-      'base_type' => $baseType,
       'days' => $memberDays,
-      'days_desc' => $memberDayDescs,
       'first_name' => $form_values['unpaid']['add']['first_name'],
       'last_name' => $form_values['unpaid']['add']['last_name'],
       'badge_name' => $badge_name,

@@ -80,7 +80,11 @@ class SimpleConregOptions {
         ];
       }
     }
-    return (object)['publicOptions' => $publicOptions, 'privateOptions' => $privateOptions, 'publicNames' => $publicNames, 'types' => $typeVals];
+    return (object)[
+      'publicOptions' => $publicOptions,
+      'privateOptions' => $privateOptions,
+      'publicNames' => $publicNames,
+      'types' => $typeVals];
   }
 
   /**

@@ -43,6 +43,7 @@ class SimpleConregAdminMembers extends FormBase {
     $config = $this->config('simple_conreg.settings.'.$eid);
     $types = SimpleConregOptions::memberTypes($eid, $config);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
+    $days = SimpleConregOptions::days($eid, $config);
     $displayOptions = SimpleConregOptions::display();
     $pageSize = $config->get('display.page_size');
 
@@ -219,12 +220,20 @@ class SimpleConregAdminMembers extends FormBase {
       $row['display'] = array(
         '#markup' => SafeMarkup::checkPlain(isset($displayOptions[$entry['display']]) ? $displayOptions[$entry['display']] : $entry['display']),
       );
-      $memberType = trim($entry['base_type']);
+      $memberType = trim($entry['member_type']);
       $row['member_type'] = array(
         '#markup' => SafeMarkup::checkPlain(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
       );
+      if (!empty($entry['days'])) {
+        $dayDescs = [];
+        foreach(explode('|', $entry['days']) as $day) {
+          $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
+        }
+        $memberDays = implode(', ', $dayDescs);
+      } else
+        $memberDays = '';
       $row['days'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['days_desc']),
+        '#markup' => SafeMarkup::checkPlain($memberDays),
       );
       $badgeType = trim($entry['badge_type']);
       $row['badge_type'] = array(

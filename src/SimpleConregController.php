@@ -98,7 +98,7 @@ class SimpleConregController extends ControllerBase {
           $member['name'] = t('Name withheld');
           break;
       }
-      $member['badge_type'] = trim($types[$badge_type]);
+      $member['badge_type'] = trim(isset($types[$badge_type]) ? $types[$badge_type] : $badge_type);
       $member['country'] = trim(isset($countryOptions[$entry['country']]) ? $countryOptions[$entry['country']] : $entry['country']);
 
       // Set key to field to be sorted by.
@@ -169,8 +169,8 @@ class SimpleConregController extends ControllerBase {
     $total = 0;
     foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
       // Replace type code with description.
-      if (isset($types->types[$entry['base_type']]))
-        $entry['base_type'] = (isset($types->types[$entry['base_type']]) ? $types->types[$entry['base_type']]->name : $entry['base_type']);
+      if (isset($types->types[$entry['member_type']]))
+        $entry['member_type'] = (isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type']);
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
       $total += $entry['num'];
@@ -223,16 +223,32 @@ class SimpleConregController extends ControllerBase {
    * Add a summary by payment method to render array.
    */
   public function memberAdminMemberListDaysSummary($eid, &$content) {
-    $rows = array();
-    $headers = array(
-      t('Days'), 
-      t('Number of members'),
-    );
+    $days = SimpleConregOptions::days($eid);
+
+    $dayTotals = [];
+    foreach($days as $key=>$val) {
+      $dayTotals[$key] = 0;
+    }
     $total = 0;
     foreach ($entries = SimpleConregStorage::adminMemberDaysSummaryLoad($eid) as $entry) {
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      foreach (explode('|', $entry['days']) as $day)
+        $dayTotals[$day] += $entry['num'];
       $total += $entry['num'];
+    }
+
+    $rows = array();
+    $headers = array(
+      t('Days'),
+      t('Number of members'),
+    );
+    foreach ($dayTotals as $key=>$val) {
+      // Sanitize each entry.
+      $entry = [
+        'days' => $days[$key],
+        'num' => $val,
+      ];
+      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
     }
     //Add a row for the total.
     $rows[] = array(t("Total"), $total);
@@ -313,6 +329,7 @@ class SimpleConregController extends ControllerBase {
     $countryOptions = $this->getMemberCountries($config);
     $types = SimpleConregOptions::memberTypes($eid, $config);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
+    $days = SimpleConregOptions::days($eid, $config);
     $communicationsOptions = SimpleConregOptions::communicationMethod($eid, $config);
     $displayOptions = SimpleConregOptions::display();
     $yesNo = SimpleConregOptions::yesNo();
@@ -364,8 +381,8 @@ class SimpleConregController extends ControllerBase {
 
     $rows = array();
     $headers = array(
-      'base_type' =>  ['data' => t('Member type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      'days_desc' =>  ['data' => t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
+      'member_type' =>  ['data' => t('Member type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
+      'days' =>  ['data' => t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       'member_no' => ['data' => t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
       'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
       'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
@@ -394,7 +411,14 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminPaidMemberListLoad($eid, $direction, $order) as $entry) {
       if (!empty($entry['member_no']))
         $entry['member_no'] = sprintf("%0".$digits."d", $entry['member_no']);
-      $entry['base_type'] = isset($types->types[$entry['base_type']]) ? $types->types[$entry['base_type']]->name : $entry['base_type'];
+      if (!empty($entry['days'])) {
+        $dayDescs = [];
+        foreach(explode('|', $entry['days']) as $day) {
+          $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
+        }
+        $entry['days'] = implode(', ', $dayDescs);
+      }
+      $entry['member_type'] = isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'];
       $entry['badge_type'] = isset($badgeTypes[$entry['badge_type']]) ? $badgeTypes[$entry['badge_type']] : $entry['badge_type'];
       $entry['country'] = isset($countryOptions[$entry['country']]) ? $countryOptions[$entry['country']] : $entry['country'];
       $entry['communication_method'] = isset($communicationsOptions[$entry['communication_method']]) ? $communicationsOptions[$entry['communication_method']] : $entry['communication_method'];

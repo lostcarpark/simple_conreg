@@ -109,16 +109,12 @@ function simple_conreg_schema() {
         'default' => '',
         'description' => 'Type of membership.',
       ),
-      // alter table simple_conreg_members add base_type varchar(4) NULL after member_type;
-      // update simple_conreg_members set base_type = member_type;
-      'base_type' => array(
-        'type' => 'varchar',
-        'length' => 4,
-        'not null' => TRUE,
-        'default' => '',
-        'description' => 'Member type witout any day modifiers',
-      ),
-      // alter table simple_conreg_members add days varchar(16) NULL after base_type;
+      // Base type column removed. To remove from database use:
+      // update simple_conreg_members set member_type = base_type;
+      // alter table simple_conreg_members remove base_type;
+      //      
+      // alter table simple_conreg_members add days varchar(16) NULL after member_type;
+      // update simple_conreg_members set days='W' where days is NULL or days='';
       'days' => array(
         'type' => 'varchar',
         'length' => 16,
@@ -126,15 +122,9 @@ function simple_conreg_schema() {
         'default' => '',
         'description' => 'Selected day codes separated by |',
       ),
-      // alter table simple_conreg_members add days_desc varchar(32) NULL after days;
-      // update simple_conreg_members set days_desc='Weekend';
-      'days_desc' => array(
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => FALSE,
-        'default' => '',
-        'description' => 'Description of selected days',
-      ),
+      // Days desc column removed. Remove from database with:
+      // alter table simple_conreg_members drop days_desc;
+      //
       // alter table simple_conreg_members add communication_method varchar(1) NULL after member_type;
       'communication_method' => array(
         'type' => 'varchar',

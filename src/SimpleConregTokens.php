@@ -35,7 +35,7 @@ class SimpleConregTokens {
 
     $types = SimpleConregOptions::memberTypes($this->eid, $this->config);
     $this->typeVals = $types->types;
-
+	
     $this->html['[site_name]'] = \Drupal::config('system.site')->get('name');
     $this->html['[event_name]'] = $this->event['event_name'];
     $this->html['[event_email]'] = $this->config->get('confirmation.from_email');
@@ -176,6 +176,8 @@ class SimpleConregTokens {
   }
 
   public function getMemberDetailsToken($members, &$member_seq) {
+//dpm((array)$types, "Types");
+//dpm($this->typeVals);
     // If types not set, fetch them.
     if (!isset($this->typeVals)) {
       $types = SimpleConregOptions::memberTypes($this->eid, $this->config);
@@ -214,7 +216,8 @@ class SimpleConregTokens {
     $this->display .= '<table>';
     foreach ($members as $index => $cur_member) {
       // Get fieldset config for member type.
-      $memberType = $cur_member['base_type'];
+      $memberType = $cur_member['raw_member_type'];
+//dpm($cur_member);
       $fieldsetConfig = $this->typeVals[$memberType]->config;
       // Get member options from database.
       $memberOptions = SimpleConregFieldOptionStorage::getMemberOptions($this->eid, $cur_member['mid']);
@@ -224,7 +227,7 @@ class SimpleConregTokens {
       $this->display .= '<tr><th colspan="2">'.$member_heading.'</th></tr>';
       $this->plain_display .= "\n$member_heading\n";
       foreach ($confirm_labels as $key=>$val) {
-        if (!empty($fieldsetConfig->get($val))) {
+        if (!empty($fieldsetConfig) && !empty($fieldsetConfig->get($val))) {
           $label = $fieldsetConfig->get($val);
           $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member[$key].'</td></tr>';
           $this->plain_display .= $label.":\t".$cur_member[$key]."\n";
@@ -267,7 +270,7 @@ class SimpleConregTokens {
       $global = $this->config->get('add_ons.global');
       if ($global && $member_seq == 1 || !$global) {
         foreach ($addon_labels as $key=>$val) {
-          if (!empty($fieldsetConfig->get($val))) {
+          if (!empty($fieldsetConfig) && !empty($fieldsetConfig->get($val))) {
             $label = $fieldsetConfig->get($val);
             $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member[$key].'</td></tr>';
             $this->plain_display .= $label.":\t".$cur_member[$key]."\n";

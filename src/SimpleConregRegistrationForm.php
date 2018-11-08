@@ -77,7 +77,7 @@ class SimpleConregRegistrationForm extends FormBase {
         '#prefix' => '<h3>',
         '#suffix' => '</h3>',
       );
-      return parent::buildForm($form, $form_state);
+      return $form;
     }
 
     if ($event['is_open'] == 0) {
@@ -87,7 +87,7 @@ class SimpleConregRegistrationForm extends FormBase {
         '#prefix' => '<h3>',
         '#suffix' => '</h3>',
       );
-      return parent::buildForm($form, $form_state);
+      return $form;
     }
 
     // Get config for event and fieldset.    
@@ -99,7 +99,7 @@ class SimpleConregRegistrationForm extends FormBase {
         '#prefix' => '<h3>',
         '#suffix' => '</h3>',
       );
-      return parent::buildForm($form, $form_state);
+      return $form;
     }
 
     $types = SimpleConregOptions::memberTypes($eid, $config);
@@ -770,9 +770,7 @@ class SimpleConregRegistrationForm extends FormBase {
         'lead_mid' => $lead_mid,
         'random_key' => $rand_key,
         'member_type' => $memberPrices[$cnt]->memberType,
-        'base_type' => $memberPrices[$cnt]->baseType,
         'days' => $memberPrices[$cnt]->days,
-        'days_desc' => trim($memberPrices[$cnt]->daysDesc),
         'first_name' => $form_values['members']['member'.$cnt]['first_name'],
         'last_name' => $form_values['members']['member'.$cnt]['last_name'],
         'badge_name' => $badge_name,
@@ -943,15 +941,13 @@ class SimpleConregRegistrationForm extends FormBase {
     if (!empty($memberType)) {
       $price = $types[$memberType]->price;
     }
-    $baseType = $memberType;
     
     $daysPrice = 0;
-    $dayTypes = '';
     $dayCodes = [];
     $dayNames = [];
     // Default days to none selected.
-    $days = '';
-    $daysDesc = isset($types[$memberType]) ? $types[$memberType]->defaultDays : '';
+    $days = isset($types[$memberType]) ? $types[$memberType]->defaultDays : '';
+    $daysDesc = '';
     if (isset($types[$memberType]->days)) {
       // If day code = type code, whole weekend selected.
       if (isset($form_values['members']['member'.$memberNo]['dayOptions']['days'][$memberType]) && $form_values['members']['member'.$memberNo]['dayOptions']['days'][$memberType]) {
@@ -961,7 +957,6 @@ class SimpleConregRegistrationForm extends FormBase {
         foreach($types[$memberType]->days as $dayCode => $dayOptions) {
           if (isset($form_values['members']['member'.$memberNo]['dayOptions']['days'][$dayCode]) && $form_values['members']['member'.$memberNo]['dayOptions']['days'][$dayCode]) {
             $daysPrice += $dayOptions->price;
-            $dayTypes .= $dayCode;
             $dayCodes[] = $dayCode;
             $dayNames[] = $dayOptions->name;
           }
@@ -969,7 +964,6 @@ class SimpleConregRegistrationForm extends FormBase {
       }
       if ($daysPrice > 0 and $daysPrice < $price) {
         $price = $daysPrice;
-        $memberType = $baseType . $dayTypes;
         $days = implode('|', $dayCodes);
         $daysDesc = implode(', ', $dayNames);
       }
@@ -1008,7 +1002,6 @@ class SimpleConregRegistrationForm extends FormBase {
       'basePrice' => $basePrice,
       'addOnPrice' => $addOnPrice,
       'memberType' => $memberType,
-      'baseType' => $baseType,
       'days' => $days,
       'daysDesc' => $daysDesc,
     ];

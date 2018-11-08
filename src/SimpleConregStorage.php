@@ -260,8 +260,7 @@ class SimpleConregStorage {
     $select->addField('m', 'badge_name');
     $select->addField('m', 'display');
     $select->addField('m', 'member_type');
-    $select->addField('m', 'base_type');
-    $select->addField('m', 'days_desc');
+    $select->addField('m', 'days');
     $select->addField('m', 'badge_type');
     $select->addField('m', 'is_paid');
     $select->addField('m', 'is_approved');
@@ -334,8 +333,7 @@ class SimpleConregStorage {
     $select->addField('m', 'email');
     $select->addField('m', 'badge_name');
     $select->addField('m', 'member_type');
-    $select->addField('m', 'base_type');
-    $select->addField('m', 'days_desc');
+    $select->addField('m', 'days');
     $select->addField('m', 'badge_type');
     $select->addField('m', 'comment');
     $select->addField('m', 'is_paid');
@@ -365,8 +363,7 @@ class SimpleConregStorage {
     $select->addField('m', 'email');
     $select->addField('m', 'badge_name');
     $select->addField('m', 'member_type');
-    $select->addField('m', 'base_type');
-    $select->addField('m', 'days_desc');
+    $select->addField('m', 'days');
     $select->addField('m', 'badge_type');
     $select->addField('m', 'comment');
     $select->addField('m', 'display');
@@ -429,8 +426,8 @@ class SimpleConregStorage {
   public static function adminPaidMemberListLoad($eid, $direction = 'ASC', $order = 'm.member_no') {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
-    $select->addField('m', 'base_type');
-    $select->addField('m', 'days_desc');
+    $select->addField('m', 'member_type');
+    $select->addField('m', 'days');
     $select->addField('m', 'member_no');
     $select->addField('m', 'first_name');
     $select->addField('m', 'last_name');
@@ -469,12 +466,12 @@ class SimpleConregStorage {
   public static function adminMemberSummaryLoad($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
-    $select->addField('m', 'base_type');
+    $select->addField('m', 'member_type');
     $select->addExpression('COUNT(m.mid)', 'num');
     $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
-    $select->groupby('m.base_type');
+    $select->groupby('m.member_type');
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -499,12 +496,12 @@ class SimpleConregStorage {
   public static function adminMemberDaysSummaryLoad($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
-    $select->addField('m', 'days_desc');
+    $select->addField('m', 'days');
     $select->addExpression('COUNT(m.mid)', 'num');
     $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
-    $select->groupby('m.days_desc');
+    $select->groupby('m.days');
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
