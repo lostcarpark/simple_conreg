@@ -946,7 +946,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $dayCodes = [];
     $dayNames = [];
     // Default days to none selected.
-    $days = isset($types[$memberType]) ? $types[$memberType]->defaultDays : '';
+    $days = isset($types[$memberType]) ? trim($types[$memberType]->defaultDays) : '';
     $daysDesc = '';
     if (isset($types[$memberType]->days)) {
       // If day code = type code, whole weekend selected.

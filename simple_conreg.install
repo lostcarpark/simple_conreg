@@ -111,7 +111,7 @@ function simple_conreg_schema() {
       ),
       // Base type column removed. To remove from database use:
       // update simple_conreg_members set member_type = base_type;
-      // alter table simple_conreg_members remove base_type;
+      // alter table simple_conreg_members drop base_type;
       //      
       // alter table simple_conreg_members add days varchar(16) NULL after member_type;
       // update simple_conreg_members set days='W' where days is NULL or days='';
