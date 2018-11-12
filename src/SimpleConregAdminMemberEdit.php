@@ -381,7 +381,6 @@ class SimpleConregAdminMemberEdit extends FormBase {
 
     $config = $this->config('simple_conreg.settings.'.$eid);
     $form_values = $form_state->getValues();
-dd($form_values['member']['days']);
     $memberDays = [];
     foreach($form_values['member']['days'] as $key=>$val) {
       if ($val)
@@ -465,7 +464,6 @@ dd($form_values['member']['days']);
     }
 
     $join_date = $form_values['member']['join_date']->getTimestamp();
-dd($join_date);
     // If Join Date specified, use it. If not, use current date/time.
     if ($join_date == 0)
       $entry['join_date'] = time();
