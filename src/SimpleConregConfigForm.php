@@ -487,7 +487,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $form['simple_conreg_communication']['options'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Options'),
-      '#description' => $this->t('Put each communications method on a line with sincle character code and description separated by | character (e.g. "E|Electronic").'),
+      '#description' => $this->t('Put each communications method on a line with sincle character code, description and 1/0 for public/private, separated by | character (e.g. "E|Electronic|1").'),
       '#default_value' => $config->get('communications_method.options'),
     );  
 

@@ -325,7 +325,7 @@ class SimpleConregRegistrationForm extends FormBase {
         $form['members']['member'.$cnt]['communication_method'] = array(
           '#type' => 'select',
           '#title' => $fieldsetConfig->get('fields.communication_method_label'),
-          '#options' => SimpleConregOptions::communicationMethod($eid, $config),
+          '#options' => SimpleConregOptions::communicationMethod($eid, $config, TRUE),
           '#default_value' => 'E',
           '#required' => TRUE,
         );

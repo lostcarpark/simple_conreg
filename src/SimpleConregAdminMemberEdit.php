@@ -199,7 +199,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
       $form['member']['communication_method'] = array(
         '#type' => 'select',
         '#title' => $config->get('fields.communication_method_label'),
-        '#options' => SimpleConregOptions::communicationMethod($eid, $config),
+        '#options' => SimpleConregOptions::communicationMethod($eid, $config, FALSE),
         '#default_value' => (isset($member['communication_method']) ? $member['communication_method'] : 'E'),
         '#required' => TRUE,
       );

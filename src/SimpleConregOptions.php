@@ -173,17 +173,18 @@ class SimpleConregOptions {
   }
 
   /**
-   * Return list of communications methods (currently hard coded, will be editable later).
+   * Return list of communications methods (from ).
    */
-  public static function communicationMethod($eid, $config = NULL) {
+  public static function communicationMethod($eid, $config = NULL, $publicOnly = TRUE) {
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
     $methods = explode("\n", $config->get('communications_method.options')); // One communications method per line.
     $methodOptions = array();
     foreach ($methods as $method) {
-      list($code, $description) = explode('|', $method);
-      $methodOptions[$code] = $description;
+      list($code, $description, $public) = array_pad(explode('|', trim($method)), 3, '');
+      if (!$publicOnly || $public == '1' || $public == '')
+        $methodOptions[$code] = $description;
     }
     return $methodOptions;
     /* return ['E' => t('Electronic only'),
