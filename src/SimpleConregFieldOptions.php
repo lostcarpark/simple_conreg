@@ -67,23 +67,29 @@ class SimpleConregFieldOptions {
           $memberForm[$key]['options'][$optid] = [
             '#type' => 'checkbox',
             '#title' => $optionDetails['option'],
-            '#ajax' => [
+          ];
+          // Check if option can have detail.
+          if (isset($optionDetails['detail']) && !empty($optionDetails['detail'])) {
+            // Add Ajax property to field to display option when selected.
+            $memberForm[$key]['options'][$optid]['#ajax'] = [
               'wrapper' => $id,
               'callback' => $callback,
               'event' => 'change',
-            ],
-          ];
-          $memberForm[$key]['options']['container_'.$optid] = [
-            '#prefix' => '<div id="'.$id.'">',
-            '#suffix' => '</div>',
-          ];
-          if (isset($optionDetails['detail']) && !empty($optionDetails['detail']) && $memberVals[$key]['options'][$optid]) {
-            $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid] = [
-              '#type' => 'textfield',
-              '#title' => $optionDetails['detail'],
             ];
-            if ($optionDetails['required']) {
-              $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid]['#required'] = TRUE;
+            // Add container placeholder for detail.
+            $memberForm[$key]['options']['container_'.$optid] = [
+              '#prefix' => '<div id="'.$id.'">',
+              '#suffix' => '</div>',
+            ];
+            // If option selected, put detail in placeholder.
+            if ($memberVals[$key]['options'][$optid]) {
+              $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid] = [
+                '#type' => 'textfield',
+                '#title' => $optionDetails['detail'],
+              ];
+              if ($optionDetails['required']) {
+                $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid]['#required'] = TRUE;
+              }
             }
           }
           $callbackKey = "members[member$memberNo][$key][options][$optid]";
