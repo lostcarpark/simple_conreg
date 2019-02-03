@@ -558,6 +558,7 @@ class SimpleConregStorage {
     // Select these specific fields for the output.
     $select->addField('m', 'first_name');
     $select->addField('m', 'last_name');
+    $select->addField('m', 'email');
     $select->addField('m', 'add_on');
     $select->addField('m', 'add_on_info');
     $select->addField('m', 'add_on_price');
@@ -669,12 +670,12 @@ class SimpleConregStorage {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'email');
-    $select->addExpression('MIN(m.communication_method)', 'method');
+    $select->addField('m', 'communication_method)');
+    $select->condition('m.eid', $eid);
     $select->isNotNull('m.email');
     $select->condition('m.email', '', '<>');
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->isNotNull('m.communication_method');
-    $select->groupby('m.email');
     
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 

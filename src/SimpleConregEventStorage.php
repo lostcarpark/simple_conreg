@@ -110,6 +110,26 @@ class SimpleConregEventStorage {
   }
 
   /**
+   * Read from the database and return multiple rows using a filter array.
+   *
+   */
+  public static function loadAll($entry = array()) {
+    // Read all fields from the simple_conreg table.
+    $select = db_select('simple_conreg_events', 'events');
+    $select->fields('events');
+
+    // Add each field and value as a condition to this query.
+    foreach ($entry as $field => $value) {
+      $select->condition($field, $value);
+    }
+    // Return the result in associative array format.
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  
+  /**
    * Read all event(s) from the database and return associative array for option list.
    *
    */

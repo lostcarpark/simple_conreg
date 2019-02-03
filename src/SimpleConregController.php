@@ -491,6 +491,7 @@ class SimpleConregController extends ControllerBase {
     $headers = array(
       t('First Name'),
       t('Last Name'),
+      t('email'),
       t('Add-on Option'),
       t('Add-on Detail'),
       t('Add-on Price'),
