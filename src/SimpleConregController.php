@@ -520,6 +520,48 @@ class SimpleConregController extends ControllerBase {
     return $content;
   }
 
+  public function memberAdminChildMemberAges($eid) {
+    $content = array();
+
+    $content['message'] = array(
+      '#markup' => $this->t('List of members with add-ons.'),
+    );
+
+    $table = 0;
+    $zz9_option = "";
+    $rows = array();
+    $headers = array(
+      t('Member No'),
+      t('First Name'),
+      t('Last Name'),
+      t('email'),
+      t('Member Type'),
+      t('Age'),
+      t('Parent First Name'),
+      t('Parent Last Name'),
+      t('Parent email'),
+    );
+
+    $total = 0;
+
+    foreach ($entries = SimpleConregStorage::adminMemberChildMembers($eid) as $entry) {
+      // Sanitize each entry.
+      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+    }
+    
+    $content['table'] = array(
+      '#type' => 'table',
+      '#header' => $headers,
+      '#rows' => $rows,
+      '#empty' => t('No entries available.'),
+      '#sticky' => TRUE,
+    );
+    // Don't cache this page.
+    $content['#cache']['max-age'] = 0;
+
+    return $content;
+  }
+
   public function memberAdminZZ9List($eid) {
     $content = array();
 

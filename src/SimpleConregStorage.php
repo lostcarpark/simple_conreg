@@ -572,6 +572,28 @@ class SimpleConregStorage {
     return $entries;
   }
 
+  public static function adminMemberChildMembers($eid) {
+    $select = db_select('simple_conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'member_no');
+    $select->addField('m', 'first_name');
+    $select->addField('m', 'last_name');
+    $select->addField('m', 'email');
+    $select->addField('m', 'member_type');
+    $select->addField('m', 'age');
+    $select->addField('p', 'first_name');
+    $select->addField('p', 'last_name');
+    $select->addField('p', 'email');
+    $select->join('simple_conreg_members', 'p', 'm.lead_mid = p.mid');
+    $select->condition('m.member_type', ['C', 'I'], 'IN');
+    $select->condition('m.is_paid', 1);
+    $select->condition("m.is_deleted", FALSE); //Only include members who aren't deleted.
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
   public static function adminMemberCountrySummaryLoad($eid) {
     $select = db_select('simple_conreg_members', 'm');
     // Select these specific fields for the output.

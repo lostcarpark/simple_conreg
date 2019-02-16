@@ -60,6 +60,11 @@ simple_conreg.member_addons:
   route_name: simple_conreg_admin_member_addons
   weight: 3
 
+simple_conreg.child_member_ages:
+  title: Child Member Ages
+  route_name: simple_conreg_admin_child_member_ages
+  weight: 10
+
 simple_conreg.member_summary:
   title: Membership Summary
   route_name: simple_conreg_admin_member_summary

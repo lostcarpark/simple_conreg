@@ -28,6 +28,10 @@
   title: View membership add-ons
   description: Allow users to view lists of members add-ons (including private data)
   
+'view child members':
+  title: View child member ages
+  description: Allow users to view lists of child members (including private data)
+  
 'view membership summary':
   title: View membership summary
   description: Allow users to view membership summary (including financial data)
