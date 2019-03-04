@@ -70,7 +70,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
         return parent::buildForm($form, $form_state);
       }
     } else {
-      $member = [];
+      $member = ['join_date' => \Drupal::time()->getCurrentTime()];
     }
 
     $form = array(
