@@ -42,8 +42,21 @@ function simple_conreg_install() {
  * @ingroup simple_conreg
  */
 function simple_conreg_schema() {
+
+  /*
+   * Refactoring to simplify table names:
+   *
+    rename table simple_conreg_events to conreg_events;
+    rename table simple_conreg_members to conreg_members;
+    rename table simple_conreg_option_groups to conreg_option_groups;
+    rename table simple_conreg_options to conreg_options;
+    rename table simple_conreg_fieldset_options to conreg_fieldset_options;
+    rename table simple_conreg_member_options to conreg_member_options;
+   *
+   */
+
   // create table simple_conreg_events (eid int auto_increment primary key, event_name varchar(255) not null, is_open tinyint not null default '1');
-  $schema['simple_conreg_events'] = array(
+  $schema['conreg_events'] = array(
     'description' => 'Stores events on the registration system.',
     'fields' => array(
       'eid' => array(
@@ -69,7 +82,7 @@ function simple_conreg_schema() {
   );
 
 
-  $schema['simple_conreg_members'] = array(
+  $schema['conreg_members'] = array(
     'description' => 'Stores member details for convention registrations.',
     'fields' => array(
       'mid' => array(
@@ -77,7 +90,7 @@ function simple_conreg_schema() {
         'not null' => TRUE,
         'description' => 'Primary Key: Unique member ID.',
       ),
-      // alter table simple_conreg_members add eid int NOT NULL default '1' after mid;
+      // alter table conreg_members add eid int NOT NULL default '1' after mid;
       'eid' => array(
         'type' => 'int',
         'not null' => TRUE,
@@ -101,7 +114,7 @@ function simple_conreg_schema() {
         'default' => 0,
         'description' => "Member number - assigned once approved.",
       ),
-      // alter table simple_conreg_members modify column member_type varchar(16);
+      // alter table conreg_members modify column member_type varchar(16);
       'member_type' => array(
         'type' => 'varchar',
         'length' => 16,
@@ -110,11 +123,11 @@ function simple_conreg_schema() {
         'description' => 'Type of membership.',
       ),
       // Base type column removed. To remove from database use:
-      // update simple_conreg_members set member_type = base_type;
-      // alter table simple_conreg_members drop base_type;
+      // update conreg_members set member_type = base_type;
+      // alter table conreg_members drop base_type;
       //      
-      // alter table simple_conreg_members add days varchar(16) NULL after member_type;
-      // update simple_conreg_members set days='W' where days is NULL or days='';
+      // alter table conreg_members add days varchar(16) NULL after member_type;
+      // update conreg_members set days='W' where days is NULL or days='';
       'days' => array(
         'type' => 'varchar',
         'length' => 16,
@@ -123,9 +136,9 @@ function simple_conreg_schema() {
         'description' => 'Selected day codes separated by |',
       ),
       // Days desc column removed. Remove from database with:
-      // alter table simple_conreg_members drop days_desc;
+      // alter table conreg_members drop days_desc;
       //
-      // alter table simple_conreg_members add communication_method varchar(1) NULL after member_type;
+      // alter table conreg_members add communication_method varchar(1) NULL after member_type;
       'communication_method' => array(
         'type' => 'varchar',
         'length' => 1,
@@ -167,9 +180,9 @@ function simple_conreg_schema() {
         'default' => '',
         'description' => 'Badge name of the member.',
       ),
-      // alter table simple_conreg_members add badge_type varchar(1) NULL after badge_name;
-      // update simple_conreg_members set badge_type='A';
-      // alter table simple_conreg_members modify column badge_type varchar(4);
+      // alter table conreg_members add badge_type varchar(1) NULL after badge_name;
+      // update conreg_members set badge_type='A';
+      // alter table conreg_members modify column badge_type varchar(4);
       'badge_type' => array(
         'type' => 'varchar',
         'length' => 4,
@@ -198,7 +211,7 @@ function simple_conreg_schema() {
         'default' => '',
         'description' => 'Street address of the member.',
       ),
-      // alter table simple_conreg_members add street2 varchar(255) NULL after street;
+      // alter table conreg_members add street2 varchar(255) NULL after street;
       'street2' => array(
         'type' => 'varchar',
         'length' => 255,
@@ -247,7 +260,7 @@ function simple_conreg_schema() {
         'not null' => FALSE,
         'description' => 'SQL datetime for the member\'s date of birth.',
       ),
-      // alter table simple_conreg_members add age int NULL default "0" after birth_date;
+      // alter table conreg_members add age int NULL default "0" after birth_date;
       'age' => array(
         'type' => 'int',
         'not null' => FALSE,
@@ -269,7 +282,7 @@ function simple_conreg_schema() {
         'default' => 0.0,
         'description' => 'Price for this member (excluding add-on).',
       ),
-      // alter table simple_conreg_members add member_total numeric(10,2) NOT NULL default "0" after member_price;
+      // alter table conreg_members add member_total numeric(10,2) NOT NULL default "0" after member_price;
       'member_total' => array(
         'type' => 'numeric',
         'precision' => 10,
@@ -307,7 +320,7 @@ function simple_conreg_schema() {
         'default' => '',
         'description' => 'Payment confirmation code from Stripe or other payment system.',
       ),
-      // alter table simple_conreg_members add comment varchar(1024) NULL after payment_id;
+      // alter table conreg_members add comment varchar(1024) NULL after payment_id;
       'comment' => array(
         'type' => 'varchar',
         'length' => 1024,
@@ -322,8 +335,8 @@ function simple_conreg_schema() {
         'default' => '',
         'description' => 'Optional addons to membership.',
       ),
-      // alter table simple_conreg_members add add_on_price numeric(10,2) default "0" after add_on;
-      // alter table simple_conreg_members modify add_on_price numeric(10,2);
+      // alter table conreg_members add add_on_price numeric(10,2) default "0" after add_on;
+      // alter table conreg_members modify add_on_price numeric(10,2);
       'add_on_price' => array(
         'type' => 'numeric',
         'precision' => 10,
@@ -359,7 +372,7 @@ function simple_conreg_schema() {
         'default' => 0,
         'description' => 'Unix timestamp for the date and time registered.',
       ),
-      // alter table simple_conreg_members add is_checked_in int NOT NULL default "0" after join_date;
+      // alter table conreg_members add is_checked_in int NOT NULL default "0" after join_date;
       'is_checked_in' => array(
         'type' => 'int',
         'not null' => FALSE,
@@ -367,20 +380,20 @@ function simple_conreg_schema() {
         'size' => 'tiny',
         'description' => 'True if member has checked in at convention.',
       ),
-      // alter table simple_conreg_members add check_in_date int NOT NULL default "0" after is_checked_in;
+      // alter table conreg_members add check_in_date int NOT NULL default "0" after is_checked_in;
       'check_in_date' => array(
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
         'description' => 'Unix timestamp for the date and time member was checked in.',
       ),
-      // alter table simple_conreg_members add check_in_by int NULL after check_in_date;
+      // alter table conreg_members add check_in_by int NULL after check_in_date;
       'check_in_by' => array(
         'type' => 'int',
         'not null' => FALSE,
         'description' => 'The Drupal user ID who checked the member in.',
       ),      
-      // alter table simple_conreg_members add is_deleted int NOT NULL default "0" after join_date;
+      // alter table conreg_members add is_deleted int NOT NULL default "0" after join_date;
       'is_deleted' => array(
         'type' => 'int',
         'not null' => FALSE,
@@ -397,7 +410,7 @@ function simple_conreg_schema() {
   );
 
   // create table simple_conreg_option_groups (grpid int auto_increment primary key, eid int not null, field_name varchar(255), group_title varchar(255));
-  $schema['simple_conreg_option_groups'] = array(
+  $schema['conreg_option_groups'] = array(
     'description' => 'Stores groups of field options.',
     'fields' => array(
       'grpid' => array(
@@ -429,7 +442,7 @@ function simple_conreg_schema() {
   );
 
   // create table simple_conreg_options (optid int auto_increment primary key, grpid int not null, option_title varchar(255) not null, detail_title varchar(255), detail_is_required tinyint not null default '1', weight int not null default '1');
-  $schema['simple_conreg_options'] = array(
+  $schema['conreg_options'] = array(
     'description' => 'Stores field option details.',
     'fields' => array(
       'optid' => array(
@@ -474,7 +487,7 @@ function simple_conreg_schema() {
   );
 
   // create table simple_conreg_fieldset_options (optid int not null, fieldset int not null, primary key (optid, fieldset));
-  $schema['simple_conreg_fieldset_options'] = array(
+  $schema['conreg_fieldset_options'] = array(
     'description' => 'Stores groups of field options.',
     'fields' => array(
       'optid' => array(
@@ -492,7 +505,7 @@ function simple_conreg_schema() {
   );
 
   // create table simple_conreg_member_options (mid int not null, optid int not null, is_selected tinyint not null default '1', option_detail varchar(255), primary key (mid, optid));
-  $schema['simple_conreg_member_options'] = array(
+  $schema['conreg_member_options'] = array(
     'description' => 'Stores member option choices.',
     'fields' => array(
       'mid' => array(

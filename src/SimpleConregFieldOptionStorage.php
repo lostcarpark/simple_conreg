@@ -17,11 +17,11 @@ class SimpleConregFieldOptionStorage {
   public static function getFieldOptions($eid, $fieldset) {
     // Run this query:
     // select g.grpid, g.field_name, g.group_title, o.optid, o.option_title, o.detail_title, o.detail_is_required
-    // from simple_conreg_option_groups g inner join simple_conreg_options o on g.grpid=o.grpid inner join simple_conreg_fieldset_options f on o.optid=f.optid
+    // from conreg_option_groups g inner join conreg_options o on g.grpid=o.grpid inner join conreg_fieldset_options f on o.optid=f.optid
     // where g.eid=1 and f.fieldset=1 order by g.grpid, o.weight;
-    $select = db_select('simple_conreg_option_groups', 'g');
-    $select->join('simple_conreg_options', 'o', 'g.grpid=o.grpid');
-    $select->join('simple_conreg_fieldset_options', 'f', 'o.optid=f.optid');
+    $select = db_select('conreg_option_groups', 'g');
+    $select->join('conreg_options', 'o', 'g.grpid=o.grpid');
+    $select->join('conreg_fieldset_options', 'f', 'o.optid=f.optid');
     // Select these specific fields for the output.
     $select->addField('g', 'grpid');
     $select->addField('g', 'field_name');
@@ -53,7 +53,7 @@ class SimpleConregFieldOptionStorage {
     foreach ($options as $optid=>$option) {
       // Only save if option set.
       if ($option['option']) {
-        db_insert('simple_conreg_member_options')
+        db_insert('conreg_member_options')
           ->fields([
             'mid' => $mid,
             'optid' => $optid,
@@ -71,11 +71,11 @@ class SimpleConregFieldOptionStorage {
   public static function getMemberOptions($eid, $mid) {
     // Run this query:
     // select g.field_name, g.group_title, o.option_title, o.detail_title, m.option_detail
-    // from simple_conreg_option_groups g inner join simple_conreg_options o on g.grpid=o.grpid inner join simple_conreg_member_options m on o.optid=m.optid
+    // from conreg_option_groups g inner join conreg_options o on g.grpid=o.grpid inner join conreg_member_options m on o.optid=m.optid
     // where g.eid=1 and m.mid=97 and m.is_selected=1 order by g.grpid, o.weight;
-    $select = db_select('simple_conreg_option_groups', 'g');
-    $select->join('simple_conreg_options', 'o', 'g.grpid=o.grpid');
-    $select->join('simple_conreg_member_options', 'm', 'o.optid=m.optid');
+    $select = db_select('conreg_option_groups', 'g');
+    $select->join('conreg_options', 'o', 'g.grpid=o.grpid');
+    $select->join('conreg_member_options', 'm', 'o.optid=m.optid');
     // Select these specific fields for the output.
     $select->addField('g', 'field_name');
     $select->addField('g', 'group_title');
@@ -107,10 +107,10 @@ class SimpleConregFieldOptionStorage {
   /*
    * Function to return a list of members who have ticked specified option.
    *
-   * select * from simple_conreg_options;
+   * select * from conreg_options;
    */
   public static function adminOptionListLoad() {
-    $select = db_select('simple_conreg_options', 'o');
+    $select = db_select('conreg_options', 'o');
     // Select these specific fields for the output.
     $select->addField('o', 'optid');
     $select->addField('o', 'option_title');
@@ -124,12 +124,12 @@ class SimpleConregFieldOptionStorage {
    * Function to return a list of members who have ticked specified option.
    *
    * select m.first_name, m.last_name, m.email, o.is_selected, o.option_detail
-   * from simple_conreg_members m inner join simple_conreg_member_options o on m.mid=o.mid
+   * from conreg_members m inner join conreg_member_options o on m.mid=o.mid
    * where m.eid=1 and m.is_paid=1 and m.is_deleted=0 and o.optid=1;
    */
   public static function adminOptionMemberListLoad($eid, $optid) {
-    $select = db_select('simple_conreg_members', 'm');
-    $select->join('simple_conreg_member_options', 'o', 'm.mid=o.mid');
+    $select = db_select('conreg_members', 'm');
+    $select->join('conreg_member_options', 'o', 'm.mid=o.mid');
     // Select these specific fields for the output.
     $select->addField('m', 'first_name');
     $select->addField('m', 'last_name');

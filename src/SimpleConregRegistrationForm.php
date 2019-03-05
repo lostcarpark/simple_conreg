@@ -706,8 +706,8 @@ class SimpleConregRegistrationForm extends FormBase {
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
       // Look up the member type, and get the default badge type for member type.
       $member_type = $form_values['members']['member'.$cnt]['type'];
-      if (isset($defaultBadgeTypes[$member_type])) {
-        $badge_type = $defaultBadgeTypes[$member_type];
+      if (isset($types->types[$member_type]->badgeType)) {
+        $badge_type = $types->types[$member_type]->badgeType;
       } else
         $badge_type = 'A'; // This shouldn't happen, but if no default badge type found, hard code to A.
 

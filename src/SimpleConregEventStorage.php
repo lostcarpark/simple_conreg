@@ -36,7 +36,7 @@ class SimpleConregEventStorage {
   public static function insert($entry) {
     $return_value = NULL;
     try {
-      $return_value = db_insert('simple_conreg_events')
+      $return_value = db_insert('conreg_events')
           ->fields($entry)
           ->execute();
     }
@@ -63,7 +63,7 @@ class SimpleConregEventStorage {
   public static function update($entry) {
     try {
       // db_update()...->execute() returns the number of rows updated.
-      $count = db_update('simple_conreg_events')
+      $count = db_update('conreg_events')
           ->fields($entry)
           ->condition('eid', $entry['eid'])
           ->execute();
@@ -87,7 +87,7 @@ class SimpleConregEventStorage {
    * @see db_delete()
    */
   public static function delete($entry) {
-    db_delete('simple_conreg_events')
+    db_delete('conreg_events')
         ->condition('eid', $entry['eid'])
         ->execute();
   }
@@ -97,8 +97,8 @@ class SimpleConregEventStorage {
    *
    */
   public static function load($entry = array()) {
-    // Read all fields from the simple_conreg_events table.
-    $select = db_select('simple_conreg_events', 'events');
+    // Read all fields from the conreg_events table.
+    $select = db_select('conreg_events', 'events');
     $select->fields('events');
 
     // Add each field and value as a condition to this query.
@@ -114,8 +114,8 @@ class SimpleConregEventStorage {
    *
    */
   public static function loadAll($entry = array()) {
-    // Read all fields from the simple_conreg table.
-    $select = db_select('simple_conreg_events', 'events');
+    // Read all fields from the conreg_events table.
+    $select = db_select('conreg_events', 'events');
     $select->fields('events');
 
     // Add each field and value as a condition to this query.
@@ -134,7 +134,7 @@ class SimpleConregEventStorage {
    *
    */
   public static function eventOptions() {
-    $select = db_select('simple_conreg_events', 'e');
+    $select = db_select('conreg_events', 'e');
     // Select these specific fields for the output.
     $select->addField('e', 'eid');
     $select->addField('e', 'event_name');
