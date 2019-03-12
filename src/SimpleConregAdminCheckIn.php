@@ -83,7 +83,7 @@ class SimpleConregAdminCheckIn extends FormBase {
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
     $days = SimpleConregOptions::days($eid, $config);
     $displayOptions = SimpleConregOptions::display();
-    $communicationMethods = SimpleConregOptions::communicationMethod();
+    $communicationMethods = SimpleConregOptions::communicationMethod($eid, $config, TRUE);
     $pageSize = $config->get('display.page_size');
 
     $action = $form_state->get("action");

@@ -505,7 +505,7 @@ class SimpleConregController extends ControllerBase {
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
     }
     
-    $rows[] = [t('Total'), '', '', '', number_format($total, 2)];
+    $rows[] = [t('Total'), '', '', '', '', number_format($total, 2)];
     
     $content['table'] = array(
       '#type' => 'table',
