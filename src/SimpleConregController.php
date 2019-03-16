@@ -410,7 +410,7 @@ class SimpleConregController extends ControllerBase {
 
     foreach ($entries = SimpleConregStorage::adminPaidMemberListLoad($eid, $direction, $order) as $entry) {
       if (!empty($entry['member_no']))
-        $entry['member_no'] = sprintf("%0".$digits."d", $entry['member_no']);
+        $entry['member_no'] = $entry['badge_type'] . sprintf("%0".$digits."d", $entry['member_no']);
       if (!empty($entry['days'])) {
         $dayDescs = [];
         foreach(explode('|', $entry['days']) as $day) {
@@ -472,6 +472,58 @@ class SimpleConregController extends ControllerBase {
     );
     $this->memberAdminMemberListAmountPaidSummary($eid, $content);
 
+    // Don't cache this page.
+    $content['#cache']['max-age'] = 0;
+
+    return $content;
+  }
+
+  /**
+   * Render a list of Member Badges in the database.
+   */
+  public function memberAdminBadges($eid) {
+    $config = SimpleConregConfig::getConfig($eid);
+    $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
+    $days = SimpleConregOptions::days($eid, $config);
+    $digits = $config->get('member_no_digits');
+
+    $content = array();
+
+    $content['message'] = array(
+      '#markup' => $this->t('Here is a list of all paid convention members.'),
+    );
+
+    $rows = array();
+    $headers = array(
+      'member_no' => ['data' => t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
+      'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
+      'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
+      'badge_name' => ['data' => t('Badge name'), 'field' => 'm.badge_name'],
+      'badge_type' =>  ['data' => t('Badge type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
+      'days' =>  ['data' => t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
+    );
+
+    foreach ($entries = SimpleConregStorage::adminMemberBadges($eid) as $entry) {
+      if (!empty($entry['member_no']))
+        $entry['member_no'] = $entry['badge_type'] . sprintf("%0".$digits."d", $entry['member_no']);
+      $entry['badge_type'] = isset($badgeTypes[$entry['badge_type']]) ? $badgeTypes[$entry['badge_type']] : $entry['badge_type'];
+      if (!empty($entry['days'])) {
+        $dayDescs = [];
+        foreach(explode('|', $entry['days']) as $day) {
+          $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
+        }
+        $entry['days'] = implode(', ', $dayDescs);
+      }
+      // Sanitize each entry.
+      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+    }
+    $content['table'] = array(
+      '#type' => 'table',
+      '#header' => $headers,
+      '#rows' => $rows,
+      '#empty' => t('No entries available.'),
+      '#sticky' => TRUE,
+    );
     // Don't cache this page.
     $content['#cache']['max-age'] = 0;
 

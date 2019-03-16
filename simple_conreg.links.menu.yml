@@ -55,6 +55,11 @@ simple_conreg.member_list:
   route_name: simple_conreg_admin_member_list
   weight: 2
 
+simple_conreg.member_badges:
+  title: Badge Names
+  route_name: simple_conreg_admin_member_badges
+  weight: 3
+
 simple_conreg.member_addons:
   title: Member Add-Ons
   route_name: simple_conreg_admin_member_addons
