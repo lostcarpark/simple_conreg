@@ -135,6 +135,7 @@ class SimpleConregTokens {
        '[communications_method]',
        '[display]',
        '[member_price]',
+       '[payment_amount]',
        '[payment_id]',
        '[payment_url]',
        '[member_details]',
@@ -147,6 +148,7 @@ class SimpleConregTokens {
   public function replaceMemberCodes(&$members) {
     // Labels for display option and communications method. Will add to config later.
     $types = SimpleConregOptions::memberTypes($this->eid, $this->config);
+    $days = SimpleConregOptions::days($eid, $this->config);
     $this->typeVals = $types->types;
     $displayOptions = SimpleConregOptions::display();
     $communicationOptions = SimpleConregOptions::communicationMethod($this->eid, $this->config);
@@ -158,6 +160,13 @@ class SimpleConregTokens {
       if ($members[$index]['member_no'] == 0)
         $members[$index]['member_no'] = '';
       // Expand list values and add currency symbol.
+      if (!empty($members[$index]['days'])) {
+        $dayDescs = [];
+        foreach(explode('|', $members[$index]['days']) as $day) {
+          $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
+        }
+        $members[$index]['days'] = implode(', ', $dayDescs);
+      }
       $members[$index]['is_approved'] = $yesNoOptions[$val['is_approved']];
       $members[$index]['is_paid'] = $yesNoOptions[$val['is_paid']];
       $members[$index]['display'] = $displayOptions[$val['display']];
@@ -185,6 +194,8 @@ class SimpleConregTokens {
     }
     // List of fields to add to mail for each member.
     $confirm_labels = array(
+      'member_type' => 'fields.membership_type_label',
+      'days' => 'fields.membership_days_label',
       'first_name' => 'fields.first_name_label',
       'last_name' => 'fields.last_name_label',
       'badge_name' => 'fields.badge_name_label',
@@ -200,7 +211,6 @@ class SimpleConregTokens {
       'phone' => 'fields.phone_label',
       'birth_date' => 'fields.birth_date_label',
       'age' => 'fields.age_label',
-      'member_type' => 'fields.member_type_label',
       'extra_flag1' => 'extras.flag1',
       'extra_flag2' => 'extras.flag2',
     );
@@ -217,8 +227,9 @@ class SimpleConregTokens {
     foreach ($members as $index => $cur_member) {
       // Get fieldset config for member type.
       $memberType = $cur_member['raw_member_type'];
-//dpm($cur_member);
       $fieldsetConfig = $this->typeVals[$memberType]->config;
+//dpm($fieldsetConfig->get('fields.membership_type_label'));
+//dpm($cur_member);
       // Get member options from database.
       $memberOptions = SimpleConregFieldOptionStorage::getMemberOptions($this->eid, $cur_member['mid']);
       // Look up labels for fields to email.
@@ -226,6 +237,12 @@ class SimpleConregTokens {
       $member_heading = t('Member @seq', ['@seq' => $member_seq]);
       $this->display .= '<tr><th colspan="2">'.$member_heading.'</th></tr>';
       $this->plain_display .= "\n$member_heading\n";
+      if (!empty($cur_member['member_no'])) {
+        $label = t('Member Number');
+        $member_no = $cur_member['member_no'];
+        $this->display .= '<tr><td>'.$label.'</td><td>'.$member_no.'</td></tr>';
+        $this->plain_display .= $label.":\t".$member_no."\n";
+      }
       foreach ($confirm_labels as $key=>$val) {
         if (!empty($fieldsetConfig) && !empty($fieldsetConfig->get($val))) {
           $label = $fieldsetConfig->get($val);
