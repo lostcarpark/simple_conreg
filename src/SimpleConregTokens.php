@@ -154,11 +154,14 @@ class SimpleConregTokens {
     $communicationOptions = SimpleConregOptions::communicationMethod($this->eid, $this->config);
     $countryOptions = SimpleConregOptions::memberCountries($this->eid, $this->config);
     $yesNoOptions = SimpleConregOptions::yesNo();
+    $digits = $this->config->get('member_no_digits');
     
     foreach ($members as $index => $val) {
       // If member number is zero, replace with blank.
       if ($members[$index]['member_no'] == 0)
         $members[$index]['member_no'] = '';
+      else
+        $members[$index]['member_no'] = $members[$index]['badge_type'] . sprintf("%0".$digits."d", $members[$index]['member_no']);
       // Expand list values and add currency symbol.
       if (!empty($members[$index]['days'])) {
         $dayDescs = [];
@@ -239,8 +242,7 @@ class SimpleConregTokens {
       $this->plain_display .= "\n$member_heading\n";
       if (!empty($cur_member['member_no'])) {
         $label = t('Member Number');
-        $member_no = $cur_member['member_no'];
-        $this->display .= '<tr><td>'.$label.'</td><td>'.$member_no.'</td></tr>';
+        $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member['member_no'].'</td></tr>';
         $this->plain_display .= $label.":\t".$member_no."\n";
       }
       foreach ($confirm_labels as $key=>$val) {
