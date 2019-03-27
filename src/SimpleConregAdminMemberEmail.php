@@ -41,9 +41,24 @@ class SimpleConregAdminMemberEmail extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $mid = NULL) {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
-    // Initialise params array with eid and mid.
-    $params = ['eid' => $eid, 'mid' => $mid];
+    
+    // Look up email address for member.
+    $members = SimpleConregStorage::loadAll(['eid' => $eid, 'mid' => $mid, 'is_deleted' => 0]);
+    $email = $members[0]['email'];
 
+    // Get any additional paid members registered by email address.
+    $members = SimpleConregStorage::loadAll(['eid' => $eid, 'email' => $email, 'is_paid' => 1, 'is_deleted' => 0]);
+    $mids = [$mid];
+    if (count($members)) {
+      foreach ($members as $member) {
+        if ($member['mid'] != $mid && $member['lead_mid'] != $mid)
+          $mids[] = $member['mid'];
+      }
+    }
+
+    // Initialise params array with eid and mid.
+    $params = ['eid' => $eid, 'mid' => $mids];
+    
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
     $config = $this->config('simple_conreg.settings.'.$eid);
