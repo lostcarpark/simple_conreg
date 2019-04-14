@@ -15,6 +15,20 @@ simple_conreg_payment:
     _form: '\Drupal\simple_conreg\SimpleConregPaymentForm'
     name: ''
     postcode: ''
+    return: ''
+  requirements:
+    _permission: 'convention registration'
+    mid: ^[0-9]+$
+    key: ^[0-9]+$
+
+simple_conreg_checkin_payment:
+  path: 'admin/members/checkin/payment/{mid}/{key}/{name}/{postcode}'
+  defaults:
+    _title: 'Payment'
+    _form: '\Drupal\simple_conreg\SimpleConregPaymentForm'
+    name: ''
+    postcode: ''
+    return: 'checkin'
   requirements:
     _permission: 'convention registration'
     mid: ^[0-9]+$
@@ -230,16 +244,26 @@ simple_conreg_admin_members_email:
     mid: ^[0-9]+$
 
 simple_conreg_admin_checkin:
-  path: 'admin/members/checkin/{eid}/{display}/{page}'
+  path: 'admin/members/checkin/{eid}/{lead_mid}'
   defaults:
     _title: 'Member Checkin'
     _form: '\Drupal\simple_conreg\SimpleConregAdminCheckIn'
     eid: 1
-    display: 'search'
-    page: 1
+    lead_mid: 0
   requirements:
     _permission: 'check in convention members'
     eid: ^[0-9]+$
-    display: ^[a-z_]+$
-    page: ^[0-9]+$
+    lead_mid: ^[0-9]+$
+
+simple_conreg_admin_fantable:
+  path: 'admin/members/fantable/{eid}/{lead_mid}'
+  defaults:
+    _title: 'Fan Table'
+    _form: '\Drupal\simple_conreg\SimpleConregAdminFanTable'
+    eid: 1
+    lead_mid: 0
+  requirements:
+    _permission: 'fan table registration'
+    eid: ^[0-9]+$
+    lead_mid: ^[0-9]+$
 

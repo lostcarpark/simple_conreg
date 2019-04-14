@@ -57,8 +57,12 @@
   description: Allow users to approve, add and update members
   
 'check in convention members':
-  title: Manage convention members
+  title: Check in convention members
   description: Allow users to check in members arriving at the convention
+  
+'fan table registration':
+  title: Sign up members at a fan table
+  description: Allow users to help members to join at a convention fan table
 
 permission_callbacks:
   - Drupal\simple_conreg\SimpleConregFieldOptions::permissions

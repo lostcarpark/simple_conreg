@@ -314,7 +314,6 @@ class SimpleConregStorage {
       }
     }
     $select->condition('m.is_paid', 1);
-    $select->condition('m.is_checked_in', 0);
     $select->condition("m.is_deleted", FALSE); //Only include members who aren't deleted.
 
     return $select;

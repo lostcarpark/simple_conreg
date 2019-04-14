@@ -675,6 +675,32 @@ class SimpleConregConfigForm extends ConfigFormBase {
 
 
     /*
+     * Fields for check-in page.
+     */
+
+    $form['simple_conreg_checkin'] = array(
+      '#type' => 'details',
+      '#title' => $this->t('Check In Page'),
+      '#tree' => TRUE,
+      '#group' => 'admin',
+    );
+
+    $form['simple_conreg_checkin']['display'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Default display'),
+      '#description' => $this->t('The value for the "display" for new members added through checkin screen.'),
+      '#default_value' => $config->get('checkin.display'),
+    );  
+
+    $form['simple_conreg_checkin']['communication_method'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Default communicationmethod'),
+      '#description' => $this->t('The value for the "communication method" for new members added through checkin screen.'),
+      '#default_value' => $config->get('checkin.communication_method'),
+    );  
+
+
+    /*
      * Fields for confirmation emails.
      */
 
@@ -834,6 +860,8 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('thanks.thank_you_message', $vals['simple_conreg_thanks']['thank_you_message']);
     $config->set('discount.enable', $vals['simple_conreg_discount']['enable']);
     $config->set('discount.free_every', $vals['simple_conreg_discount']['free_every']);
+    $config->set('checkin.display', $vals['simple_conreg_checkin']['display']);
+    $config->set('checkin.communication_method', $vals['simple_conreg_checkin']['communication_method']);
     $config->set('confirmation.format_html', $vals['simple_conreg_confirmation']['format_html']);
     $config->set('confirmation.copy_us', $vals['simple_conreg_confirmation']['copy_us']);
     $config->set('confirmation.from_name', $vals['simple_conreg_confirmation']['from_name']);

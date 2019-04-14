@@ -12,31 +12,26 @@ simple_conreg.check:
   title: Check Membership
   route_name: simple_conreg_check
   weight: 1
-  parent: simple_conreg.register
 
 simple_conreg.config:
   title: Registration Config
   route_name: simple_conreg_config
   weight: 2
-  parent: simple_conreg.register
 
 simple_conreg.config_email:
   title: Convention Email Templates
   route_name: simple_conreg_config_email_templates
   weight: 3
-  parent: simple_conreg.register
 
 simple_conreg.admin.members:
   title: Membership Admin
   route_name: simple_conreg_admin_members
   weight: 4
-  parent: simple_conreg.register
 
 simple_conreg.admin.options:
   title: Membership Selected Options
   route_name: simple_conreg_admin_member_options
   weight: 6
-  parent: simple_conreg.register
 
 simple_conreg.admin.add:
   title: Add Member
@@ -48,7 +43,11 @@ simple_conreg.admin.checkin:
   title: Membership Check In
   route_name: simple_conreg_admin_checkin
   weight: 5
-  parent: simple_conreg.register
+
+simple_conreg.admin.fantable:
+  title: Fan Table Registration
+  route_name: simple_conreg_admin_fantable
+  weight: 5
 
 simple_conreg.member_list:
   title: Membership List

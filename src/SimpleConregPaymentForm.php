@@ -54,7 +54,8 @@ class SimpleConregPaymentForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $mid = NULL, $key = NULL, $name = NULL, $postcode = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $mid = NULL, $key = NULL, $name = NULL, $postcode = NULL, $return = '') {
+
     if (is_numeric($mid) && is_numeric($key) && SimpleConregStorage::checkMemberKey($mid, $key)) {
       $member = SimpleConregStorage::load(array("mid"=>$mid));
     } else {
@@ -86,6 +87,7 @@ class SimpleConregPaymentForm extends FormBase {
 
     $form_state->set('mid', $mid);
     $form_state->set('eid', $eid);
+    $form_state->set('return', $return);
     $amount = $member["payment_amount"];
     $form_state->set('payment_amount', $amount);
 
@@ -261,7 +263,8 @@ class SimpleConregPaymentForm extends FormBase {
         $language_code = \Drupal::languageManager()->getDefaultLanguage()->getId();
         $send_now = TRUE;
         // Send confirmation email to member.
-        $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $language_code, $params);
+        if (!empty($member["email"]))
+          $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $language_code, $params);
 
         // If copy_us checkbox checked, send a copy to us.
         if ($config->get('confirmation.copy_us')) {
@@ -305,8 +308,15 @@ class SimpleConregPaymentForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
-    // Redirect to payment form.
-    $form_state->setRedirect('simple_conreg_thanks', ['eid' => $eid]);
+    $mid = $form_state->get('mid');
+    $return = $form_state->get('return');
+
+    if ($return = 'checkin')
+      // Redirect to payment form.
+      $form_state->setRedirect('simple_conreg_admin_checkin', ['eid' => $eid, 'lead_mid' => $mid]);
+    else
+      // Redirect to payment form.
+      $form_state->setRedirect('simple_conreg_thanks', ['eid' => $eid]);
   }
 }    
 

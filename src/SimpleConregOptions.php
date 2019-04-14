@@ -202,6 +202,7 @@ class SimpleConregOptions {
             'Cheque' => t('Cheque'),
             'Credit Card' => t('Credit Card'),
             'Free' => t('Free'),
+            'Groats' => t('Groats'),
             'PayPal' => t('PayPal'),
            ];
   }
