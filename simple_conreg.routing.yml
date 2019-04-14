@@ -34,6 +34,19 @@ simple_conreg_checkin_payment:
     mid: ^[0-9]+$
     key: ^[0-9]+$
 
+simple_conreg_fantable_payment:
+  path: 'admin/members/fantable/payment/{mid}/{key}/{name}/{postcode}'
+  defaults:
+    _title: 'Payment'
+    _form: '\Drupal\simple_conreg\SimpleConregPaymentForm'
+    name: ''
+    postcode: ''
+    return: 'fantable'
+  requirements:
+    _permission: 'convention registration'
+    mid: ^[0-9]+$
+    key: ^[0-9]+$
+
 simple_conreg_thanks:
   path: 'members/thanks/{eid}'
   defaults:

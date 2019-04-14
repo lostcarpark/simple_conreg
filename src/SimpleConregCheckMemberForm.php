@@ -72,16 +72,6 @@ class SimpleConregCheckMemberForm extends FormBase {
       return parent::buildForm($form, $form_state);
     }
 
-    if ($event['is_open'] == 0) {
-      // Event not configured. Display error.
-      $form['simple_conreg_event'] = array(
-        '#markup' => $this->t('Sorry. This event is not currently open for registration.'),
-        '#prefix' => '<h3>',
-        '#suffix' => '</h3>',
-      );
-      return parent::buildForm($form, $form_state);
-    }
-
     // Get config for event and fieldset.    
     $config = SimpleConregConfig::getConfig($eid);
     if (empty($config->get('payments.system'))) {
