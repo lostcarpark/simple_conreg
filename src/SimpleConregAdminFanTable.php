@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\simple_conreg\DBTNExampleAddForm
+ * Contains \Drupal\simple_conreg\SimpleConregAdminFanTable
  */
 
 namespace Drupal\simple_conreg;
@@ -23,40 +23,6 @@ use Drupal\devel;
  * Simple form to add an entry, with all the interesting fields.
  */
 class SimpleConregAdminFanTable extends FormBase {
-
-
-  /**
-   * Add a summary by member type status to render array.
-   */
-  public function FanTableSummary($eid, &$content) {
-    $types = SimpleConregOptions::memberTypes($eid, $config);
-
-    $rows = [];
-    $headers = [
-      t('Member type'), 
-      t('Number of members'),
-    ];
-    $total = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
-      // Replace type code with description.
-      $status = trim($entry['is_checked_in']);
-      if (isset($descriptions[$status]))
-        $entry['is_checked_in'] = $descriptions[$status];
-      // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
-      $total += $entry['num'];
-    }
-    //Add a row for the total.
-    $rows[] = array(t("Total"), $total);
-    $content['check_in_summary'] = array(
-      '#type' => 'table',
-      '#header' => $headers,
-      '#rows' => $rows,
-      '#empty' => t('No entries available.'),
-    );
-
-    return $content;
-  }
 
 
   /**
@@ -92,10 +58,6 @@ class SimpleConregAdminFanTable extends FormBase {
           $toPay = $form_state->get("topay");
           return $this->buildCashForm($toPay, $config);
           break;
-        case "checkIn":
-          $toPay = $form_state->get("topay");
-          return $this->buildConfirmForm($eid, $toPay);
-          break;
       }
     }
 
@@ -107,7 +69,7 @@ class SimpleConregAdminFanTable extends FormBase {
       '#suffix' => '</div>',
     );
 
-    $this->FanTableSummary($eid, $form);
+    SimpleConregController::memberAdminMemberListSummary($eid, $form);
 
     $headers = array(
       'member_no' => ['data' => t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
@@ -121,7 +83,6 @@ class SimpleConregAdminFanTable extends FormBase {
       'badge_type' =>  ['data' => t('Badge type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       'comment' =>  ['data' => t('Comment'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       t('Paid'),
-      t('Select'),
       /*t('Action'),*/
     );
 
@@ -204,18 +165,6 @@ class SimpleConregAdminFanTable extends FormBase {
         $row['is_paid'] = array(
           '#markup' => $is_paid ? $this->t('Yes') : $this->t('No'),
         );
-        if ($entry['is_checked_in'])
-          $row["is_checked_in"] = array(
-            '#markup' => $this->t('Checked in'),
-          );        
-        else
-          $row["is_checked_in"] = array(
-            //'#attributes' => array('name' => 'is_approved_'.$mid, 'id' => 'edit_is_approved_'.$mid),
-            '#type' => 'checkbox',
-            '#title' => t('Select'),
-            /*'#title_display' => 'invisible',*/
-            '#default_value' => $entry['is_checked_in'],
-          );
   /*      $row['link'] = array(
           '#type' => 'dropbutton',
           '#links' => array(
@@ -229,13 +178,6 @@ class SimpleConregAdminFanTable extends FormBase {
         $form['table'][$mid] = $row;
       }
     }
-
-    $form['submit'] = array(
-      '#type' => 'submit',
-      '#value' => t('Check-in Selected'),
-      '#submit' => [[$this, 'checkInSubmit']],
-      '#attributes' => array('id' => "submitBtn"),
-    );
 
     $headers = array(
       'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
@@ -651,7 +593,7 @@ class SimpleConregAdminFanTable extends FormBase {
       ];
       SimpleConregStorage::update($update);
     }
-    $form_state->set('action', 'checkIn');a
+    $form_state->set('action', 'checkIn');
     $form_state->setRebuild();
   }
 
