@@ -18,6 +18,11 @@ class SimpleConregOptions {
    * Parameters: Optional config.
    */
   public static function memberTypes($eid, &$config = NULL) {
+    static $member_types = [];
+    if (!empty($member_types[$eid])) {
+      return $member_types[$eid];
+    }
+  
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
@@ -80,11 +85,51 @@ class SimpleConregOptions {
         ];
       }
     }
-    return (object)[
+    $member_types[$eid] = (object)[
       'publicOptions' => $publicOptions,
       'privateOptions' => $privateOptions,
       'publicNames' => $publicNames,
       'types' => $typeVals];
+    return $member_types[$eid];
+  }
+
+  /**
+   * Return list of membership types from config.
+   *
+   * Parameters: Optional config.
+   */
+  public static function memberUpgrades($eid, &$config = NULL) {
+    if (is_null($config)) {
+      $config = SimpleConregConfig::getConfig($eid);
+    }
+    
+    $types = self::memberTypes($eid, $config);
+    $upgrades = explode("\n", $config->get('member_upgrades')); // One upgrades per line.
+    $upgradeOptions = [];
+    $upgradeVals = [];
+    foreach ($upgrades as $upgrade) {
+      if (!empty($upgrade)) {
+        list($upid, $fromtype, $fromdays, $totype, $todays, $tobadge, $desc, $price) = array_pad(explode('|', $upgrade), 8, '');
+        // If list not present, add from type as first option.
+        if (!isset($upgradeOptions[$fromtype][$fromdays])) {
+          $upgradeOptions[$fromtype][$fromdays][0] = $types->types[$fromtype]->name;
+        }
+        // Remove any extra spacing.
+        $code = trim($code);
+        $fieldset = trim($fieldset);
+        // Store 
+        $upgradeOptions[$fromtype][$fromdays][$upid] = $desc;
+        $upgradeVals[$upid] = (object)[
+          'fromType' => $fromtype,
+          'fromDays' => $fromdays,
+          'toType' => $totype,
+          'toDays' => $todays,
+          'toBadgeType' => $tobadge,
+          'desc' => desc,
+          'price' => $price];
+      }
+    }
+    return (object)['options' => $upgradeOptions, 'upgrades' => $upgradeVals];
   }
 
   /**

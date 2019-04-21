@@ -4,8 +4,20 @@ simple_conreg_register:
     _title: 'Registration'
     _form: '\Drupal\simple_conreg\SimpleConregRegistrationForm'
     eid: 1
+    return: ''
   requirements:
     _permission: 'convention registration'
+    eid: ^[0-9]+$
+
+simple_conreg_fantable_register:
+  path: 'admin/members/fantable/register/{eid}'
+  defaults:
+    _title: 'Registration'
+    _form: '\Drupal\simple_conreg\SimpleConregRegistrationForm'
+    eid: 1
+    return: 'fantable'
+  requirements:
+    _permission: 'fan table registration'
     eid: ^[0-9]+$
 
 simple_conreg_payment:
@@ -30,7 +42,7 @@ simple_conreg_checkin_payment:
     postcode: ''
     return: 'checkin'
   requirements:
-    _permission: 'convention registration'
+    _permission: 'check in convention members'
     mid: ^[0-9]+$
     key: ^[0-9]+$
 
@@ -43,7 +55,7 @@ simple_conreg_fantable_payment:
     postcode: ''
     return: 'fantable'
   requirements:
-    _permission: 'convention registration'
+    _permission: 'fan table registration'
     mid: ^[0-9]+$
     key: ^[0-9]+$
 

@@ -409,6 +409,106 @@ function simple_conreg_schema() {
     ),
   );
 
+  // create table conreg_upgrades (upgid int auto_increment primary key, eid int not null, mid int not null, lead_mid int not null, from_type varchar(16), from_days varchar(16), to_type varchar(16), to_days varchar(16), to_badge_type(16), upgrade_price numeric(10,2), is_paid tinyint, payment_method varchar(255), payment_amount numeric(10,2), payment_id varchar(255));
+  $schema['conreg_upgrades'] = array(
+    'description' => 'Stores member upgrades.',
+    'fields' => array(
+      'grpid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique group ID.',
+      ),
+      'eid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Foreign Key: Event ID.',
+      ),
+      'mid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Foreign Key: Member ID.',
+      ),
+      'lead_mid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Foreign Key: Member ID.',
+      ),
+      'from_type' => array(
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Member type upgrading from.',
+      ),
+      'from_days' => array(
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Member days upgrading from',
+      ),
+      'to_type' => array(
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Member type upgraded to.',
+      ),
+      'to_days' => array(
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Member days upgraded to',
+      ),
+      'to_badge_type' => array(
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Badge type upgraded to.',
+      ),
+      'upgrade_price' => array(
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 2,
+        'not null' => TRUE,
+        'default' => 0.0,
+        'description' => 'Price for this member (excluding add-on).',
+      ),
+      'is_paid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'Set to 1 if payment complete.',
+      ),
+      'payment_method' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'How payment received (Stripe, PayPal, etc).',
+      ),
+      'payment_amount' => array(
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 2,
+        'not null' => TRUE,
+        'default' => 0.0,
+        'description' => 'Total amount received for all members in group.',
+      ),
+      'payment_id' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Payment confirmation code from Stripe or other payment system.',
+      ),
+    'primary key' => array('upgid'),
+  );
+
+
   // create table simple_conreg_option_groups (grpid int auto_increment primary key, eid int not null, field_name varchar(255), group_title varchar(255));
   $schema['conreg_option_groups'] = array(
     'description' => 'Stores groups of field options.',

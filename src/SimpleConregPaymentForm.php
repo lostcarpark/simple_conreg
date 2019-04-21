@@ -211,6 +211,7 @@ class SimpleConregPaymentForm extends FormBase {
     $form_values = $form_state->getValues();
     $mid = $form_state->get('mid');
     $eid = $form_state->get('eid');
+    $return = $form_state->get('return');
     $amount = $form_state->get('payment_amount');
 
     $config = $this->config('simple_conreg.settings.'.$eid);
@@ -246,11 +247,25 @@ class SimpleConregPaymentForm extends FormBase {
         
         // First update the lead member (in case for some reason the lead_mid update failed).
         $entry = array('mid' => $mid, 'is_paid' => 1, 'payment_id' => $payment_id, 'payment_method' => 'Stripe');
-        $return = SimpleConregStorage::update($entry);
+        $result = SimpleConregStorage::update($entry);
 
         // Update all members in group using lead_mid.
         $entry = array('lead_mid' => $mid, 'is_paid' => 1, 'payment_id' => $payment_id, 'payment_method' => 'Stripe');
-        $return = SimpleConregStorage::updateByLeadMid($entry);
+        $result = SimpleConregStorage::updateByLeadMid($entry);
+
+        // If called from Fan Table, also assign member numbers...
+        if ($return == 'fantable') {
+          $max_member_no = SimpleConregStorage::loadMaxMemberNo($eid);
+          if ($members = SimpleConregStorage::loadAll(['lead_mid' => $mid, 'is_deleted' => 0])) {
+            foreach ($members as $member) {
+              $approved_member['mid'] = $member['mid'];
+              if (empty($member['member_no']))
+                $approved_member['member_no'] = ++$max_member_no;
+              $approved_member['is_approved'] = 1;
+              SimpleConregStorage::update($approved_member);
+            }
+          }
+        }
 
         // Set up parameters for receipt email.
         $params = ['eid' => $eid, 'mid' => $mid];
@@ -311,12 +326,19 @@ class SimpleConregPaymentForm extends FormBase {
     $mid = $form_state->get('mid');
     $return = $form_state->get('return');
 
-    if ($return = 'checkin')
-      // Redirect to payment form.
-      $form_state->setRedirect('simple_conreg_admin_checkin', ['eid' => $eid, 'lead_mid' => $mid]);
-    else
-      // Redirect to payment form.
-      $form_state->setRedirect('simple_conreg_thanks', ['eid' => $eid]);
+    switch ($return) {
+      case 'checkin':
+        // Redirect to payment form.
+        $form_state->setRedirect('simple_conreg_admin_checkin', ['eid' => $eid, 'lead_mid' => $mid]);
+        break;
+      case 'fantable':
+        // Redirect to payment form.
+        $form_state->setRedirect('simple_conreg_admin_fantable', ['eid' => $eid, 'lead_mid' => $mid]);
+        break;
+      default:
+        // Redirect to payment form.
+        $form_state->setRedirect('simple_conreg_thanks', ['eid' => $eid]);
+    }
   }
 }    
 

@@ -165,6 +165,13 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('member_types'),
     );
 
+    $form['simple_conreg_members']['upgrades'] = array(
+      '#type' => 'textarea',
+      '#title' => $this->t('Member upgrades'),
+      '#description' => $this->t('Put allowed membership upgrade on a line each with from upgrade ID, type code, from day, to type code, to day, to badge, description, price separated by | character (e.g. 101|S|W|A|W|Attending upgrade|45).'),
+      '#default_value' => $config->get('member_upgrades'),
+    );
+
     $form['simple_conreg_members']['badge_types'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Badge types'),
@@ -840,6 +847,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('payments.name', trim($vals['simple_conreg_payments']['show_name']));
     $config->set('payments.postcode', trim($vals['simple_conreg_payments']['show_postcode']));
     $config->set('member_types', $vals['simple_conreg_members']['types']);
+    $config->set('member_upgrades', $vals['simple_conreg_members']['upgrades']);
     $config->set('badge_types', $vals['simple_conreg_members']['badge_types']);
     $config->set('days', $vals['simple_conreg_members']['days']);
     $config->set('member_no_digits', $vals['simple_conreg_members']['digits']);

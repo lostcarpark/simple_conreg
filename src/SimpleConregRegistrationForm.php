@@ -61,9 +61,10 @@ class SimpleConregRegistrationForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1) {
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $return = '') {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
+    $form_state->set('return', $return);
 
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
@@ -667,6 +668,7 @@ class SimpleConregRegistrationForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
+    $return = $form_state->get('return');
 
     $form_values = $form_state->getValues();
     
@@ -812,24 +814,24 @@ class SimpleConregRegistrationForm extends FormBase {
       // Add member details to parameters for email.
       $confirm_params["members"][$cnt] = $entry;
       // Insert to database table.
-      $return = SimpleConregStorage::insert($entry);
+      $result = SimpleConregStorage::insert($entry);
       
-      if ($return) {
+      if ($result) {
         // Now we have the member ID we can save the field options.
-        SimpleConregFieldOptions::insertOptionFields($return, $optionVals);
+        SimpleConregFieldOptions::insertOptionFields($result, $optionVals);
         \Drupal::messenger()->addMessage(t('Thank you for registering @first_name @last_name.',
                                            array('@first_name' => $entry['first_name'],
                                                  '@last_name' => $entry['last_name'])));
       }
       if ($cnt == 1) {
         // For first member, get key from insert statement to use for lead member ID.
-        $lead_mid = $return;
+        $lead_mid = $result;
         $lead_key = $rand_key;
         $lead_name = trim($entry['first_name'].' '.$entry['last_name']);
         $lead_postcode = trim($entry['postcode']);
         // Update first member with own member ID as lead member ID.
         $update = array('mid' => $lead_mid, 'lead_mid' => $lead_mid);
-        $return = SimpleConregStorage::update($update);
+        $result = SimpleConregStorage::update($update);
       }
 
       // Check Simplenews module loaded.
@@ -858,10 +860,17 @@ class SimpleConregRegistrationForm extends FormBase {
       }
     }
 
-    // Redirect to payment form.
-    $form_state->setRedirect('simple_conreg_payment',
-      array('mid' => $lead_mid, 'key' => $lead_key, 'name' => $lead_name, 'postcode' => $lead_postcode)
-    );
+    switch ($return) {
+      case 'fantable':
+        // If member add initiated from fan table screen, return there.
+        $form_state->setRedirect('simple_conreg_admin_fantable', ['eid' => $eid, 'lead_mid' => $mid]);
+        break;
+      default:
+        // Redirect to payment form.
+        $form_state->setRedirect('simple_conreg_payment',
+          array('mid' => $lead_mid, 'key' => $lead_key, 'name' => $lead_name, 'postcode' => $lead_postcode)
+        );
+    }
   }
 
   /**
