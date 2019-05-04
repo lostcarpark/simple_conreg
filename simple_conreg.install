@@ -55,7 +55,7 @@ function simple_conreg_schema() {
    *
    */
 
-  // create table simple_conreg_events (eid int auto_increment primary key, event_name varchar(255) not null, is_open tinyint not null default '1');
+  // create table conreg_events (eid int auto_increment primary key, event_name varchar(255) not null, is_open tinyint not null default '1');
   $schema['conreg_events'] = array(
     'description' => 'Stores events on the registration system.',
     'fields' => array(
@@ -409,7 +409,7 @@ function simple_conreg_schema() {
     ),
   );
 
-  // create table conreg_upgrades (upgid int auto_increment primary key, eid int not null, mid int not null, lead_mid int not null, from_type varchar(16), from_days varchar(16), to_type varchar(16), to_days varchar(16), to_badge_type(16), upgrade_price numeric(10,2), is_paid tinyint, payment_method varchar(255), payment_amount numeric(10,2), payment_id varchar(255));
+  // create table conreg_upgrades (upgid int auto_increment primary key, eid int not null, mid int not null, lead_mid int not null, from_type varchar(16), from_days varchar(16), to_type varchar(16), to_days varchar(16), to_badge_type(16), upgrade_price numeric(10,2), is_paid tinyint, payment_method varchar(255), payment_amount numeric(10,2), payment_id varchar(255), upgrade_date int not null);
   $schema['conreg_upgrades'] = array(
     'description' => 'Stores member upgrades.',
     'fields' => array(
@@ -505,11 +505,19 @@ function simple_conreg_schema() {
         'default' => '',
         'description' => 'Payment confirmation code from Stripe or other payment system.',
       ),
+      // alter table conreg_upgrades add upgrade_date int NOT NULL default "0" after payment_id;
+      'upgrade_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp for the date and time member was upgraded.',
+      ),
+    ),
     'primary key' => array('upgid'),
   );
 
 
-  // create table simple_conreg_option_groups (grpid int auto_increment primary key, eid int not null, field_name varchar(255), group_title varchar(255));
+  // create table conreg_option_groups (grpid int auto_increment primary key, eid int not null, field_name varchar(255), group_title varchar(255));
   $schema['conreg_option_groups'] = array(
     'description' => 'Stores groups of field options.',
     'fields' => array(
@@ -541,7 +549,7 @@ function simple_conreg_schema() {
     'primary key' => array('grpid'),
   );
 
-  // create table simple_conreg_options (optid int auto_increment primary key, grpid int not null, option_title varchar(255) not null, detail_title varchar(255), detail_is_required tinyint not null default '1', weight int not null default '1');
+  // create table conreg_options (optid int auto_increment primary key, grpid int not null, option_title varchar(255) not null, detail_title varchar(255), detail_is_required tinyint not null default '1', weight int not null default '1');
   $schema['conreg_options'] = array(
     'description' => 'Stores field option details.',
     'fields' => array(
@@ -586,7 +594,7 @@ function simple_conreg_schema() {
     'primary key' => array('optid'),
   );
 
-  // create table simple_conreg_fieldset_options (optid int not null, fieldset int not null, primary key (optid, fieldset));
+  // create table conreg_fieldset_options (optid int not null, fieldset int not null, primary key (optid, fieldset));
   $schema['conreg_fieldset_options'] = array(
     'description' => 'Stores groups of field options.',
     'fields' => array(
@@ -604,7 +612,7 @@ function simple_conreg_schema() {
     'primary key' => array('optid', 'fieldset'),
   );
 
-  // create table simple_conreg_member_options (mid int not null, optid int not null, is_selected tinyint not null default '1', option_detail varchar(255), primary key (mid, optid));
+  // create table conreg_member_options (mid int not null, optid int not null, is_selected tinyint not null default '1', option_detail varchar(255), primary key (mid, optid));
   $schema['conreg_member_options'] = array(
     'description' => 'Stores member option choices.',
     'fields' => array(
