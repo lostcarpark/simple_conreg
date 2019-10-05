@@ -19,6 +19,7 @@ class SimpleConregOptions {
    */
   public static function memberTypes($eid, &$config = NULL) {
     static $member_types = [];
+    // If member types previously loaded, just return them.
     if (!empty($member_types[$eid])) {
       return $member_types[$eid];
     }
@@ -85,6 +86,8 @@ class SimpleConregOptions {
         ];
       }
     }
+
+    // Stash member types in static variable in case needed again.
     $member_types[$eid] = (object)[
       'publicOptions' => $publicOptions,
       'privateOptions' => $privateOptions,
@@ -98,10 +101,18 @@ class SimpleConregOptions {
    *
    * Parameters: Optional config.
    */
-  public static function memberUpgrades($eid, &$config = NULL) {
-    if (is_null($config)) {
-      $config = SimpleConregConfig::getConfig($eid);
+  public static function memberUpgrades($eid, &$config = NULL)
+  {
+    static $member_upgrades = []; // Store upgrade options in a static array.
+
+    // If member upgrades previously stored, just return them.
+    if (!empty($member_upgrades[$eid])) {
+      return $member_upgrades[$eid];
     }
+
+    // If config not passed in, we need to load it.
+    if (is_null($config))
+      $config = SimpleConregConfig::getConfig($eid);
     
     $types = self::memberTypes($eid, $config);
     $upgrades = explode("\n", $config->get('member_upgrades')); // One upgrades per line.
@@ -129,7 +140,10 @@ class SimpleConregOptions {
           'price' => $price];
       }
     }
-    return (object)['options' => $upgradeOptions, 'upgrades' => $upgradeVals];
+    
+    // Stash member upgrades in static variable in case needed again.
+    $member_upgrades[$eid] = (object)['options' => $upgradeOptions, 'upgrades' => $upgradeVals];
+    return $member_upgrades[$eid];
   }
 
   /**

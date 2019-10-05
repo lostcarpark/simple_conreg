@@ -705,6 +705,8 @@ class SimpleConregRegistrationForm extends FormBase {
     $confirm_params["members"] = array();
     $confirm_params['from'] = $config->get('confirmation.from_name').' <'.$config->get('confirmation.from_email').'>';
     
+    $payment = new SimpleConregPayment();
+    
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
       // Look up the member type, and get the default badge type for member type.
       $member_type = $form_values['members']['member'.$cnt]['type'];
@@ -819,6 +821,12 @@ class SimpleConregRegistrationForm extends FormBase {
       if ($result) {
         // Now we have the member ID we can save the field options.
         SimpleConregFieldOptions::insertOptionFields($result, $optionVals);
+        // Add a payment line for the member.
+        $payment->add(new SimpleConregPaymentLine($result,
+                                                 'member',
+                                                 t("Member registration for @first_name @last_name", array('@first_name' => $entry['first_name'], '@last_name' => $entry['last_name'])),
+                                                 $memberPrices[$cnt]->price));
+        // Add confirmation.
         \Drupal::messenger()->addMessage(t('Thank you for registering @first_name @last_name.',
                                            array('@first_name' => $entry['first_name'],
                                                  '@last_name' => $entry['last_name'])));
@@ -865,10 +873,16 @@ class SimpleConregRegistrationForm extends FormBase {
         // If member add initiated from fan table screen, return there.
         $form_state->setRedirect('simple_conreg_admin_fantable', ['eid' => $eid, 'lead_mid' => $mid]);
         break;
+      case 'portal':
+        // If member add initiated from member portal screen, return there.
+        $form_state->setRedirect('simple_conreg_portal', ['eid' => $eid]);
+        break;
       default:
+        // Save the payment (only if direct registration).
+        $payid = $payment->save();
         // Redirect to payment form.
-        $form_state->setRedirect('simple_conreg_payment',
-          array('mid' => $lead_mid, 'key' => $lead_key, 'name' => $lead_name, 'postcode' => $lead_postcode)
+        $form_state->setRedirect('simple_conreg_checkout',
+          array('payid' => $payid, 'key' => $payment->randomKey)
         );
     }
   }

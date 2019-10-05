@@ -20,6 +20,17 @@ simple_conreg_fantable_register:
     _permission: 'fan table registration'
     eid: ^[0-9]+$
 
+simple_conreg_portal_register:
+  path: 'members/portal/register/{eid}'
+  defaults:
+    _title: 'Registration'
+    _form: '\Drupal\simple_conreg\SimpleConregRegistrationForm'
+    eid: 1
+    return: 'portal'
+  requirements:
+    _permission: 'member portal'
+    eid: ^[0-9]+$
+
 simple_conreg_payment:
   path: 'members/payment/{mid}/{key}/{name}/{postcode}'
   defaults:
@@ -50,7 +61,7 @@ simple_conreg_fantable_payment:
   path: 'admin/members/fantable/payment/{mid}/{key}/{name}/{postcode}'
   defaults:
     _title: 'Payment'
-    _form: '\Drupal\simple_conreg\SimpleConregPaymentForm'
+    _form: '\Drupal\simple_conreg\SimpleConregCheckoutForm'
     name: ''
     postcode: ''
     return: 'fantable'
@@ -58,6 +69,58 @@ simple_conreg_fantable_payment:
     _permission: 'fan table registration'
     mid: ^[0-9]+$
     key: ^[0-9]+$
+
+simple_conreg_portal_payment:
+  path: 'members/portal/payment/{mid}/{key}/{name}/{postcode}'
+  defaults:
+    _title: 'Payment'
+    _form: '\Drupal\simple_conreg\SimpleConregPaymentForm'
+    name: ''
+    postcode: ''
+    return: 'portal'
+  requirements:
+    _permission: 'member portal'
+    mid: ^[0-9]+$
+    key: ^[0-9]+$
+
+simple_conreg_checkout:
+  path: 'members/checkout/{payid}/{key}'
+  defaults:
+    _title: 'Payment'
+    _form: '\Drupal\simple_conreg\SimpleConregCheckoutForm'
+    return: ''
+  requirements:
+    _permission: 'convention registration'
+    payid: ^[0-9]+$
+    key: ^[0-9]+$
+  options:
+    no_cache: 'TRUE'
+
+simple_conreg_fantable_checkout:
+  path: 'members/checkout/{payid}/{key}'
+  defaults:
+    _title: 'Payment'
+    _form: '\Drupal\simple_conreg\SimpleConregCheckoutForm'
+    return: 'fantable'
+  requirements:
+    _permission: 'convention registration'
+    payid: ^[0-9]+$
+    key: ^[0-9]+$
+  options:
+    no_cache: 'TRUE'
+
+simple_conreg_portal_checkout:
+  path: 'members/checkout/{payid}/{key}'
+  defaults:
+    _title: 'Payment'
+    _form: '\Drupal\simple_conreg\SimpleConregCheckoutForm'
+    return: 'portal'
+  requirements:
+    _permission: 'convention registration'
+    payid: ^[0-9]+$
+    key: ^[0-9]+$
+  options:
+    no_cache: 'TRUE'
 
 simple_conreg_thanks:
   path: 'members/thanks/{eid}'
@@ -87,6 +150,29 @@ simple_conreg_check:
     eid: 1
   requirements:
     _permission: 'check membership'
+    eid: ^[0-9]+$
+
+simple_conreg_login:
+  path: 'members/login/{mid}/{key}/{expiry}'
+  defaults:
+    _title: 'Login'
+    _controller: '\Drupal\simple_conreg\SimpleConregController::memberLoginAndRedirect'
+  requirements:
+    _access: 'TRUE'
+    mid: ^[0-9]+$
+    key: ^[0-9]+$
+    expiry: ^[0-9]+$
+  options:
+    no_cache: 'TRUE'
+
+simple_conreg_portal:
+  path: 'members/portal/{eid}'
+  defaults:
+    _title: 'Member Portal'
+    _form: '\Drupal\simple_conreg\SimpleConregMemberPortal'
+    eid: 1
+  requirements:
+    _permission: 'member portal'
     eid: ^[0-9]+$
 
 simple_conreg_config:

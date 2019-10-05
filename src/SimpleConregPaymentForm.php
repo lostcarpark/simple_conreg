@@ -58,6 +58,9 @@ class SimpleConregPaymentForm extends FormBase {
 
     if (is_numeric($mid) && is_numeric($key) && SimpleConregStorage::checkMemberKey($mid, $key)) {
       $member = SimpleConregStorage::load(array("mid"=>$mid));
+      
+      $mgr = new SimpleConregUpgradeManager($eid);
+      $mgr->loadUpgrades($mid, FALSE);
     } else {
       $form['message'] = array(
         '#markup' => $this->t('Invalid payment credentials. Please return to <a href="@url">registration page</a> and complete membership details.', array("@url" => "/members/register"))
@@ -78,7 +81,7 @@ class SimpleConregPaymentForm extends FormBase {
       '#suffix' => '</div>',
     );
 
-    if ($member['is_paid']) {
+    if ($member['is_paid'] && $mgr->count() == 0) {
       $form['message'] = array(
         '#markup' => $this->t('Your payment has been completed. Thank you for joining.')
       );
@@ -87,8 +90,9 @@ class SimpleConregPaymentForm extends FormBase {
 
     $form_state->set('mid', $mid);
     $form_state->set('eid', $eid);
+    $form_state->set('is_paid', $member['is_paid']);
     $form_state->set('return', $return);
-    $amount = $member["payment_amount"];
+    $amount = $member["payment_amount"] + $mgr->getTotalPrice();
     $form_state->set('payment_amount', $amount);
 
     // Callback function to be called after the page is built. This prevents card details from being sent to our server.
@@ -240,32 +244,40 @@ class SimpleConregPaymentForm extends FormBase {
         $payment_id = $charge->id;
         \Drupal::messenger()->addMessage($this->t("Your payment has been accepted. Thank you for joining. Your payment confirmation ID is @payment", array('@payment' => $payment_id)));
         
-        // Since member record already loaded, update in memory.
-        $member['is_paid'] = 1;
-        $member['payment_id'] = $payment_id;
-        $member['payment_method'] = 'Stripe';
-        
-        // First update the lead member (in case for some reason the lead_mid update failed).
-        $entry = array('mid' => $mid, 'is_paid' => 1, 'payment_id' => $payment_id, 'payment_method' => 'Stripe');
-        $result = SimpleConregStorage::update($entry);
+        // Only update member payment if paying for membership.
+        if ($form_state->get('is_paid') == 0) {
+          // Since member record already loaded, update in memory.
+          $member['is_paid'] = 1;
+          $member['payment_id'] = $payment_id;
+          $member['payment_method'] = 'Stripe';
+          
+          // First update the lead member (in case for some reason the lead_mid update failed).
+          $entry = array('mid' => $mid, 'is_paid' => 1, 'payment_id' => $payment_id, 'payment_method' => 'Stripe');
+          $result = SimpleConregStorage::update($entry);
 
-        // Update all members in group using lead_mid.
-        $entry = array('lead_mid' => $mid, 'is_paid' => 1, 'payment_id' => $payment_id, 'payment_method' => 'Stripe');
-        $result = SimpleConregStorage::updateByLeadMid($entry);
+          // Update all members in group using lead_mid.
+          $entry = array('lead_mid' => $mid, 'is_paid' => 1, 'payment_id' => $payment_id, 'payment_method' => 'Stripe');
+          $result = SimpleConregStorage::updateByLeadMid($entry);
 
-        // If called from Fan Table, also assign member numbers...
-        if ($return == 'fantable') {
-          $max_member_no = SimpleConregStorage::loadMaxMemberNo($eid);
-          if ($members = SimpleConregStorage::loadAll(['lead_mid' => $mid, 'is_deleted' => 0])) {
-            foreach ($members as $member) {
-              $approved_member['mid'] = $member['mid'];
-              if (empty($member['member_no']))
-                $approved_member['member_no'] = ++$max_member_no;
-              $approved_member['is_approved'] = 1;
-              SimpleConregStorage::update($approved_member);
+          // If called from Fan Table, also assign member numbers...
+          if ($return == 'fantable') {
+            $max_member_no = SimpleConregStorage::loadMaxMemberNo($eid);
+            if ($members = SimpleConregStorage::loadAll(['lead_mid' => $mid, 'is_deleted' => 0])) {
+              foreach ($members as $member) {
+                $approved_member['mid'] = $member['mid'];
+                if (empty($member['member_no']))
+                  $approved_member['member_no'] = ++$max_member_no;
+                $approved_member['is_approved'] = 1;
+                SimpleConregStorage::update($approved_member);
+              }
             }
           }
         }
+        
+        // Load any upgrades and complete them.
+        $mgr = new SimpleConregUpgradeManager($eid);
+        $mgr->loadUpgrades($mid, FALSE);
+        $mgr->completeUpgrades($amount, 'Stripe', $payment_id);
 
         // Set up parameters for receipt email.
         $params = ['eid' => $eid, 'mid' => $mid];
@@ -328,12 +340,16 @@ class SimpleConregPaymentForm extends FormBase {
 
     switch ($return) {
       case 'checkin':
-        // Redirect to payment form.
+        // Redirect to check-in page.
         $form_state->setRedirect('simple_conreg_admin_checkin', ['eid' => $eid, 'lead_mid' => $mid]);
         break;
       case 'fantable':
-        // Redirect to payment form.
+        // Redirect to fan table page.
         $form_state->setRedirect('simple_conreg_admin_fantable', ['eid' => $eid, 'lead_mid' => $mid]);
+        break;
+      case 'portal':
+        // Redirect to portal.
+        $form_state->setRedirect('simple_conreg_portal', ['eid' => $eid]);
         break;
       default:
         // Redirect to payment form.

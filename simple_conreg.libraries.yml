@@ -8,13 +8,22 @@ conreg_form:
   dependencies:
     - core/jquery
 
+conreg_checkout:
+  version: 1.x
+  js:
+    https://js.stripe.com/v3/: { type: external, minified: true }
+    js/simple_conreg_checkout.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupalSettings
+
 conreg_payment:
   version: 1.x
   css:
     theme:
       css/simple_conreg_payment.css: {}
   js:
-    https://js.stripe.com/v2/: { type: external, minified: true }
+    https://js.stripe.com/v3/: { type: external, minified: true }
     js/simple_conreg_stripe.js: {}
   dependencies:
     - core/jquery

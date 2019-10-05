@@ -52,12 +52,13 @@ class SimpleConregAdminFanTable extends FormBase {
     $pageSize = $config->get('display.page_size');
 
     // If action set, display either payment or check-in subpage.
-    $action = $form_state->get("action");
+    $action = $form_state->get('action');
     if (isset($action) && !empty($action)) {
       switch ($action) {
         case "payCash":
           $toPay = $form_state->get("topay");
-          return $this->buildCashForm($toPay, $config);
+          $lead_mid = $form_state->get("leadmid");
+          return $this->buildCashForm($eid, $lead_mid, $toPay, $config);
           break;
       }
     }
@@ -250,7 +251,7 @@ class SimpleConregAdminFanTable extends FormBase {
       $row['price'] = array(
         '#markup' => SafeMarkup::checkPlain($entry['member_total']),
       );
-      $row["is_selected"] = array(
+      $row['is_selected'] = array(
         //'#attributes' => array('name' => 'is_approved_'.$mid, 'id' => 'edit_is_approved_'.$mid),
         '#type' => 'checkbox',
         '#title' => t('Select'),
@@ -296,7 +297,7 @@ class SimpleConregAdminFanTable extends FormBase {
   //
   // Set up markup fields to display cash payment.
   //
-  public function buildCashForm($toPay, $config) {
+  public function buildCashForm($eid, $lead_mid, $toPay, $config) {
     $symbol = $config->get('payments.symbol');
     $form = [];
     $form['intro'] = [
@@ -306,6 +307,25 @@ class SimpleConregAdminFanTable extends FormBase {
       '#suffix' => '</h3></div>',
     ];
     $total_price = 0;
+    
+    $mgr = new SimpleConregUpgradeManager($eid);
+    $mgr->loadUpgrades($lead_mid, FALSE);
+    foreach ($mgr->upgrades as $upgrade) {
+      $member = SimpleConregStorage::load(['mid' => $upgrade->mid]);
+      $form['member'.$upgrade->mid] = [
+        '#type' => 'markup',
+        '#markup' => $this->t('Member @first @last to pay @symbol@total',
+          ['@first' => $member['first_name'],
+           '@last' => $member['last_name'],
+           '@symbol' => $symbol,
+           '@total' => $upgrade->upgradePrice,
+          ]),
+        '#prefix' => '<div>',
+        '#suffix' => '</div>',
+      ];
+      $total_price += $upgrade->upgradePrice;
+    }
+    
     foreach ($toPay as $mid) {
       if ($member = SimpleConregStorage::load(['mid' => $mid, 'is_paid' => 0])) {
         $form['member'.$mid] = [
@@ -320,21 +340,6 @@ class SimpleConregAdminFanTable extends FormBase {
           '#suffix' => '</div>',
         ];
         $total_price += $member['member_total'];
-      }
-      if ($upgrade = SimpleConregUpgradeStorage::load(['mid' => $mid, 'is_paid' => 0])) {
-        $member = SimpleConregStorage::load(['mid' => $mid]);
-        $form['member'.$mid] = [
-          '#type' => 'markup',
-          '#markup' => $this->t('Member @first @last to pay @symbol@total',
-            ['@first' => $member['first_name'],
-             '@last' => $member['last_name'],
-             '@symbol' => $symbol,
-             '@total' => $upgrade['upgrade_price'],
-            ]),
-          '#prefix' => '<div>',
-          '#suffix' => '</div>',
-        ];
-        $total_price += $upgrade['upgrade_price'];
       }
     }
     $form['payment_method'] = array(
@@ -367,76 +372,6 @@ class SimpleConregAdminFanTable extends FormBase {
     return $form;
   }
 
-  //
-  // Set up markup fields to display check-in confirm.
-  //
-  public function buildConfirmForm($eid, $toPay) {
-    $form = [];
-    $form['intro'] = [
-      '#type' => 'markup',
-      '#markup' => $this->t('Please confirm badges for:'),
-      '#prefix' => '<div><h3>',
-      '#suffix' => '</h3></div>',
-    ];
-    $maxMemberNo = SimpleConregStorage::loadMaxMemberNo($eid);
-    foreach ($toPay as $mid) {
-      if ($member = SimpleConregStorage::load(['mid' => $mid])) {
-        $update = ['mid' => $mid];
-        if (!(isset($member['is_confirmed']) && $member['is_approved']))
-          $update['is_approved'] = 1;
-        if (isset($member['member_no']) && $member['member_no'])
-          $member_no = $member['member_no'];
-        else {
-          $member_no = ++$maxMemberNo;
-          $update['member_no'] = $member_no;
-        }
-        SimpleConregStorage::update($update);
-        $form['member'.$mid] = [
-          '#type' => 'markup',
-          '#markup' => $this->t('Badge number @memberno for @first @last',
-            ['@memberno' => $member_no,
-             '@first' => $member['first_name'],
-             '@last' => $member['last_name'],
-            ]),
-          '#prefix' => '<div>',
-          '#suffix' => '</div>',
-        ];
-      }
-    }
-    $form['confirm'] = array(
-      '#type' => 'submit',
-      '#value' => $this->t('Confirm Check-In'),
-      '#submit' => [[$this, 'confirmCheckInSubmit']],
-    );  
-    $form['cancel'] = array(
-      '#type' => 'submit',
-      '#value' => $this->t('Cancel'),
-      '#submit' => [[$this, 'cancelAction']],
-    );
-    return $form;
-  }
-
-  // Callback function for "member type" and "add-on" drop-downs. Replace price fields.
-  public function updateApprovedCallback(array $form, FormStateInterface $form_state) {
-    $triggering_element = $form_state->getTriggeringElement();
-    $ajax_response = new AjaxResponse();
-    if (preg_match("/table\[(\d+)\]\[is_approved\]/", $triggering_element['#name'], $matches)) {
-      $mid = $matches[1];
-      $form['table'][$mid]["member_div"]["member_no"]['#value'] = $triggering_element['#value'];
-      $ajax_response->addCommand(new HtmlCommand('#member_no_'.$mid, render($form['table'][$mid]["member_div"]["member_no"]['#value'])));
-      //$ajax_response->addCommand(new AlertCommand($row." = ".));
-    }
-    return $ajax_response;
-  }
-
-  // Callback function for "member type" and "add-on" drop-downs. Replace price fields.
-  public function updateTestCallback(array $form, FormStateInterface $form_state) {
-    $triggering_element = $form_state->getTriggeringElement();
-    $ajax_response = new AjaxResponse();
-    $ajax_response->addCommand(new AlertCommand($triggering_element['#name']." = ".$triggering_element['#value']));
-    return $ajax_response;
-  }
-
   // Callback function for "display" drop down.
   public function updateDisplayCallback(array $form, FormStateInterface $form_state) {
     // Form rebuilt with required number of members before callback. Return new form.
@@ -455,93 +390,51 @@ class SimpleConregAdminFanTable extends FormBase {
     );
   }
   
-  public function checkInSubmit(array &$form, FormStateInterface $form_state) {
-    $eid = $form_state->get('eid');
-    $config = SimpleConregConfig::getConfig($eid);
-    $form_values = $form_state->getValues();
+  // If any member upgrades selected, save them so they can be charged.
+  public function saveUpgrades($eid, $form_values)
+  {
+    $mgr = new SimpleConregUpgradeManager($eid);
 
-    $toPay = [];
-    foreach ($form_values["table"] as $mid => $member) {
-      if (isset($member["is_checked_in"]) && $member["is_checked_in"]) {
-        $toPay[] = $mid;
-      }
-    }
-    if (count($toPay)) {
-      $form_state->set("action", "checkIn");
-      $form_state->set("topay", $toPay);
-    }
-    $form_state->setRebuild();
+    $lead_mid = NULL; // First member will set Lead MID, which will then be used for supsequent member upgrades.
+    foreach ($form_values["table"] as $mid => $member)
+      $mgr->Add(new SimpleConregUpgrade($eid, $mid, $member["member_type"], $lead_mid));
+      
+    $lead_mid = $mgr->saveUpgrades();
+    return $lead_mid;
   }
 
-  public function saveUpgrades($eid, $form_values, $upgrades, $lead_mid, &$toPay) {
-    // Calculate total price of upbrades.
-    $upgrade_total = 0;
-    foreach ($form_values["table"] as $mid => $member) {
-      if (isset($member["member_type"]) && $member["member_type"]) {
-        $upgid = $member["member_type"];
-        $upgrade_total += $upgrades->upgrades[$upgid]->price;
-      }
-    }
-    
-    // Next, check for any member upgrades.
-    foreach ($form_values["table"] as $mid => $member) {
-      if (isset($member["member_type"]) && $member["member_type"]) {
-        if (empty($lead_mid))
-          $lead_mid = $mid;
-        $upgid = $member["member_type"];
-        
-        $bad_upgrades = SimpleConregUpgradeStorage::loadAll(['mid' => $mid, 'is_paid' => 0]);
-        foreach ($bad_upgrades as $delete) {
-          SimpleConregUpgradeStorage::delete($delete);
-        }
-        
-        SimpleConregUpgradeStorage::insert([
-          'mid' => $mid,
-          'eid' => $eid,
-          'lead_mid' => $lead_mid,
-          'from_type' => $upgrades->upgrades[$upgid]->fromType,
-          'from_days' => $upgrades->upgrades[$upgid]->fromDays,
-          'to_type' => $upgrades->upgrades[$upgid]->toType,
-          'to_days' => $upgrades->upgrades[$upgid]->toDays,
-          'to_badge_type' => $upgrades->upgrades[$upgid]->toBadgeType,
-          'upgrade_price' => $upgrades->upgrades[$upgid]->price,
-          'is_paid' => 0,
-          'payment_amount' => $upgrade_total,
-        ]);	
-        
-        $toPay[$mid] = $mid;
-      }
-    }
-  }
-
-  public function payCash(array &$form, FormStateInterface $form_state) {
+  // "Pay Cash" button on main form clicked.
+  public function payCash(array &$form, FormStateInterface $form_state)
+  {
     $eid = $form_state->get('eid');
     $config = SimpleConregConfig::getConfig($eid);
     $types = SimpleConregOptions::memberTypes($eid, $config);
-    $upgrades = SimpleConregOptions::memberUpgrades($eid, $config);
     $days = SimpleConregOptions::days($eid, $config);
     $form_values = $form_state->getValues();
 
-    // First check for any unpaid members to be paid.
+    // Save any member upgrades.
+    $lead_mid = self::saveUpgrades($eid, $form_values);
+
+    // Next check for any unpaid members to be paid.
     $toPay = [];
-    foreach ($form_values["unpaid"] as $mid => $member) {
-      if (isset($member["is_selected"]) && $member["is_selected"]) {
+    foreach ($form_values['unpaid'] as $mid => $member) {
+      if (isset($member['is_selected']) && $member['is_selected']) {
         $toPay[$mid] = $mid;
       }
     }
 
-    // Save any member upgrades.
-    self::saveUpgrades($eid, $form_values, $upgrades, 0, $toPay);
-
     // No need to proceed unless members have been selected.
-    if (count($toPay)) {
-      $form_state->set("action", "payCash");
-      $form_state->set("topay", $toPay);
+    if (!empty($lead_mid) || count($toPay)) {
+      $form_state->set('action', 'payCash');
+      $form_state->set('topay', $toPay);
+      $form_state->set('leadmid', $lead_mid);
     }
     $form_state->setRebuild();
   }
 
-  public function confirmPayCash(array &$form, FormStateInterface $form_state) {
+  // "Confirm" button on Pay Cash subform clicked.
+  public function confirmPayCash(array &$form, FormStateInterface $form_state)
+  {
     $eid = $form_state->get('eid');
     $config = SimpleConregConfig::getConfig($eid);
     $types = SimpleConregOptions::memberTypes($eid, $config);
@@ -549,8 +442,9 @@ class SimpleConregAdminFanTable extends FormBase {
     $form_values = $form_state->getValues();
 
     $payment_amount = 0;
-    $lead_mid = 0;
-    $toPay = $form_state->get("topay");
+    $lead_mid = $form_state->get('leadmid');
+    $toPay = $form_state->get('topay');
+
     // Loop through selected members to get lead and total price.
     $memberPay = [];
     $upgradePay = [];
@@ -563,15 +457,14 @@ class SimpleConregAdminFanTable extends FormBase {
         $payment_amount += $member['member_total'];
         $memberPay[] = $mid;
       }
-      // Check for upgrade payments.
-      if ($upgrade = SimpleConregUpgradeStorage::load(['mid' => $mid, 'is_paid' => 0])) {
-        // Make first member lead member.
-        if ($lead_mid == 0)
-          $lead_mid = $mid;
-        $payment_amount += $upgrade['upgrade_price'];
-        $upgradePay[$mid] = $upgrade['upgid'];
-      }
     }
+
+    // Load upgrades into upgrade manager and process.
+    $mgr = new SimpleConregUpgradeManager($eid);
+    $mgr->loadUpgrades($lead_mid, FALSE);
+    $payment_amount += $mgr->getTotalPrice(); // Add total price of upgrades to total price of new members.
+    $mgr->completeUpgrades($payment_amount, $form_values['payment_method'], $form_values['payment_id']);
+
     // Get next member number.
     $max_member_no = SimpleConregStorage::loadMaxMemberNo($eid);
     // Loop again to update members.
@@ -590,58 +483,11 @@ class SimpleConregAdminFanTable extends FormBase {
     }
     // Loop again to update upgrades.
     foreach ($upgradePay as $mid => $upgid) {
-      // Fetch update details.
-      if ($upgrade = SimpleConregUpgradeStorage::load(['upgid' => $upgid])) {
-        $update = [
-          'upgid' => $upgid,
-          'lead_mid' => $lead_mid,
-          'payment_amount' => $payment_amount,
-          'payment_method' => $form_values['payment_method'],
-          'payment_id' => $form_values['payment_id'],
-          'is_paid' => 1,
-        ];
-        SimpleConregUpgradeStorage::update($update);
-        // Fetch member record.
-        if ($member = SimpleConregStorage::load(['mid' => $mid])) {
-          // Update member type, days and price.
-          $member['member_type'] = $upgrade['to_type'];
-          $member['days'] = $upgrade['to_days'];
-          $member['badge_type'] = $upgrade['to_badge_type'];
-          $member['member_price'] += $upgrade['upgrade_price'];
-          $member['member_total'] = $member['member_price'] + $member['add_on_price'] + $upgrade['upgrade_price'];
-          // Save updated member.
-          SimpleConregStorage::update($member);
-        }
-      }
     }
-    $form_state->set('action', 'checkIn');
-    $form_state->setRebuild();
+    $form_state->setRedirect('simple_conreg_admin_fantable', ['eid' => $eid]);
   }
 
-  public function confirmCheckInSubmit(array &$form, FormStateInterface $form_state) {
-    $eid = $form_state->get('eid');
-    $config = SimpleConregConfig::getConfig($eid);
-    $types = SimpleConregOptions::memberTypes($eid, $config);
-    $days = SimpleConregOptions::days($eid, $config);
-    $form_values = $form_state->getValues();
-    $toPay = $form_state->get("topay");
-    $uid = \Drupal::currentUser()->id();
-    // Loop through members and mark checked in.
-    foreach ($toPay as $mid) {
-      $update = [
-        'mid' => $mid,
-        'is_checked_in' => 1,
-        'check_in_date' => time(),
-        'check_in_by' => $uid,
-      ];
-      SimpleConregStorage::update($update);
-    }
-    //$form_state->set('action', 'checkin');
-    //$form_state->setRebuild();
-    // Form may have checked in member in URL. Redirect to clear.
-    $form_state->setRedirect('simple_conreg_admin_checkin', ['eid' => $eid]);
-  }
-  
+
   public function payCard(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
     $config = SimpleConregConfig::getConfig($eid);
@@ -649,25 +495,25 @@ class SimpleConregAdminFanTable extends FormBase {
     $days = SimpleConregOptions::days($eid, $config);
     $form_values = $form_state->getValues();
 
+    // Save any member upgrades.
+    $lead_mid = self::saveUpgrades($eid, $form_values);
+
     $payment_amount = 0;
-    $lead_mid = 0;
-    $toPay = $form_state->get("topay");
+    $toPay = $form_state->get('topay');
     // Loop through selected members to get lead and total price.
-    foreach ($form_values["unpaid"] as $mid => $member) {
-      if (isset($member["is_selected"]) && $member["is_selected"]) {
+    foreach ($form_values['unpaid'] as $mid => $member) {
+      if (isset($member['is_selected']) && $member['is_selected']) {
         if ($member = SimpleConregStorage::load(['mid' => $mid])) {
           // Make first member lead member.
-          if ($lead_mid == 0) {
+          if (empty($lead_mid))
             $lead_mid = $mid;
-            $lead_key = $member['random_key'];
-          }
           $payment_amount += $member['member_total'];
         }
       }
     }
     // Loop again to update members.
-    foreach ($form_values["unpaid"] as $mid => $member) {
-      if (isset($member["is_selected"]) && $member["is_selected"]) {
+    foreach ($form_values['unpaid'] as $mid => $member) {
+      if (isset($member['is_selected']) && $member['is_selected']) {
         $update = [
           'mid' => $mid,
           'lead_mid' => $lead_mid,
@@ -676,10 +522,14 @@ class SimpleConregAdminFanTable extends FormBase {
         SimpleConregStorage::update($update);
       }
     }
+    // Assuming there are members/upgrades to pay for, redirect to payment form.
     if ($lead_mid)
+      // Get the Lead Member key...
+      $member = SimpleConregStorage::load(['mid' => $lead_mid]);
+      $lead_key = $member['random_key'];
       // Redirect to payment form.
       $form_state->setRedirect('simple_conreg_fantable_payment',
-        array('mid' => $lead_mid, 'key' => $lead_key)
+        ['mid' => $lead_mid, 'key' => $lead_key]
       );
   }
 
@@ -693,28 +543,12 @@ class SimpleConregAdminFanTable extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-  	  $saved_members = SimpleConregStorage::loadAllMemberNos($eid);
   }
 
   /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $eid = $form_state->get('eid');
-    $form_values = $form_state->getValues();
-    $saved_members = SimpleConregStorage::loadAllMemberNos($eid);
-    $max_member = SimpleConregStorage::loadMaxMemberNo($eid);
-    $uid = \Drupal::currentUser()->id();
-    foreach ($form_values["table"] as $mid => $member) {
-      if ($member["is_checked_in"] != $saved_members[$mid]["is_checked_in"]) {
-        if ($member["is_checked_in"])
-          $entry = array('mid' => $mid, 'is_checked_in' => $member["is_checked_in"], 'check_in_date' => time(), 'check_in_by' => $uid);
-        else
-          $entry = array('mid' => $mid, 'is_checked_in' => $member["is_checked_in"]);
-        $return = SimpleConregStorage::update($entry);
-      }
-    }
-    \Drupal\Core\Cache\Cache::invalidateTags(['simple-conreg-member-list']);
   }
 }    
 

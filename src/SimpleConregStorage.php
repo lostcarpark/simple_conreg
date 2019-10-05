@@ -383,6 +383,43 @@ class SimpleConregStorage {
     return $entries;
   }
   
+  /*
+   * Get member list for Member Portal listing.
+   */
+  public static function adminMemberPortalListLoad($eid, $email, $is_paid) {
+    $select = db_select('conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'mid');
+    $select->addField('m', 'member_no');
+    $select->addField('m', 'first_name');
+    $select->addField('m', 'last_name');
+    $select->addField('m', 'email');
+    $select->addField('m', 'badge_name');
+    $select->addField('m', 'member_type');
+    $select->addField('m', 'days');
+    $select->addField('m', 'badge_type');
+    $select->addField('m', 'comment');
+    $select->addField('m', 'is_paid');
+    $select->addField('m', 'is_checked_in');
+    $select->addExpression("concat(l.first_name, ' ', l.last_name)", 'registered_by');
+    $select->join('conreg_members', 'l', 'm.lead_mid = l.mid');
+    // Add selection criteria.
+    $select->condition('m.eid', $eid);
+    $likes = $select->orConditionGroup()
+      ->condition('m.email', $email, 'LIKE')
+      ->condition('l.email', $email, 'LIKE');
+    $select->condition($likes);
+    $select->condition('m.is_paid', $is_paid);
+    $select->condition("m.is_deleted", FALSE); //Only include members who aren't deleted.
+    // Sort by specified field and direction.
+    $select->orderby('m.mid', 'ASC');    
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  
   public static function loadAllMemberNos($eid) {
     $select = db_select('conreg_members', 'm');
     // Select these specific fields for the output.

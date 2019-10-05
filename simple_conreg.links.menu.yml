@@ -13,6 +13,12 @@ simple_conreg.check:
   route_name: simple_conreg_check
   weight: 1
 
+simple_conreg.portal:
+  title: Member Portal
+  route_name: simple_conreg_portal
+  weight: 1
+
+
 simple_conreg.config:
   title: Registration Config
   route_name: simple_conreg_config

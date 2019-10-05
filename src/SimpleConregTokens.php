@@ -56,7 +56,24 @@ class SimpleConregTokens {
       // Replace codes with values in member data.
       $this->replaceMemberCodes($members);
       $this->vals = $members[0];
+
+      // Check if random_key set. If not set, generate it.
+      if (empty($this->vals['random_key'])) {
+        $rand_key = mt_rand();
+        SimpleConregStorage::update(['mid'=>$this->vals['mid'], 'random_key'=>$rand_key]);
+        $this->vals['random_key'] = $rand_key;
+      }
       
+      // Get login expiry time.
+      $expiryDate = self::updateLoginExpiryDate($mid);
+      $this->html['[login_expiry]'] = $expiryDate;
+      $this->html['[login_expiry_medium]'] = format_date($expiryDate, 'medium');
+      $login_url = \Drupal\Core\Url::fromRoute('simple_conreg_login',
+        ['mid' => $this->vals['mid'], 'key' => $this->vals['random_key'], 'expiry' => $expiryDate],
+        ['absolute' => TRUE]
+      )->toString();
+      $this->html['[login_url]'] = $login_url;
+
       // If member is not group lead, we need to get payment URL and possibly email from leader.
       if ($this->vals['mid'] != $this->vals['lead_mid']) {
         $leader = SimpleConregStorage::load(['eid' => $eid, 'mid' => $member['lead_mid'], 'is_deleted' => 0]);
@@ -74,6 +91,9 @@ class SimpleConregTokens {
 
       // Copy all tokens into plain version. Later tokens may contain HTML.
       $this->plain = $this->html;
+
+      // Format Login URL as a link for HTML.
+      $this->html["[login_url]"] = '<a href="'.$login_url.'">'.$login_url.'</a>';
 
       // Add payment URL to tokens.
       if (!empty($leader['random_key'])) {
@@ -101,6 +121,7 @@ class SimpleConregTokens {
           if (count($members) == 0) {
             $members = SimpleConregStorage::loadAll(['eid' => $eid, 'mid' => $mid, 'is_deleted' => 0]);
           }
+          
           // Replace codes with values in member data.
           $this->replaceMemberCodes($members);
           // Add member 
@@ -113,6 +134,16 @@ class SimpleConregTokens {
     }
   }
 
+  /***
+   * Update the date/time when the login link will expire.
+   * ToDo: Currently set to one week in future. Make duration configurable.
+   */
+  private function updateLoginExpiryDate($mid)
+  {
+    $expiryTime = \Drupal::time()->getRequestTime() + 604800; //7*24*3600 - seconds in a week.
+    SimpleConregStorage::update(['mid'=>$mid, 'login_exp_date'=>$expiryTime]);
+    return $expiryTime;
+  }
 
   // Function to return help text containing allowed tokens.
   public static function tokenHelp() {
@@ -139,6 +170,9 @@ class SimpleConregTokens {
        '[payment_id]',
        '[payment_url]',
        '[member_details]',
+       '[login_url]',
+       '[login_expiry]',
+       '[login_expiry_medium]',
       ];
     return t("Available tokens: @tokens", ['@tokens' => implode(', ', $tokens)]);
   }
@@ -188,8 +222,6 @@ class SimpleConregTokens {
   }
 
   public function getMemberDetailsToken($members, &$member_seq) {
-//dpm((array)$types, "Types");
-//dpm($this->typeVals);
     // If types not set, fetch them.
     if (!isset($this->typeVals)) {
       $types = SimpleConregOptions::memberTypes($this->eid, $this->config);
@@ -231,8 +263,6 @@ class SimpleConregTokens {
       // Get fieldset config for member type.
       $memberType = $cur_member['raw_member_type'];
       $fieldsetConfig = $this->typeVals[$memberType]->config;
-//dpm($fieldsetConfig->get('fields.membership_type_label'));
-//dpm($cur_member);
       // Get member options from database.
       $memberOptions = SimpleConregFieldOptionStorage::getMemberOptions($this->eid, $cur_member['mid']);
       // Look up labels for fields to email.

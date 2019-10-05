@@ -372,6 +372,13 @@ function simple_conreg_schema() {
         'default' => 0,
         'description' => 'Unix timestamp for the date and time registered.',
       ),
+      // alter table conreg_members add login_exp_date int NOT NULL default "0" after join_date;
+      'login_exp_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp for the date and time member was checked in.',
+      ),
       // alter table conreg_members add is_checked_in int NOT NULL default "0" after join_date;
       'is_checked_in' => array(
         'type' => 'int',
@@ -409,7 +416,7 @@ function simple_conreg_schema() {
     ),
   );
 
-  // create table conreg_upgrades (upgid int auto_increment primary key, eid int not null, mid int not null, lead_mid int not null, from_type varchar(16), from_days varchar(16), to_type varchar(16), to_days varchar(16), to_badge_type(16), upgrade_price numeric(10,2), is_paid tinyint, payment_method varchar(255), payment_amount numeric(10,2), payment_id varchar(255), upgrade_date int not null);
+  // create table conreg_upgrades (upgid int auto_increment primary key, eid int not null, mid int not null, lead_mid int not null, from_type varchar(16), from_days varchar(16), to_type varchar(16), to_days varchar(16), to_badge_type varchar(16), upgrade_price numeric(10,2), is_paid tinyint, payment_method varchar(255), payment_amount numeric(10,2), payment_id varchar(255), upgrade_date int not null);
   $schema['conreg_upgrades'] = array(
     'description' => 'Stores member upgrades.',
     'fields' => array(
@@ -515,6 +522,106 @@ function simple_conreg_schema() {
     ),
     'primary key' => array('upgid'),
   );
+
+
+  // create table conreg_payments (payid int auto_increment primary key, random_key int not null, created_date int not null, session_id varchar(255), paid_date int, payment_method varchar(255), payment_amount numeric(10,2), payment_ref varchar(255));
+  $schema['conreg_payments'] = array(
+    'description' => 'Stores member upgrades.',
+    'fields' => array(
+      'payid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique group ID.',
+      ),
+      'random_key' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => "A random generated key to provide some security in payment URL",
+      ),
+      'created_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp for the date and time member was upgraded.',
+      ),
+      // alter table conreg_payments add session_id varchar(255) after created_date;
+      'session_id' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Stripe Session ID.',
+      ),
+      'paid_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp for the date and time member was upgraded.',
+      ),
+      'payment_method' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'How payment received (Stripe, PayPal, etc).',
+      ),
+      'payment_amount' => array(
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 2,
+        'not null' => TRUE,
+        'default' => 0.0,
+        'description' => 'Total amount received for all members in group.',
+      ),
+      'payment_ref' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Payment confirmation code from Stripe or other payment system.',
+      ),
+    ),
+    'primary key' => array('payid'),
+  );
+
+  // create table conreg_payment_lines (lineid int auto_increment primary key, payid int not null, mid int not null, payment_type varchar(255) not null, line_desc varchar(255) not null, amount numeric(10,2) not null);
+  $schema['conreg_payment_lines'] = array(
+    'description' => 'Stores member upgrades.',
+    'fields' => array(
+      'payid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique group ID.',
+      ),
+      'payid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Foreign Key: Payment ID.',
+      ),
+      'mid' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => 'Foreign Key: Member ID.',
+      ),
+      'payment_type' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Identifies the type of payment, such as "member", "upgrade".',
+      ),
+      'line_desc' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Line description to be displayed for the field group (if null or blank, no title displayed).',
+      ),
+    ),
+    'primary key' => array('grpid'),
+  );
+
 
 
   // create table conreg_option_groups (grpid int auto_increment primary key, eid int not null, field_name varchar(255), group_title varchar(255));

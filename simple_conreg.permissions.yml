@@ -8,6 +8,10 @@
   title: Check membership
   description: Allow users to check if they have registered
 
+'member portal':
+  title: Access Member Portal
+  description: Allow users to check if they have registered
+
 'configure convention registration':
   title: Configure convention registration
   description: Allow users to change registration configuration settings

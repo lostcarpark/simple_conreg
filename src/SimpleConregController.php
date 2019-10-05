@@ -9,6 +9,8 @@ namespace Drupal\simple_conreg;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Component\Utility\SafeMarkup;
+use Drupal\user\Entity\User;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * Controller for Simple Convention Registration.
@@ -796,5 +798,57 @@ class SimpleConregController extends ControllerBase {
     }
     return $countryOptions;
   }
+
+  /**
+   * Check valid member credentials, and if valid, login and redirect to member portal.
+   */
+  public function memberLoginAndRedirect($mid, $key, $expiry)
+  {
+
+    // Check member credentials valid.
+    $member = SimpleConregStorage::load(['mid' => $mid, 'random_key' => $key, 'login_exp_date' => $expiry, 'is_deleted' => 0]);
+    if (empty($member['mid'])) {
+      $content['markup'.$tableNo] = array(
+        '#markup' => '<p>Invalid credentials.</p>',
+      );
+      return $content;
+    }
+
+    // Check if login has expired.
+    if (empty($member['login_exp_date'] > \Drupal::time()->getRequestTime())) {
+      $content['markup'.$tableNo] = array(
+        '#markup' => '<p>Login has expired. Please use Member Check to generate a new login link.</p>',
+      );
+      return $content;
+    }
+
+    // Check if user already exists.
+    $user = user_load_by_mail($member['email']);
+    
+    // If user doesn't exist, create new user.
+    if (!$user) {
+      $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+      $user = User::create([
+        'name' => $member['email'],
+        'mail' => $member['email'],
+      ]);
+      $user->set("langcode", $language);
+      $user->set("preferred_langcode", $language);
+      $user->set("preferred_admin_langcode", $language);
+      // Set the user timezone to the site default timezone.
+      $config = \Drupal::config('system.date');
+      $config_data_default_timezone = $config->get('timezone.default');
+      $user->set('timezone', !empty($config_data_default_timezone) ? $config_data_default_timezone : @date_default_timezone_get());
+      $user->activate();// NOTE: login will fail silently if not activated!
+      $user->save();
+    }
+    
+    // Login user.
+    user_login_finalize($user);
+    
+    // Redirect to member portal.
+    return new RedirectResponse(\Drupal\Core\Url::fromRoute('simple_conreg_portal', ['eid' => $member['eid']])->setAbsolute()->toString());
+  }
+
 
 }
