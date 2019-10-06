@@ -79,6 +79,7 @@ class SimpleConregUpgrade
       'upgrade_price' => $this->upgradePrice,
       'is_paid' => 0,
       'payment_amount' => $upgradeTotal,
+      'upgrade_date' => time(),
     ]);	
   }
   
