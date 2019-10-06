@@ -99,6 +99,7 @@ class SimpleConregCheckoutForm extends FormBase {
       return $form;
     }
 
+    // Set up payment lines on Stripe.
     $items = [];
     foreach ($payment->paymentLines as $line) {
       $items[] = [
@@ -110,9 +111,11 @@ class SimpleConregCheckoutForm extends FormBase {
       ];
     }
     
+    // Set up return URLs.
     $success = Url::fromRoute("simple_conreg_checkout", ["payid" => $payment->payId,"key" => $payment->randomKey], ['absolute' => TRUE])->toString();
     $cancel = Url::fromRoute("simple_conreg_register", ["eid" => $eid], ['absolute' => TRUE])->toString();
 
+    // Set up Stripe Session.
     $session = \Stripe\Checkout\Session::create([
       'payment_method_types' => ['card'],
       'customer_email' => $email,
@@ -125,6 +128,8 @@ class SimpleConregCheckoutForm extends FormBase {
     $payment->sessionId = $session->id;
     $payment->save();
 
+    $from['#title'] = $this->t("Transferring to Stripe");
+
     // Attach the Javascript library and set up parameters.
     $form['#attached'] = [
       'library' => ['simple_conreg/conreg_checkout'],
@@ -132,7 +137,7 @@ class SimpleConregCheckoutForm extends FormBase {
     ];
 
     $form['security_message'] = array(
-      '#markup' => $this->t('Payment'),
+      '#markup' => $this->t('You will be transferred to Stripe to securely accept your payment. Your browser will return after payment processed.'),
       '#prefix' => '<div>',
       '#suffix' => '</div>',
     );
