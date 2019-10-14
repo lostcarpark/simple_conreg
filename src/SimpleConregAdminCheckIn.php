@@ -699,13 +699,23 @@ class SimpleConregAdminCheckIn extends FormBase {
     $days = SimpleConregOptions::days($eid, $config);
     $form_values = $form_state->getValues();
 
+    // Create a payment object.jumpgate
+    
+    $payment = new SimpleConregPayment();
+
     $payment_amount = 0;
     $lead_mid = 0;
-    $toPay = $form_state->get("topay");
     // Loop through selected members to get lead and total price.
     foreach ($form_values["unpaid"] as $mid => $member) {
       if (isset($member["is_selected"]) && $member["is_selected"]) {
         if ($member = SimpleConregStorage::load(['mid' => $mid])) {
+          // Add member to payment.
+          $payment->add(new SimpleConregPaymentLine($mid,
+                                                   'member',
+                                                   t("Member registration for @first_name @last_name",
+                                                     ['@first_name' => $entry['first_name'],
+                                                      '@last_name' => $entry['last_name']]),
+                                                   $member['member_price']));
           // Make first member lead member.
           if ($lead_mid == 0) {
             $lead_mid = $mid;
@@ -727,9 +737,11 @@ class SimpleConregAdminCheckIn extends FormBase {
       }
     }
     if ($lead_mid)
+      // Save the payment.
+      $payid = $payment->save();
       // Redirect to payment form.
-      $form_state->setRedirect('simple_conreg_checkin_payment',
-        array('mid' => $lead_mid, 'key' => $lead_key)
+      $form_state->setRedirect('simple_conreg_checkin_checkout',
+        array('payid' => $payid, 'key' => $payment->randomKey)
       );
   }
 

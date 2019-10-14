@@ -102,13 +102,16 @@ class SimpleConregCheckoutForm extends FormBase {
     // Set up payment lines on Stripe.
     $items = [];
     foreach ($payment->paymentLines as $line) {
-      $items[] = [
-        'name' => $line->lineDesc,
-        'description' => $line-lineDesc,
-        'amount' => $line->amount * 100,
-        'currency' => $config->get('payments.currency'),
-        'quantity' => 1,
-      ];
+      // Only add member to payment if price greater than zero...
+      if ($line->amount > 0) {
+        $items[] = [
+          'name' => $line->lineDesc,
+          'description' => $line-lineDesc,
+          'amount' => $line->amount * 100,
+          'currency' => $config->get('payments.currency'),
+          'quantity' => 1,
+        ];
+      }
     }
     
     // Set up return URLs.
