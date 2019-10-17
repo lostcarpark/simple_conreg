@@ -512,8 +512,33 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $form['simple_conreg_communication']['options'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Options'),
-      '#description' => $this->t('Put each communications method on a line with sincle character code, description and 1/0 for public/private, separated by | character (e.g. "E|Electronic|1").'),
+      '#description' => $this->t('Put each communications method on a line with single character code, description and 1/0 for public/private, separated by | character (e.g. "E|Electronic|1").'),
       '#default_value' => $config->get('communications_method.options'),
+    );  
+
+
+    /*
+     * Fields for options.
+     */
+    $form['simple_conreg_options'] = array(
+      '#type' => 'details',
+      '#title' => $this->t('Options'),
+      '#tree' => TRUE,
+      '#group' => 'admin',
+    );
+
+    $form['simple_conreg_options']['option_groups'] = array(
+      '#type' => 'textarea',
+      '#title' => $this->t('Options'),
+      '#description' => $this->t('Put each option group on a line with group ID, field name to attach to, and group title, separated by | character (e.g. "1|extra_flag1|Please tick the areas you\'d like to volunteer").'),
+      '#default_value' => $config->get('simple_conreg_options.option_groups'),
+    );  
+
+    $form['simple_conreg_options']['options'] = array(
+      '#type' => 'textarea',
+      '#title' => $this->t('Options'),
+      '#description' => $this->t('Put each option on a line with option ID, group ID, option title, detail title, detail required (1/0), weight (bigger number goes to bottom), and comma setprated list of fieldsets to include it, separated by | character (e.g. "1|1| Help with pre-con tasks|Please provide details of areas you\'d like to help|0|1|0,1").'),
+      '#default_value' => $config->get('simple_conreg_options.options'),
     );  
 
 
@@ -854,6 +879,8 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('registration_intro', $vals['simple_conreg_intros']['registration_intro']);
     $config->set('payment_intro', $vals['simple_conreg_intros']['payment_intro']);
     $config->set('communications_method.options', $vals['simple_conreg_communication']['options']);
+    $config->set('simple_conreg_options.option_groups', $vals['simple_conreg_options']['option_groups']);
+    $config->set('simple_conreg_options.options', $vals['simple_conreg_options']['options']);
     $config->set('add_ons.global', $vals['simple_conreg_addons']['global']);
     $config->set('add_ons.label', $vals['simple_conreg_addons']['label']);
     $config->set('add_ons.description', $vals['simple_conreg_addons']['description']);
