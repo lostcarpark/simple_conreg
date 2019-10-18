@@ -49,6 +49,7 @@ class SimpleConregFieldOptionStorage {
     return $fieldOptions;
   }
   
+
   public static function insertMemberOptions($mid, $options) {
     foreach ($options as $optid=>$option) {
       // Only save if option set.

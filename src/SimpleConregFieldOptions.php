@@ -12,6 +12,51 @@ namespace Drupal\simple_conreg;
  */
 class SimpleConregFieldOptions {
 
+
+  /**
+   * Fetch field options from config.
+   *
+   * Parameters: Event ID, Config, Fieldset.
+   */
+  private static function getFieldOptions($eid, $config, $fieldset) {
+    if (is_null($config)) {
+      $config = SimpleConregConfig::getConfig($eid);
+    }
+
+    // Initialise results array.
+    $fieldOptions = [];
+
+    // Get options and split into lines.
+    $optionGroups = explode("\n", $config->get('simple_conreg_options.option_groups')); // One option group per line.
+    $options = explode("\n", $config->get('simple_conreg_options.options')); // One option group per line.
+
+    foreach ($optionGroups as $group) {
+      if (!empty($group)) {
+        // Get 
+        $groupFields = array_pad(explode('|', $group), 3, '');
+        list($grpid, $fieldName, $groupTitle) = $groupFields;
+
+        foreach ($options as $option) {
+          if (!empty($option)) {
+            $optionFields = array_pad(explode('|', $option), 7, '');
+            list($optid, $option_grpid, $optionTitle, $detailTitle, $required, $weight, $belongsIn) = $optionFields;
+            if ($grpid == $option_grpid) { // Only process option if it belongs to group.
+              $forFieldSets = explode(',', $belongsIn);
+              if (in_array($fieldset, $forFieldSets)) { // Only add to fieldOptions if belonging to requested fieldset.
+                $fieldOptions[$fieldName]['title'] = $groupTitle;
+                $fieldOptions[$fieldName]['options'][$optid]['option'] = $optionTitle;
+                $fieldOptions[$fieldName]['options'][$optid]['detail'] = $detailTitle;
+                $fieldOptions[$fieldName]['options'][$optid]['required'] = $required;
+              }
+            }
+          }
+        }
+      }
+    }
+    return $fieldOptions;
+  }
+  
+  
   /**
    * Add field options to member form.
    *
@@ -19,7 +64,7 @@ class SimpleConregFieldOptions {
    */
   public static function addOptionFields($eid, $fieldset, &$memberForm, &$memberVals, &$optionCallbacks, $callback, $memberNo = NULL) {
     // Read the option field from the database.
-    $fieldOptions = SimpleConregFieldOptionStorage::getFieldOptions($eid, $fieldset);
+    $fieldOptions = self::getFieldOptions($eid, NULL, $fieldset);
     // Loop through each field option.
     foreach ($fieldOptions as $key=>$fieldOption) {
       // If the field exists on the form, save its value.
@@ -106,7 +151,7 @@ class SimpleConregFieldOptions {
    */
   public static function procesOptionFields($eid, $fieldset, &$memberVals, &$optionVals) {
     // Read the option field from the database.
-    $fieldOptions = SimpleConregFieldOptionStorage::getFieldOptions($eid, $fieldset);
+    $fieldOptions = self::getFieldOptions($eid, NULL, $fieldset);
     // Loop through each field on the member form.
     foreach ($memberVals as $key=>$fieldVal) {
       if (array_key_exists($key, $fieldOptions)) {
