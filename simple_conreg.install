@@ -420,7 +420,7 @@ function simple_conreg_schema() {
   $schema['conreg_upgrades'] = array(
     'description' => 'Stores member upgrades.',
     'fields' => array(
-      'grpid' => array(
+      'upgid' => array(
         'type' => 'serial',
         'not null' => TRUE,
         'description' => 'Primary Key: Unique group ID.',
@@ -589,7 +589,7 @@ function simple_conreg_schema() {
   $schema['conreg_payment_lines'] = array(
     'description' => 'Stores member upgrades.',
     'fields' => array(
-      'payid' => array(
+      'lineid' => array(
         'type' => 'serial',
         'not null' => TRUE,
         'description' => 'Primary Key: Unique group ID.',
@@ -619,7 +619,7 @@ function simple_conreg_schema() {
         'description' => 'Line description to be displayed for the field group (if null or blank, no title displayed).',
       ),
     ),
-    'primary key' => array('grpid'),
+    'primary key' => array('lineid'),
   );
 
 
