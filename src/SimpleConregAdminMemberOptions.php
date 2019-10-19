@@ -46,11 +46,11 @@ class SimpleConregAdminMemberOptions extends FormBase {
     $displayOptions = SimpleConregOptions::display();
     $pageSize = $config->get('display.page_size');
 
-    $optionList = SimpleConregFieldOptionStorage::adminOptionListLoad();
+    $optionList = SimpleConregFieldOptions::getFieldOptionList($eid, $config);
     $options = [];
     $user = \Drupal::currentUser();
     foreach ($optionList as $val) {
-      if ($user->hasPermission('view field option ' . $val['optid'])) {
+      if ($user->hasPermission('view field option ' . $val['optid'] . ' event ' . $eid)) {
         $options[$val['optid']] = $val['option_title'];
       }
     }

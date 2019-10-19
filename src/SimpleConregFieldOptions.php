@@ -18,12 +18,14 @@ class SimpleConregFieldOptions {
    *
    * Parameters: Event ID, Config, Fieldset.
    */
-  private static function getFieldOptions($eid, $config, $fieldset) {
+  private static function parseFieldOptions($eid, $config)
+  {
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
 
-    // Initialise results array.
+    // Initialise results arrays.
+    $fieldGroups = [];
     $fieldOptions = [];
 
     // Get options and split into lines.
@@ -35,34 +37,94 @@ class SimpleConregFieldOptions {
         // Get 
         $groupFields = array_pad(explode('|', $group), 3, '');
         list($grpid, $fieldName, $groupTitle) = $groupFields;
+        $fieldGroups[$grpid] = ['field' => $fieldName, 'title' => $groupTitle, 'options' => []];
+      }
+    }
 
-        foreach ($options as $option) {
-          if (!empty($option)) {
-            $optionFields = array_pad(explode('|', $option), 7, '');
-            list($optid, $option_grpid, $optionTitle, $detailTitle, $required, $weight, $belongsIn) = $optionFields;
-            if ($grpid == $option_grpid) { // Only process option if it belongs to group.
-              $forFieldSets = explode(',', $belongsIn);
-              if (in_array($fieldset, $forFieldSets)) { // Only add to fieldOptions if belonging to requested fieldset.
-                $fieldOptions[$fieldName]['title'] = $groupTitle;
-                $fieldOptions[$fieldName]['options'][$optid]['option'] = $optionTitle;
-                $fieldOptions[$fieldName]['options'][$optid]['detail'] = $detailTitle;
-                $fieldOptions[$fieldName]['options'][$optid]['required'] = $required;
-              }
-            }
-          }
+    foreach ($options as $option) {
+      if (!empty($option)) {
+        $optionFields = array_pad(explode('|', $option), 7, '');
+        list($optid, $grpid, $optionTitle, $detailTitle, $required, $weight, $belongsIn) = $optionFields;
+        $fieldSets = [];
+        foreach (explode(',', trim($belongsIn)) as $fieldSet) {
+          //if (!empty($fieldSet)) {
+            $fieldSets[] = $fieldSet;
+          //}
+        }
+        $fieldOption = ['grpid' => $grpid, 'title' => $optionTitle, 'detail' => $detailTitle, 'required' => $required, 'weight' => $weight, 'fieldSets' => $fieldSets]; 
+        $fieldOptions[$optid] = $fieldOption;
+        $fieldGroups[$grpid]['options'][$optid] = $fieldOption;
+      }
+    }
+    return ['groups' => $fieldGroups, 'options' => $fieldOptions];
+  }
+  
+
+  /**
+   * Fetch field options from config.
+   *
+   * Parameters: Event ID, Config, Fieldset.
+   */
+  public static function getFieldOptions($eid, $config, $fieldset) 
+  {
+    $options = self::parseFieldOptions($eid, $config);
+
+    // Initialise results array.
+    $fieldOptions = [];
+
+    foreach ($options['groups'] as $optionGroup) {
+      foreach ($optionGroup['options'] as $optid => $option) {
+        if (in_array($fieldset, $option['fieldSets'])) { // Only add to fieldOptions if belonging to requested fieldset.
+          $fieldName = $optionGroup['field'];
+          $fieldOptions[$fieldName]['title'] = $optionGroup['title'];
+          $fieldOptions[$fieldName]['options'][$optid]['option'] = $option['title'];
+          $fieldOptions[$fieldName]['options'][$optid]['detail'] = $option['detail'];
+          $fieldOptions[$fieldName]['options'][$optid]['required'] = $option['required'];
         }
       }
     }
     return $fieldOptions;
   }
-  
+
+  /**
+   * Fetch field options selected by member.
+   *
+   * Parameters: Event ID, Config, member ID.
+   */
+  public static function getMemberOptions($eid, $config, $mid)
+  {
+    // Get all options.
+    $options = self::parseFieldOptions($eid, $config);
+
+    // Get member's options from database.
+    $entries = SimpleConregFieldOptionStorage::getMemberOptions($eid, $mid);
+
+    $memberOptions = []; // Initialise return array.
+    // Loop through option groups.
+    foreach ($options['groups'] as $optionGroup) {
+      // Loop through options within group.
+      foreach ($optionGroup['options'] as $optid => $option) {
+        // Check if option selected by member.
+        if (isset($entries[$optid])) {
+          $fieldName = $optionGroup['field']; // Get field to attach option to.
+          $memberOptions[$fieldName]['title'] = $optionGroup['title']; // Get title from option group.
+          $memberOptions[$fieldName]['options'][$optid]['option_title'] = $option['title']; // Get option title.
+          $memberOptions[$fieldName]['options'][$optid]['detail_title'] = $option['detail'];
+          $memberOptions[$fieldName]['options'][$optid]['option_detail'] = $entries[$optid]; // Get member's detail from database result.
+        }
+      }
+    }
+
+    return $memberOptions;
+  }
   
   /**
    * Add field options to member form.
    *
    * Parameters: Event ID, Fieldset, Form to add to.
    */
-  public static function addOptionFields($eid, $fieldset, &$memberForm, &$memberVals, &$optionCallbacks, $callback, $memberNo = NULL) {
+  public static function addOptionFields($eid, $fieldset, &$memberForm, &$memberVals, &$optionCallbacks, $callback, $memberNo = NULL)
+  {
     // Read the option field from the database.
     $fieldOptions = self::getFieldOptions($eid, NULL, $fieldset);
     // Loop through each field option.
@@ -172,10 +234,28 @@ class SimpleConregFieldOptions {
   /**
    * Save field options from submitted member form.
    *
-   * Parameters: Event ID, Fieldset, Form vals for member, and reference to array to return option values.
+   * Parameters: Member ID, array of option fields.
    */
   public static function insertOptionFields($mid, $options) {
     SimpleConregFieldOptionStorage::insertMemberOptions($mid, $options);
+  }
+
+  /**
+   * Get permissions for ConReg field options for event.
+   *
+   * @return array
+   *   Permissions array.
+   */
+  public function getFieldOptionList($eid, $config=NULL)
+  {
+    $options = self::parseFieldOptions($eid, $config);
+
+    // Initialise results array.
+    $fieldOptions = [];
+    foreach ($options['options'] as $optid => $option) {
+      $fieldOptions[] = ['optid' => $optid, 'option_title' => $option['title']];
+    }
+    return $fieldOptions;
   }
 
   /**
@@ -184,15 +264,19 @@ class SimpleConregFieldOptions {
    * @return array
    *   Permissions array.
    */
-  public function permissions() {
+  public function permissions()
+  {
     $permissions = [];
 
-    foreach (SimpleConregFieldOptionStorage::adminOptionListLoad() as $option) {
-      $permissions += [
-        'view field option ' . $option['optid'] => [
-          'title' => t('View data for field option %option', array('%option' => $option['option_title'])),
-        ]
-      ];
+    $events = SimpleConregEventStorage::eventOptions();
+    foreach ($events as $event) {
+      foreach (self::getFieldOptionList($event['eid']) as $option) {
+        $permissions += [
+          'view field option ' . $option['optid'] . ' event ' . $event['eid'] => [
+            'title' => t('View data for field option %option for event %event', array('%option' => $option['option_title'], '%event' => $event['event_name'])),
+          ]
+        ];
+      }
     }
 
     return $permissions;

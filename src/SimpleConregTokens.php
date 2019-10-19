@@ -182,7 +182,7 @@ class SimpleConregTokens {
   public function replaceMemberCodes(&$members) {
     // Labels for display option and communications method. Will add to config later.
     $types = SimpleConregOptions::memberTypes($this->eid, $this->config);
-    $days = SimpleConregOptions::days($eid, $this->config);
+    $days = SimpleConregOptions::days($this->eid, $this->config);
     $this->typeVals = $types->types;
     $displayOptions = SimpleConregOptions::display();
     $communicationOptions = SimpleConregOptions::communicationMethod($this->eid, $this->config);
@@ -264,7 +264,7 @@ class SimpleConregTokens {
       $memberType = $cur_member['raw_member_type'];
       $fieldsetConfig = $this->typeVals[$memberType]->config;
       // Get member options from database.
-      $memberOptions = SimpleConregFieldOptionStorage::getMemberOptions($this->eid, $cur_member['mid']);
+      $memberOptions = SimpleConregFieldOptions::getMemberOptions($this->eid, NULL, $cur_member['mid']);
       // Look up labels for fields to email.
       $member_seq ++;
       $member_heading = t('Member @seq', ['@seq' => $member_seq]);

@@ -92,7 +92,7 @@ class SimpleConregAdminMemberEmail extends FormBase {
     $form_state->set('templates', $templates);
 
     // Check if default template selected.
-    if (NULL == $default_template = $form_values['template']['template_select'])
+    if (!isset($form_values['template']) || NULL == $default_template = $form_values['template']['template_select'])
       $default_template = 1;
 
     $previous_template = $form_state->get('default_template');
@@ -102,13 +102,13 @@ class SimpleConregAdminMemberEmail extends FormBase {
     if (empty($params['from'] = $form_values['email']['message']['from_email']))
       $params['from'] = $from_default;
 
-    if ($previous_template != $default_template || empty($params['subject'] = $form_values['email']['message']['subject'.$default_template]))
+    if ($previous_template != $default_template || !isset($form_values['email']) || empty($params['subject'] = $form_values['email']['message']['subject'.$default_template]))
       $params['subject'] = $templates[$default_template]['subject'];
 
-    if ($previous_template != $default_template || empty($params['body'] = $form_values['email']['message']['body'.$default_template]['value']))
+    if ($previous_template != $default_template || !isset($form_values['email']) || empty($params['body'] = $form_values['email']['message']['body'.$default_template]['value']))
       $params['body'] = $templates[$default_template]['body'];
 
-    if ($previous_template != $default_template || empty($params['format'] = $form_values['email']['message']['body'.$default_template]['format']))
+    if ($previous_template != $default_template || !isset($form_values['email']) || empty($params['format'] = $form_values['email']['message']['body'.$default_template]['format']))
       $params['format'] = $templates[$default_template]['format'];
 
     // If tokens stored in form state, store in params to save looking up again.
