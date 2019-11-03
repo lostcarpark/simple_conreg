@@ -618,7 +618,14 @@ function simple_conreg_schema() {
         'default' => '',
         'description' => 'Line description to be displayed for the field group (if null or blank, no title displayed).',
       ),
-    ),
+      'amount' => array(
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 2,
+        'not null' => TRUE,
+        'default' => 0.0,
+        'description' => 'Amount of payment line.',
+      ),    ),
     'primary key' => array('lineid'),
   );
 
