@@ -140,7 +140,21 @@ class SimpleConregTokens {
    */
   private function updateLoginExpiryDate($mid)
   {
-    $expiryTime = \Drupal::time()->getRequestTime() + 604800; //7*24*3600 - seconds in a week.
+    // Get current time.
+    $timeNow = \Drupal::time()->getRequestTime();
+
+    // First check previous expiry time.
+    $result = SimpleConregStorage::load(['mid'=>$mid]);
+    $expiryTime = $result['login_exp_date'];
+    // Check if previous expiry date is more than 24 hours in the future.
+    if ($expiryTime > $timeNow + 86400) { // 24*3600.
+      // Plenty of time left on previous key, just return it.
+      return $expiryTime;
+    }
+    
+    // Set expiry time to a week in the future.
+    // Add a random number of seconds so logins generated in bulk won't have the same expiry.
+    $expiryTime = $timeNow + 604800 + rand(0, 3600); //7*24*3600 - seconds in a week.
     SimpleConregStorage::update(['mid'=>$mid, 'login_exp_date'=>$expiryTime]);
     return $expiryTime;
   }
@@ -189,7 +203,14 @@ class SimpleConregTokens {
     $countryOptions = SimpleConregOptions::memberCountries($this->eid, $this->config);
     $yesNoOptions = SimpleConregOptions::yesNo();
     $digits = $this->config->get('member_no_digits');
-    
+
+    // Loop once to get the correct payment total.
+    $payAmount = 0;
+    foreach ($members as $index => $val) {
+      $payAmount += $val['member_total'];
+    }
+
+    // Loop through members and set payment total.
     foreach ($members as $index => $val) {
       // If member number is zero, replace with blank.
       if ($members[$index]['member_no'] == 0)
@@ -209,7 +230,7 @@ class SimpleConregTokens {
       $members[$index]['display'] = $displayOptions[$val['display']];
       $members[$index]['member_price'] = $this->symbol . $val['member_price'];
       $members[$index]['member_total'] = $this->symbol . $val['member_total'];
-      $members[$index]['payment_amount'] = $this->symbol . $val['payment_amount'];
+      $members[$index]['payment_amount'] = $this->symbol . $payAmount;
       $members[$index]['add_on_price'] = $this->symbol . $val['add_on_price'];
       $members[$index]['raw_member_type'] = $members[$index]['member_type'];
       $members[$index]['member_type'] = (isset($this->typeVals[$val['member_type']]) ? $this->typeVals[$val['member_type']]->name : $val['member_type']);
@@ -259,6 +280,7 @@ class SimpleConregTokens {
     $this->display .= '<h3>' . $reg_date . '</h3>';
     $this->plain_display .= "\n$reg_date\n";
     $this->display .= '<table>';
+
     foreach ($members as $index => $cur_member) {
       // Get fieldset config for member type.
       $memberType = $cur_member['raw_member_type'];
@@ -330,7 +352,7 @@ class SimpleConregTokens {
     $label = t('Total');
     $this->display .= '<tr><th colspan="2">'.$label.'</th></tr>';
     $this->plain_display .= "\n$label\n";
-    $label = t('Total amount to pay');
+    $label = t('Total amount paid');
     $this->display .= '<tr><td>'.$label.'</td><td>'.$this->vals['payment_amount'].'</td></tr>';
     $this->plain_display .= $label.":\t".$this->vals['payment_amount']."\n";
     $this->display .= '</table>';
