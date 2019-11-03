@@ -207,7 +207,7 @@ class SimpleConregTokens {
     // Loop once to get the correct payment total.
     $payAmount = 0;
     foreach ($members as $index => $val) {
-      $payAmount += $val['member_total'];
+      $payAmount += $val['member_price'] + $val['add_on_price'];
     }
 
     // Loop through members and set payment total.
@@ -229,7 +229,7 @@ class SimpleConregTokens {
       $members[$index]['is_paid'] = $yesNoOptions[$val['is_paid']];
       $members[$index]['display'] = $displayOptions[$val['display']];
       $members[$index]['member_price'] = $this->symbol . $val['member_price'];
-      $members[$index]['member_total'] = $this->symbol . $val['member_total'];
+      $members[$index]['member_total'] = $this->symbol . $val['member_price'] + $val['add_on_price'];
       $members[$index]['payment_amount'] = $this->symbol . $payAmount;
       $members[$index]['add_on_price'] = $this->symbol . $val['add_on_price'];
       $members[$index]['raw_member_type'] = $members[$index]['member_type'];
