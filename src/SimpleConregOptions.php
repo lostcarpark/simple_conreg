@@ -19,6 +19,7 @@ class SimpleConregOptions {
    */
   public static function memberTypes($eid, &$config = NULL) {
     static $member_types = [];
+
     // If member types previously loaded, just return them.
     if (!empty($member_types[$eid])) {
       return $member_types[$eid];
@@ -93,6 +94,7 @@ class SimpleConregOptions {
       'privateOptions' => $privateOptions,
       'publicNames' => $publicNames,
       'types' => $typeVals];
+
     return $member_types[$eid];
   }
 
@@ -169,7 +171,8 @@ class SimpleConregOptions {
    *
    * Parameters: Optional config.
    */
-  public static function days($eid, &$config = NULL) {
+  public static function days($eid, &$config = NULL)
+  {
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
@@ -187,7 +190,8 @@ class SimpleConregOptions {
    *
    * Parameters: Optional config.
    */
-  public static function memberAddons($eid, &$config = NULL) {
+  public static function memberAddons($eid, &$config = NULL)
+  {
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
@@ -195,9 +199,11 @@ class SimpleConregOptions {
     $addOnOptions = array();
     $addOnPrices = array();
     foreach ($addOns as $addOn) {
-      list($desc, $price) = explode('|', $addOn);
-      $addOnOptions[$desc] = $desc;
-      $addOnPrices[$desc] = $price;
+      if (!empty($addOn)) {
+        list($desc, $price) = explode('|', $addOn);
+        $addOnOptions[$desc] = $desc;
+        $addOnPrices[$desc] = $price;
+      }
     }
     return array($addOnOptions, $addOnPrices);
   }

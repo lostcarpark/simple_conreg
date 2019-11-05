@@ -159,6 +159,11 @@ class SimpleConregRegistrationForm extends FormBase {
     );
 
     $optionCallbacks = [];
+    // Array to store type for each member.
+    $curMemberTypes = [];
+    $curMemberDays = [];
+    $prevMemberTypes = $form_state->get('member_types');
+    $prevMemberDays = $form_state->get('member_days');
     // Array to store fieldset for each member.
     $memberFieldsets = [];
     // Get the previous fieldsets to compare.
@@ -169,6 +174,7 @@ class SimpleConregRegistrationForm extends FormBase {
       // Get the fieldset config for the current member type, or if none defined, get the default fieldset config.
       $memberType = isset($form_values['members']['member'.$cnt]['type']) ? $form_values['members']['member'.$cnt]['type'] : '';
       if (!empty($memberType)) {
+        $curMemberTypes[$cnt] = $memberType;
         $fieldsetConfig = $types->types[$memberType]->config;
         $memberFieldsets[$cnt] = $types->types[$memberType]->fieldset;
       }
@@ -238,6 +244,8 @@ class SimpleConregRegistrationForm extends FormBase {
         $currentType = $form_values['members']['member'.$cnt]['type'];
         // If current member type has day options, display 
         if (count($types->types[$currentType]->dayOptions)) {
+          // Track that the member has days set.
+          $curMemberDays[$cnt] = TRUE;
           // If day options available, we need to give them Ajax callbacks, and can't do a partial form update, so treat like fieldset change.
           $memberFieldsetChanged = TRUE;
           // Checkboxes for days.
@@ -254,6 +262,13 @@ class SimpleConregRegistrationForm extends FormBase {
               'event' => 'change',
             ),
           );
+        }
+        else {
+          // Current member doesn't have days set.
+          $curMemberDays[$cnt] = FALSE;
+          // If current member type has no days, but previous one did, we need to refresh form.
+          if (isset($prevMemberDays) && $prevMemberDays[$cnt])
+            $memberFieldsetChanged = TRUE;
         }
       }
 
@@ -495,6 +510,8 @@ class SimpleConregRegistrationForm extends FormBase {
       '#value' => t('Proceed to payment page'),
     );
 
+    $form_state->set('member_types', $curMemberTypes);
+    $form_state->set('member_days', $curMemberDays);
     $form_state->set('member_fieldsets', $memberFieldsets);
     $form_state->set('fieldset_changed', $memberFieldsetChanged);
     $form_state->set('option_callbacks', $optionCallbacks);
@@ -509,7 +526,8 @@ class SimpleConregRegistrationForm extends FormBase {
   }
 
   // Callback function for "member type" and "add-on" drop-downs. Replace price fields.
-  public function updateMemberPriceCallback(array $form, FormStateInterface $form_state) {
+  public function updateMemberPriceCallback(array $form, FormStateInterface $form_state)
+  {
     // Check if fieldset has changed, which will require a full form refresh to update the member fields.
     $memberFieldsetChanged = $form_state->get('fieldset_changed');
     if ($memberFieldsetChanged) {
