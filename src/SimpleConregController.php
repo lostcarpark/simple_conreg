@@ -450,27 +450,37 @@ class SimpleConregController extends ControllerBase {
     $content = array();
 
     $content['message_member'] = array(
-      '#markup' => $this->t('Summary by member type.'),
+      '#markup' => $this->t('Summary by member type'),
+      '#prefix' => '<h3>',
+      '#suffix' => '</h3>',
     );
     $this->memberAdminMemberListSummary($eid, $content);
 
     $content['message_badge_type'] = array(
-      '#markup' => $this->t('Summary by badge type.'),
+      '#markup' => $this->t('Summary by badge type'),
+      '#prefix' => '<h3>',
+      '#suffix' => '</h3>',
     );
     $this->memberAdminMemberListBadgeSummary($eid, $content);
 
     $content['message_days'] = array(
-      '#markup' => $this->t('Summary by day.'),
+      '#markup' => $this->t('Summary by day'),
+      '#prefix' => '<h3>',
+      '#suffix' => '</h3>',
     );
     $this->memberAdminMemberListDaysSummary($eid, $content);
     
     $content['message_payment_method'] = array(
-      '#markup' => $this->t('Summary by payment method.'),
+      '#markup' => $this->t('Summary by payment method'),
+      '#prefix' => '<h3>',
+      '#suffix' => '</h3>',
     );
     $this->memberAdminMemberListPaymentMethodSummary($eid, $content);
 
     $content['message_amount_paid'] = array(
-      '#markup' => $this->t('Summary by amount paid.'),
+      '#markup' => $this->t('Summary by amount paid'),
+      '#prefix' => '<h3>',
+      '#suffix' => '</h3>',
     );
     $this->memberAdminMemberListAmountPaidSummary($eid, $content);
 
