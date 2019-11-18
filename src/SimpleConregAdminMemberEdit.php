@@ -501,18 +501,18 @@ class SimpleConregAdminMemberEdit extends FormBase {
             // Get communications methods selected for newsletter.
             $communications_methods = $simplenews_options[$newsletter_id]['communications_methods'];
             // Check if member matches newsletter criteria.
-            if (isset($entry['email']) &&
-                $entry['email'] != '' &&
-                isset($entry['communication_method']) &&
-                isset($communications_methods[$entry['communication_method']]) &&
-                $communications_methods[$entry['communication_method']]) {
-              // Subscribe member if criteria met.
-              $subscription_manager->subscribe($entry['email'], $newsletter_id, FALSE, 'website');
-              \Drupal::messenger()->addMessage($this->t('Subscribed %email to %newsletter.', ['%email' => $entry['email'], '%newsletter' => $newsletter_id]));
-            } else {
-              // Unsubscribe member if criteria not met (their communications method may have changed).
-              $subscription_manager->unsubscribe($entry['email'], $newsletter_id, FALSE, 'website');
-              \Drupal::messenger()->addMessage($this->t('Unsubscribed %email from %newsletter.', ['%email' => $entry['email'], '%newsletter' => $newsletter_id]));
+            if (isset($entry['email']) && $entry['email'] != '') {
+              if (isset($entry['communication_method']) &&
+                  isset($communications_methods[$entry['communication_method']]) &&
+                  $communications_methods[$entry['communication_method']]) {
+                // Subscribe member if criteria met.
+                $subscription_manager->subscribe($entry['email'], $newsletter_id, FALSE, 'website');
+                \Drupal::messenger()->addMessage($this->t('Subscribed %email to %newsletter.', ['%email' => $entry['email'], '%newsletter' => $newsletter_id]));
+              } else {
+                // Unsubscribe member if criteria not met (their communications method may have changed).
+                $subscription_manager->unsubscribe($entry['email'], $newsletter_id, FALSE, 'website');
+                \Drupal::messenger()->addMessage($this->t('Unsubscribed %email from %newsletter.', ['%email' => $entry['email'], '%newsletter' => $newsletter_id]));
+              }
             }
           }
         }
