@@ -117,7 +117,7 @@ class SimpleConregRegistrationForm extends FormBase {
     
     // Calculate price for all members.
     list($fullPrice, $discountPrice, $totalPrice, $memberPrices) =
-      $this->getAllMemberPrices($form_values, $memberQty, $types->types, $addOnPrices, $symbol, $discountEnabled, $discountFreeEvery);
+      $this->getAllMemberPrices($config, $form_values, $memberQty, $types->types, $addOnPrices, $symbol, $discountEnabled, $discountFreeEvery);
   
     $form = array(
       '#tree' => TRUE,
@@ -276,7 +276,7 @@ class SimpleConregRegistrationForm extends FormBase {
       $addon = isset($form_values['members']['member'.$cnt]['add_on']) ? $form_values['members']['member'.$cnt]['add_on'] : '';
       $form['members']['member'.$cnt]['add_on'] = SimpleConregAddons::getAddon($config,
         $addon,
-        $addOnOptions, $cnt, [$this, 'updateMemberPriceCallback']);
+        $addOnOptions, $cnt, [$this, 'updateMemberPriceCallback'], $form_state);
 
       // Display price for selected member type and add-ons.
       $form['members']['member'.$cnt]['price'] = array(
@@ -477,7 +477,7 @@ class SimpleConregRegistrationForm extends FormBase {
     // Get global add-on details.
     $form['payment']['global_add_on'] = SimpleConregAddons::getAddon($config,
       (isset($form_values['payment']['global_add_on']) ? $form_values['payment']['global_add_on'] : NULL),
-      $addOnOptions, 0, [$this, 'updateMemberPriceCallback']);
+      $addOnOptions, 0, [$this, 'updateMemberPriceCallback'], $form_state);
 
     $form['payment']['price'] = array(
       '#prefix' => '<div id="Pricing">',
@@ -544,15 +544,22 @@ class SimpleConregRegistrationForm extends FormBase {
     $ajax_response = new AjaxResponse();
     // Calculate price for each member.
     $memberQty = $form_state->getValue(array('global', 'member_quantity'));
+    $addons = $form_state->get('addons');
     for ($cnt=1; $cnt<=$memberQty; $cnt++) {
-      if (!empty($form['members']['member'.$cnt]['add_on']['extra'])) {
-        $ajax_response->addCommand(new HtmlCommand('#member_addon_info_'.$cnt, render($form['members']['member'.$cnt]['add_on']['extra']['info'])));
+      foreach ($addons as $addOnId) {
+        if (!empty($form['members']['member'.$cnt]['add_on'][$addOnId]['extra'])) {
+          $id = '#member_addon_'.$addOnId.'_info_'.$cnt;
+          $ajax_response->addCommand(new HtmlCommand($id, render($form['members']['member'.$cnt]['add_on'][$addOnId]['extra']['info'])));
+        }
       }
       $ajax_response->addCommand(new HtmlCommand('#memberPrice'.$cnt, $form['members']['member'.$cnt]['price']['#markup']));
     }
     // If global addon, return update that.
-    if (!empty($form['payment']['global_add_on']['extra'])) {
-      $ajax_response->addCommand(new HtmlCommand('#global_addon_info', render($form['payment']['global_add_on']['extra']['info'])));
+    foreach ($addons as $addOnId) {
+      if (!empty($form['payment']['global_add_on'][$addOnId]['extra'])) {
+        $id = '#global_addon_'.$addOnId.'_info';
+        $ajax_response->addCommand(new HtmlCommand($id, render($form['payment']['global_add_on'][$addOnId]['extra']['info'])));
+      }
     }
     $ajax_response->addCommand(new HtmlCommand('#Pricing', $form['payment']['price']));
 
@@ -706,12 +713,13 @@ class SimpleConregRegistrationForm extends FormBase {
     
     // Can't rely on price sent back from form, so recalculate.
     list($fullPrice, $discountPrice, $totalPrice, $memberPrices) =
-      $this->getAllMemberPrices($form_values, $memberQty, $types->types, $addOnPrices, $symbol, $discountEnabled, $discountFreeEvery);
+      $this->getAllMemberPrices($config, $form_values, $memberQty, $types->types, $addOnPrices, $symbol, $discountEnabled, $discountFreeEvery);
     
     // Gather the current user so the new record has ownership.
     $account = \Drupal::currentUser();
     $lead_mid = 0;
     $lead_key = 0;
+    $memberIDs = [];
     
     // Set up parameters for confirmation email.
     $confirm_params = array();
@@ -737,28 +745,6 @@ class SimpleConregRegistrationForm extends FormBase {
       $optionVals = [];
       SimpleConregFieldOptions::procesOptionFields($eid, $fieldset, $form_values['members']['member'.$cnt], $optionVals);
     
-      // Get add-on details.
-      $addOn = isset($form_values['members']['member'.$cnt]['add_on']['option']) ?
-        $form_values['members']['member'.$cnt]['add_on']['option'] : '';
-      $addOnInfo = isset($form_values['members']['member'.$cnt]['add_on']['extra']['info']) ?
-        $form_values['members']['member'.$cnt]['add_on']['extra']['info'] : '';
-
-      // If global add-on and first member, add global add-on price and details.
-      if ($global && $cnt==1) {
-        $addOn = isset($form_values['payment']['global_add_on']['option']) ? $form_values['payment']['global_add_on']['option'] : '';
-        if (!empty($addOn)) {
-          $addOnInfo = isset($form_values['payment']['global_add_on']['extra']['info']) ? $form_values['payment']['global_add_on']['extra']['info'] : '';
-          $memberPrices[$cnt]->addOnPrice = $addOnPrices[$addOn];
-          $memberPrices[$cnt]->price = $memberPrices[$cnt]->basePrice + $memberPrices[$cnt]->addOnPrice;
-        }
-
-        // If global add on free amount, add value.
-        if (!empty($freeAmount = $form_values['payment']['global_add_on']['free_amount'])) {
-          $memberPrices[$cnt]->addOnPrice += $freeAmount;
-          $memberPrices[$cnt]->price += $freeAmount;
-        }
-      }
-
       // Check whether to use name or "other" badge name...
       switch($form_values['members']['member'.$cnt]['badge_name_option']) {
         case 'N':
@@ -839,11 +825,13 @@ class SimpleConregRegistrationForm extends FormBase {
       if ($result) {
         // Now we have the member ID we can save the field options.
         SimpleConregFieldOptions::insertOptionFields($result, $optionVals);
+        // Store the member ID for use when saving add-ons.
+        $memberIDs[$cnt] = $result;
         // Add a payment line for the member.
         $payment->add(new SimpleConregPaymentLine($result,
                                                  'member',
                                                  t("Member registration for @first_name @last_name", array('@first_name' => $entry['first_name'], '@last_name' => $entry['last_name'])),
-                                                 $memberPrices[$cnt]->price));
+                                                 $memberPrices[$cnt]->basePrice));
         // Add confirmation.
         \Drupal::messenger()->addMessage(t('Thank you for registering @first_name @last_name.',
                                            array('@first_name' => $entry['first_name'],
@@ -885,6 +873,9 @@ class SimpleConregRegistrationForm extends FormBase {
         }
       }
     }
+    
+    // All members saved. Now save any add-ons.
+    SimpleConregAddons::saveAddons($config, $form_values, $memberIDs, $payment);
 
     switch ($return) {
       case 'fantable':
@@ -921,29 +912,26 @@ class SimpleConregRegistrationForm extends FormBase {
   /**
    * Method to calculate price of all members, and subtract any discounts.
    */
-  public function getAllMemberPrices($form_values, $memberQty, $types, $addOnPrices, $symbol,
+  public function getAllMemberPrices($config, $form_values, $memberQty, $types, $addOnPrices, $symbol,
                                      $discountEnabled, $discountFreeEvery) {
     $fullPrice = 0;
     $discountPrice = 0;
     $totalPrice = 0;
     $memberPrices = [];
     $prices = [];
+    
+    // First check for add-ons.
+    list($addOnTotal, $globalTotal, $addOnMembers) = SimpleConregAddons::getAllAddonPrices($config, $form_values);
+    $fullPrice += $globalTotal;
+    
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
       // Check member price.
-      $memberPrices[$cnt] = $this->getMemberPrice($form_values, $cnt, $types, $addOnPrices, $symbol);
+      $memberPrices[$cnt] = $this->getMemberPrice($form_values, $cnt, $types, $addOnMembers[$cnt], $symbol);
       if ($memberPrices[$cnt]->basePrice > 0)
-        $prices[] = (object)['memberNo' => $memberPrices[$cnt]->memberNo,
+        $prices[] = (object)['memberNo' => $memberPrices[$cnt]->memberNo + (isset($addOnMembers[i]) ? $addOnMembers[i] : 0),
                              'basePrice' => $memberPrices[$cnt]->basePrice];
       $fullPrice += $memberPrices[$cnt]->price;
     }
-    // If global add on selected, look up value.
-    $option = isset($form_values['payment']['global_add_on']['option']) ? $form_values['payment']['global_add_on']['option'] : '';
-    if (!empty($option))
-      $fullPrice += $addOnPrices[$option];
-    // If global add on free amount, add value.
-    $freeAmount = isset($form_values['payment']['global_add_on']['free_amount']) ? $form_values['payment']['global_add_on']['free_amount'] : '';
-    if (!empty($freeAmount))
-      $fullPrice += $freeAmount;
     // Sort prices array in reverse order, but keep indexes so memberPrices array can be referenced.
     $cnt = 0;
     if ($discountEnabled && usort($prices, [$this, 'MemberPriceCompare'])) {
@@ -965,7 +953,7 @@ class SimpleConregRegistrationForm extends FormBase {
       }
     }
     // Calculate total price with discounts.
-    $totalPrice = $fullPrice - $discountPrice;
+    $totalPrice = $fullPrice + $discountPrice;
     return [$fullPrice, $discountPrice, $totalPrice, $memberPrices];
   }
   
@@ -974,7 +962,7 @@ class SimpleConregRegistrationForm extends FormBase {
   /**
    * Method to return the price of a member
    */
-  public function getMemberPrice(array $form_values, $memberNo, $types, $addOnPrices, $symbol)
+  public function getMemberPrice(array $form_values, $memberNo, $types, $addOnPrice, $symbol)
   {
     $price = 0;
     // If type selected, look up value.
@@ -1011,21 +999,6 @@ class SimpleConregRegistrationForm extends FormBase {
     }
     $basePrice = $price;
     
-    // If add on selected, look up value.
-    $addOnPrice = 0;
-    $option = isset($form_values['members']['member'.$memberNo]['add_on']['option']) ? $form_values['members']['member'.$memberNo]['add_on']['option'] : '';
-    if (!empty($option)) {
-      $addOnPrice = $addOnPrices[$option];
-      $price += $addOnPrice;
-    }
-
-    // If add on free amount, add value.
-    $freeAmount = isset($form_values['members']['member'.$memberNo]['add_on']['free_amount']) ? $form_values['members']['member'.$memberNo]['add_on']['free_amount'] : '';
-    if (!empty($freeAmount)) {
-      $addOnPrice += $freeAmount;
-      $price += $freeAmount;
-    }
-    
     //Make sure price can never be negative.
     if ($price < 0) {
       $price = 0;
@@ -1034,11 +1007,11 @@ class SimpleConregRegistrationForm extends FormBase {
     $priceMessage = $this->t('Price for member #@number: @symbol@price', [
         '@number' => $memberNo,
         '@symbol' => $symbol,
-        '@price' => $price]);
+        '@price' => $price + $addOnPrice]);
 
     return (object)[
       'memberNo' => $memberNo,
-      'price' => $price,
+      'price' => $price + $addOnPrice,
       'priceMessage' => $priceMessage,
       'basePrice' => $basePrice,
       'addOnPrice' => $addOnPrice,

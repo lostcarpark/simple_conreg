@@ -24,6 +24,12 @@ simple_conreg.config:
   route_name: simple_conreg_config
   weight: 2
 
+simple_conreg.config_addons:
+  title: Add-Ons Configuration
+  route_name: simple_conreg_config_addons
+  base_route: simple_conreg_config
+  weight: 2
+
 simple_conreg.config_email:
   title: Convention Email Templates
   route_name: simple_conreg_config_email_templates
@@ -38,12 +44,6 @@ simple_conreg.admin.options:
   title: Membership Selected Options
   route_name: simple_conreg_admin_member_options
   weight: 6
-
-simple_conreg.admin.add:
-  title: Add Member
-  route_name: simple_conreg_admin_members_add
-  weight: 0
-  parent: simple_conreg.admin.members
 
 simple_conreg.admin.checkin:
   title: Membership Check In
@@ -80,11 +80,6 @@ simple_conreg.member_summary:
   route_name: simple_conreg_admin_member_summary
   weight: 6
   parent: simple_conreg.register
-
-simple_conreg.zz9_member_list:
-  title: ZZ9 Membership List
-  route_name: simple_conreg_admin_zz9_list
-  weight: 10
 
 simple_conreg.programme_list:
   title: Programme Participant List

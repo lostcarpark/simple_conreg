@@ -27,12 +27,31 @@ class SimpleConregPayment
     $this->paymentLines = [];
   }
   
+  // Add a detail line to the payment.
   public function add(SimpleConregPaymentLine $payLine)
   {
     $this->paymentLines[] = $payLine;
   }
 
+  // Get the payment ID of the payment. If not already created, save the payment to create it.
+  public function getId()
+  {
+    $this->savePayment();
+    return $this->payId;
+  }
+
   public function save()
+  {
+    $this->savePayment();
+    
+    foreach ($this->paymentLines as $line) {
+      $line->save($this->payId);
+    }
+    
+    return $this->payId;
+  }
+  
+  private function savePayment()
   {
     // If Random Key not set, generate it.
     if (empty($this->randomKey))
@@ -54,12 +73,6 @@ class SimpleConregPayment
     else {
       $this->payId = SimpleConregPaymentStorage::insert($pay);
     }
-    
-    foreach ($this->paymentLines as $line) {
-      $line->save($this->payId);
-    }
-    
-    return $this->payId;
   }
 
   public static function load($payId)

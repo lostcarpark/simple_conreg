@@ -185,6 +185,16 @@ simple_conreg_config:
     _permission: 'configure convention registration'
     eid: ^[0-9]+$
 
+simple_conreg_config_addons:
+  path: 'admin/config/simple_conreg/addons/{eid}'
+  defaults:
+    _title: 'Simple Convention Registration Add-ons'
+    _form: '\Drupal\simple_conreg\SimpleConregConfigAddOnsForm'
+    eid: 1
+  requirements:
+    _permission: 'configure convention add-ons'
+    eid: ^[0-9]+$
+
 simple_conreg_config_email_templates:
   path: 'admin/config/simple_conreg/email/templates'
   defaults:
@@ -253,16 +263,6 @@ simple_conreg_admin_child_member_ages:
     eid: 1
   requirements:
     _permission: 'view child members'
-    eid: ^[0-9]+$
-
-simple_conreg_admin_zz9_list:
-  path: 'members/zz9list/{eid}'
-  defaults:
-    _title: 'ZZ9 Member List'
-    _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminZZ9List'
-    eid: 1
-  requirements:
-    _permission: 'view zz9 membership details'
     eid: ^[0-9]+$
 
 simple_conreg_admin_programme_list:

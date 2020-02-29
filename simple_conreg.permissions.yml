@@ -14,11 +14,15 @@
 
 'configure convention registration':
   title: Configure convention registration
-  description: Allow users to change registration configuration settings
+  description: Allow administrator to change registration configuration settings
+
+'configure convention add-ons':
+  title: Configure convention add-ons
+  description: Allow administrator to set up add-ons to convention memberships
 
 'configure convention email templates':
   title: Configure convention email templates
-  description: Allow users to change the available templates for sending emails
+  description: Allow administrator to change the available templates for sending emails
 
 'view membership details':
   title: View membership details
@@ -44,10 +48,6 @@
   title: View membership summary
   description: Allow users to view membership summary (including financial data)
   
-'view zz9 membership details':
-  title: View membership details for ZZ9 members
-  description: Allow users to view lists of ZZ9 members (including private data)
-
 'view programme membership details':
   title: View programme participant membership details
   description: Allow users to view lists of members who ticked "programme participant" (including private data)

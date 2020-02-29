@@ -662,5 +662,73 @@ function simple_conreg_schema() {
     'primary key' => array('mid', 'optid'),
   );
 
+
+  // create table conreg_member_addons (addonid int auto_increment primary key, mid int not null, addon_name varchar(255) not null, addon_option varchar(255), addon_info varchar(255), addon_amount numeric(10,2), payid int, is_paid tinyint, payment_ref varchar(255));
+  $schema['conreg_member_addons'] = array(
+    'description' => 'Stores member add-ons.',
+    'fields' => array(
+      'addonid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique option ID.',
+      ),
+      'mid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Compound Primary Key: Member ID.',
+      ),
+      'addon_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Name of the add-on.',
+      ),      
+      'addon_option' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Name of the selected option.',
+      ),
+      'addon_info' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Extra information about add-on.',
+      ),      
+      'addon_amount' => array(
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 2,
+        'not null' => TRUE,
+        'default' => 0.0,
+        'description' => 'Total amount received for all members in group.',
+      ),
+      // alter table conreg_member_addons add payid int after addon_amount;
+      'payid' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => 'Compound Primary Key: Member ID.',
+      ),
+      'is_paid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'Set to 1 if payment complete.',
+      ),
+     'payment_ref' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Payment confirmation code from Stripe or other payment system.',
+      ),
+    ),
+    'primary key' => array('payid'),
+  );
+
   return $schema;
 }

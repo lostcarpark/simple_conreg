@@ -173,6 +173,8 @@ class SimpleConregCheckoutForm extends FormBase {
           $payment->save();
         }
         
+        SimpleConregAddons::markPaid($payment->getId(), $session->payment_intent);
+        
         // Process the payment lines.
         foreach ($payment->paymentLines as $line) {
           switch ($line->type) {

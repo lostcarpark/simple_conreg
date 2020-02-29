@@ -207,7 +207,14 @@ class SimpleConregTokens {
     // Loop once to get the correct payment total.
     $payAmount = 0;
     foreach ($members as $index => $val) {
-      $payAmount += $val['member_price'] + $val['add_on_price'];
+      // Get add ons and add up price.
+      $members[$index]['addons'] = SimpleConregAddons::getMemberAddons($this->config, $val['mid']);
+      $members[$index]['add_on_price'] = 0;
+      foreach ($members[$index]['addons'] as $addon) {
+        $members[$index]['add_on_price'] += $addon->value;
+      }
+      $members[$index]['member_total'] = $val['member_price'] + $members[$index]['add_on_price'];
+      $payAmount += $members[$index]['member_total'];
     }
 
     // Loop through members and set payment total.
@@ -229,9 +236,10 @@ class SimpleConregTokens {
       $members[$index]['is_paid'] = $yesNoOptions[$val['is_paid']];
       $members[$index]['display'] = $displayOptions[$val['display']];
       $members[$index]['member_price'] = $this->symbol . $val['member_price'];
-      $members[$index]['member_total'] = $this->symbol . $val['member_price'] + $val['add_on_price'];
+      $members[$index]['member_total'] = $this->symbol . $val['member_total'];
       $members[$index]['payment_amount'] = $this->symbol . $payAmount;
-      $members[$index]['add_on_price'] = $this->symbol . $val['add_on_price'];
+      if (!empty($val['add_on_price']))
+        $members[$index]['add_on_price'] = $this->symbol . $val['add_on_price'];
       $members[$index]['raw_member_type'] = $members[$index]['member_type'];
       $members[$index]['member_type'] = (isset($this->typeVals[$val['member_type']]) ? $this->typeVals[$val['member_type']]->name : $val['member_type']);
       if (!empty($val['communication_method']))
@@ -270,11 +278,6 @@ class SimpleConregTokens {
       'extra_flag1' => 'extras.flag1',
       'extra_flag2' => 'extras.flag2',
     );
-    $addon_labels = array(
-      'add_on' => 'add_ons.label',
-      'add_on_info' => 'add_on_info.label',
-      'add_on_price' => 'add_on_free.label',
-    );
 
     $reg_date = t('Registered on @date', ['@date' => format_date($members[0]['join_date'])]);
     $this->display .= '<h3>' . $reg_date . '</h3>';
@@ -299,7 +302,11 @@ class SimpleConregTokens {
       }
       foreach ($confirm_labels as $key=>$val) {
         if (!empty($fieldsetConfig) && !empty($fieldsetConfig->get($val))) {
-          $label = $fieldsetConfig->get($val);
+          // Override name for badge name field, as we don't want it to say "Custom badge name".
+          if ($key == 'badge_name')
+            $label = t('Name on badge');
+          else
+            $label = $fieldsetConfig->get($val);
           $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member[$key].'</td></tr>';
           $this->plain_display .= $label.":\t".$cur_member[$key]."\n";
 
@@ -337,24 +344,44 @@ class SimpleConregTokens {
       $label = t('Price for member');
       $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member['member_price'].'</td></tr>';
       $this->plain_display .= $label.":\t".$cur_member['member_price']."\n";
-      // Add on details.
-      $global = $this->config->get('add_ons.global');
-      if ($global && $member_seq == 1 || !$global) {
-        foreach ($addon_labels as $key=>$val) {
-          if (!empty($fieldsetConfig) && !empty($fieldsetConfig->get($val))) {
-            $label = $fieldsetConfig->get($val);
-            $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member[$key].'</td></tr>';
-            $this->plain_display .= $label.":\t".$cur_member[$key]."\n";
-          }
+
+      // If any member add-ons, add them.
+      foreach ($cur_member['addons'] as $addon) {
+        if (!empty($addon->label) && !empty($addon->option)) {
+          $addOnName = $addon->label;
+          $this->display .= '<tr><td>'.t("Add-on: @addon", ['@addon' => $addOnName]).'</td><td>'.$addon->option.'</td></tr>';
+          $this->plain_display .= t("Add-on: @addon", ['@addon' => $addOnName]).":\t".$addon->option."\n";
+        }
+        if (!empty($addon->info_label) && !empty($addon->info)) {
+          $this->display .= '<tr><td>'.$addon->info_label.'</td><td>'.$addon->info.'</td></tr>';
+          $this->plain_display .= $addon->info_label.":\t".$addon->info."\n";
+        }
+        if (!empty($addon->free_label) && !empty($addon->amount)) {
+          $addOnName = $addon->free_label;
+          $this->display .= '<tr><td>'.t("Add-on: @addon", ['@addon' => $addOnName]).'</td><td>'.$addon->amount.'</td></tr>';
+          $this->plain_display .= t("Add-on: @addon", ['@addon' => $addOnName]).":\t".$addon->amount."\n";
+        }
+        if (!empty($addon->amount)) {
+          $this->display .= '<tr><td>'.t("@addon price", ['@addon' => $addOnName]).'</td><td>'.$addon->amount.'</td></tr>';
+          $this->plain_display .= t("@addon price", ['@addon' => $addOnName]).":\t".$addon->amount."\n";
         }
       }
+      if (!empty($cur_member['add_on_price'])) {
+        $label = t('Add-on Total for member');
+        $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member['add_on_price'].'</td></tr>';
+        $this->plain_display .= $label.":\t".$cur_member['add_on_price']."\n";
+      }
+      $label = t('Member Total');
+      $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member['member_total'].'</td></tr>';
+      $this->plain_display .= $label.":\t".$cur_member['member_total']."\n";
+      $payment_amount = $cur_member['payment_amount'];
     }
     $label = t('Total');
     $this->display .= '<tr><th colspan="2">'.$label.'</th></tr>';
     $this->plain_display .= "\n$label\n";
     $label = t('Total amount paid');
-    $this->display .= '<tr><td>'.$label.'</td><td>'.$this->vals['payment_amount'].'</td></tr>';
-    $this->plain_display .= $label.":\t".$this->vals['payment_amount']."\n";
+    $this->display .= '<tr><td>'.$label.'</td><td>'.$payment_amount.'</td></tr>';
+    $this->plain_display .= $label.":\t".$payment_amount."\n";
     $this->display .= '</table>';
   }
 
