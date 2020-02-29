@@ -372,14 +372,20 @@ function simple_conreg_schema() {
         'default' => 0,
         'description' => 'Unix timestamp for the date and time registered.',
       ),
-      // alter table conreg_members add login_exp_date int NOT NULL default "0" after join_date;
+      'update_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp for the date and time last updated.',
+      ),
+      // alter table conreg_members add update_date int NOT NULL default "0" after join_date;
       'login_exp_date' => array(
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
         'description' => 'Unix timestamp for the date and time member was checked in.',
       ),
-      // alter table conreg_members add is_checked_in int NOT NULL default "0" after join_date;
+      // alter table conreg_members add is_checked_in int NOT NULL default "0" after update_date;
       'is_checked_in' => array(
         'type' => 'int',
         'not null' => FALSE,
