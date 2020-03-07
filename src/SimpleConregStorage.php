@@ -499,7 +499,7 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberBadges($eid) {
+  public static function adminMemberBadges($eid, $max_num_badges=0) {
     $select = db_select('conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'member_no');
@@ -508,13 +508,15 @@ class SimpleConregStorage {
     $select->addField('m', 'badge_name');
     $select->addField('m', 'badge_type');
     $select->addField('m', 'days');
+    $select->addField('m', 'mid');
     $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
     $select->condition('m.is_approved', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->orderby('m.member_no');
-    // Make sure we only get items 0-49, for scalability reasons.
-    //$select->range(0, 50);
+    // If maximum number of badges specified, select that range.
+    if ($max_num_badges)
+      $select->range(0, $max_num_badges);
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 

@@ -198,6 +198,7 @@ class SimpleConregAdminMemberTransfer extends FormBase {
     if (isset($mid)) {
       $entry = array(
         'eid' => $form_values['member']['event'],
+        'update_date' => time(),
         'mid' => $mid,
       );
       // Update the member record.

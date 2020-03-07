@@ -1,0 +1,58 @@
+.badge {
+  display: flex;
+  flex-direction: row;
+  break-inside: avoid;
+  width: 18.8cm;
+}
+
+.badge-side {
+  position: relative;
+  width: 9.4cm;
+  height: 6cm;
+  background-color: #ccc;
+  margin: 0;
+  border: 1px solid black;
+}
+
+.badge-name {
+  position: absolute;
+  top: 3cm;
+  left: 0.5cm;
+  width: 8.2cm;
+  height: 1.8cm;
+  padding: .1cm;
+  text-align: center;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  font-size: 5em;
+}
+
+.badge-type {
+  position: absolute;
+  bottom: 2.9cm;
+  left: 0.5cm;
+  font-size: .5cm;
+}
+
+.badge-number {
+  position: absolute;
+  bottom: 2.9cm;
+  right: 0.5cm;
+  font-size: .5cm;
+}
+
+.badge-days {
+  position: absolute;
+  top: 5.1cm;
+  left: 0.5cm;
+  width: 8.4cm;
+  text-align: center;
+  font-size: .5cm;
+}
+
+@media print {
+  #badge-form {
+    display: none !important;
+  }
+}
+

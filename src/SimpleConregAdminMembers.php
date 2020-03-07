@@ -369,7 +369,7 @@ class SimpleConregAdminMembers extends FormBase {
 	        // No member number for unapproved members.
 	        $member_no = 0;
 	      }
-        $entry = array('mid' => $mid, 'is_approved' => $member["is_approved"], 'member_no' => $member_no);
+        $entry = ['mid' => $mid, 'is_approved' => $member["is_approved"], 'member_no' => $member_no, 'update_date' => time()];
         $return = SimpleConregStorage::update($entry);
       }
     }

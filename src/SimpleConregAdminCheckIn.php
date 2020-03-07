@@ -580,6 +580,7 @@ class SimpleConregAdminCheckIn extends FormBase {
       'add_on_price' => 0,
       'payment_amount' => $price,
       'join_date' => time(),
+      'update_date' => time(),
     );
     // Insert to database table.
     $return = SimpleConregStorage::insert($entry);

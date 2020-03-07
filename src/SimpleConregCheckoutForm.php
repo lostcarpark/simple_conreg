@@ -186,6 +186,8 @@ class SimpleConregCheckoutForm extends FormBase {
                 $update['is_paid'] = 1;
                 $update['payment_id'] = $session->payment_intent;
                 $update['payment_method'] = 'Stripe';
+                $update['update_date'] = time();
+
                 $result = SimpleConregStorage::update($update);
                 // If email address populated, send confirmation email.
                 if (!empty($member['email']))

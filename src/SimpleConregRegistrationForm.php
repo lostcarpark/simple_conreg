@@ -816,6 +816,7 @@ class SimpleConregRegistrationForm extends FormBase {
         'add_on_price' => $memberPrices[$cnt]->addOnPrice,
         'payment_amount' => $totalPrice,
         'join_date' => time(),
+        'update_date' => time(),
       );
       // Add member details to parameters for email.
       $confirm_params["members"][$cnt] = $entry;
