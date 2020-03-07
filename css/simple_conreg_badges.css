@@ -54,5 +54,17 @@
   #badge-form {
     display: none !important;
   }
+
+  header {
+    display: none;
+  }
+
+  #header {
+    display: none;
+  }
+
+  .highlighted {
+    display: none;
+  }
 }
 
