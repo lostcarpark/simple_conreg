@@ -474,10 +474,12 @@ class SimpleConregAdminMemberEdit extends FormBase {
     if (isset($mid)) {
       // Update the member record.
       $entry['mid'] = $mid;
+      $entry['update_date'] = time();
       $return = SimpleConregStorage::update($entry);
     } else {
       // Specify the event.
       $entry['eid'] = $eid;
+      $entry['update_date'] = time();
       // Insert to database table.
       $return = SimpleConregStorage::insert($entry);
       

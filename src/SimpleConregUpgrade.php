@@ -106,6 +106,7 @@ class SimpleConregUpgrade
       $member['badge_type'] = $this->toBadgeType;
       $member['member_price'] += $this->upgradePrice;
       $member['member_total'] = $member['member_price'] + $member['add_on_price'] + $this->upgradePrice;
+      $member['update_date'] = time();
       // Save updated member.
       SimpleConregStorage::update($member);
     }

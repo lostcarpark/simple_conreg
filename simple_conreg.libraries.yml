@@ -29,3 +29,14 @@ conreg_payment:
     - core/jquery
     - core/drupalSettings
 
+conreg_badges:
+  version: 1.x
+  css:
+    theme:
+      css/simple_conreg_badges.css: {}
+  js:
+    js/jquery.textfit.min.js: {}
+    js/jquery.badge_names.js: {}
+  dependencies:
+    - core/jquery
+

@@ -60,8 +60,13 @@ simple_conreg.member_list:
   route_name: simple_conreg_admin_member_list
   weight: 2
 
-simple_conreg.member_badges:
+simple_conreg.member_badge_names:
   title: Badge Names
+  route_name: simple_conreg_admin_member_badge_names
+  weight: 3
+
+simple_conreg.member_badges:
+  title: Badge Printing
   route_name: simple_conreg_admin_member_badges
   weight: 3
 
