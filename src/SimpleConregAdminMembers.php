@@ -14,7 +14,7 @@ use Drupal\Core\Ajax\AlertCommand;
 use Drupal\Core\Ajax\CssCommand;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Link;
-use Drupal\Core\URL;
+use Drupal\Core\Url;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\devel;
 
@@ -112,6 +112,9 @@ class SimpleConregAdminMembers extends FormBase {
     $tempstore->set('search', $search);
 
     $form = array(
+      '#attached' => [
+        'library' => ['simple_conreg/conreg_tables'],
+      ],
       '#prefix' => '<div id="memberform">',
       '#suffix' => '</div>',
     );

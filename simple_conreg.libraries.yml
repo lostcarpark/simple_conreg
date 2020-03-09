@@ -29,6 +29,12 @@ conreg_payment:
     - core/jquery
     - core/drupalSettings
 
+conreg_tables:
+  version: 1.x
+  css:
+    theme:
+      css/simple_conreg_tables.css: {}
+
 conreg_badges:
   version: 1.x
   css:

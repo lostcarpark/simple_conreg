@@ -175,6 +175,17 @@ simple_conreg_portal:
     _permission: 'member portal'
     eid: ^[0-9]+$
 
+simple_conreg_portal_edit:
+  path: 'members/portal/edit/{eid}/{mid}'
+  defaults:
+    _title: 'Edit Member'
+    _form: '\Drupal\simple_conreg\SimpleConregMemberEdit'
+    eid: 1
+  requirements:
+    _permission: 'member portal'
+    eid: ^[0-9]+$
+    mid: ^[0-9]+$
+
 simple_conreg_config:
   path: 'admin/config/simple_conreg/{eid}'
   defaults:

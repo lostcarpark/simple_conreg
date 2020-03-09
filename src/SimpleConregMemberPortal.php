@@ -14,7 +14,7 @@ use Drupal\Core\Ajax\AlertCommand;
 use Drupal\Core\Ajax\CssCommand;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Link;
-use Drupal\Core\URL;
+use Drupal\Core\Url;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\devel;
 
@@ -55,6 +55,9 @@ class SimpleConregMemberPortal extends FormBase {
     $email = $user->getEmail();
 
     $form = array(
+      '#attached' => [
+        'library' => ['simple_conreg/conreg_tables'],
+      ],
       '#prefix' => '<div id="memberform">',
       '#suffix' => '</div>',
     );
@@ -68,7 +71,7 @@ class SimpleConregMemberPortal extends FormBase {
       'member_type' =>  ['data' => t('Member type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       'days' =>  ['data' => t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
       t('Paid'),
-      /*t('Action'),*/
+      t('Edit'),
     );
 
     $entries = SimpleConregStorage::adminMemberPortalListLoad($eid, $email, TRUE);
@@ -133,15 +136,15 @@ class SimpleConregMemberPortal extends FormBase {
         $row['is_paid'] = array(
           '#markup' => $is_paid ? $this->t('Yes') : $this->t('No'),
         );
-  /*      $row['link'] = array(
+        $row['link'] = array(
           '#type' => 'dropbutton',
           '#links' => array(
             'edit_button' => array(
-              'title' => $this->t('View'),
-              'url' => Url::fromRoute ('simple_conreg_admin_members_edit', ['eid' => $eid, 'mid' => $mid]),
+              'title' => $this->t('Edit'),
+              'url' => Url::fromRoute ('simple_conreg_portal_edit', ['eid' => $eid, 'mid' => $mid]),
             ),
           ),
-        );*/
+        );
 
         $form['table'][$mid] = $row;
       }
