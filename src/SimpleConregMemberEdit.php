@@ -341,12 +341,12 @@ class SimpleConregMemberEdit extends FormBase {
 
     // Save the submitted entry.
     $entry = array(
-      'mid' = $mid;
+      'mid' => $mid,
       'badge_name' => $form_values['member']['badge_name'],
       'display' => $form_values['member']['display'],
       'communication_method' => isset($form_values['member']['communication_method']) ?
           $form_values['member']['communication_method'] : '',
-      'update_date' => time();
+      'update_date' => time(),
     );
     
     $return = SimpleConregStorage::update($entry);
