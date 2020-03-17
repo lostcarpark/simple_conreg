@@ -57,15 +57,31 @@ class SimpleConregMemberEdit extends FormBase {
     $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
     $defaultCountry = $config->get('reference.default_country');
 
+
+    // Load the member record.
+    $member = SimpleConregStorage::load(['eid' => $eid, 'mid' => $mid, 'is_paid' => 1]);
+    // Check member exists.
+    if (!is_array($member)) {
+      // Member not in database. Display error.
+      $form['error'] = array(
+        '#markup' => $this->t('Sorry, we couldn\'t find that member.'),
+        '#prefix' => '<h3>',
+        '#suffix' => '</h3>',
+      );
+      return $form;
+    }
+    $lead_mid = $member['lead_mid'];
+
     // Check out who is editing.
     $user = \Drupal::currentUser();
     $email = $user->getEmail();
+
     // Get the member with the matching email address.
-    $owner = SimpleConregStorage::load(['eid' => $eid, 'email' => $email, 'lead_mid' => $mid, 'is_paid' => 1]);
+    $owner = SimpleConregStorage::load(['eid' => $eid, 'email' => $email, 'mid' => $lead_mid, 'is_paid' => 1]);
     // If couldn't find member with matching Lead MID, check on MID, as editor may not be group leader.
-    if (count($owner) < 3)
-      $owner = SimpleConregStorage::load(['eid' => $eid, 'email' => $email, 'mid' => $mid, 'is_paid' => 1]);
-    if (count($owner) < 3) {
+    if (!is_array($owner))
+      $owner = SimpleConregStorage::load(['eid' => $eid, 'email' => $email, 'mid' => $lead_mid, 'is_paid' => 1]);
+    if (!is_array($owner)) {
       // Member not in database. Display error.
       $form['error'] = array(
         '#markup' => $this->t('Sorry, you don\'t have permission to do that.'),
@@ -74,19 +90,6 @@ class SimpleConregMemberEdit extends FormBase {
       );
       return $form;
     }
-
-    $member = SimpleConregStorage::load(['eid' => $eid, 'mid' => $mid]);
-    // Check member exists.
-    if (count($member) < 3) {
-      // Member not in database. Display error.
-      $form['error'] = array(
-        '#markup' => $this->t('Member not found. Please confirm member valid.'),
-        '#prefix' => '<h3>',
-        '#suffix' => '</h3>',
-      );
-      return $form;
-    }
-
 
     $form = array(
       '#tree' => TRUE,
