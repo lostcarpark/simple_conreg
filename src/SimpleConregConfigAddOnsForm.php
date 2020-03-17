@@ -14,7 +14,7 @@ use Drupal\devel;
  */
 class SimpleConregConfigAddOnsForm extends ConfigFormBase
 {
-  /** 
+  /**
    * {@inheritdoc}
    */
   public function getFormId()
@@ -84,7 +84,6 @@ class SimpleConregConfigAddOnsForm extends ConfigFormBase
      */
 
     foreach ($config->get('add-ons') as $addOnId => $addOnVals) {
-//    dpm($addOnVals, "Loading $addOnId");
       
       /*
        * Fields for add on choices and options.
@@ -210,7 +209,6 @@ class SimpleConregConfigAddOnsForm extends ConfigFormBase
     }
     // Loop through add-ons and save to config.
     foreach ($vals['addons'] as $addOnId => $addOnVals) {
-//    dpm($addOnVals, $addOnId);
       $config->set('add-ons.'.$addOnId.'.addon.active', $addOnVals['addon']['active']);
       $config->set('add-ons.'.$addOnId.'.addon.global', $addOnVals['addon']['global']);
       $config->set('add-ons.'.$addOnId.'.addon.label', $addOnVals['addon']['label']);

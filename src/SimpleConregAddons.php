@@ -10,6 +10,18 @@ namespace Drupal\simple_conreg;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
+ * Provide array_key_first function for versions of PHP before 7.3.
+ */
+if (!function_exists('array_key_first')) {
+    function array_key_first(array $arr) {
+        foreach($arr as $key => $unused) {
+            return $key;
+        }
+        return NULL;
+    }
+}
+
+/**
  * List options for Simple Convention Registration.
  */
 class SimpleConregAddons
@@ -40,11 +52,20 @@ class SimpleConregAddons
    *
    * Parameters: Event ID.
    */
-  public static function getAddon($config, $addonVals, $addOnOptions, $member, $callback, FormStateInterface $form_state)
+  public static function getAddon($config, $addonVals, $addOnOptions, $member, $callback, FormStateInterface $form_state, $mid = NULL)
   {
 
     $addons = ['#tree' => TRUE];
     $fs_addons = [];
+    
+    // If member ID passed in, read values from database.
+    $saved = [];
+    if (!is_null($mid)) {
+      $result = SimpleConregAddonStorage::loadAll(['mid' => $mid]);
+      foreach ($result as $entry) {
+        $saved[$entry['addon_name']] = $entry;
+      }
+    }
 
     foreach ($config->get('add-ons') as $addOnId => $addOnVals) {
       // Add add-on to form_state.
@@ -53,19 +74,21 @@ class SimpleConregAddons
       $addon = (isset($addOnVals['addon']) ? $addOnVals['addon'] : []);          
       // Check add-on is enabled.
       if ($addon['active'] == 1) {
-//dpm($addOnVals, $addOnId);
         // Get add options...
         list($addOnOptions, $addOnPrices) = self::memberAddons($addon['options']);
         // If global is set, only display if there's a member number.
-        if ((!empty($member) && !$addon['global']) || (empty($member) && $addon['global'])) {
-          if (!empty($member))
+        if ((!empty($member) && !$addon['global']) || (empty($member) && $addon['global']) || $member == -1) {
+          if ($member == -1) // Single member on edit form.
+            $id = 'member_addon_'.$addOnId.'_info';
+          elseif (!empty($member)) // Numbered member of Reg form.
             $id = 'member_addon_'.$addOnId.'_info_'.$member;
-          else
+          else // Global add-ons on Reg form.
             $id = 'global_addon_'.$addOnId.'_info';
       
           $addons[$addOnId] = [];
 
           if (!empty($addon['label'])) {
+            // Set the add-on options drop-down.
             $addons[$addOnId]['option'] = array(
               '#type' => 'select',
               '#title' => $addon['label'],
@@ -78,6 +101,27 @@ class SimpleConregAddons
                 'target' => $id,
               ),
             );
+            // Now check if editing existing member.
+            if (!is_null($mid)) {
+              if (isset($saved[$addOnId])) {
+                if ($saved[$addOnId]['is_paid'] == 1) {
+                  // Add-on saved and paid, so replace drop-down with non-editable label.
+                  $addons[$addOnId]['option'] = [
+                    '#markup' => '<strong>' . $addon['label'] . '</strong><br />' . $addOnOptions[$saved[$addOnId]['addon_option']],
+                    '#prefix' => '<div>',
+                    '#suffix' => '</div>',
+                  ];
+                }
+                else {
+                  // Add-on saved, but not paid, so allow user to change their choice.
+                  $addons[$addOnId]['option']['#default_value'] = $saved[$addOnId]['addon_option'];
+                }
+              }
+              else {
+                // Add-on not saved, so default to first option (otherwise member will be forced to pick an option every time they edit).
+                $addons[$addOnId]['option']['#default_value'] = array_key_first($addOnOptions);
+              }
+            }
       
             $addons[$addOnId]['extra'] = array(
               '#prefix' => '<div id="'.$id.'">',
@@ -87,14 +131,17 @@ class SimpleConregAddons
             // Check if something other than the first value in add-on list selected. Display add-on info field if so. Use current(array_keys()) to get first add-on option.
             $info = (isset($addOnVals['info']) ? $addOnVals['info'] : []);
 
-            if (!empty($addonVals[$addOnId]['option']) &&
-                $addonVals[$addOnId]['option']!=current(array_keys($addOnOptions)) &&
+            if ((!empty($addonVals[$addOnId]['option']) && $addonVals[$addOnId]['option']!=current(array_keys($addOnOptions)) ||
+                (isset($saved[$addOnId]))) &&
                 !empty($info['label'])) {
               $addons[$addOnId]['extra']['info'] = array(
                 '#type' => 'textfield',
                 '#title' => $info['label'],
                 '#description' => $info['description'],
               );
+              if (isset($saved[$addOnId])) {
+                 $addons[$addOnId]['extra']['info']['#default_value'] = $saved[$addOnId]['addon_info'];
+              }
             }
           }
 
@@ -109,6 +156,18 @@ class SimpleConregAddons
               '#step' => '0.01',
               '#min' => 0,
             );
+            if (isset($saved[$addOnId])) {
+              if (isset($saved[$addOnId]) && $saved[$addOnId]['is_paid'] ) {
+                $addons[$addOnId]['free_amount'] = [
+                  '#markup' => '<strong>' . $free['label'] . '</strong><br />' . $saved[$addOnId]['addon_amount'],
+                  '#prefix' => '<div>',
+                  '#suffix' => '</div>',
+                ];
+              }
+              else {
+                $addons[$addOnId]['free_amount']['#default_value'] = $saved[$addOnId]['addon_amount'];
+              }
+            }
           }
         }
       }
@@ -170,13 +229,66 @@ class SimpleConregAddons
   }
   
   //
+  // Save add-ons for single member on Edit form.
+  //
+  
+  function saveMemberAddons($config, $form_values, $mid)
+  {
+    foreach ($config->get('add-ons') as $addOnName => $addOnVals) {
+      // If add-on set, get values.
+      $addon = (isset($addOnVals['addon']) ? $addOnVals['addon'] : []);          
+      // Check add-on is enabled.
+      if ($addon['active'] == 1) {
+        // Get add options...
+        list($addOnOptions, $addOnPrices) = self::memberAddons($addon['options']);
+
+        $saved = SimpleConregAddonStorage::load(['mid' => $mid, 'addon_name' => $addOnName]);
+
+        $id = 'member_addon_'.$addOnName.'_info';
+        $price = 0;
+        if (isset($saved) && isset($saved['addonid']))
+          $insert = ['addonid' => $saved['addonid'],
+                     'addon_amount' => $price];
+        else
+          $insert = ['mid' => $mid,
+                    'addon_name' => $addOnName,
+                    'addon_amount' => $price,
+                    'is_paid' => 0];
+        if (!empty($form_values['member']['add_on'][$addOnName]['option'])) {
+          $option = $form_values['member']['add_on'][$addOnName]['option'];
+          $insert['addon_option'] = $option;
+          $price += $addOnPrices[$option];
+          if (isset($form_values['member']['add_on'][$addOnName]['extra']['info'])) {
+            $insert['addon_info'] = $form_values['member']['add_on'][$addOnName]['extra']['info'];
+          }
+        }
+        if (!empty($form_values['member']['add_on'][$addOnName]['free_amount']) && $form_values['member']['add_on'][$addOnName]['free_amount'] > 0) {
+          $price += $form_values['member']['add_on'][$addOnName]['free_amount'];
+        }
+        if ($price > 0) {
+          $insert['addon_amount'] = $price;
+          if (isset($saved) && isset($saved['addonid']))
+            SimpleConregAddonStorage::update($insert);
+          else
+            SimpleConregAddonStorage::insert($insert);
+        }
+        else {
+          // If there's a previously saved addon, delete it.
+          if (isset($saved) && isset($saved['addonid']))
+            SimpleConregAddonStorage::delete(['addonid' => $saved['addonid']]);
+        }
+      }
+    }
+  }
+
+  //
   // Save the add-ons from for each member.
   //
   
-  function saveAddons($config, $form_values, $memberIDs, SimpleConregPayment $payment)
+  function saveAddons($config, $form_values, $memberIDs, SimpleConregPayment $payment = NULL)
   {
     $payId = $payment->getId();
-    foreach ($config->get('add-ons') as $addOnId => $addOnVals) {
+    foreach ($config->get('add-ons') as $addOnName => $addOnVals) {
       // If add-on set, get values.
       $addon = (isset($addOnVals['addon']) ? $addOnVals['addon'] : []);          
       // Check add-on is enabled.
@@ -185,23 +297,24 @@ class SimpleConregAddons
         list($addOnOptions, $addOnPrices) = self::memberAddons($addon['options']);
         // If global is set, only display if there's a member number.
         if ($addon['global']) {
-          $id = "global_addon_'.$addOnId.'_info";
+          $id = "global_addon_'.$addOnName.'_info";
           $mid = $memberIDs[1]; // Global options get saved to first member.
           $price = 0;
           $insert = ['mid' => $mid,
-                    'addon_name' => $addOnId,
+                    'addon_name' => $addOnName,
                     'addon_amount' => $price,
-                    'payid' => $payId];
-          if (!empty($form_values['payment']['global_add_on'][$addOnId]['option'])) {
-            $option = $form_values['payment']['global_add_on'][$addOnId]['option'];
+                    'payid' => $payId,
+                    'is_paid' => 0];
+          if (!empty($form_values['payment']['global_add_on'][$addOnName]['option'])) {
+            $option = $form_values['payment']['global_add_on'][$addOnName]['option'];
             $insert['addon_option'] = $option;
             $price += $addOnPrices[$option];
-            if (isset($form_values['payment']['global_add_on'][$addOnId]['extra']['info'])) {
-              $insert['addon_info'] = $form_values['payment']['global_add_on'][$addOnId]['extra']['info'];
+            if (isset($form_values['payment']['global_add_on'][$addOnName]['extra']['info'])) {
+              $insert['addon_info'] = $form_values['payment']['global_add_on'][$addOnName]['extra']['info'];
             }
           }
-          if (!empty($form_values['payment']['global_add_on'][$addOnId]['free_amount']) && $form_values['payment']['global_add_on'][$addOnId]['free_amount'] > 0) {
-            $price += $form_values['payment']['global_add_on'][$addOnId]['free_amount'];
+          if (!empty($form_values['payment']['global_add_on'][$addOnName]['free_amount']) && $form_values['payment']['global_add_on'][$addOnName]['free_amount'] > 0) {
+            $price += $form_values['payment']['global_add_on'][$addOnName]['free_amount'];
           }
           // Only insert if add-on has a price.
           if ($price > 0) {
@@ -211,7 +324,7 @@ class SimpleConregAddons
             $payment->add(new SimpleConregPaymentLine($mid,
                                                  'addon',
                                                  t("Add-on @add_on",
-                                                    array('@add_on' => $addOnId)),
+                                                    array('@add_on' => $addOnName)),
                                                  $price));
           }
         }
@@ -219,35 +332,36 @@ class SimpleConregAddons
           foreach ($form_values['members'] as $memberKey => $memberVals) {
             $member = substr($memberKey, 6); // memberKey should be in the form "member1". We want the 1.
 
-            $id = 'member_addon_'.$addOnId.'_info_'.$member;
+            $id = 'member_addon_'.$addOnName.'_info_'.$member;
             $mid = $memberIDs[$member];
             $first_name = $memberVals['first_name'];
             $last_name = $memberVals['last_name'];
             $price = 0;
             $insert = ['mid' => $mid,
-                      'addon_name' => $addOnId,
+                      'addon_name' => $addOnName,
                       'addon_amount' => $price,
-                      'payid' => $payId];
-            if (!empty($memberVals['add_on'][$addOnId]['option'])) {
-              $option = $memberVals['add_on'][$addOnId]['option'];
+                      'payid' => $payId,
+                      'is_paid' => 0];
+            if (!empty($memberVals['add_on'][$addOnName]['option'])) {
+              $option = $memberVals['add_on'][$addOnName]['option'];
               $insert['addon_option'] = $option;
               $price += $addOnPrices[$option];
-              if (isset($memberVals['add_on'][$addOnId]['extra']['info'])) {
-                $insert['addon_info'] = $memberVals['add_on'][$addOnId]['extra']['info'];
+              if (isset($memberVals['add_on'][$addOnName]['extra']['info'])) {
+                $insert['addon_info'] = $memberVals['add_on'][$addOnName]['extra']['info'];
               }
             }
-            if (!empty($memberVals['add_on'][$addOnId]['free_amount']) && $memberVals['add_on'][$addOnId]['free_amount'] > 0) {
-              $price += $memberVals['add_on'][$addOnId]['free_amount'];
+            if (!empty($memberVals['add_on'][$addOnName]['free_amount']) && $memberVals['add_on'][$addOnName]['free_amount'] > 0) {
+              $price += $memberVals['add_on'][$addOnName]['free_amount'];
             }
             if ($price > 0) {
               $insert['addon_amount'] = $price;
               SimpleConregAddonStorage::insert($insert);
             }
-            // Add a payment line for the member.
+            // Add a payment line for the add-on.
             $payment->add(new SimpleConregPaymentLine($mid,
                                                  'addon',
                                                  t("Add-on @add_on for @first_name @last_name",
-                                                    array('@add_on' => $addOnId,
+                                                    array('@add_on' => $addOnName,
                                                       '@first_name' => $first_name,
                                                       '@last_name' => $last_name)),
                                                  $price));

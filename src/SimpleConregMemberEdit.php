@@ -269,6 +269,12 @@ class SimpleConregMemberEdit extends FormBase {
     }
 
 */
+    // Get member add-on details.
+    $addon = isset($form_values['member']['add_on']) ? $form_values['member']['add_on'] : '';
+    $form['member']['add_on'] = SimpleConregAddons::getAddon($config,
+      $addon,
+      $addOnOptions, -1, [$this, 'updateMemberPriceCallback'], $form_state, $mid);
+
 
     $form['submit'] = array(
       '#type' => 'submit',
@@ -283,6 +289,26 @@ class SimpleConregMemberEdit extends FormBase {
 
     $form_state->set('mid', $mid);
     return $form;
+  }
+  
+  // Callback function for "member type" and "add-on" drop-downs. Replace price fields.
+  public function updateMemberPriceCallback(array $form, FormStateInterface $form_state)
+  {
+    $ajax_response = new AjaxResponse();
+    // Calculate price for each member.
+    $addons = $form_state->get('addons');
+    foreach ($addons as $addOnId) {
+      if (!empty($form['member']['add_on'][$addOnId]['extra'])) {
+        $id = '#member_addon_'.$addOnId.'_info';
+        $ajax_response->addCommand(new HtmlCommand($id, render($form['member']['add_on'][$addOnId]['extra']['info'])));
+      }
+    }
+    //$ajax_response->addCommand(new HtmlCommand('#memberPrice'.$cnt, $form['members']['member'.$cnt]['price']['#markup']));
+
+    //We don't currently display a total price, but keep the below commented in case we add it infuture.
+    //$ajax_response->addCommand(new HtmlCommand('#Pricing', $form['payment']['price']));
+
+    return $ajax_response;
   }
   
   /*
@@ -322,23 +348,6 @@ class SimpleConregMemberEdit extends FormBase {
       $birth_date = NULL;
     }
 
-    // Get the maximum member number from the database.
-    $max_member = SimpleConregStorage::loadMaxMemberNo($eid);
-    // Check if approved has been checked.
-    if ($form_values['member']["is_approved"]) {
-      if (empty($form_values['member']["member_no"])) {
-        // No member no specified, so assign next one.
-        $max_member++;
-        $member_no = $max_member;
-      } else {
-        // Member no specified.
-        $member_no = $form_values['member']["member_no"];
-      }
-    } else {
-      // No member number for unapproved members.
-      $member_no = 0;
-    }
-
     // Save the submitted entry.
     $entry = array(
       'mid' => $mid,
@@ -351,6 +360,9 @@ class SimpleConregMemberEdit extends FormBase {
     
     $return = SimpleConregStorage::update($entry);
 
+    // All members saved. Now save any add-ons.
+    SimpleConregAddons::saveMemberAddons($config, $form_values, $mid);
+
     if ($return) {
 
       // Get session state to return to correct page.
@@ -362,5 +374,6 @@ class SimpleConregMemberEdit extends FormBase {
       $form_state->setRedirect('simple_conreg_portal', ['eid' => $eid]);
     }
   }
+
 
 }

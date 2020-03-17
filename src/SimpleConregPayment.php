@@ -36,10 +36,10 @@ class SimpleConregPayment
   // Get the payment ID of the payment. If not already created, save the payment to create it.
   public function getId()
   {
-    $this->savePayment();
-    return $this->payId;
+    return $this->savePayment();
   }
 
+  // Save the payment details and all payment lines.
   public function save()
   {
     $this->savePayment();
@@ -48,7 +48,6 @@ class SimpleConregPayment
       $line->save($this->payId);
     }
     
-    return $this->payId;
   }
   
   private function savePayment()
@@ -73,6 +72,7 @@ class SimpleConregPayment
     else {
       $this->payId = SimpleConregPaymentStorage::insert($pay);
     }
+    return $this->payId;
   }
 
   public static function load($payId)

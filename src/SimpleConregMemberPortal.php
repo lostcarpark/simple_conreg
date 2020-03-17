@@ -150,71 +150,41 @@ class SimpleConregMemberPortal extends FormBase {
       }
     }
 
-    $entries = SimpleConregStorage::adminMemberPortalListLoad($eid, $email, FALSE);
+    // Load all members for email address (paid and unpaid)...
+    $entries = SimpleConregStorage::adminMemberPortalListLoad($eid, $email);
 
+    // Default to keep unpaid grid hidden.
+    $display_unpaid = FALSE;
+    $headers = array(
+      'payment_type' => ['data' => t('Payment Type')],
+      'name' => ['data' => t('Name'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
+      'email' => ['data' => t('Email'), 'field' => 'm.email', 'class' => [RESPONSIVE_PRIORITY_LOW]],
+      'detail' =>  ['data' => t('Detail')],
+      'price' => ['data' => t('Price'), 'field' => 'm.member_total'],
+    );
 
-    // Only show table if unpaid members found.
-    if (count($entries)) {
-      $form['unpaid_title'] = array(
-        '#markup' => $this->t('Unpaid Members'),
-        '#prefix' => '<h2>',
-        '#suffix' => '</h2>',
-      );  
-    
-      $headers = array(
-        'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
-        'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
-        'email' => ['data' => t('Email'), 'field' => 'm.email'],
-        'badge_name' => ['data' => t('Badge name'), 'field' => 'm.badge_name'],
-        'member_type' =>  ['data' => t('Member type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-        'days' =>  ['data' => t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-        'price' => ['data' => t('Price'), 'field' => 'm.member_total'],
-      );
-
-      $form['unpaid'] = array(
-        '#type' => 'table',
-        '#header' => $headers,
-        '#attributes' => array('id' => 'simple-conreg-admin-member-list'),
-        '#empty' => t('No entries available.'),
-        '#sticky' => TRUE,
-      );
-    
-      foreach ($entries as $entry) {
-        $mid = $entry['mid'];
-        // Sanitize each entry.
-        $is_paid = $entry['is_paid'];
+    $unpaid = array(
+      '#type' => 'table',
+      '#header' => $headers,
+      '#attributes' => array('id' => 'simple-conreg-admin-member-list'),
+      '#empty' => t('No entries available.'),
+      '#sticky' => TRUE,
+    );
+  
+    foreach ($entries as $entry) {
+      $mid = $entry['mid'];
+      // Sanitize each entry.
+      $is_paid = $entry['is_paid'];
+      
+      if (!$is_paid) {
         //$row = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $entry);
         $row = [];
-        $row['first_name'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['first_name']),
-        );
-        $row['last_name'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['last_name']),
-        );
-        $row['email'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['email']),
-        );
-        $row['badge_name'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['badge_name']),
-        );
-        $memberType = trim($entry['member_type']);
-        $row['member_type'] = array(
-          '#markup' => SafeMarkup::checkPlain(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
-        );
-        if (!empty($entry['days'])) {
-          $dayDescs = [];
-          foreach(explode('|', $entry['days']) as $day) {
-            $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
-          }
-          $memberDays = implode(', ', $dayDescs);
-        } else
-          $memberDays = '';
-        $row['days'] = array(
-          '#markup' => SafeMarkup::checkPlain($memberDays),
-        );
-        $row['price'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['member_total']),
-        );
+        $row['type'] = ['#markup' => t('Member')];
+        $row['name'] = ['#markup' => SafeMarkup::checkPlain($entry['first_name'] . ' ' . $entry['last_name'])];
+        $row['email'] = ['#markup' => SafeMarkup::checkPlain($entry['email'])];
+        $memberType = isset($types->types[trim($entry['member_type'])]->name) ? $types->types[trim($entry['member_type'])]->name : trim($entry['member_type']);
+        $row['member_type'] = ['#markup' => SafeMarkup::checkPlain($memberType)];
+        $row['price'] = ['#markup' => SafeMarkup::checkPlain($entry['member_price'])];
   /*      $row['link'] = array(
           '#type' => 'dropbutton',
           '#links' => array(
@@ -224,10 +194,32 @@ class SimpleConregMemberPortal extends FormBase {
             ),
           ),
         );*/
-
-        $form['unpaid'][$mid] = $row;
+        $unpaid[$mid] = $row;
+        $display_unpaid = TRUE;
       }
-    }    
+      
+      foreach (SimpleConregAddonStorage::loadAll(['mid' =>$mid, 'is_paid' => 0]) as $addon) {
+        $row = [];
+        $row['type'] = ['#markup' => t('Add-on')];
+        $row['name'] = ['#markup' => SafeMarkup::checkPlain($entry['first_name'] . ' ' . $entry['last_name'])];
+        $row['email'] = ['#markup' => SafeMarkup::checkPlain($entry['email'])];
+        $row['member_type'] = ['#markup' => SafeMarkup::checkPlain($addon['addon_name'] . (isset($addon['addon_option']) ? ' - ' . $addon['addon_option'] : ''))];
+        $row['price'] = ['#markup' => SafeMarkup::checkPlain($addon['addon_amount'])];
+        $unpaid['addon_'.$addon['addonid']] = $row;
+        $display_unpaid = TRUE;
+      }
+    }
+
+    // Only show table if unpaid members found.
+    if ($display_unpaid) {
+      $form['unpaid_title'] = array(
+        '#markup' => $this->t('Unpaid Members and Add-ons'),
+        '#prefix' => '<h2>',
+        '#suffix' => '</h2>',
+      );  
+    
+      $form['unpaid'] = $unpaid;
+    }
 
 /*
     $form['add_members_button'] = array(
@@ -242,7 +234,7 @@ class SimpleConregMemberPortal extends FormBase {
       '#type' => 'submit',
       '#value' => $this->t('Pay Credit Card'),
       '#submit' => [[$this, 'payCard']],
-    );    
+    );
 
     return $form;
   }
@@ -286,18 +278,21 @@ class SimpleConregMemberPortal extends FormBase {
     $lead_mid = $this->getUserLeadMid($eid); // Get lead MID from .
     foreach ($form_values["table"] as $mid => $memberRow) {
       $upgrade = new SimpleConregUpgrade($eid, $mid, $memberRow["member_type"], $lead_mid);
-      $mgr->Add($upgrade);
-      $member = SimpleConregStorage::load(['mid' => $mid]);
-      $payment->add(new SimpleConregPaymentLine($mid,
-                                                'upgrade',
-                                                t("Upgrade for @first_name @last_name", array('@first_name' => $member['first_name'], '@last_name' => $member['last_name'])),
-                                                $upgrade->upgradePrice));
+      // Only save upgrade if price is not null.
+      if (isset($upgrade->upgradePrice)) {
+        $mgr->Add($upgrade);
+        $member = SimpleConregStorage::load(['mid' => $mid]);
+        $payment->add(new SimpleConregPaymentLine($mid,
+                                                  'upgrade',
+                                                  t("Upgrade for @first_name @last_name", array('@first_name' => $member['first_name'], '@last_name' => $member['last_name'])),
+                                                  $upgrade->upgradePrice));
+      }
     }
     $upgrade_price = $mgr->getTotalPrice();
     $lead_mid = $mgr->saveUpgrades();
     return $lead_mid;
   }
-
+  
   // Callback for "Pay by Card" button. Sets up members to be paid and transfers to Credit Card form.
   public function payCard(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
@@ -321,13 +316,47 @@ class SimpleConregMemberPortal extends FormBase {
           // Make first member lead member.
           if (empty($lead_mid))
             $lead_mid = $mid;
-          $payment_amount += $member['member_total'];
+          $payment_amount += $member['member_price'];
         }
       }
     }
-    // Loop again to update members.
-    foreach ($form_values['unpaid'] as $mid => $member) {
+
+    // Get the user email address.
+    $user = \Drupal::currentUser();
+    $email = $user->getEmail();
+
+    // Load all members for email address (paid and unpaid)...
+    $entries = SimpleConregStorage::adminMemberPortalListLoad($eid, $email);
+
+    foreach ($entries as $entry) {
+      $mid = $entry['mid'];
+      // Sanitize each entry.
+      $is_paid = $entry['is_paid'];
+      
+      // If member unpaid, add to payment.
+      if (!$is_paid) {
+        $payment->add(new SimpleConregPaymentLine($mid,
+                                                  'member',
+                                                  t("Member registration for @first_name @last_name", array('@first_name' => $entry['first_name'], '@last_name' => $entry['last_name'])),
+                                                  $entry['member_price']));
+        $payment_amount += $entry['member_price'];
+      }
+      
+      // Loop through unpaid upgrades for member, and add those to payment.
+      foreach (SimpleConregAddonStorage::loadAll(['mid' =>$mid, 'is_paid' => 0]) as $addon) {
+        $payment->add(new SimpleConregPaymentLine($mid,
+                                                 'addon',
+                                                 t("Add-on @add_on for @first_name @last_name",
+                                                    ['@add_on' => $addon['addon_name'],
+                                                    '@first_name' => $entry['first_name'],
+                                                    '@last_name' => $entry['last_name']]),
+                                                 $addon['addon_amount']));
+        // Update addon to set the payment ID.
+        SimpleConregAddonStorage::update(['addonid' => $addon['addonid'], 'payid' => $payment->getId()]);
+        $payment_amount += $addon['addon_amount'];
+      }
     }
+
     // Assuming there are members/upgrades to pay for, redirect to payment form.
     if ($payment_amount > 0 || $upgrade_price > 0) {
       // Get the Lead Member key...

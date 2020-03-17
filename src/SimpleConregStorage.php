@@ -386,7 +386,7 @@ class SimpleConregStorage {
   /*
    * Get member list for Member Portal listing.
    */
-  public static function adminMemberPortalListLoad($eid, $email, $is_paid) {
+  public static function adminMemberPortalListLoad($eid, $email, $is_paid = NULL) {
     $select = db_select('conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'mid');
@@ -399,6 +399,7 @@ class SimpleConregStorage {
     $select->addField('m', 'days');
     $select->addField('m', 'badge_type');
     $select->addField('m', 'comment');
+    $select->addField('m', 'member_price');
     $select->addField('m', 'is_paid');
     $select->addField('m', 'is_checked_in');
     $select->addExpression("concat(l.first_name, ' ', l.last_name)", 'registered_by');
@@ -409,7 +410,10 @@ class SimpleConregStorage {
       ->condition('m.email', $email, 'LIKE')
       ->condition('l.email', $email, 'LIKE');
     $select->condition($likes);
-    $select->condition('m.is_paid', $is_paid);
+    // If "is paid" specified, add it as a condition.
+    if (!is_null($is_paid)) {
+      $select->condition('m.is_paid', $is_paid);
+    }
     $select->condition("m.is_deleted", FALSE); //Only include members who aren't deleted.
     // Sort by specified field and direction.
     $select->orderby('m.mid', 'ASC');    

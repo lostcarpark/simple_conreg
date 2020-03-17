@@ -20,6 +20,6 @@
       // error, display the localized error message to your customer
       // using `result.error.message`.
     });
-  }, 3000);
+  }, 5000);
 
 })(jQuery);
