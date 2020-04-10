@@ -48,6 +48,7 @@ class SimpleConregPayment
       $line->save($this->payId);
     }
     
+    return $this->payId;
   }
   
   private function savePayment()
