@@ -733,7 +733,7 @@ function simple_conreg_schema() {
         'description' => 'Payment confirmation code from Stripe or other payment system.',
       ),
     ),
-    'primary key' => array('payid'),
+    'primary key' => array('addonid'),
   );
 
   return $schema;
