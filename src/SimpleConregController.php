@@ -66,7 +66,6 @@ class SimpleConregController extends ControllerBase {
     }
 
     $content = array();
-    $content['#markup'] = $this->t('Unpaid Members');
 
     $content['message'] = array(
       '#cache' => ['tags' => ['simple-conreg-member-list']],
