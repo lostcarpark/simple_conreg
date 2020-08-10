@@ -16,6 +16,9 @@
 
 .badge-name {
   position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   top: 3cm;
   left: 0.5cm;
   width: 8.2cm;
@@ -64,6 +67,14 @@
   }
 
   .highlighted {
+    display: none;
+  }
+
+  .breadcrumb {
+    display: none;
+  }
+
+  .page-title {
     display: none;
   }
 }

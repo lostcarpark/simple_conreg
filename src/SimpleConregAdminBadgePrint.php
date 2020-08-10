@@ -35,10 +35,19 @@ class SimpleConregAdminBadgePrint extends FormBase {
 
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
-    
-    $max_num_badges = 10;
-    if (isset($form_values['view']['max_num_badges']))
-      $max_num_badges = $form_values['view']['max_num_badges'];
+
+    if ($select_bydate = (isset($form_values['view']['by_date'])) ? $form_values['view']['by_date'] : 0) {
+      
+    }
+    if ($select_bymemberno = (isset($form_values['view']['by_member_no'])) ? $form_values['view']['by_member_no'] : 0) {
+      
+    }
+    if ($select_byname = (isset($form_values['view']['by_name'])) ? $form_values['view']['by_name'] : 0) {
+      
+    }
+    if ($select_max = (isset($form_values['view']['max_badges'])) ? $form_values['view']['max_badges'] : 1) {
+      $max_num_badges = (isset($form_values['view']['max']['max_num_badges']) ? $form_values['view']['max']['max_num_badges'] : 10);
+    }
 
     $form['#attached'] = [
       'library' => ['simple_conreg/conreg_badges'],
@@ -51,44 +60,85 @@ class SimpleConregAdminBadgePrint extends FormBase {
     $form['view']['by_date'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Select by date updated'),
+      '#default_value' => $select_bydate,
+      '#ajax' => array(
+        'wrapper' => 'badge-form',
+        'callback' => array($this, 'updateForm'),
+        'event' => 'change',
+      ),
     ];
-    $form['view']['date_from'] = [
-      '#type' => 'datetime',
-      '#title' => $this->t('From'),
-    ];
-    $form['view']['date_to'] = [
-      '#type' => 'datetime',
-      '#title' => $this->t('To'),
-    ];
+    
+    if ($select_bydate) {
+      $form['view']['date'] = [
+        '#type' => 'fieldset',
+        '#title' => $this->t('Choose dates'),
+      ];
+      $form['view']['date']['date_from'] = [
+        '#type' => 'datetime',
+        '#title' => $this->t('From'),
+      ];
+      $form['view']['date']['date_to'] = [
+        '#type' => 'datetime',
+        '#title' => $this->t('To'),
+      ];
+    }
 
     $form['view']['by_member_no'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Select by member number'),
+      '#default_value' => $select_bymemberno,
+      '#ajax' => array(
+        'wrapper' => 'badge-form',
+        'callback' => array($this, 'updateForm'),
+        'event' => 'change',
+      ),
     ];
-    $form['view']['member_no_from'] = [
-      '#type' => 'number',
-      '#title' => $this->t('From'),
-    ];
-    $form['view']['member_no_to'] = [
-      '#type' => 'number',
-      '#title' => $this->t('To'),
-    ];
+    if ($by_member_no) {
+      $form['view']['number'] = [
+        '#type' => 'fieldset',
+        '#title' => $this->t('Choose member numbers'),
+      ];
+      $form['view']['number']['member_no_from'] = [
+        '#type' => 'number',
+        '#title' => $this->t('From'),
+      ];
+      $form['view']['number']['member_no_to'] = [
+        '#type' => 'number',
+        '#title' => $this->t('To'),
+      ];
+    }
 
     $form['view']['by_name'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Select by name'),
     ];
+    if ($select_byname) {
+      $form['view']['name'] = [
+        '#type' => 'fieldset',
+        '#title' => $this->t('Find members containing text'),
+      ];
+      $form['view']['name']['search'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t('Search text'),
+      ];
+    }
 
     $form['view']['max_badges'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Limit maximum number of badges'),
       '#default_value' => TRUE,
     ];
-    $form['view']['max_num_badges'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Limit number of badges printed to'),
-      '#default_value' => $max_num_badges,
-    ];
+    if ($select_max) {
+      $form['view']['max'] = [
+        '#type' => 'fieldset',
+        '#title' => $this->t('Maximum number of badges to print'),
+      ];
+      $form['view']['max']['max_num_badges'] = [
+        '#type' => 'number',
+        '#title' => $this->t('Limit number of badges printed to'),
+        '#default_value' => $max_num_badges,
+      ];
+    }
 
     $form['view']['update'] = [
       '#type' => 'button',
@@ -124,15 +174,25 @@ class SimpleConregAdminBadgePrint extends FormBase {
     return $form;
   }
 
+  // Callback function for "number of members" drop down.
+  public function updateForm(array $form, FormStateInterface $form_state)
+  {
+    // Form rebuilt with required number of members before callback. Return new form.
+    return $form;
+  }
+  
+  
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
+  public function validateForm(array &$form, FormStateInterface $form_state)
+  {
   }
   
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state)
+  {
   }
 }
