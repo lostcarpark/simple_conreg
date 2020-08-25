@@ -49,12 +49,15 @@ class SimpleConregAdminMemberOptions extends FormBase {
     $groupList = SimpleConregFieldOptions::getFieldOptionGroupedList($eid, $config);
 
     $user = \Drupal::currentUser();
+    $groupTitles = [];
+    $optionTitles = [];
     foreach ($groupList as $val) {
       if (empty($val['optid'])) {
         // optid not set, so entry is group heading.
         $groupAdded = FALSE;
         $grpid = $val['grpid'];
         $groupTitle = $val['group_title'];
+        $groupTitles[$grpid] = $groupTitle;
       } else {
         // Entry is option.
         if ($user->hasPermission('view field option ' . $val['optid'] . ' event ' . $eid)) {
@@ -64,6 +67,7 @@ class SimpleConregAdminMemberOptions extends FormBase {
             $groupAdded = TRUE;
           }
           $options[$grpid."_".$val['optid']] = " - ".$val['option_title'];
+          $optionTitles[$val['optid']] = $val['option_title'];
         }
       }
     }
@@ -81,41 +85,58 @@ class SimpleConregAdminMemberOptions extends FormBase {
       $selection = key($options); // If still no display specified, or invalid option, default to first key in displayOptions.
     list($selGroup, $selOption) = explode('_', $selection);
 
-    $tempstore->set('adminMemberSelectedOption', $selOption);
+    $tempstore->set('adminMemberSelectedOption', $selection);
 
     $form = array(
       '#prefix' => '<div id="memberform">',
       '#suffix' => '</div>',
     );
 
-    $form['selOption'] = array(
+    $form['selOption'] = [
       '#type' => 'select',
       '#title' => $this->t('Select member option'),
       '#options' => $options,
-      '#default_value' => $selOption,
+      '#default_value' => $selection,
       '#required' => TRUE,
-      '#ajax' => array(
+      '#ajax' => [
         'wrapper' => 'memberform',
         'callback' => array($this, 'updateDisplayCallback'),
         'event' => 'change',
-      ),
-    );
+      ],
+    ];
+    
+    $hideEmail = ( isset($form_values['hideEmail']) ? $form_values['hideEmail'] : FALSE );
+
+    $form['hideEmail'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Hide email address'),
+      '#default_value' => FALSE,
+      '#ajax' => [
+        'wrapper' => 'memberform',
+        'callback' => array($this, 'updateDisplayCallback'),
+        'event' => 'change',
+      ],
+    ];
 
     $headers = array(
       'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
       'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
-      'email' => ['data' => t('Email'), 'field' => 'm.email'],
     );
+
+    if (!$hideEmail)
+      $headers['email'] = ['data' => t('Email'), 'field' => 'm.email'];
 
     // Check if single option selected.
     $displayOpts = [];
     $optionTotals = [];
     if (!empty($selOption)) {
-      $headers['option_'.$selOption] = ['data' => $options[$selGroup.'_'.$selOption], 'field' => 'option_'.$selOption];
+      // Specific option selected.
+      $headers['option_'.$selOption] = ['data' => $optionTitles[$selOption], 'field' => 'option_'.$selOption];
       $displayOpts[] = $selOption;
       $optionTotals[$selOption] = 0;
     }
     else if (!empty($selGroup)) {
+      // Group heading selected.
       $selOption = [];
       foreach($groupList as $groupOption) {
         if ($groupOption['grpid'] == $selGroup && !empty($groupOption['optid']) && $user->hasPermission('view field option ' . $groupOption['optid'] . ' event ' . $eid)) {
@@ -159,9 +180,11 @@ class SimpleConregAdminMemberOptions extends FormBase {
         $row['last_name'] = array(
           '#markup' => SafeMarkup::checkPlain($entry['last_name']),
         );
-        $row['email'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['email']),
-        );
+        if (!$hideEmail) {
+          $row['email'] = array(
+            '#markup' => SafeMarkup::checkPlain($entry['email']),
+          );
+        }
         $rowTotal = 0;
         foreach ($displayOpts as $display) {
           if (isset($entry['option_' . $display])) {
@@ -182,11 +205,14 @@ class SimpleConregAdminMemberOptions extends FormBase {
         $totalRows ++;
       }
     }
+    
+    // Populate final row of table with totals.
     $totalRow = [
       'first_name' => ['#markup' => $this->t('Total')],
       'last_name' => ['#markup' => ''],
-      'email' => ['#markup' => ''],
     ];
+    if (!$hideEmail)
+      $totalRow['email'] = ['#markup' => ''];
     foreach ($displayOpts as $display)
       $totalRow['option_'.$display] = ['#markup' => $optionTotals[$display]];
     $totalRow['total'] = ['#markup' => $totalRows];
