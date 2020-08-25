@@ -105,11 +105,11 @@ class SimpleConregAdminMemberOptions extends FormBase {
       ],
     ];
     
-    $hideEmail = ( isset($form_values['hideEmail']) ? $form_values['hideEmail'] : FALSE );
+    $showEmail = ( isset($form_values['showEmail']) ? $form_values['showEmail'] : FALSE );
 
-    $form['hideEmail'] = [
+    $form['showEmail'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Hide email address'),
+      '#title' => $this->t('Show email address'),
       '#default_value' => FALSE,
       '#ajax' => [
         'wrapper' => 'memberform',
@@ -123,7 +123,7 @@ class SimpleConregAdminMemberOptions extends FormBase {
       'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
     );
 
-    if (!$hideEmail)
+    if ($showEmail)
       $headers['email'] = ['data' => t('Email'), 'field' => 'm.email'];
 
     // Check if single option selected.
@@ -180,7 +180,7 @@ class SimpleConregAdminMemberOptions extends FormBase {
         $row['last_name'] = array(
           '#markup' => SafeMarkup::checkPlain($entry['last_name']),
         );
-        if (!$hideEmail) {
+        if ($showEmail) {
           $row['email'] = array(
             '#markup' => SafeMarkup::checkPlain($entry['email']),
           );
@@ -211,7 +211,7 @@ class SimpleConregAdminMemberOptions extends FormBase {
       'first_name' => ['#markup' => $this->t('Total')],
       'last_name' => ['#markup' => ''],
     ];
-    if (!$hideEmail)
+    if ($showEmail)
       $totalRow['email'] = ['#markup' => ''];
     foreach ($displayOpts as $display)
       $totalRow['option_'.$display] = ['#markup' => $optionTotals[$display]];
