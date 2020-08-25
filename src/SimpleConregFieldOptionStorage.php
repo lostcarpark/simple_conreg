@@ -64,15 +64,27 @@ class SimpleConregFieldOptionStorage {
     $select = db_select('conreg_members', 'm');
     $select->join('conreg_member_options', 'o', 'm.mid=o.mid');
     // Select these specific fields for the output.
+    $select->addField('m', 'mid');
     $select->addField('m', 'first_name');
     $select->addField('m', 'last_name');
     $select->addField('m', 'email');
+    $select->addField('o', 'optid');
     $select->addField('o', 'is_selected');
     $select->addField('o', 'option_detail');
     $select->condition('m.eid', $eid);
-    $select->condition('o.optid', $optid);
+    if (is_array($optid)) {
+      $or_group = $select->orConditionGroup();
+      foreach ($optid as $curOpt)
+        $or_group->condition('o.optid', $curOpt);
+      $select->condition($or_group);
+    }
+    else {
+      $select->condition('o.optid', $optid);
+    }
     $select->condition("is_paid", TRUE); //Only include members have paid.
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+    $select->orderby('m.mid', 'ASC');    
+    $select->orderby('o.optid', 'ASC');    
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 

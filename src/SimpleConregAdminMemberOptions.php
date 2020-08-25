@@ -46,25 +46,40 @@ class SimpleConregAdminMemberOptions extends FormBase {
     $displayOptions = SimpleConregOptions::display();
     $pageSize = $config->get('display.page_size');
 
-    $optionList = SimpleConregFieldOptions::getFieldOptionList($eid, $config);
-    $options = [];
+    $groupList = SimpleConregFieldOptions::getFieldOptionGroupedList($eid, $config);
+
     $user = \Drupal::currentUser();
-    foreach ($optionList as $val) {
-      if ($user->hasPermission('view field option ' . $val['optid'] . ' event ' . $eid)) {
-        $options[$val['optid']] = $val['option_title'];
+    foreach ($groupList as $val) {
+      if (empty($val['optid'])) {
+        // optid not set, so entry is group heading.
+        $groupAdded = FALSE;
+        $grpid = $val['grpid'];
+        $groupTitle = $val['group_title'];
+      } else {
+        // Entry is option.
+        if ($user->hasPermission('view field option ' . $val['optid'] . ' event ' . $eid)) {
+          // Only display if user has permission to see option.
+          if (!$groupAdded) {
+            $options[$grpid] = $groupTitle;
+            $groupAdded = TRUE;
+          }
+          $options[$grpid."_".$val['optid']] = " - ".$val['option_title'];
+        }
       }
     }
+
 
     $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
     // If form values submitted, use the display value that was submitted over the passed in values.
     if (isset($form_values['selOption']))
-      $selOption = $form_values['selOption'];
-    elseif (empty($selOption)) {
+      $selection = $form_values['selOption'];
+    elseif (empty($selection)) {
       // If display not submitted from form or passed in through URL, take last value from session.
-      $selOption = $tempstore->get('adminMemberSelectedOption');
+      $selection = $tempstore->get('adminMemberSelectedOption');
     }
-    if (empty($selOption) || !array_key_exists($selOption, $options))
-      $selOption = key($options); // If still no display specified, or invalid option, default to first key in displayOptions.
+    if (empty($selection) || !array_key_exists($selection, $options))
+      $selection = key($options); // If still no display specified, or invalid option, default to first key in displayOptions.
+    list($selGroup, $selOption) = explode('_', $selection);
 
     $tempstore->set('adminMemberSelectedOption', $selOption);
 
@@ -90,9 +105,29 @@ class SimpleConregAdminMemberOptions extends FormBase {
       'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
       'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
       'email' => ['data' => t('Email'), 'field' => 'm.email'],
-      'is_selected' => ['data' => t('Selected?'), 'field' => 'm.is_selected'],
-      'option_detail' => ['data' => t('Detail'), 'field' => 'm.option_detail'],
     );
+
+    // Check if single option selected.
+    $displayOpts = [];
+    $optionTotals = [];
+    if (!empty($selOption)) {
+      $headers['option_'.$selOption] = ['data' => $options[$selGroup.'_'.$selOption], 'field' => 'option_'.$selOption];
+      $displayOpts[] = $selOption;
+      $optionTotals[$selOption] = 0;
+    }
+    else if (!empty($selGroup)) {
+      $selOption = [];
+      foreach($groupList as $groupOption) {
+        if ($groupOption['grpid'] == $selGroup && !empty($groupOption['optid']) && $user->hasPermission('view field option ' . $groupOption['optid'] . ' event ' . $eid)) {
+          $selOption[] = $groupOption['optid'];
+          $displayOpts[] = $groupOption['optid'];
+          $headers['option_'.$groupOption['optid']] = ['data' => $groupOption['option_title'], 'field' => 'option_'.$groupOption['optid']];
+          $optionTotals[$groupOption['optid']] = 0;
+        }
+      }
+    }
+    
+    $headers['total'] = ['data' => 'Total', 'field' => 'total'];
 
     $form['table'] = array(
       '#type' => 'table',
@@ -103,9 +138,20 @@ class SimpleConregAdminMemberOptions extends FormBase {
     );      
 
     if (!empty($selOption)) {
+      // Fetch all entries for selected option or group.
       $entries = SimpleConregFieldOptionStorage::adminOptionMemberListLoad($eid, $selOption);
-
+      // Reorganise to put all entries for a member in the same row.
+      $optRows = [];
       foreach ($entries as $entry) {
+        if (!isset($optRows[$entry['mid']]))
+          $optRows[$entry['mid']] = ['mid' => $entry['mid'], 'first_name' => $entry['first_name'], 'last_name' => $entry['last_name'], 'email' => $entry['email']];
+        $optRows[$entry['mid']]['option_'.$entry['optid']] = ($entry['is_selected'] ? '✓ ' . $entry['option_detail'] : '');
+      }
+      // Track the total number of members in the category.
+      $totalRows = 0;
+      
+      // Now loop through the combined results.
+      foreach ($optRows as $entry) {
         $row = array();
         $row['first_name'] = array(
           '#markup' => SafeMarkup::checkPlain($entry['first_name']),
@@ -116,15 +162,35 @@ class SimpleConregAdminMemberOptions extends FormBase {
         $row['email'] = array(
           '#markup' => SafeMarkup::checkPlain($entry['email']),
         );
-        $row['is_selected'] = array(
-          '#markup' => $entry['is_selected'] ? $this->t('Yes') : $this->t('No'),
-        );
-        $row['option_detail'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['option_detail']),
-        );
+        $rowTotal = 0;
+        foreach ($displayOpts as $display) {
+          if (isset($entry['option_' . $display])) {
+            $val = $entry['option_' . $display];
+            $rowTotal++;
+            $optionTotals[$display]++;
+          }
+          else
+            $val = '';
+          $row['option_'.$display] = array(
+            '#markup' => SafeMarkup::checkPlain($val),
+          );
+        }
+        $row['total'] = [
+          '#markup' => $rowTotal,
+        ];
         $form['table'][] = $row;
+        $totalRows ++;
       }
     }
+    $totalRow = [
+      'first_name' => ['#markup' => $this->t('Total')],
+      'last_name' => ['#markup' => ''],
+      'email' => ['#markup' => ''],
+    ];
+    foreach ($displayOpts as $display)
+      $totalRow['option_'.$display] = ['#markup' => $optionTotals[$display]];
+    $totalRow['total'] = ['#markup' => $totalRows];
+    $form['table'][] = $totalRow;
     
     return $form;
   }

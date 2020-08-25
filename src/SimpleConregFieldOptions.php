@@ -241,10 +241,10 @@ class SimpleConregFieldOptions {
   }
 
   /**
-   * Get permissions for ConReg field options for event.
+   * Get a list of all Options
    *
    * @return array
-   *   Permissions array.
+   *   Options array.
    */
   public function getFieldOptionList($eid, $config=NULL)
   {
@@ -257,6 +257,27 @@ class SimpleConregFieldOptions {
     }
     return $fieldOptions;
   }
+  
+  /**
+   * Get a list of all Options
+   *
+   * @return array
+   *   Options array.
+   */
+  public function getFieldOptionGroupedList($eid, $config=NULL)
+  {
+    $options = self::parseFieldOptions($eid, $config);
+
+    // Initialise results array.
+    $fieldOptions = [];
+    foreach ($options['groups'] as $grpid => $group) {
+      $fieldOptions[] = ['grpid' => $grpid, 'group_title' => $group['title']];
+      foreach ($group['options'] as $optid => $option) {
+        $fieldOptions[] = ['grpid' => $grpid, 'optid' => $optid, 'option_title' => $option['title']];
+      }
+    }
+    return $fieldOptions;
+  }  
 
   /**
    * Get permissions for ConReg field options.
