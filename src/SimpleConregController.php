@@ -10,7 +10,9 @@ namespace Drupal\simple_conreg;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\user\Entity\User;
+use Drupal\Core\Datetime\DateHelper;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+
 
 /**
  * Controller for Simple Convention Registration.
@@ -326,6 +328,77 @@ class SimpleConregController extends ControllerBase {
   }
 
   /**
+   * Add a summary by member type and amount paid to render array.
+   */
+  public function memberAdminMemberListAmountPaidByTypeSummary($eid, &$content) {
+    $types = SimpleConregOptions::memberTypes($eid);
+    $rows = array();
+    $headers = array(
+      t('Member Type'), 
+      t('Amount Paid'), 
+      t('Number of members'), 
+      t('Total Paid'),
+    );
+    $total = 0;
+    $totalAmount = 0;
+    foreach ($entries = SimpleConregStorage::adminMemberAmountPaidByTypeSummaryLoad($eid) as $entry) {
+      // Replace type code with description.
+      if (isset($types->types[$entry['member_type']]))
+        $entry['member_type'] = (isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type']);
+      // Calculate total received at that rate.
+      $entry['total_paid'] = $entry['member_price'] * $entry['num'];
+      // Sanitize each entry.
+      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $total += $entry['num'];
+      $totalAmount += $entry['total_paid'];
+    }
+    //Add a row for the total.
+    $rows[] = array(t("Total"), "", $total, $totalAmount);
+    $content['type_amount_paid_summary'] = array(
+      '#type' => 'table',
+      '#header' => $headers,
+      '#rows' => $rows,
+      '#empty' => t('No entries available.'),
+    );
+
+    return $content;
+  }
+  
+  /**
+   * Add a summary by member type and amount paid to render array.
+   */
+  public function memberAdminMemberListByDateSummary($eid, &$content) {
+    $months = DateHelper::monthNames();
+    $rows = array();
+    $headers = array(
+      t('Year'), 
+      t('Month'), 
+      t('Number of members'), 
+      t('Total Paid'),
+    );
+    $total = 0;
+    $totalAmount = 0;
+    foreach ($entries = SimpleConregStorage::adminMemberByDateSummaryLoad($eid) as $entry) {
+      // Convert month to name.
+      $entry['month'] = $months[$entry['month']];
+      // Sanitize each entry.
+      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $total += $entry['num'];
+      $totalAmount += $entry['total_paid'];
+    }
+    //Add a row for the total.
+    $rows[] = array(t("Total"), "", $total, $totalAmount);
+    $content['by_date_summary'] = array(
+      '#type' => 'table',
+      '#header' => $headers,
+      '#rows' => $rows,
+      '#empty' => t('No entries available.'),
+    );
+
+    return $content;
+  }
+
+  /**
    * Render a list of paid convention members in the database.
    */
   public function memberAdminMemberList($eid) {
@@ -485,6 +558,20 @@ class SimpleConregController extends ControllerBase {
       '#suffix' => '</h3>',
     );
     $this->memberAdminMemberListAmountPaidSummary($eid, $content);
+
+    $content['message_type_amount_paid'] = array(
+      '#markup' => $this->t('Summary by member type and amount paid'),
+      '#prefix' => '<h3>',
+      '#suffix' => '</h3>',
+    );
+    $this->memberAdminMemberListAmountPaidByTypeSummary($eid, $content);
+
+    $content['message_by_date'] = array(
+      '#markup' => $this->t('Summary by date joined'),
+      '#prefix' => '<h3>',
+      '#suffix' => '</h3>',
+    );
+    $this->memberAdminMemberListByDateSummary($eid, $content);
 
     // Don't cache this page.
     $content['#cache']['max-age'] = 0;

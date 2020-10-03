@@ -602,6 +602,41 @@ class SimpleConregStorage {
     return $entries;
   }
 
+  public static function adminMemberAmountPaidByTypeSummaryLoad($eid) {
+    $select = db_select('conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'member_type');
+    $select->addField('m', 'member_price');
+    $select->addExpression('COUNT(m.mid)', 'num');
+    $select->condition('m.eid', $eid);
+    $select->condition('m.is_paid', 1);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+    $select->groupby('m.member_type');
+    $select->groupby('m.member_price');
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
+  public static function adminMemberByDateSummaryLoad($eid) {
+    $select = db_select('conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addExpression('year(from_unixtime(m.join_date))', 'year');
+    $select->addExpression('month(from_unixtime(m.join_date))', 'month');
+    $select->addExpression('COUNT(1)', 'num');
+    $select->addExpression('SUM(m.member_price)', 'total_paid');
+    $select->condition('m.eid', $eid);
+    $select->condition('m.is_paid', 1);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+    $select->groupby('year');
+    $select->groupby('month');
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
   public static function adminMemberCheckInSummaryLoad($eid) {
     $select = db_select('conreg_members', 'm');
     // Select these specific fields for the output.
