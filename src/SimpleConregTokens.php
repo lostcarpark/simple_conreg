@@ -5,9 +5,9 @@
  * Contains \Drupal\simple_conreg\SimpleConregTokens
  */
 
-use Drupal\devel;
-
 namespace Drupal\simple_conreg;
+
+use Drupal\devel;
 
 class SimpleConregTokens {
 

@@ -5,12 +5,12 @@
  * Contains \Drupal\simple_conreg\SimpleConregEmailer
  */
 
+namespace Drupal\simple_conreg;
+
 use Drupal\devel;
 use Drupal\Core\Render\Markup;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Component\Render\PlainTextOutput;
-
-namespace Drupal\simple_conreg;
 
 class SimpleConregEmailer {
 
@@ -48,7 +48,12 @@ class SimpleConregEmailer {
       if ($config->get('confirmation.format_html')) {
         // Set up HTML email (todo: add plain text option).
         $message['headers']['Content-Type'] = 'text/html; charset=UTF-8';
-        $message['body'][] = \Drupal\Core\Render\Markup::create($body);
+        // Split body into an array.
+        $body = explode('\n', $body);
+        $message['body'] = array_map(function ($body) {
+          return Markup::create($body);
+        }, $body);
+        //$message['body'][] = \Drupal\Core\Render\Markup::create($body);
         //$message['body'][] = check_markup($body, $format);  // HTML version of message body.
         $message['plain'] = \Drupal\Component\Utility\SafeMarkup::checkPlain($tokens->applyTokens($params['body'], TRUE));  // Plain text version of body.
       } else {
@@ -63,6 +68,7 @@ class SimpleConregEmailer {
         $message['from'] = $params['from'];
         $message['headers']['From'] = $params['from'];
       }
+//dpm($message);
     }
   }
 

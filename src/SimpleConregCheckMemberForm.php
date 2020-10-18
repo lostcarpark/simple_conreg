@@ -116,14 +116,17 @@ class SimpleConregCheckMemberForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
+  public function validateForm(array &$form, FormStateInterface $form_state)
+  {
     $eid = $form_state->get('eid');
   }
 
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state)
+  {
+
     $eid = $form_state->get('eid');
     $config = SimpleConregConfig::getConfig($eid);
     $form_values = $form_state->getValues();
@@ -143,13 +146,13 @@ class SimpleConregCheckMemberForm extends FormBase {
       }
       $params['mid'] = $mids;
       $params['body'] = $config->get('member_check.confirm_body');
-      $params['format'] = $config->get('member_check.confirm_format');
+      $params['body_format'] = $config->get('member_check.confirm_format');
       
       $info = 'Member details found and sent to @email.';
     }
     else {
       $params['body'] = $config->get('member_check.unknown_body');
-      $params['format'] = $config->get('member_check.unknown_format');
+      $params['body_format'] = $config->get('member_check.unknown_format');
       
       $info = 'Member details not found for @email.';
     }

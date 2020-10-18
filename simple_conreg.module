@@ -17,7 +17,8 @@ use Drupal\simple_conreg\SimpleConregOptions;
 use Drupal\simple_conreg\SimpleConregEmailer;
 use Drupal\simple_conreg\SimpleConregConfig;
 
-function simple_conreg_help($route_name, RouteMatchInterface $route_match) {
+function simple_conreg_help($route_name, RouteMatchInterface $route_match)
+{
   switch ($route_name) {
     //case 'simple_conreg_register':
       // Help text for the simple page registered for this path.
@@ -29,18 +30,9 @@ function simple_conreg_help($route_name, RouteMatchInterface $route_match) {
   }
 }
 
-function simple_conreg_mail($key, &$message, $params) {
-  $eid = $params['eid'];
 
-  $event = SimpleConregEventStorage::load(['eid' => $eid]);
-
-  $config = \Drupal::config('simple_conreg.settings.'.$eid);
-  $symbol = $config->get('payments.symbol');
-
-  // Get language message to be sent in.
-  $options = array(
-    'langcode' => $message['langcode'],
-  );
+function simple_conreg_mail($key, &$message, $params)
+{
 
   switch ($key) {
     // Use template handler.
@@ -48,10 +40,11 @@ function simple_conreg_mail($key, &$message, $params) {
       SimpleConregEmailer::createEmail($message, $params);
       break;
   }
-
 }
 
-function simple_conreg_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+
+function simple_conreg_form_alter(&$form, FormStateInterface $form_state, $form_id)
+{
 
   switch ($form_id) {
     case "simplenews_newsletter_edit_form":
