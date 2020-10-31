@@ -80,7 +80,7 @@ class SimpleConregMemberEdit extends FormBase {
     $owner = SimpleConregStorage::load(['eid' => $eid, 'email' => $email, 'mid' => $lead_mid, 'is_paid' => 1]);
     // If couldn't find member with matching Lead MID, check on MID, as editor may not be group leader.
     if (!is_array($owner))
-      $owner = SimpleConregStorage::load(['eid' => $eid, 'email' => $email, 'mid' => $lead_mid, 'is_paid' => 1]);
+      $owner = SimpleConregStorage::load(['eid' => $eid, 'email' => $email, 'mid' => $mid, 'is_paid' => 1]);
     if (!is_array($owner)) {
       // Member not in database. Display error.
       $form['error'] = array(
