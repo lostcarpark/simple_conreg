@@ -215,7 +215,7 @@ class SimpleConregCheckoutForm extends FormBase {
     $params = ['eid' => $member['eid'], 'mid' => $member['mid']];
     $params['subject'] = $config->get('confirmation.template_subject');
     $params['body'] = $config->get('confirmation.template_body');
-    $params['format'] = $config->get('confirmation.template_format');
+    $params['body_format'] = $config->get('confirmation.template_format');
     $module = "simple_conreg";
     $key = "template";
     $to = $member["email"];

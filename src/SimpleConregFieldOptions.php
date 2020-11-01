@@ -97,7 +97,7 @@ class SimpleConregFieldOptions {
     $options = self::parseFieldOptions($eid, $config);
 
     // Get member's options from database.
-    $entries = SimpleConregFieldOptionStorage::getMemberOptions($eid, $mid);
+    $entries = SimpleConregFieldOptionStorage::getMemberOptions($mid);
 
     $memberOptions = []; // Initialise return array.
     // Loop through option groups.
@@ -105,12 +105,12 @@ class SimpleConregFieldOptions {
       // Loop through options within group.
       foreach ($optionGroup['options'] as $optid => $option) {
         // Check if option selected by member.
-        if (isset($entries[$optid])) {
+        if (array_key_exists($optid, $entries)) {
           $fieldName = $optionGroup['field']; // Get field to attach option to.
           $memberOptions[$fieldName]['title'] = $optionGroup['title']; // Get title from option group.
           $memberOptions[$fieldName]['options'][$optid]['option_title'] = $option['title']; // Get option title.
           $memberOptions[$fieldName]['options'][$optid]['detail_title'] = $option['detail'];
-          $memberOptions[$fieldName]['options'][$optid]['option_detail'] = $entries[$optid]; // Get member's detail from database result.
+          $memberOptions[$fieldName]['options'][$optid]['option_detail'] = $entries[$optid]['option_detail']; // Get member's detail from database result.
         }
       }
     }
@@ -119,11 +119,22 @@ class SimpleConregFieldOptions {
   }
   
   /**
+   * Fetch field options selected by member.
+   *
+   * Parameters: Event ID, Config, member ID.
+   */
+  public static function getMemberOptionValues($mid, $selected = TRUE)
+  {
+    // Get member's options from database.
+    return SimpleConregFieldOptionStorage::getMemberOptions($mid, $selected);
+  }
+  
+  /**
    * Add field options to member form.
    *
    * Parameters: Event ID, Fieldset, Form to add to.
    */
-  public static function addOptionFields($eid, $fieldset, &$memberForm, &$memberVals, &$optionCallbacks, $callback, $memberNo = NULL)
+  public static function addOptionFields($eid, $fieldset, &$memberForm, &$memberVals, &$optionCallbacks, $callback, $memberNo = NULL, $member = NULL)
   {
     // Read the option field from the database.
     $fieldOptions = self::getFieldOptions($eid, NULL, $fieldset);
@@ -157,11 +168,14 @@ class SimpleConregFieldOptions {
         // Put the original element under the container we added.
         $memberForm[$key][$key] = $field;
         // Store the details in a keyed array for Ajax callbacks.
-        $callbackKey = "members[member$memberNo][$key][$key]";
+        if (isset($memberNo))
+          $callbackKey = "members[member$memberNo][$key][$key]";
+        else
+          $callbackKey = "member[$key][$key]";
         $optionCallbacks[$callbackKey] = ['group', $memberNo, $key];
       }
       // If linked field is not a checkbox, or it is and it's been checked, display the options as checkboxes.
-      if (!isset($field) || $field['#type'] != 'checkbox' || $memberVals[$key][$key]) {
+      if (!isset($field) || $field['#type'] != 'checkbox' || $memberVals[$key][$key] || (!isset($memberVals[$key][$key]) && isset($member) && $member[$key])) {
         $memberForm[$key]['options'] = [
           '#type' => 'fieldset',
           '#title' => t($fieldOptions[$key]['title']),
@@ -175,6 +189,9 @@ class SimpleConregFieldOptions {
             '#type' => 'checkbox',
             '#title' => $optionDetails['option'],
           ];
+          // Check if saved value.
+          if (array_key_exists($optid, $member['options']))
+            $memberForm[$key]['options'][$optid]['#default_value'] = TRUE;
           // Check if option can have detail.
           if (isset($optionDetails['detail']) && !empty($optionDetails['detail'])) {
             // Add Ajax property to field to display option when selected.
@@ -189,17 +206,22 @@ class SimpleConregFieldOptions {
               '#suffix' => '</div>',
             ];
             // If option selected, put detail in placeholder.
-            if ($memberVals[$key]['options'][$optid]) {
+            if ($memberVals[$key]['options'][$optid] || (!isset($memberVals[$key]['options'][$optid]) && isset($member['options'][$optid]))) {
               $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid] = [
                 '#type' => 'textfield',
                 '#title' => $optionDetails['detail'],
               ];
+              if (array_key_exists($optid, $member['options']))
+                $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid]['#default_value'] = $member['options'][$optid]['option_detail'];
               if ($optionDetails['required']) {
                 $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid]['#required'] = TRUE;
               }
             }
           }
-          $callbackKey = "members[member$memberNo][$key][options][$optid]";
+          if (isset($memberNo))
+            $callbackKey = "members[member$memberNo][$key][options][$optid]";
+          else
+            $callbackKey = "member[$key][options][$optid]";
           $optionCallbacks[$callbackKey] = ['detail', $memberNo, $key, $optid];
         }
       }
@@ -236,8 +258,19 @@ class SimpleConregFieldOptions {
    *
    * Parameters: Member ID, array of option fields.
    */
-  public static function insertOptionFields($mid, $options) {
+  public static function insertOptionFields($mid, $options)
+  {
     SimpleConregFieldOptionStorage::insertMemberOptions($mid, $options);
+  }
+
+  /**
+   * Save field options from previously saved member form.
+   *
+   * Parameters: Member ID, array of option fields.
+   */
+  public static function updateOptionFields($mid, $options)
+  {
+    SimpleConregFieldOptionStorage::updateMemberOptions($mid, $options);
   }
 
   /**

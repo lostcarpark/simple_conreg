@@ -73,6 +73,9 @@ class SimpleConregAdminMemberEdit extends FormBase {
       $member = ['join_date' => \Drupal::time()->getCurrentTime()];
     }
 
+    // Add member options to member array.
+    $member['options'] = SimpleConregFieldOptions::getMemberOptionValues($mid);
+
     $form = array(
       '#tree' => TRUE,
       '#prefix' => '<div id="regform">',
@@ -295,6 +298,11 @@ class SimpleConregAdminMemberEdit extends FormBase {
       );
     }
 
+    $optionCallbacks = [];
+    $callback = [$this, 'updateMemberOptionFields'];
+    $fieldset = isset($types->types[$member['member_type']]->fieldset) ? $types->types[$member['member_type']]->fieldset : 0;
+    SimpleConregFieldOptions::addOptionFields($eid, $fieldset, $form['member'], $form_values['member'], $optionCallbacks, $callback, NULL, $member);
+
     $form['member']['is_paid'] = array(
       '#type' => 'checkbox',
       '#title' => $this->t('Paid'),
@@ -354,9 +362,28 @@ class SimpleConregAdminMemberEdit extends FormBase {
     );
 
     $form_state->set('mid', $mid);
+    $form_state->set('fieldset', $fieldset);
+    $form_state->set('option_callbacks', $optionCallbacks);
     return $form;
   }
-  
+
+  // Callback function for option fields - add/remove detail field.
+  public function updateMemberOptionFields(array $form, FormStateInterface $form_state)
+  {
+    // Get the triggering element.    
+    $trigger = $form_state->getTriggeringElement()['#name'];
+    // Get array of items to return, keyed by trigering element.
+    $optionCallbacks = $form_state->get('option_callbacks');
+    $callback = $optionCallbacks[$trigger];
+    // Build the index of the element to return.
+    switch ($callback[0]) {
+      case 'group':
+        return $form['member'][$callback[2]];
+      case 'detail':
+        return $form['member'][$callback[2]]['options']['container_'.$callback[3]];
+    }
+  }
+
   /*
    * Submit handler for cancel button.
    */
@@ -378,6 +405,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
     $mid = $form_state->get('mid');
+    $fieldset = $form_state->get('fieldset');
 
     $config = $this->config('simple_conreg.settings.'.$eid);
     $form_values = $form_state->getValues();
@@ -410,6 +438,10 @@ class SimpleConregAdminMemberEdit extends FormBase {
       // No member number for unapproved members.
       $member_no = 0;
     }
+
+    // Process option fields to remove any modifications from form values.
+    $optionVals = [];
+    SimpleConregFieldOptions::procesOptionFields($eid, $fieldset, $form_values['member'], $optionVals);
 
     // Save the submitted entry.
     $entry = array(
@@ -490,6 +522,10 @@ class SimpleConregAdminMemberEdit extends FormBase {
       $update = array('mid' => $lead_mid, 'lead_mid' => $lead_mid);
       $return = SimpleConregStorage::update($update);
     }
+
+    // Update member field options.
+    SimpleConregFieldOptions::updateOptionFields($mid, $optionVals);
+
     if ($return) {
 
       // Check Simplenews module loaded.

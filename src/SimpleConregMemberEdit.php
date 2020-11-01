@@ -38,12 +38,14 @@ class SimpleConregMemberEdit extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $mid = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $mid = NULL)
+  {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
 
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
+//dpm($form_values, "Form values");
     $memberPrices = array();
 
     // Get event configuration from config.
@@ -71,6 +73,9 @@ class SimpleConregMemberEdit extends FormBase {
       return $form;
     }
     $lead_mid = $member['lead_mid'];
+
+    // Add member options to member array.
+    $member['options'] = SimpleConregFieldOptions::getMemberOptionValues($mid);
 
     // Check out who is editing.
     $user = \Drupal::currentUser();
@@ -155,7 +160,7 @@ class SimpleConregMemberEdit extends FormBase {
       '#default_value' => $member['badge_name'],
       '#required' => TRUE,
       '#attributes' => array(
-        'id' => "edit-members-member$cnt-badge-name",
+        'id' => "edit-members-badge-name",
         'class' => array('edit-members-badge-name')),
     );
 
@@ -254,6 +259,13 @@ class SimpleConregMemberEdit extends FormBase {
         '#default_value' => $member['birth_date'],
       );
     }
+*/
+
+    // Get member add-on details.
+    $addon = isset($form_values['member']['add_on']) ? $form_values['member']['add_on'] : '';
+    $form['member']['add_on'] = SimpleConregAddons::getAddon($config,
+      $addon,
+      $addOnOptions, -1, [$this, 'updateMemberPriceCallback'], $form_state, $mid);
 
     if (!empty($config->get('extras.flag1'))) {
       $form['member']['extra_flag1'] = array(
@@ -271,13 +283,10 @@ class SimpleConregMemberEdit extends FormBase {
       );
     }
 
-*/
-    // Get member add-on details.
-    $addon = isset($form_values['member']['add_on']) ? $form_values['member']['add_on'] : '';
-    $form['member']['add_on'] = SimpleConregAddons::getAddon($config,
-      $addon,
-      $addOnOptions, -1, [$this, 'updateMemberPriceCallback'], $form_state, $mid);
-
+    $optionCallbacks = [];
+    $callback = [$this, 'updateMemberOptionFields'];
+    $fieldset = isset($types->types[$member['member_type']]->fieldset) ? $types->types[$member['member_type']]->fieldset : 0;
+    SimpleConregFieldOptions::addOptionFields($eid, $fieldset, $form['member'], $form_values['member'], $optionCallbacks, $callback, NULL, $member);
 
     $form['submit'] = array(
       '#type' => 'submit',
@@ -291,6 +300,8 @@ class SimpleConregMemberEdit extends FormBase {
     );
 
     $form_state->set('mid', $mid);
+    $form_state->set('fieldset', $fieldset);
+    $form_state->set('option_callbacks', $optionCallbacks);
     return $form;
   }
   
@@ -298,15 +309,12 @@ class SimpleConregMemberEdit extends FormBase {
   public function updateMemberPriceCallback(array $form, FormStateInterface $form_state)
   {
     $ajax_response = new AjaxResponse();
-    // Calculate price for each member.
-    $addons = $form_state->get('addons');
     foreach ($addons as $addOnId) {
       if (!empty($form['member']['add_on'][$addOnId]['extra'])) {
         $id = '#member_addon_'.$addOnId.'_info';
         $ajax_response->addCommand(new HtmlCommand($id, render($form['member']['add_on'][$addOnId]['extra']['info'])));
       }
     }
-    //$ajax_response->addCommand(new HtmlCommand('#memberPrice'.$cnt, $form['members']['member'.$cnt]['price']['#markup']));
 
     //We don't currently display a total price, but keep the below commented in case we add it infuture.
     //$ajax_response->addCommand(new HtmlCommand('#Pricing', $form['payment']['price']));
@@ -314,11 +322,30 @@ class SimpleConregMemberEdit extends FormBase {
     return $ajax_response;
   }
   
+  // Callback function for option fields - add/remove detail field.
+  public function updateMemberOptionFields(array $form, FormStateInterface $form_state)
+  {
+    // Get the triggering element.    
+    $trigger = $form_state->getTriggeringElement()['#name'];
+    // Get array of items to return, keyed by trigering element.
+    $optionCallbacks = $form_state->get('option_callbacks');
+    $callback = $optionCallbacks[$trigger];
+    // Build the index of the element to return.
+    switch ($callback[0]) {
+      case 'group':
+        return $form['member'][$callback[2]];
+      case 'detail':
+        return $form['member'][$callback[2]]['options']['container_'.$callback[3]];
+    }
+  }
+
+  
   /*
    * Submit handler for cancel button.
    */
 
-  public function submitCancel(array &$form, FormStateInterface $form_state) {
+  public function submitCancel(array &$form, FormStateInterface $form_state)
+  {
     $eid = $form_state->get('eid');
     // Get session state to return to correct page.
     $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
@@ -332,36 +359,34 @@ class SimpleConregMemberEdit extends FormBase {
    * Submit handler for member edit form.
    */
 
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state)
+  {
     $eid = $form_state->get('eid');
     $mid = $form_state->get('mid');
+    $fieldset = $form_state->get('fieldset');
 
     $config = $this->config('simple_conreg.settings.'.$eid);
     $form_values = $form_state->getValues();
-    $memberDays = [];
-    foreach($form_values['member']['days'] as $key=>$val) {
-      if ($val)
-        $memberDays[] = $key;
-    }
 
-    // If no date, use NULL.
-    if (isset($form_values['member']['birth_date']) && preg_match("/^(\d{4})-(\d{2})-(\d{2})$/", $form_values['member']['birth_date'])) {
-      $birth_date = $form_values['member']['birth_date'];
-    } else {
-      $birth_date = NULL;
-    }
+    // Process option fields to remove any modifications from form values.
+    $optionVals = [];
+    SimpleConregFieldOptions::procesOptionFields($eid, $fieldset, $form_values['member'], $optionVals);
 
     // Save the submitted entry.
-    $entry = array(
+    $entry = [
       'mid' => $mid,
       'badge_name' => $form_values['member']['badge_name'],
       'display' => $form_values['member']['display'],
       'communication_method' => isset($form_values['member']['communication_method']) ?
           $form_values['member']['communication_method'] : '',
+      'extra_flag1' => isset($form_values['member']['extra_flag1']) ? $form_values['member']['extra_flag1'] : 0,
+      'extra_flag2' => isset($form_values['member']['extra_flag2']) ? $form_values['member']['extra_flag2'] : 0,
       'update_date' => time(),
-    );
-    
+    ];
     $return = SimpleConregStorage::update($entry);
+
+    // Update member field options.
+    SimpleConregFieldOptions::updateOptionFields($mid, $optionVals);
 
     // All members saved. Now save any add-ons.
     SimpleConregAddons::saveMemberAddons($config, $form_values, $mid);

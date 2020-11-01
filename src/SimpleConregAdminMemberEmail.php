@@ -108,8 +108,8 @@ class SimpleConregAdminMemberEmail extends FormBase {
     if ($previous_template != $default_template || !isset($form_values['email']) || empty($params['body'] = $form_values['email']['message']['body'.$default_template]['value']))
       $params['body'] = $templates[$default_template]['body'];
 
-    if ($previous_template != $default_template || !isset($form_values['email']) || empty($params['format'] = $form_values['email']['message']['body'.$default_template]['format']))
-      $params['format'] = $templates[$default_template]['format'];
+    if ($previous_template != $default_template || !isset($form_values['email']) || empty($params['body_format'] = $form_values['email']['message']['body'.$default_template]['format']))
+      $params['body_format'] = $templates[$default_template]['format'];
 
     // If tokens stored in form state, store in params to save looking up again.
     if (NULL != $tokens = $form_state->get('tokens'))

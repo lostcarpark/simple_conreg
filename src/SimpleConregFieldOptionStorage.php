@@ -5,6 +5,7 @@
  * Contains \Drupal\simple_conreg\SimpleConregFieldOptionStorage
  */
 
+use Drupal\Core\Database\Connection;
 use Drupal\devel;
 
 namespace Drupal\simple_conreg;
@@ -14,10 +15,12 @@ class SimpleConregFieldOptionStorage {
 
   public static function insertMemberOptions($mid, $options)
   {
+    $connection = \Drupal::database();
+    
     foreach ($options as $optid=>$option) {
       // Only save if option set.
       if ($option['option']) {
-        db_insert('conreg_member_options')
+        $connection->insert('conreg_member_options')
           ->fields([
             'mid' => $mid,
             'optid' => $optid,
@@ -29,23 +32,75 @@ class SimpleConregFieldOptionStorage {
     }
   }
   
+  public static function updateMemberOptions($mid, $options)
+  {
+    $connection = \Drupal::database();
+
+    // Get the saved member options for comparison.
+    $prevOptions = self::getMemberOptions($mid, 0);
+    // Loop through currently saved options, and remove any that are no longer required.
+    foreach ($prevOptions as $optid=>$delete) {
+      // If element not in options to save, update it's selected to 0.
+      if (!array_key_exists($optid, $options) || $options[$optid]['option'] != 1) {
+        $connection->update('conreg_member_options')
+          ->fields([
+            'is_selected' => 0,
+          ])
+          ->condition('mid', $mid)
+          ->condition('optid', $optid)
+          ->execute(); }
+    }
+    
+    // Loop through all options to save, and either insert or update them.
+    foreach ($options as $optid=>$option) {
+      // Only save if option set.
+      if ($option['option']) {
+        // Check if already saved.
+        if (isset($prevOptions[$optid]))
+          $connection->update('conreg_member_options')
+            ->fields([
+              'is_selected' => $option['option'],
+              'option_detail' => $option['detail'],
+            ])
+            ->condition('mid', $mid)
+            ->condition('optid', $optid)
+            ->execute();
+        else
+          $connection->insert('conreg_member_options')
+            ->fields([
+              'mid' => $mid,
+              'optid' => $optid,
+              'is_selected' => $option['option'],
+              'option_detail' => $option['detail'],
+            ])
+            ->execute();
+      }
+    }
+  }
+   
   /*
    * Function to return a list of options for specified member.
    */
-  public static function getMemberOptions($eid, $mid)
+  public static function getMemberOptions($mid, $selected = TRUE)
   {
-    $select = db_select('conreg_member_options', 'm');
+    $connection = \Drupal::database();
+    
+    $select = $connection->select('conreg_member_options', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'optid');
+    $select->addField('m', 'is_selected');
     $select->addField('m', 'option_detail');
     $select->condition('m.mid', $mid);
-    $select->condition('m.is_selected', 1);
+    // If selected is TRUE, only select entries that are selected, otherwise select all entries.
+    if ($selected)
+      $select->condition('m.is_selected', 1);
     
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
     
+    // Turn result into associative array.
     $memberOptions = [];
     foreach ($entries as $entry) {
-      $memberOptions[$entry['optid']] = $entry['option_detail'];
+      $memberOptions[$entry['optid']] = ['optid' => $entry['optid'], 'is_selected' => $entry['is_selected'], 'option_detail' => $entry['option_detail']];
     }
 
     return $memberOptions;
@@ -61,7 +116,9 @@ class SimpleConregFieldOptionStorage {
    */
   public static function adminOptionMemberListLoad($eid, $optid)
   {
-    $select = db_select('conreg_members', 'm');
+    $connection = \Drupal::database();
+    
+    $select = $connection->select('conreg_members', 'm');
     $select->join('conreg_member_options', 'o', 'm.mid=o.mid');
     // Select these specific fields for the output.
     $select->addField('m', 'mid');
