@@ -26,6 +26,7 @@ class SimpleConregFieldOptionStorage {
             'optid' => $optid,
             'is_selected' => $option['option'],
             'option_detail' => $option['detail'],
+            'update_date' => time(),
           ])
           ->execute();
       }
@@ -45,6 +46,7 @@ class SimpleConregFieldOptionStorage {
         $connection->update('conreg_member_options')
           ->fields([
             'is_selected' => 0,
+            'update_date' => time(),
           ])
           ->condition('mid', $mid)
           ->condition('optid', $optid)
@@ -56,24 +58,31 @@ class SimpleConregFieldOptionStorage {
       // Only save if option set.
       if ($option['option']) {
         // Check if already saved.
-        if (isset($prevOptions[$optid]))
-          $connection->update('conreg_member_options')
-            ->fields([
-              'is_selected' => $option['option'],
-              'option_detail' => $option['detail'],
-            ])
-            ->condition('mid', $mid)
-            ->condition('optid', $optid)
-            ->execute();
-        else
+        if (isset($prevOptions[$optid])) {
+          // Only update if detail has changed.
+          if ($prevOptions[$optid]['is_selected'] != $options[$optid]['option'] || $prevOptions[$optid]['option_detail'] != $options[$optid]['detail']) {
+            $connection->update('conreg_member_options')
+              ->fields([
+                'is_selected' => $option['option'],
+                'option_detail' => $option['detail'],
+                'update_date' => time(),
+              ])
+              ->condition('mid', $mid)
+              ->condition('optid', $optid)
+              ->execute();
+          }
+        }
+        else {
           $connection->insert('conreg_member_options')
             ->fields([
               'mid' => $mid,
               'optid' => $optid,
               'is_selected' => $option['option'],
               'option_detail' => $option['detail'],
+              'update_date' => time(),
             ])
             ->execute();
+        }
       }
     }
   }

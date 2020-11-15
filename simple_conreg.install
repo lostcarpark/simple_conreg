@@ -636,7 +636,7 @@ function simple_conreg_schema() {
   );
 
 
-  // create table conreg_member_options (mid int not null, optid int not null, is_selected tinyint not null default '1', option_detail varchar(255), primary key (mid, optid));
+  // create table conreg_member_options (mid int not null, optid int not null, is_selected tinyint not null default '1', option_detail varchar(255), update_date int NOT NULL, primary key (mid, optid));
   $schema['conreg_member_options'] = array(
     'description' => 'Stores member option choices.',
     'fields' => array(
@@ -663,6 +663,13 @@ function simple_conreg_schema() {
         'not null' => FALSE,
         'default' => '',
         'description' => 'Optional text details entered for the option.',
+      ),
+      // alter table conreg_member_options add update_date int NOT NULL default "0" after option_detail;
+      'update_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp for the date and time last updated.',
       ),
     ),
     'primary key' => array('mid', 'optid'),
