@@ -214,6 +214,24 @@ simple_conreg_config_email_templates:
   requirements:
     _permission: 'configure convention email templates'
 
+simple_conreg_config_clickup:
+  path: 'admin/config/simple_conreg/clickup'
+  defaults:
+    _title: 'Simple Convention Registration ClickUp Integration'
+    _form: '\Drupal\simple_conreg\SimpleConregConfigClickUpForm'
+  requirements:
+    _permission: 'integration convention with ClickUp'
+
+simple_conreg_config_clickup_options:
+  path: 'admin/config/simple_conreg/clickup/options/{eid}'
+  defaults:
+    _title: 'Simple Convention Registration ClickUp Options'
+    _form: '\Drupal\simple_conreg\SimpleConregConfigClickUpOptionsForm'
+    eid: 1
+  requirements:
+    _permission: 'integration convention with ClickUp'
+    eid: ^[0-9]+$
+
 simple_conreg_admin_member_list:
   path: 'members/memberlist/{eid}'
   defaults:

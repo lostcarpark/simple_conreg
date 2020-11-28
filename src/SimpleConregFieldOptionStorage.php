@@ -13,7 +13,7 @@ namespace Drupal\simple_conreg;
 class SimpleConregFieldOptionStorage {
 
 
-  public static function insertMemberOptions($mid, $options)
+  public static function insertMemberOptions($mid, &$options)
   {
     $connection = \Drupal::database();
     
@@ -29,11 +29,14 @@ class SimpleConregFieldOptionStorage {
             'update_date' => time(),
           ])
           ->execute();
+        $options[$optid]['changed'] = TRUE;
       }
+      else
+        $options[$optid]['changed'] = FALSE;
     }
   }
   
-  public static function updateMemberOptions($mid, $options)
+  public static function updateMemberOptions($mid, &$options)
   {
     $connection = \Drupal::database();
 
@@ -51,6 +54,7 @@ class SimpleConregFieldOptionStorage {
           ->condition('mid', $mid)
           ->condition('optid', $optid)
           ->execute(); }
+        $options[$optid]['changed'] = FALSE;
     }
     
     // Loop through all options to save, and either insert or update them.
@@ -70,7 +74,10 @@ class SimpleConregFieldOptionStorage {
               ->condition('mid', $mid)
               ->condition('optid', $optid)
               ->execute();
+            $options[$optid]['changed'] = TRUE;
           }
+          else
+            $options[$optid]['changed'] = FALSE;
         }
         else {
           $connection->insert('conreg_member_options')
@@ -82,6 +89,7 @@ class SimpleConregFieldOptionStorage {
               'update_date' => time(),
             ])
             ->execute();
+          $options[$optid]['changed'] = TRUE;
         }
       }
     }

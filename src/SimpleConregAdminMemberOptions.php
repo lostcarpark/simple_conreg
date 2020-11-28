@@ -33,7 +33,7 @@ class SimpleConregAdminMemberOptions extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $selOption = 0) {
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $selection = 0) {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
 
@@ -72,14 +72,31 @@ class SimpleConregAdminMemberOptions extends FormBase {
       }
     }
 
+    $group = \Drupal::request()->query->get('group');
+    $option = \Drupal::request()->query->get('option');
 
     $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
     // If form values submitted, use the display value that was submitted over the passed in values.
     if (isset($form_values['selOption']))
       $selection = $form_values['selOption'];
     elseif (empty($selection)) {
-      // If display not submitted from form or passed in through URL, take last value from session.
-      $selection = $tempstore->get('adminMemberSelectedOption');
+      if (!empty($group)) {
+        $group = preg_replace('/[^0-9]/i', '', $group);
+        if (!empty($option)) {
+          $option = preg_replace('/[^0-9]/i', '', $option);
+          $selection = $group . '_' . $option;
+        }
+        else
+          $selection = $group;
+      }
+      elseif (!empty($option)) {
+        $option = preg_replace('/[^0-9]/i', '', $option);
+        $selection = $option;
+      }
+      else {
+        // If display not submitted from form or passed in through URL, take last value from session.
+        $selection = $tempstore->get('adminMemberSelectedOption');
+      }
     }
     if (empty($selection) || !array_key_exists($selection, $options))
       $selection = key($options); // If still no display specified, or invalid option, default to first key in displayOptions.

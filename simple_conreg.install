@@ -743,5 +743,39 @@ function simple_conreg_schema() {
     'primary key' => array('addonid'),
   );
 
+
+  // create table conreg_member_clickup_options (mid int not null, option_group varchar(32) NOT NULL, clickup_task_id varchar(255) NOT NULL, update_date int NOT NULL, primary key (mid, option_group));
+  $schema['conreg_member_clickup_options'] = array(
+    'description' => 'Stores member click-up task IDs.',
+    'fields' => array(
+      'mid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Compound Primary Key: Member ID.',
+      ),
+      'option_group' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Group of options sharing a single task.',
+      ),
+      'clickup_task_id' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Task ID returned from ClickUp.',
+      ),
+      'update_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp for the date and time last updated.',
+      ),
+    ),
+    'primary key' => array('mid', 'option_group'),
+  );
+
   return $schema;
 }

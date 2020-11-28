@@ -68,7 +68,6 @@ class SimpleConregEmailer {
         $message['from'] = $params['from'];
         $message['headers']['From'] = $params['from'];
       }
-//dpm($message);
     }
   }
 

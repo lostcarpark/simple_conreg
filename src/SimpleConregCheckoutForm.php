@@ -159,6 +159,9 @@ class SimpleConregCheckoutForm extends FormBase {
       ],
     ]);
 
+    // Could potentially need to use multiple configs for multiple events.
+    $eventConfigs = [];
+
     // Loop through received events and mark payments complete.
     foreach ($events->autoPagingIterator() as $event) {
       $session = $event->data->object;
@@ -182,16 +185,24 @@ class SimpleConregCheckoutForm extends FormBase {
               // Only update member if not already paid.
               $member = SimpleConregStorage::load(['mid' => $line->mid, 'is_paid' => 0, 'is_deleted' => 0]);
               if (isset($member)) {
+                $eid = $member['eid'];
+                if (!isset($eventConfigs[$eid])) {
+                  $eventConfigs[$eid] = $this->config('simple_conreg.settings.'.$eid);
+                }
                 $update['mid'] = $line->mid;
                 $update['is_paid'] = 1;
                 $update['payment_id'] = $session->payment_intent;
                 $update['payment_method'] = 'Stripe';
                 $update['update_date'] = time();
-
                 $result = SimpleConregStorage::update($update);
+
                 // If email address populated, send confirmation email.
                 if (!empty($member['email']))
-                  $this->sendConfirmationEmail($config, $member);
+                  $this->sendConfirmationEmail($eventConfigs[$eid], $member);
+
+                // Create ClickUp tasks for options.
+                $optionVals = SimpleConregFieldOptions::getMemberOptionValues($line->mid);
+                SimpleConregClickUp::createMemberTasks($eid, $line->mid, $optionVals, $eventConfigs[$eid]);                
               }
               break;
             case "upgrade":

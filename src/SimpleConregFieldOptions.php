@@ -258,7 +258,7 @@ class SimpleConregFieldOptions {
    *
    * Parameters: Member ID, array of option fields.
    */
-  public static function insertOptionFields($mid, $options)
+  public static function insertOptionFields($mid, &$options)
   {
     SimpleConregFieldOptionStorage::insertMemberOptions($mid, $options);
   }
@@ -268,7 +268,7 @@ class SimpleConregFieldOptions {
    *
    * Parameters: Member ID, array of option fields.
    */
-  public static function updateOptionFields($mid, $options)
+  public static function updateOptionFields($mid, &$options)
   {
     SimpleConregFieldOptionStorage::updateMemberOptions($mid, $options);
   }

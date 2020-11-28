@@ -45,7 +45,6 @@ class SimpleConregMemberEdit extends FormBase {
 
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
-//dpm($form_values, "Form values");
     $memberPrices = array();
 
     // Get event configuration from config.
@@ -387,6 +386,9 @@ class SimpleConregMemberEdit extends FormBase {
 
     // Update member field options.
     SimpleConregFieldOptions::updateOptionFields($mid, $optionVals);
+
+    // Create ClickUp tasks for options.
+    SimpleConregClickUp::createMemberTasks($eid, $mid, $optionVals);
 
     // All members saved. Now save any add-ons.
     SimpleConregAddons::saveMemberAddons($config, $form_values, $mid);
