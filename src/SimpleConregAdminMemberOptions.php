@@ -71,6 +71,17 @@ class SimpleConregAdminMemberOptions extends FormBase {
         }
       }
     }
+    
+    // Check if user can see any options.
+    if (empty($options)) {
+      // User cannot see any options - display error message.
+      $form['simple_conreg_event'] = array(
+        '#markup' => $this->t('You don\'t have permission to see any options. Please contact your administrator.'),
+        '#prefix' => '<h3>',
+        '#suffix' => '</h3>',
+      );
+      return $form;
+    }
 
     $group = \Drupal::request()->query->get('group');
     $option = \Drupal::request()->query->get('option');
