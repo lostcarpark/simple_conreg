@@ -87,6 +87,27 @@ class SimpleConregFieldOptions {
   }
 
   /**
+   * Fetch field option titles from config.
+   *
+   * Parameters: Event ID, Config, Fieldset.
+   */
+  public static function getFieldOptionsTitles($eid, $config=NULL) 
+  {
+    // If event config not passed in, load it.
+    if (is_null($config)) {
+      $config = SimpleConregConfig::getConfig($eid);
+    }
+
+    // Get the list of options, and put titles in an array.
+    $optionTitles = [];
+    foreach (explode("\n", $config->get('simple_conreg_options.options')) as $optionLine) {
+      list($optid, $grpid, $optionTitle) = explode('|', $optionLine);
+      $optionTitles[$optid] = $optionTitle;
+    }
+    return $optionTitles;
+  }
+
+  /**
    * Fetch field options selected by member.
    *
    * Parameters: Event ID, Config, member ID.

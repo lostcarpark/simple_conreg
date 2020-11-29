@@ -243,12 +243,7 @@ class SimpleConregClickUp
     $member = SimpleConregStorage::load(['eid' => $eid, 'mid' => $mid]);
     $memberName = $member['first_name'] . ' ' . $member['last_name'];
     
-    // Get the list of options, and put titles in an array.
-    $optionTitles = [];
-    foreach (explode("\n", $config->get('simple_conreg_options.options')) as $optionLine) {
-      list($optid, $grpid, $optionTitle) = explode('|', $optionLine);
-      $optionTitles[$optid] = $optionTitle;
-    }
+    $optionTitles = SimpleConregFieldOptions::getFieldOptionsTitles($eid, $config);
 
     // Loop through each option group and check if any options set.
     foreach ($config->get('clickup_option_groups') as $groupName => $groupVals) {

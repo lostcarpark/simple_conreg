@@ -54,6 +54,16 @@ class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
 
     // Get config for event and fieldset.    
     $config = SimpleConregConfig::getConfig($eid);
+    
+    $optionTitles = SimpleConregFieldOptions::getFieldOptionsTitles($eid, $config);
+
+    $memberNames = [];
+    $teams = SimpleConregClickUp::getTeam();
+    foreach ($teams['teams'] as $team) {
+      foreach ($team['members'] as $member) {
+        $memberNames[$member['user']['id']] = $member['user']['username'];
+      }
+    }
 
     $form['admin'] = array(
       '#type' => 'vertical_tabs',
@@ -142,12 +152,33 @@ class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
         '#default_value' => (isset($groupVals['task_status']) ? $groupVals['task_status'] : ''),
       );
 
+      $mapping = (isset($groupVals['option_mapping']) ? $groupVals['option_mapping'] : '');
       $form['groups'][$groupName]['option_mapping'] = array(
         '#type' => 'textarea',
         '#title' => $this->t('Option Mapping to ClickUp Members'),
         '#description' => $this->t('On each line place Conreg Option ID followed by ClickUp Member IDs, separated by |. If mapping to multiple Members, separate by commas. E.g. "1|4793987,4793985".'),
-        '#default_value' => (isset($groupVals['option_mapping']) ? $groupVals['option_mapping'] : ''),
+        '#default_value' => $mapping,
       );
+
+      $form['groups'][$groupName]['mapping_test'] = array(
+        '#type' => 'fieldset',
+        '#title' => $this->t('Option Mapping Test'),
+      );
+      
+      $i = 1;
+      foreach (explode("\n", $mapping) as $mappingLine) {
+        $fields = explode('|', $mappingLine);
+        $optionName = $optionTitles[$fields[0]];
+        $members = [];
+        foreach (explode(',', trim($fields[1])) as $memberId) {
+          $members[] = $memberNames[$memberId];
+        }
+        $form['groups'][$groupName]['mapping_test'][$i++] = array(
+          '#markup' => $this->t('@option => @users', ['@option' => $optionName, '@users' => implode(", ", $members)]),
+          '#prefix' => '<div>',
+          '#suffix' => '</div>',
+        );
+      }
     }
 
     return parent::buildForm($form, $form_state);
