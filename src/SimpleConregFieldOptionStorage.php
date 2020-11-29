@@ -35,7 +35,7 @@ class SimpleConregFieldOptionStorage {
         $options[$optid]['changed'] = FALSE;
     }
   }
-  
+
   public static function updateMemberOptions($mid, &$options)
   {
     $connection = \Drupal::database();

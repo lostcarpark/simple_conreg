@@ -97,6 +97,8 @@ class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
       '#tree' => TRUE,
     );
 
+    $groupOptions = [];
+
     /*
      * Loop through each option group and add to form.
      */
@@ -166,8 +168,10 @@ class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
       );
       
       $i = 1;
+      $options = [];
       foreach (explode("\n", $mapping) as $mappingLine) {
         $fields = explode('|', $mappingLine);
+        $options[] = $fields[0];
         $optionName = $optionTitles[$fields[0]];
         $members = [];
         foreach (explode(',', trim($fields[1])) as $memberId) {
@@ -179,7 +183,37 @@ class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
           '#suffix' => '</div>',
         );
       }
+      $groupOptions[$groupName] = $options;
+
+      $form['groups'][$groupName]['create'] = array(
+        '#type' => 'fieldset',
+        '#title' => $this->t('Create tasks for existing members'),
+      );
+      
+      $count = SimpleConregClickUp::getMembersWithoutTasks($eid, $options, TRUE);
+
+      $form['groups'][$groupName]['create']['count'] = array(
+        '#markup' => $this->t('@count users have options without ClickUp tasks.', ['@count' => $count]),
+        '#prefix' => '<div>',
+        '#suffix' => '</div>',
+      );
+
+      $form['groups'][$groupName]['create']['info'] = array(
+        '#markup' => $this->t('Click below to create tasks for the next 10 members. Please wait 1 minute between presses to avoid flooding ClickUp.'),
+        '#prefix' => '<div>',
+        '#suffix' => '</div>',
+      );
+
+      $form['groups'][$groupName]['create']['submit_create_tasks'] = array(
+        '#type' => 'submit',
+        '#value' => t('Create Tasks'),
+        '#name' => $groupName,
+        '#submit' => [[$this, 'createMemberTasks']],
+        '#attributes' => array('id' => "submitBtn"),
+      );
     }
+
+    $form_state->set('groupOptions', $groupOptions);
 
     return parent::buildForm($form, $form_state);
   }
@@ -202,6 +236,28 @@ class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
         \Drupal::messenger()->addMessage($this->t('Option group @name has been added.', ['@name' => $vals['group_name']]));
       }
       $form_state->setValue(['groups', $groupName, '#value'], '');
+    }
+
+    $form_state->setRebuild();
+  }
+
+  // Handler for Create Tasks button.
+
+  public function createMemberTasks(array &$form, FormStateInterface $form_state)
+  {
+    $eid = $form_state->get('eid');
+    $config = SimpleConregConfig::getConfig($eid);
+    
+    $groupOptions = $form_state->get('groupOptions');
+    $vals = $form_state->getValues();
+    $group = $form_state->getTriggeringElement()['#name'];
+    $members = SimpleConregClickUp::getMembersWithoutTasks($eid, $groupOptions[$group], FALSE);
+    $i = 0;
+    foreach ($members as $member) {
+      if ($i++ >= 10) break;
+      $memberRec = SimpleConregStorage::load(['mid' => $member['mid']]);
+      $optionVals = SimpleConregFieldOptions::getMemberOptionValues($member['mid']);
+      SimpleConregClickUp::createMemberTasks($eid, $member['mid'], $optionVals, $config);
     }
 
     $form_state->setRebuild();

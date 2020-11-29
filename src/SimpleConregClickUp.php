@@ -335,4 +335,25 @@ class SimpleConregClickUp
     
     return $select->execute()->fetchField(); // Only selecting one field.
   }
+  
+  public static function getMembersWithoutTasks($eid, $optids, $count) {
+    $connection = \Drupal::database();
+    
+    $select = $connection->select('conreg_members', 'm');
+    $select->join('conreg_member_options', 'o', 'm.mid=o.mid');
+    $select->leftJoin('conreg_member_clickup_options', 'c', 'm.mid=c.mid');
+    // Select these specific fields for the output.
+    $select->addField('m', 'mid');
+    $select->condition('m.eid', $eid);
+    $select->condition('m.is_paid', 1);
+    $select->condition('o.optid', $optids, 'IN');
+    $select->condition('o.is_selected', 1);
+    $select->isNull('c.clickup_task_id');
+    $select->distinct();
+    
+    if ($count)
+      return $select->countQuery()->execute()->fetchField(); // Count the number of rows.
+    else
+      return $select->execute()->fetchAll(\PDO::FETCH_ASSOC); // Only selecting one field.
+  }
 }
