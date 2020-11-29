@@ -526,6 +526,9 @@ class SimpleConregAdminMemberEdit extends FormBase {
     // Update member field options.
     SimpleConregFieldOptions::updateOptionFields($mid, $optionVals);
 
+    // Create ClickUp tasks for options.
+    SimpleConregClickUp::createMemberTasks($eid, $mid, $optionVals);
+
     if ($return) {
 
       // Check Simplenews module loaded.
