@@ -387,7 +387,7 @@ class SimpleConregAdminMemberEmail extends FormBase {
     $params = $form_state->get('params');
     $params['subject'] = $form_values['email']['message']['subject'.$template];
     $params['body'] = $form_values['email']['message']['body'.$template]['value'];
-    $params['format'] = $form_values['email']['message']['body'.$template]['format'];
+    $params['body_format'] = $form_values['email']['message']['body'.$template]['format'];
     $module = "simple_conreg";
     $key = "template";
     $to = $params["to"];
