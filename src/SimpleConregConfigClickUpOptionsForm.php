@@ -98,14 +98,12 @@ class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
     );
 
     $groupOptions = [];
+    $buttonGroups = [];
 
     /*
      * Loop through each option group and add to form.
      */
     foreach ($config->get('clickup_option_groups') as $groupName => $groupVals) {
-      /*
-       * Fields for add on choices and options.
-       */
       $form['groups'][$groupName] = array(
         '#type' => 'details',
         '#title' => $groupName,
@@ -204,16 +202,20 @@ class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
         '#suffix' => '</div>',
       );
 
+      $buttonName = str_replace(' ', '_', $groupName);
+      $buttonGroups[$buttonName] = $groupName;
+      
       $form['groups'][$groupName]['create']['submit_create_tasks'] = array(
         '#type' => 'submit',
         '#value' => t('Create Tasks for @name', ['@name' => $groupName]),
-        '#name' => $groupName,
+        '#name' => $buttonName,
         '#submit' => [[$this, 'createMemberTasks']],
         '#attributes' => array('id' => "submitBtn"),
       );
     }
 
     $form_state->set('groupOptions', $groupOptions);
+    $form_state->set('buttonGroups', $buttonGroups);
 
     return parent::buildForm($form, $form_state);
   }
@@ -249,8 +251,9 @@ class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
     $config = SimpleConregConfig::getConfig($eid);
     
     $groupOptions = $form_state->get('groupOptions');
+    $buttonGroups = $form_state->get('buttonGroups');
     $vals = $form_state->getValues();
-    $group = $form_state->getTriggeringElement()['#name'];
+    $group = $buttonGroups[$form_state->getTriggeringElement()['#name']];
     $members = SimpleConregClickUp::getMembersWithoutTasks($eid, $groupOptions[$group], FALSE);
     \Drupal::messenger()->addMessage($this->t('Creating tasks for @name.', ['@name' => $group]));
     $i = 0;
