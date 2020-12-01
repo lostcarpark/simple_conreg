@@ -252,13 +252,16 @@ class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
     $vals = $form_state->getValues();
     $group = $form_state->getTriggeringElement()['#name'];
     $members = SimpleConregClickUp::getMembersWithoutTasks($eid, $groupOptions[$group], FALSE);
+    \Drupal::messenger()->addMessage($this->t('Creating tasks for @name.', ['@name' => $group]));
     $i = 0;
     foreach ($members as $member) {
       if ($i++ >= 10) break;
       $memberRec = SimpleConregStorage::load(['mid' => $member['mid']]);
       $optionVals = SimpleConregFieldOptions::getMemberOptionValues($member['mid']);
       SimpleConregClickUp::createMemberTasks($eid, $member['mid'], $optionVals, $config);
+      \Drupal::messenger()->addMessage($this->t('Tasks created for member @name.', ['@name' => $member['first_name'] . ' ' . $member['last_name']]));
     }
+    \Drupal::messenger()->addMessage($this->t('Created tasks for @number members.', ['@number' => $i]));
 
     $form_state->setRebuild();
   }
