@@ -206,7 +206,7 @@ class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
 
       $form['groups'][$groupName]['create']['submit_create_tasks'] = array(
         '#type' => 'submit',
-        '#value' => t('Create Tasks'),
+        '#value' => t('Create Tasks for @name', ['@name' => $groupName]),
         '#name' => $groupName,
         '#submit' => [[$this, 'createMemberTasks']],
         '#attributes' => array('id' => "submitBtn"),
