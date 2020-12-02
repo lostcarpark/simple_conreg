@@ -67,6 +67,7 @@ class SimpleConregConfig {
     $config = \Drupal::service('config.factory')->getEditable($configName);
     $config->set('fields.first_name_label', $vals['simple_conreg_fields']['first_name_label']);
     $config->set('fields.last_name_label', $vals['simple_conreg_fields']['last_name_label']);
+    $config->set('fields.name_description', $vals['simple_conreg_fields']['name_description']);
     $config->set('fields.email_label', $vals['simple_conreg_fields']['email_label']);
     $config->set('fields.membership_type_label', $vals['simple_conreg_fields']['membership_type_label']);
     $config->set('fields.membership_days_label', $vals['simple_conreg_fields']['membership_days_label']);

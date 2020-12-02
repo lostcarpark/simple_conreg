@@ -212,6 +212,13 @@ class SimpleConregRegistrationForm extends FormBase {
         '#required' => ($fieldsetConfig->get('fields.last_name_mandatory') ? TRUE : FALSE),
       );
 
+      $form['members']['member'.$cnt]['name_descriptio'] = array(
+        '#type' => 'markup',
+        '#markup' => $fieldsetConfig->get('fields.name_description'),
+        '#prefix' => '<div class="description">',
+        '#suffix' => '</div>',
+      );
+
       $form['members']['member'.$cnt]['email'] = array(
         '#type' => 'email',
         '#title' => $fieldsetConfig->get('fields.email_label'),

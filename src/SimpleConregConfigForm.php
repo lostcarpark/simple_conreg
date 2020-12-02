@@ -269,6 +269,13 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#required' => TRUE,
     );
 
+    $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['name_description'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Name description (discription to appear under both name fields)'),
+      '#default_value' => $fieldsetConfig->get('fields.name_description'),
+      '#maxlength' => 255, 
+    );
+
     $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['email_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Email address label (required)'),
