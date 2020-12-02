@@ -681,10 +681,11 @@ class SimpleConregConfigForm extends ConfigFormBase {
     );
 
     $form['simple_conreg_thanks']['thank_you_message'] = array(
-      '#type' => 'textarea',
+      '#type' => 'text_format',
       '#title' => $this->t('Thank You Message'),
-      '#description' => $this->t('Text to appear on the thank you page displayed after payment completed.'),
+      '#description' => $this->t('Text to appear on the thank you page displayed after payment completed. [reference] will be replaced with payment reference.'),
       '#default_value' => $config->get('thanks.thank_you_message'),
+      '#format' => $config->get('thanks.thank_you_format'),
     );  
 
 
@@ -899,7 +900,8 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('display.page_size', $vals['simple_conreg_display']['page_size']);
     $config->set('reference.default_country', $vals['simple_conreg_reference']['default_country']);
     $config->set('reference.countries', $vals['simple_conreg_reference']['countries']);
-    $config->set('thanks.thank_you_message', $vals['simple_conreg_thanks']['thank_you_message']);
+    $config->set('thanks.thank_you_message', $vals['simple_conreg_thanks']['thank_you_message']['value']);
+    $config->set('thanks.thank_you_format', $vals['simple_conreg_thanks']['thank_you_message']['format']);
     $config->set('discount.enable', $vals['simple_conreg_discount']['enable']);
     $config->set('discount.free_every', $vals['simple_conreg_discount']['free_every']);
     $config->set('checkin.display', $vals['simple_conreg_checkin']['display']);

@@ -92,9 +92,14 @@ class SimpleConregCheckoutForm extends FormBase {
 
     // Check if payment date populated. If so, payment is complete, thank you message can be displayed.
     if ($payment->paidDate) {
+      $message = str_replace('[reference]',
+                             $payment->paymentRef,
+                             $config->get('thanks.thank_you_message'));
+      $format = $config->get('thanks.thank_you_format');
+
       $form['#title'] = $this->t('Thank You');
       $form['message'] = array(
-        '#markup' => $this->t('Your payment has been received and your registration is complete. Your payment reference is @pay_ref.', array("@pay_ref" => $payment->paymentRef))
+        '#markup' => check_markup($message, $format),
       );
       return $form;
     }
