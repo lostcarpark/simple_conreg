@@ -30,6 +30,8 @@ simple_conreg_portal_register:
   requirements:
     _permission: 'member portal'
     eid: ^[0-9]+$
+  options:
+    no_cache: 'TRUE'
 
 simple_conreg_payment:
   path: 'members/payment/{mid}/{key}/{name}/{postcode}'
