@@ -62,6 +62,9 @@ class SimpleConregRegistrationForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $return = '') {
+    // Prevent registration form from caching.
+    \Drupal::service('page_cache_kill_switch')->trigger();
+
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
     $form_state->set('return', $return);
