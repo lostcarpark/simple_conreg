@@ -665,6 +665,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $form['simple_conreg_reference']['default_country'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Default country code'),
+      '#description' => $this->t('Enter 2 letter country code of country to default to. Leave blank to have no default.'),
       '#default_value' => $config->get('reference.default_country'),
     );  
 

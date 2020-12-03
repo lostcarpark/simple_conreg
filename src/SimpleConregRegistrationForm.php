@@ -422,9 +422,11 @@ class SimpleConregRegistrationForm extends FormBase {
             '#type' => 'select',
             '#title' => $fieldsetConfig->get('fields.country_label'),
             '#options' => $countryOptions,
-            '#default_value' => $defaultCountry,
             '#required' => ($fieldsetConfig->get('fields.country_mandatory') ? TRUE : FALSE),
           );
+          if (!empty($defaultCountry)) {
+            $form['members']['member'.$cnt]['address']['country']['#default_value'] = $defaultCountry;
+          }
         }
       }
 
