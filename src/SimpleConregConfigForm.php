@@ -669,6 +669,12 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('reference.default_country'),
     );  
 
+    $form['simple_conreg_reference']['geoplugin'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Use geoPlugin to lookup country from IP'),
+      '#default_value' => $config->get('reference.geoplugin'),
+    );  
+
 
     /*
      * Fields for Thank You page.
@@ -901,6 +907,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('display.page_size', $vals['simple_conreg_display']['page_size']);
     $config->set('reference.default_country', $vals['simple_conreg_reference']['default_country']);
     $config->set('reference.countries', $vals['simple_conreg_reference']['countries']);
+    $config->set('reference.geoplugin', $vals['simple_conreg_reference']['geoplugin']);
     $config->set('thanks.thank_you_message', $vals['simple_conreg_thanks']['thank_you_message']['value']);
     $config->set('thanks.thank_you_format', $vals['simple_conreg_thanks']['thank_you_message']['format']);
     $config->set('discount.enable', $vals['simple_conreg_discount']['enable']);
