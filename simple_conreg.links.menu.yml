@@ -55,6 +55,11 @@ simple_conreg.admin.options:
   route_name: simple_conreg_admin_member_options
   weight: 6
 
+simple_conreg.admin.mailout.emails:
+  title: Membership Mailout Emails
+  route_name: simple_conreg_admin_mailout_emails
+  weight: 6
+
 simple_conreg.admin.checkin:
   title: Membership Check In
   route_name: simple_conreg_admin_checkin

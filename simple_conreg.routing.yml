@@ -276,6 +276,17 @@ simple_conreg_admin_member_options:
     eid: ^[0-9]+$
     option: ^[0-9]*$
 
+simple_conreg_admin_mailout_emails:
+  path: 'admin/members/mailout/{eid}'
+  defaults:
+    _title: 'Member Mailout Emails'
+    _form: '\Drupal\simple_conreg\SimpleConregAdminMailoutEmails'
+    eid: 1
+    option: 0
+  requirements:
+    _permission: 'manage mailout lists'
+    eid: ^[0-9]+$
+
 simple_conreg_admin_member_summary:
   path: 'members/membersummary/{eid}'
   defaults:
