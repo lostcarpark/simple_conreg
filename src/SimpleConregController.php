@@ -165,30 +165,32 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by member type to render array.
    */
-  public function memberAdminMemberListSummary($eid, &$content) {
+  public function memberAdminMemberListSummary($eid, &$content)
+  {
     $types = SimpleConregOptions::memberTypes($eid);
-    $rows = array();
     $headers = array(
       t('Member Type'), 
       t('Number of members'),
     );
-    $total = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
-      // Replace type code with description.
-      if (isset($types->types[$entry['member_type']]))
-        $entry['member_type'] = (isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type']);
-      // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
-      $total += $entry['num'];
-    }
-    //Add a row for the total.
-    $rows[] = array(t("Total"), $total);
     $content['summary'] = array(
       '#type' => 'table',
       '#header' => $headers,
-      '#rows' => $rows,
       '#empty' => t('No entries available.'),
     );
+    $total = 0;
+    foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
+      // Replace type code with description.
+      $content['summary'][] = [
+        'type' => ['#markup' => SafeMarkup::checkPlain(isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'])],
+        'member_type' => ['#markup' => $entry['num']],
+      ];
+      $total += $entry['num'];
+    }
+    //Add a row for the total.
+    $content['summary']['total'] = [
+      'type' => ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
+      'number' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+    ];
 
     return $content;
   }
@@ -198,29 +200,29 @@ class SimpleConregController extends ControllerBase {
    */
   public function memberAdminMemberListBadgeSummary($eid, &$content) {
     $types = SimpleConregOptions::badgeTypes($eid);
-    $rows = array();
     $headers = array(
       t('Badge Type'), 
       t('Number of members'),
     );
-    $total = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberBadgeSummaryLoad($eid) as $entry) {
-      // Replace type code with description.
-      $badge_type = trim($entry['badge_type']);
-      if (isset($types[$badge_type]))
-        $entry['badge_type'] = $types[$badge_type];
-      // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
-      $total += $entry['num'];
-    }
-    //Add a row for the total.
-    $rows[] = array(t("Total"), $total);
     $content['badge_summary'] = array(
       '#type' => 'table',
       '#header' => $headers,
-      '#rows' => $rows,
       '#empty' => t('No entries available.'),
     );
+    $total = 0;
+    foreach ($entries = SimpleConregStorage::adminMemberBadgeSummaryLoad($eid) as $entry) {
+      // Replace type code with description.
+      $content['badge_summary'][] = [
+        'type' => ['#markup' => SafeMarkup::checkPlain(isset($types[trim($entry['badge_type'])]) ? $types[trim($entry['badge_type'])] : $entry['badge_type'])],
+        'member_type' => ['#markup' => $entry['num']],
+      ];
+      $total += $entry['num'];
+    }
+    //Add a row for the total.
+    $content['badge_summary']['total'] = [
+      'type' => ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
+      'number' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+    ];
 
     return $content;
   }
@@ -243,27 +245,27 @@ class SimpleConregController extends ControllerBase {
       $total += $entry['num'];
     }
 
-    $rows = array();
     $headers = array(
       t('Days'),
       t('Number of members'),
     );
-    foreach ($dayTotals as $key=>$val) {
-      // Sanitize each entry.
-      $entry = [
-        'days' => $days[$key],
-        'num' => $val,
-      ];
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
-    }
-    //Add a row for the total.
-    $rows[] = array(t("Total"), $total);
     $content['days_summary'] = array(
       '#type' => 'table',
       '#header' => $headers,
-      '#rows' => $rows,
       '#empty' => t('No entries available.'),
     );
+    foreach ($dayTotals as $key=>$val) {
+      // Sanitize each entry.
+      $content['days_summary'][] = [
+        'type' => ['#markup' => SafeMarkup::checkPlain(isset($days[$key]) ? $days[$key] : $key)],
+        'member_type' => ['#markup' => $val],
+      ];
+    }
+    //Add a row for the total.
+    $content['days_summary']['total'] = [
+      'type' => ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
+      'number' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+    ];
 
     return $content;
   }
@@ -401,7 +403,8 @@ class SimpleConregController extends ControllerBase {
   /**
    * Render a list of paid convention members in the database.
    */
-  public function memberAdminMemberList($eid) {
+  public function memberAdminMemberList($eid)
+  {
     $config = SimpleConregConfig::getConfig($eid);
     $countryOptions = $this->getMemberCountries($config);
     $types = SimpleConregOptions::memberTypes($eid, $config);
@@ -412,7 +415,11 @@ class SimpleConregController extends ControllerBase {
     $yesNo = SimpleConregOptions::yesNo();
     $digits = $config->get('member_no_digits');
 
-    $content = array();
+    $content = [
+      '#attached' => [
+        'library' => ['simple_conreg/conreg_tables'],
+      ]
+    ];
 
     $pageOptions = [];
     switch(isset($_GET['sort']) ? $_GET['sort'] : '') {
@@ -522,7 +529,11 @@ class SimpleConregController extends ControllerBase {
    * Render a list of paid convention members in the database.
    */
   public function memberAdminMemberSummary($eid) {
-    $content = array();
+    $content = [
+      '#attached' => [
+        'library' => ['simple_conreg/conreg_tables'],
+      ]
+    ];
 
     $content['message_member'] = array(
       '#markup' => $this->t('Summary by member type'),

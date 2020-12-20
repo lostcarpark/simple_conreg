@@ -300,7 +300,7 @@ class SimpleConregFieldOptions {
    * @return array
    *   Options array.
    */
-  public function getFieldOptionList($eid, $config=NULL)
+  public static function getFieldOptionList($eid, $config=NULL)
   {
     $options = self::parseFieldOptions($eid, $config);
 
@@ -318,7 +318,7 @@ class SimpleConregFieldOptions {
    * @return array
    *   Options array.
    */
-  public function getFieldOptionGroupedList($eid, $config=NULL)
+  public static function getFieldOptionGroupedList($eid, $config=NULL)
   {
     $options = self::parseFieldOptions($eid, $config);
 
@@ -339,7 +339,7 @@ class SimpleConregFieldOptions {
    * @return array
    *   Permissions array.
    */
-  public function permissions()
+  public static function permissions()
   {
     $permissions = [];
 

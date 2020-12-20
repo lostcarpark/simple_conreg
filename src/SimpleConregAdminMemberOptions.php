@@ -33,7 +33,8 @@ class SimpleConregAdminMemberOptions extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $selection = 0) {
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $selection = 0)
+  {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
 
@@ -71,7 +72,7 @@ class SimpleConregAdminMemberOptions extends FormBase {
         }
       }
     }
-    
+
     // Check if user can see any options.
     if (empty($options)) {
       // User cannot see any options - display error message.
@@ -111,14 +112,17 @@ class SimpleConregAdminMemberOptions extends FormBase {
     }
     if (empty($selection) || !array_key_exists($selection, $options))
       $selection = key($options); // If still no display specified, or invalid option, default to first key in displayOptions.
-    list($selGroup, $selOption) = explode('_', $selection);
+    list($selGroup, $selOption) = array_pad(explode('_', $selection), 2, '');
 
     $tempstore->set('adminMemberSelectedOption', $selection);
 
-    $form = array(
+    $form = [
+      '#attached' => [
+        'library' => ['simple_conreg/conreg_tables'],
+      ],
       '#prefix' => '<div id="memberform">',
       '#suffix' => '</div>',
-    );
+    ];
 
     $form['selOption'] = [
       '#type' => 'select',
@@ -236,14 +240,13 @@ class SimpleConregAdminMemberOptions extends FormBase {
     
     // Populate final row of table with totals.
     $totalRow = [
-      'first_name' => ['#markup' => $this->t('Total')],
-      'last_name' => ['#markup' => ''],
+      'first_name' => ['#markup' => $this->t('Total members'), '#wrapper_attributes' => ['colspan' => 2, 'class' => ['table-total']]],
     ];
     if ($showEmail)
-      $totalRow['email'] = ['#markup' => ''];
+      $totalRow['email'] = ['#markup' => '', '#wrapper_attributes' => ['class' => ['table-total']]];
     foreach ($displayOpts as $display)
-      $totalRow['option_'.$display] = ['#markup' => $optionTotals[$display]];
-    $totalRow['total'] = ['#markup' => $totalRows];
+      $totalRow['option_'.$display] = ['#markup' => $optionTotals[$display], '#wrapper_attributes' => ['class' => ['table-total']]];
+    $totalRow['total'] = ['#markup' => $this->t('@total members', ['@total' => $totalRows]), '#wrapper_attributes' => ['class' => ['table-total']]];
     $form['table'][] = $totalRow;
     
     return $form;
