@@ -100,6 +100,9 @@ class SimpleConregConfig {
     $config->set('fields.country_mandatory', $vals['simple_conreg_mandatory']['country']);
     $config->set('fields.birth_date_mandatory', $vals['simple_conreg_mandatory']['birth_date']);
     $config->set('fields.age_mandatory', $vals['simple_conreg_mandatory']['age']);
+    $config->set('fields.first_name_max_length', $vals['simple_conreg_max_lengths']['first_name']);
+    $config->set('fields.last_name_max_length', $vals['simple_conreg_max_lengths']['last_name']);
+    $config->set('fields.badge_name_max_length', $vals['simple_conreg_max_lengths']['badge_name']);
     $config->set('extras.flag1', $vals['simple_conreg_extras']['flag1']);
     $config->set('extras.flag2', $vals['simple_conreg_extras']['flag2']);
     $config->save();

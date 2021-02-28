@@ -136,7 +136,7 @@ class SimpleConregRegistrationForm extends FormBase {
       '#prefix' => '<div id="regform">',
       '#suffix' => '</div>',
       '#attached' => array(
-        'library' => array('simple_conreg/conreg_form')
+        'library' => array('simple_conreg/conreg_form'),
       ),
     );
 
@@ -203,20 +203,24 @@ class SimpleConregRegistrationForm extends FormBase {
         '#title' => $this->t('Member @number', array('@number' => $cnt)),
       );
 
+      $firstname_max_length = $fieldsetConfig->get('fields.first_name_max_length');
       $form['members']['member'.$cnt]['first_name'] = array(
         '#type' => 'textfield',
         '#title' => $fieldsetConfig->get('fields.first_name_label'),
         '#size' => 29,
+        '#maxlength' => (empty($firstname_max_length) ? 128 : $firstname_max_length),
         '#attributes' => array(
           'id' => "edit-members-member$cnt-first-name",
           'class' => array('edit-members-first-name')),
         '#required' => ($fieldsetConfig->get('fields.first_name_mandatory') ? TRUE : FALSE),
       );
 
+      $lastname_max_length = $fieldsetConfig->get('fields.last_name_max_length');
       $form['members']['member'.$cnt]['last_name'] = array(
         '#type' => 'textfield',
         '#title' => $fieldsetConfig->get('fields.last_name_label'),
         '#size' => 29,
+        '#maxlength' => (empty($lastname_max_length) ? 128 : $lastname_max_length),
         '#attributes' => array(
           'id' => "edit-members-member$cnt-last-name",
           'class' => array('edit-members-last-name')),
@@ -303,14 +307,17 @@ class SimpleConregRegistrationForm extends FormBase {
         '#markup' => $memberPrices[$cnt]->priceMessage,
       );
 
+      // Add badge name max to Drupal Settings for JavaScript to use.
+      $badgename_max_length = $fieldsetConfig->get('fields.badge_name_max_length');
+      if (empty($badgename_max_length)) $badgename_max_length = 128;
+      $form['#attached']['drupalSettings'] = ['simple_conreg' => ['badge_name_max' => $badgename_max_length]];
+
       $form['members']['member'.$cnt]['badge_name_option'] = array(
         '#type' => 'radios',
         '#title' => $fieldsetConfig->get('fields.badge_name_option_label'),
         '#description' => $fieldsetConfig->get('fields.badge_name_description'),
-        '#options' => array('N' => $this->t('Full name on badge'),
-                            'F' => $this->t('First name only'),
-                            'O' => $this->t('Other badge name')),
-        '#default_value' => 'N',
+        '#options' => SimpleConregOptions::badgeNameOptions($eid, $config),
+        '#default_value' => 'F',
         '#required' => TRUE,
         '#attributes' => array(
           'class' => array('edit-members-badge-name-option')),
@@ -332,6 +339,7 @@ class SimpleConregRegistrationForm extends FormBase {
           '#type' => 'textfield',
           '#title' => $fieldsetConfig->get('fields.badge_name_label'),
           '#required' => TRUE,
+          '#maxlength' => $badgename_max_length,
           '#attributes' => array(
             'id' => "edit-members-member$cnt-badge-name",
             'class' => array('edit-members-badge-name')),
@@ -592,8 +600,8 @@ class SimpleConregRegistrationForm extends FormBase {
     // Calculate price for each member.
     $memberQty = $form_state->getValue(array('global', 'member_quantity'));
     for ($cnt=1; $cnt<=$memberQty; $cnt++) {
-      if (isset($form['members']['member'.$cnt]['badge_name']['other']))
-        $ajax_response->addCommand(new HtmlCommand('#memberBadgeName'.$cnt, render($form['members']['member'.$cnt]['badge_name']['other'])));
+      if (isset($form['members']['member'.$cnt]['badge_name']))
+        $ajax_response->addCommand(new HtmlCommand('#memberBadgeName'.$cnt, render($form['members']['member'.$cnt]['badge_name'])));
       else
         $ajax_response->addCommand(new HtmlCommand('#memberBadgeName'.$cnt, ""));
     }
@@ -762,19 +770,25 @@ class SimpleConregRegistrationForm extends FormBase {
         $badge_type = 'A'; // This shouldn't happen, but if no default badge type found, hard code to A.
 
       $fieldset = $types->types[$member_type]->fieldset;
+      $fieldsetConfig = $types->types[$member_type]->config;
       $optionVals = [];
       SimpleConregFieldOptions::procesOptionFields($eid, $fieldset, $form_values['members']['member'.$cnt], $optionVals);
     
+      $badgename_max_length = $fieldsetConfig->get('fields.badge_name_max_length');
+      if (empty($badgename_max_length)) $badgename_max_length = 128;
       // Check whether to use name or "other" badge name...
       switch($form_values['members']['member'.$cnt]['badge_name_option']) {
-        case 'N':
-          $badge_name = trim($form_values['members']['member'.$cnt]['first_name'].' '.$form_values['members']['member'.$cnt]['last_name']);
-          break;
         case 'F':
-          $badge_name = trim($form_values['members']['member'.$cnt]['first_name']);
+          $badge_name = substr(trim($form_values['members']['member'.$cnt]['first_name']), 0, $badgename_max_length);
+          break;
+        case 'N':
+          $badge_name = substr(trim($form_values['members']['member'.$cnt]['first_name']).' '.trim($form_values['members']['member'.$cnt]['last_name']), 0, $badgename_max_length);
+          break;
+        case 'L':
+          $badge_name = substr(trim($form_values['members']['member'.$cnt]['last_name']).', '.trim($form_values['members']['member'.$cnt]['first_name']), 0, $badgename_max_length);
           break;
         case 'O':
-          $badge_name = trim($form_values['members']['member'.$cnt]['badge_name']['other']);
+          $badge_name = substr(trim($form_values['members']['member'.$cnt]['badge_name']['other']), 0, $badgename_max_length);
           break;
       }
     

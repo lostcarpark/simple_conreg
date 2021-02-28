@@ -167,6 +167,24 @@ class SimpleConregOptions {
   }
 
   /**
+   * Return list of badge name options from config.
+   *
+   * Parameters: Optional config.
+   */
+  public static function badgeNameOptions($eid, &$config = NULL) {
+    if (is_null($config)) {
+      $config = SimpleConregConfig::getConfig($eid);
+    }
+    $options = explode("\n", $config->get('badge_name_options')); // One type per line.
+    $badgeNameOptions = [];
+    foreach ($options as $option) {
+      list($code, $badgeOption) = explode('|', $option);
+      $badgeNameOptions[trim($code)] = trim($badgeOption);
+    }
+    return $badgeNameOptions;
+  }
+
+  /**
    * Return list of days from config.
    *
    * Parameters: Optional config.

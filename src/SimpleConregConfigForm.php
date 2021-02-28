@@ -179,6 +179,13 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('badge_types'),
     );
 
+    $form['simple_conreg_members']['badge_name_options'] = array(
+      '#type' => 'textarea',
+      '#title' => $this->t('Badge name options'),
+      '#description' => $this->t('Put each badge name option on a line with option code and description separated by | character (e.g. F|First name only). Note that F, N, L, and O are the only options that make sense at the moment.'),
+      '#default_value' => $config->get('badge_name_options'),
+    );
+
     $form['simple_conreg_members']['days'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Days'),
@@ -483,6 +490,36 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $fieldsetConfig->get('fields.age_mandatory'),
     );
 
+    /* Field max lengths. */
+
+    $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_max_lengths'] = array(
+      '#type' => 'fieldset',
+      '#title' => $this->t('Maximum Lengths'),
+      '#tree' => TRUE,
+    );
+
+    $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_max_lengths']['markup'] = array(
+      '#type' => 'markup',
+      '#markup' => $this->t('Specify maximum length of input fields. Leave blank for unlimited.'),
+    );
+
+    $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_max_lengths']['first_name'] = array(
+      '#type' => 'number',
+      '#title' => $this->t('First name maximum length'),
+      '#default_value' => $fieldsetConfig->get('fields.first_name_max_length'),
+    );
+
+    $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_max_lengths']['last_name'] = array(
+      '#type' => 'number',
+      '#title' => $this->t('Last name maximum length'),
+      '#default_value' => $fieldsetConfig->get('fields.last_name_max_length'),
+    );
+
+    $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_max_lengths']['badge_name'] = array(
+      '#type' => 'number',
+      '#title' => $this->t('Badge name maximum length'),
+      '#default_value' => $fieldsetConfig->get('fields.badge_name_max_length'),
+    );
 
     /*
      * Fields for extra flags.
@@ -889,6 +926,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('member_types', $vals['simple_conreg_members']['types']);
     $config->set('member_upgrades', $vals['simple_conreg_members']['upgrades']);
     $config->set('badge_types', $vals['simple_conreg_members']['badge_types']);
+    $config->set('badge_name_options', $vals['simple_conreg_members']['badge_name_options']);
     $config->set('days', $vals['simple_conreg_members']['days']);
     $config->set('member_no_digits', $vals['simple_conreg_members']['digits']);
     $config->set('registration_intro', $vals['simple_conreg_intros']['registration_intro']);
