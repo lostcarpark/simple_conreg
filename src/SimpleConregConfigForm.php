@@ -859,6 +859,12 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#group' => 'admin',
     );
 
+    $form['simple_conreg_member_check']['member_check_title'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Member check title'),
+      '#default_value' => $config->get('member_check.title'),
+    );
+
     $form['simple_conreg_member_check']['member_check_intro'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Member check introduction'),
@@ -961,6 +967,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('confirmation.template_body', $vals['simple_conreg_confirmation']['template_body']['value']);
     $config->set('confirmation.template_format', $vals['simple_conreg_confirmation']['template_body']['format']);
     $config->set('confirmation.notification_subject', $vals['simple_conreg_confirmation']['notification_subject']);
+    $config->set('member_check.title', $vals['simple_conreg_member_check']['member_check_title']);
     $config->set('member_check.intro', $vals['simple_conreg_member_check']['member_check_intro']);
     $config->set('member_check.confirm_subject', $vals['simple_conreg_member_check']['confirm_subject']);
     $config->set('member_check.confirm_body', $vals['simple_conreg_member_check']['confirm_body']['value']);

@@ -53,7 +53,8 @@ class SimpleConregCheckMemberForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1) {
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1)
+  {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
 
@@ -87,6 +88,7 @@ class SimpleConregCheckMemberForm extends FormBase {
     $form = array(
       '#tree' => TRUE,
       '#cache' => ['max-age' => 0],
+      '#title' => $config->get('member_check.title'),
       '#prefix' => '<div id="regform">',
       '#suffix' => '</div>',
       '#attached' => array(
