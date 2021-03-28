@@ -43,15 +43,15 @@ class SimpleConregFieldOptions {
 
     foreach ($options as $option) {
       if (!empty($option)) {
-        $optionFields = array_pad(explode('|', $option), 7, '');
-        list($optid, $grpid, $optionTitle, $detailTitle, $required, $weight, $belongsIn) = $optionFields;
+        $optionFields = array_pad(explode('|', $option), 8, '');
+        list($optid, $grpid, $optionTitle, $detailTitle, $required, $weight, $belongsIn, $mustSelect) = $optionFields;
         $fieldSets = [];
         foreach (explode(',', trim($belongsIn)) as $fieldSet) {
           //if (!empty($fieldSet)) {
             $fieldSets[] = $fieldSet;
           //}
         }
-        $fieldOption = ['grpid' => $grpid, 'title' => $optionTitle, 'detail' => $detailTitle, 'required' => $required, 'weight' => $weight, 'fieldSets' => $fieldSets]; 
+        $fieldOption = ['grpid' => $grpid, 'title' => $optionTitle, 'detail' => $detailTitle, 'required' => $required, 'weight' => $weight, 'fieldSets' => $fieldSets, 'mustSelect' => $mustSelect]; 
         $fieldOptions[$optid] = $fieldOption;
         $fieldGroups[$grpid]['options'][$optid] = $fieldOption;
       }
@@ -80,6 +80,7 @@ class SimpleConregFieldOptions {
           $fieldOptions[$fieldName]['options'][$optid]['option'] = $option['title'];
           $fieldOptions[$fieldName]['options'][$optid]['detail'] = $option['detail'];
           $fieldOptions[$fieldName]['options'][$optid]['required'] = $option['required'];
+          $fieldOptions[$fieldName]['options'][$optid]['mustSelect'] = $option['mustSelect'];
         }
       }
     }
@@ -210,6 +211,9 @@ class SimpleConregFieldOptions {
             '#type' => 'checkbox',
             '#title' => $optionDetails['option'],
           ];
+          if ($optionDetails['mustSelect']) {
+            $memberForm[$key]['options'][$optid]['#required'] = TRUE;
+          }
           // Check if saved value.
           if (array_key_exists($optid, $member['options']))
             $memberForm[$key]['options'][$optid]['#default_value'] = TRUE;
@@ -254,7 +258,19 @@ class SimpleConregFieldOptions {
    *
    * Parameters: Event ID, Fieldset, Form vals for member, and reference to array to return option values.
    */
-  public static function procesOptionFields($eid, $fieldset, &$memberVals, &$optionVals) {
+  public static function validateOptionFields($eid, $fieldset, &$memberVals, &$optionVals)
+  {
+    // Read the option field from the database.
+    $fieldOptions = self::getFieldOptions($eid, NULL, $fieldset);
+  }
+
+  /**
+   * Process field options from submitted member form.
+   *
+   * Parameters: Event ID, Fieldset, Form vals for member, and reference to array to return option values.
+   */
+  public static function procesOptionFields($eid, $fieldset, &$memberVals, &$optionVals)
+  {
     // Read the option field from the database.
     $fieldOptions = self::getFieldOptions($eid, NULL, $fieldset);
     // Loop through each field on the member form.

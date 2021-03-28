@@ -581,7 +581,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $form['simple_conreg_options']['options'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Options'),
-      '#description' => $this->t('Put each option on a line with option ID, group ID, option title, detail title, detail required (1/0), weight (bigger number goes to bottom), and comma setprated list of fieldsets to include it, separated by | character (e.g. "1|1| Help with pre-con tasks|Please provide details of areas you\'d like to help|0|1|0,1").'),
+      '#description' => $this->t('Put each option on a line with option ID, group ID, option title, detail title, detail required (1/0), weight (bigger number goes to bottom), comma setprated list of fieldsets to include it, and must be checked, separated by | character (e.g. "1|1| Help with pre-con tasks|Please provide details of areas you\'d like to help|0|1|0,1|0").'),
       '#default_value' => $config->get('simple_conreg_options.options'),
     );  
 
