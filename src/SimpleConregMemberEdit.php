@@ -111,6 +111,12 @@ class SimpleConregMemberEdit extends FormBase {
       '#title' => $this->t('Member details'),
     );
 
+    $form['member']['intro'] = array(
+      '#markup' => $config->get('member_edit.intro_text'),
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
+    );
+
     $form['member']['member_no'] = array(
       '#markup' => $this->t('Member number: @member_no', ['@member_no' => $member['member_no']]),
       '#prefix' => '<div>',
@@ -129,11 +135,13 @@ class SimpleConregMemberEdit extends FormBase {
       '#suffix' => '</div>',
     );
 
-    $form['member']['email'] = array(
-      '#markup' => $fieldsetConfig->get('fields.email_label') . ': ' . $member['email'],
-      '#prefix' => '<div>',
-      '#suffix' => '</div>',
-    );
+    if (FALSE) {
+      $form['member']['email'] = array(
+        '#markup' => $fieldsetConfig->get('fields.email_label') . ': ' . $member['email'],
+        '#prefix' => '<div>',
+        '#suffix' => '</div>',
+      );
+    }
 
     $form['member']['type'] = array(
       '#markup' => $fieldsetConfig->get('fields.membership_type_label') . ': ' . $types->privateOptions[$member['member_type']],
@@ -154,6 +162,14 @@ class SimpleConregMemberEdit extends FormBase {
       '#prefix' => '<div>',
       '#suffix' => '</div>',
     );
+
+    if (TRUE) {
+      $form['member']['email'] = array(
+        '#type' => 'email',
+        '#title' => $fieldsetConfig->get('fields.email_label'),
+        '#default_value' => (isset($member['email']) ? $member['email'] : ''),
+      );
+    }
 
     $badgename_max_length = $fieldsetConfig->get('fields.badge_name_max_length');
     $form['member']['badge_name'] = array(
@@ -390,18 +406,20 @@ class SimpleConregMemberEdit extends FormBase {
     // Save the submitted entry.
     $entry = [
       'mid' => $mid,
-      'badge_name' => trim($form_values['member']['badge_name']),
+      'badge_name' => trim($form_values['member']['']),
       'update_date' => time(),
     ];
+    if (isset($form_values['member']['email'])) $entry['email'] = trim($form_values['member']['email']);
+    if (isset($form_values['member']['badge_name'])) $entry['badge_name'] = trim($form_values['member']['badge_name']);
     if (isset($form_values['member']['display'])) $entry['display'] = $form_values['member']['display'];
     if (isset($form_values['member']['communication_method'])) $entry['communication_method'] = $form_values['member']['communication_method'];
-    if (isset($form_values['member']['street'])) trim($entry['street'] = $form_values['member']['street']);
-    if (isset($form_values['member']['street2'])) trim($entry['street2'] = $form_values['member']['street2']);
-    if (isset($form_values['member']['city'])) trim($entry['city'] = $form_values['member']['city']);
-    if (isset($form_values['member']['county'])) trim($entry['county'] = $form_values['member']['county']);
-    if (isset($form_values['member']['postcode'])) trim($entry['postcode'] = $form_values['member']['postcode']);
-    if (isset($form_values['member']['country'])) trim($entry['country'] = $form_values['member']['country']);
-    if (isset($form_values['member']['phone'])) trim($entry['phone'] = $form_values['member']['phone']);
+    if (isset($form_values['member']['street'])) $entry['street'] = trim($form_values['member']['street']);
+    if (isset($form_values['member']['street2'])) $entry['street2'] = trim($form_values['member']['street2']);
+    if (isset($form_values['member']['city'])) $entry['city'] = trim($form_values['member']['city']);
+    if (isset($form_values['member']['county'])) $entry['county'] = trim($form_values['member']['county']);
+    if (isset($form_values['member']['postcode'])) $entry['postcode'] = trim($form_values['member']['postcode']);
+    if (isset($form_values['member']['country'])) $entry['country'] = trim($form_values['member']['country']);
+    if (isset($form_values['member']['phone'])) $entry['phone'] = trim($form_values['member']['phone']);
     if (isset($form_values['member']['birth_date'])) $entry['birth_date'] = $form_values['member']['birth_date'];
     if (isset($form_values['member']['age'])) $entry['age'] = $form_values['member']['age'];
     if (isset($form_values['member']['extra_flag1'])) $entry['extra_flag1'] = $form_values['member']['extra_flag1'];

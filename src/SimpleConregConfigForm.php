@@ -894,6 +894,22 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#format' => $config->get('member_check.unknown_format'),
     );  
 
+    /* Member Self Service Edit Settings. */
+
+    $form['simple_conreg_member_edit'] = array(
+      '#type' => 'details',
+      '#title' => $this->t('Member Self Service Edit'),
+      '#tree' => TRUE,
+      '#group' => 'admin',
+    );
+
+    $form['simple_conreg_member_edit']['member_edit_intro'] = array(
+      '#type' => 'text_format',
+      '#title' => $this->t('Member self service edit intro'),
+      '#description' => $this->t('Text to appear at the top of the member edit page.'),
+      '#default_value' => $config->get('member_edit.intro_text'),
+      '#format' => $config->get('member_edit.intro_format'),
+    );  
     return parent::buildForm($form, $form_state);
   }
 
@@ -974,6 +990,8 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('member_check.confirm_format', $vals['simple_conreg_member_check']['confirm_body']['format']);
     $config->set('member_check.unknown_body', $vals['simple_conreg_member_check']['unknown_body']['value']);
     $config->set('member_check.unknown_format', $vals['simple_conreg_member_check']['unknown_body']['format']);
+    $config->set('member_edit.intro_text', $vals['simple_conreg_member_edit']['member_edit_intro']['value']);
+    $config->set('member_edit.intro_format', $vals['simple_conreg_member_edit']['member_edit_intro']['format']);
     $config->save();
 
     $fieldset = $vals['simple_conreg_fieldsets']['fieldset'];
