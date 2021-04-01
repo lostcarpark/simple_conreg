@@ -9,6 +9,8 @@ namespace Drupal\simple_conreg;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\File\FileSystemInterface;
+//use Drupal\file\Entity\File;
 use Drupal\devel;
 
 /**
@@ -28,6 +30,9 @@ class SimpleConregAdminBadgePrint extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state, $eid = 1)
   {
+    // Store Event ID in form state.
+    $form_state->set('eid', $eid);
+
     $config = SimpleConregConfig::getConfig($eid);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
     $days = SimpleConregOptions::days($eid, $config);
@@ -93,7 +98,7 @@ class SimpleConregAdminBadgePrint extends FormBase {
         'event' => 'change',
       ),
     ];
-    if ($by_member_no) {
+    if ($select_bymemberno) {
       $form['view']['number'] = [
         '#type' => 'fieldset',
         '#title' => $this->t('Choose member numbers'),
@@ -144,7 +149,39 @@ class SimpleConregAdminBadgePrint extends FormBase {
       '#type' => 'button',
       '#value' => $this->t('Update'),
     ];
-    foreach(SimpleConregStorage::adminMemberBadges($eid, $max_num_badges) as $member) {
+    
+    $form['upload'] = [
+      '#prefix' => '<div id="badge-form">',
+      '#suffix' => '</div>',
+    ];
+    $form['upload']['ids'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('IDs to upload'),
+    ];
+    $form['upload']['canvas'] = [
+      '#prefix' => '<div id="canvas">',
+      '#suffix' => '</div>',
+    ];
+    $form['upload']['image'] = [
+      '#prefix' => '<div id="image">',
+      '#suffix' => '</div>',
+    ];
+    $form['upload']['text'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Image data'),
+    ];
+    $form['upload']['do_upload'] = [
+      '#type' => 'button',
+      '#value' => $this->t('Upload Badge Images'),
+      '#attributes' => ['onclick' => 'return (false);'],
+    ];
+
+    $options = [];
+    if ($select_bymemberno) {
+      $options['member_no_from'] = (isset($form_values['view']['number']['member_no_from']) ? $form_values['view']['number']['member_no_from'] : '');
+      $options['member_no_to'] = (isset($form_values['view']['number']['member_no_to']) ? $form_values['view']['number']['member_no_to'] : '');
+    }
+    foreach(SimpleConregStorage::adminMemberBadges($eid, $max_num_badges, $options) as $member) {
       $badge_type = isset($badgeTypes[$member['badge_type']]) ? $badgeTypes[$member['badge_type']] : $member['badge_type'];
       $member_no = $member['badge_type'] . sprintf("%0".$digits."d", $member['member_no']);
       if (!empty($member['days'])) {
@@ -153,10 +190,10 @@ class SimpleConregAdminBadgePrint extends FormBase {
           $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
         }
         $member_days = implode(', ', $dayDescs);
-      }      
+      }
       $form['member'.$member['mid']] = [
         '#markup' => 
-'<div id="mid'.$member['mid'].'" class="badge">
+'<div id="mid'.$member['mid'].'" class="badge badge-type-'.$badge_type.'">
   <div class="badge-side badge-left">
     <div class="badge-type">'.$badge_type.'</div>
     <div class="badge-number">'.$member_no.'</div>
@@ -194,5 +231,7 @@ class SimpleConregAdminBadgePrint extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state)
   {
+    $eid = $form_state->get('eid');
+
   }
 }

@@ -264,6 +264,15 @@ simple_conreg_admin_member_badges:
     _permission: 'view membership badges'
     eid: ^[0-9]+$
 
+simple_conreg_badge_upload:
+  path: 'members/badge/upload/{eid}'
+  defaults:
+    _controller: '\Drupal\simple_conreg\SimpleConregController::badgeUpload'
+    eid: 1
+  requirements:
+    _permission: 'view membership badges'
+    eid: ^[0-9]+$
+
 simple_conreg_admin_member_options:
   path: 'admin/members/options/{eid}/{option}'
   defaults:

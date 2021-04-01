@@ -503,7 +503,7 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberBadges($eid, $max_num_badges=0) {
+  public static function adminMemberBadges($eid, $max_num_badges=0, $options=[]) {
     $select = db_select('conreg_members', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'member_no');
@@ -517,6 +517,10 @@ class SimpleConregStorage {
     $select->condition('m.is_paid', 1);
     $select->condition('m.is_approved', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+    if (!empty($options['member_no_from']))
+      $select->condition('m.member_no', $options['member_no_from'], '>=');
+    if (!empty($options['member_no_to']))
+      $select->condition('m.member_no', $options['member_no_to'], '<=');
     $select->orderby('m.member_no');
     // If maximum number of badges specified, select that range.
     if ($max_num_badges)

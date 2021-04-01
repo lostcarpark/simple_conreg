@@ -42,6 +42,7 @@ conreg_badges:
       css/simple_conreg_badges.css: {}
   js:
     js/jquery.textfit.min.js: {}
+    js/html2canvas.min.js: {}
     js/jquery.badge_names.js: {}
   dependencies:
     - core/jquery

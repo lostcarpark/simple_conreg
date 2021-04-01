@@ -11,6 +11,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\user\Entity\User;
 use Drupal\Core\Datetime\DateHelper;
+use Drupal\Core\File\FileSystemInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 
@@ -960,5 +961,26 @@ class SimpleConregController extends ControllerBase {
     return new RedirectResponse(\Drupal\Core\Url::fromRoute('simple_conreg_portal', ['eid' => $member['eid']])->setAbsolute()->toString());
   }
 
+  /**
+   * Function used for badge uploading.
+   */
+  public function badgeUpload($eid)
+  {
+    $pngdata = \Drupal::request()->request->get('data');
+    if (!empty($pngdata)) {
+      list($id, $base64) = explode('|', $pngdata);
+      list($type, $data) = explode(';', $base64);
+      list(, $data)      = explode(',', $data);
+      $pngdata = base64_decode($data);
+      $path = 'public://badges/'.$eid;
+      \Drupal::service('file_system')->prepareDirectory($path, FileSystemInterface::CREATE_DIRECTORY);
+      file_save_data($pngdata, $path.'/'.$id.'.png', FileSystemInterface::EXISTS_REPLACE);
+    }
+
+    $content['markup'] = array(
+      '#markup' => '<p>Badge Upload.</p>',
+    );
+    return $content;
+  }
 
 }
