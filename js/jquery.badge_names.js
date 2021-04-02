@@ -2,9 +2,11 @@ var badgeTimer;
 
 Drupal.behaviors.badges = {
   attach: function (context) {
+    jQuery("#upload").hide();
     jQuery(".badge-name").textfit('bestfit');
-    jQuery("#edit-upload-do-upload").click(function() {
+    jQuery("#edit-view-do-upload").click(function() {
       window.scrollTo(0, 0);
+      jQuery("#upload").show();
 
       // Make a list of IDs for all visible badges.      
       var ids="";
@@ -29,6 +31,7 @@ function badgeTick() {
   // If no more IDs, stop timer.
   if (ids.length <= 1) {
     clearInterval(badgeTimer);
+    jQuery("#upload").hide();
     return;
   }
   // Get the first ID from the list.

@@ -415,6 +415,26 @@ simple_conreg_admin_members_email:
     eid: ^[0-9]+$
     mid: ^[0-9]+$
 
+simple_conreg_admin_bulk_email:
+  path: 'admin/members/bulkemail/{eid}'
+  defaults:
+    _title: 'Membership Bulk Email Sender'
+    _form: '\Drupal\simple_conreg\SimpleConregAdminBulkEmail'
+    eid: 1
+  requirements:
+    _permission: 'bulk email sending'
+    eid: ^[0-9]+$
+
+simple_conreg_admin_bulk_email_send:
+  path: 'admin/members/bulksend/{eid}/{mid}'
+  defaults:
+    _controller: '\Drupal\simple_conreg\SimpleConregController::bulksend'
+    eid: 1
+  requirements:
+    _permission: 'bulk email sending'
+    eid: ^[0-9]+$
+    mid: ^[0-9]+$
+
 simple_conreg_admin_checkin:
   path: 'admin/members/checkin/{eid}/{lead_mid}'
   defaults:

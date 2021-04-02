@@ -12,6 +12,7 @@ use Drupal\Component\Utility\SafeMarkup;
 use Drupal\user\Entity\User;
 use Drupal\Core\Datetime\DateHelper;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Mail\MailManagerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 
@@ -979,6 +980,36 @@ class SimpleConregController extends ControllerBase {
 
     $content['markup'] = array(
       '#markup' => '<p>Badge Upload.</p>',
+    );
+    return $content;
+  }
+
+  /**
+   * Function used for badge uploading.
+   */
+  public function bulksend($eid, $mid)
+  {
+   $config = SimpleConregConfig::getConfig($eid);
+   // Look up email address for member.
+    $members = SimpleConregStorage::loadAll(['eid' => $eid, 'mid' => $mid, 'is_deleted' => 0]);
+    $member = $members[0];
+
+    // Set up parameters for receipt email.
+    $params = ['eid' => $member['eid'], 'mid' => $member['mid']];
+    $params['subject'] = $config->get('bulkemail.template_subject');
+    $params['body'] = $config->get('bulkemail.template_body');
+    $params['body_format'] = $config->get('bulkemail.template_format');
+    $module = "simple_conreg";
+    $key = "template";
+    $to = $member["email"];
+    $language_code = \Drupal::languageManager()->getDefaultLanguage()->getId();
+    $send_now = TRUE;
+    // Send confirmation email to member.
+    if (!empty($member["email"]))
+      $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $language_code, $params);
+
+    $content['markup'] = array(
+      '#markup' => '<p>Bulk send.</p>',
     );
     return $content;
   }

@@ -24,6 +24,10 @@
   title: Configure convention email templates
   description: Allow administrator to change the available templates for sending emails
 
+'bulk email sending':
+  title: Bulk email sending
+  description: Allow administrator to send bulk emails to members
+
 'integration convention with ClickUp':
   title: Integrate convention with ClickUp
   description: Set up ClickUp integration to create tasks when member options are selected

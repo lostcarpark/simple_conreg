@@ -47,3 +47,10 @@ conreg_badges:
   dependencies:
     - core/jquery
 
+conreg_bulkemail:
+  version: 1.x
+  js:
+    js/jquery.bulkemail.js: {}
+  dependencies:
+    - core/jquery
+

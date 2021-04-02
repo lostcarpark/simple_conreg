@@ -58,6 +58,24 @@ class SimpleConregAdminBadgePrint extends FormBase {
       'library' => ['simple_conreg/conreg_badges'],
     ];
     $form['#tree'] = TRUE;
+
+    $form['upload'] = [
+      '#prefix' => '<div id="upload">',
+      '#suffix' => '</div>',
+    ];
+    $form['upload']['ids'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('IDs to upload'),
+    ];
+    $form['upload']['canvas'] = [
+      '#prefix' => '<div id="canvas">',
+      '#suffix' => '</div>',
+    ];
+    $form['upload']['text'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Image data'),
+    ];
+
     $form['view'] = [
       '#prefix' => '<div id="badge-form">',
       '#suffix' => '</div>',
@@ -149,32 +167,13 @@ class SimpleConregAdminBadgePrint extends FormBase {
       '#type' => 'button',
       '#value' => $this->t('Update'),
     ];
-    
-    $form['upload'] = [
-      '#prefix' => '<div id="badge-form">',
-      '#suffix' => '</div>',
-    ];
-    $form['upload']['ids'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('IDs to upload'),
-    ];
-    $form['upload']['canvas'] = [
-      '#prefix' => '<div id="canvas">',
-      '#suffix' => '</div>',
-    ];
-    $form['upload']['image'] = [
-      '#prefix' => '<div id="image">',
-      '#suffix' => '</div>',
-    ];
-    $form['upload']['text'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Image data'),
-    ];
-    $form['upload']['do_upload'] = [
+
+    $form['view']['do_upload'] = [
       '#type' => 'button',
       '#value' => $this->t('Upload Badge Images'),
       '#attributes' => ['onclick' => 'return (false);'],
     ];
+    
 
     $options = [];
     if ($select_bymemberno) {

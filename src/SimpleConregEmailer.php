@@ -8,14 +8,18 @@
 namespace Drupal\simple_conreg;
 
 use Drupal\devel;
+use Drupal\Core\File\FileSystemInterface;
+
 use Drupal\Core\Render\Markup;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Component\Render\PlainTextOutput;
+use Drupal\Core\StreamWrapper\PublicStream;
 
 class SimpleConregEmailer {
 
   // Function to create an email for specified member.
-  public static function createEmail(&$message, $params) {
+  public static function createEmail(&$message, $params)
+  {
     // Only proceed if Event provided.
     if (isset($params['eid'])) {
       if (isset($params['tokens']))
@@ -44,15 +48,38 @@ class SimpleConregEmailer {
       $body = $tokens->applyTokens($params['body'], FALSE);
       $message['preview'] = $body;
 
+      // Only attach badge image if referenced in body.
+      if (strpos($body, '[badge]') !== false) {
+        // Set ID for attachment.
+        $badge_id = "conreg-badge".$params['mid'];
+        $badge = '<img src="cid:' . $badge_id . '" />';
+
+        // Prepare image attachment.
+        $badgepath = PublicStream::basePath().'/badges/'.$params['eid'];
+        $badgefile = 'mid'.$params['mid'].'.png';
+        // Create attachment object.
+        $file = new \stdClass();
+        $file->cid = $badge_id;
+        $file->uri = $badgepath.'/'.$badgefile; // File path
+        $file->filename = $badgefile; //File name
+        $file->filemime = 'image/png'; //File mime type
+        // Add object to images array.
+        $message['params']['images'][] = $file;
+      }
+
       $config = \Drupal::config('simple_conreg.settings.'.$params['eid']);
       if ($config->get('confirmation.format_html')) {
         // Set up HTML email (todo: add plain text option).
         $message['headers']['Content-Type'] = 'text/html; charset=UTF-8';
         // Split body into an array.
+        if (!empty($badge)) {
+          $body = str_replace('[badge]', $badge, $body);
+        }
         $body = explode('\n', $body);
         $message['body'] = array_map(function ($body) {
           return Markup::create($body);
         }, $body);
+        
         //$message['body'][] = \Drupal\Core\Render\Markup::create($body);
         //$message['body'][] = check_markup($body, $format);  // HTML version of message body.
         $message['plain'] = \Drupal\Component\Utility\SafeMarkup::checkPlain($tokens->applyTokens($params['body'], TRUE));  // Plain text version of body.
