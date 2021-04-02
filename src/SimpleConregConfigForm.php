@@ -910,8 +910,22 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('member_edit.intro_text'),
       '#format' => $config->get('member_edit.intro_format'),
     );  
+
+    $form['simple_conreg_member_edit']['email'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Email editable by member'),
+      '#default_value' => $config->get('member_edit.email_editable'),
+    );
+
+    $form['simple_conreg_member_edit']['badge_name'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Badge name editable by member'),
+      '#default_value' => $config->get('member_edit.badge_name_editable'),
+    );
+
     return parent::buildForm($form, $form_state);
   }
+
 
   // Callback function for "fieldset" drop down.
   public function updateFieldsetCallback(array $form, FormStateInterface $form_state) {
@@ -992,6 +1006,8 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('member_check.unknown_format', $vals['simple_conreg_member_check']['unknown_body']['format']);
     $config->set('member_edit.intro_text', $vals['simple_conreg_member_edit']['member_edit_intro']['value']);
     $config->set('member_edit.intro_format', $vals['simple_conreg_member_edit']['member_edit_intro']['format']);
+    $config->set('member_edit.email_editable', $vals['simple_conreg_member_edit']['email']);
+    $config->set('member_edit.badge_name_editable', $vals['simple_conreg_member_edit']['badge_name']);
     $config->save();
 
     $fieldset = $vals['simple_conreg_fieldsets']['fieldset'];

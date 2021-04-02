@@ -135,9 +135,17 @@ class SimpleConregMemberEdit extends FormBase {
       '#suffix' => '</div>',
     );
 
-    if (FALSE) {
+    if (!$config->get('member_edit.email_editable')) {
       $form['member']['email'] = array(
         '#markup' => $fieldsetConfig->get('fields.email_label') . ': ' . $member['email'],
+        '#prefix' => '<div>',
+        '#suffix' => '</div>',
+      );
+    }
+
+    if (!$config->get('member_edit.badge_name_editable')) {
+      $form['member']['badge_name'] = array(
+        '#markup' => $fieldsetConfig->get('fields.badge_name_label') . ': ' . $member['badge_name'],
         '#prefix' => '<div>',
         '#suffix' => '</div>',
       );
@@ -163,7 +171,7 @@ class SimpleConregMemberEdit extends FormBase {
       '#suffix' => '</div>',
     );
 
-    if (TRUE) {
+    if ($config->get('member_edit.email_editable')) {
       $form['member']['email'] = array(
         '#type' => 'email',
         '#title' => $fieldsetConfig->get('fields.email_label'),
@@ -171,17 +179,19 @@ class SimpleConregMemberEdit extends FormBase {
       );
     }
 
-    $badgename_max_length = $fieldsetConfig->get('fields.badge_name_max_length');
-    $form['member']['badge_name'] = array(
-      '#type' => 'textfield',
-      '#title' => $fieldsetConfig->get('fields.badge_name_label'),
-      '#default_value' => $member['badge_name'],
-      '#required' => TRUE,
-      '#maxlength' => (empty($badgename_max_length) ? 128 : $badgename_max_length),
-      '#attributes' => array(
-        'id' => "edit-members-badge-name",
-        'class' => array('edit-members-badge-name')),
-    );
+    if ($config->get('member_edit.badge_name_editable')) {
+      $badgename_max_length = $fieldsetConfig->get('fields.badge_name_max_length');
+      $form['member']['badge_name'] = array(
+        '#type' => 'textfield',
+        '#title' => $fieldsetConfig->get('fields.badge_name_label'),
+        '#default_value' => $member['badge_name'],
+        '#required' => TRUE,
+        '#maxlength' => (empty($badgename_max_length) ? 128 : $badgename_max_length),
+        '#attributes' => array(
+          'id' => "edit-members-badge-name",
+          'class' => array('edit-members-badge-name')),
+      );
+    }
 
     if (!empty($fieldsetConfig->get('fields.display_label'))) {
       $form['member']['display'] = array(
