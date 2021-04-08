@@ -285,6 +285,18 @@ simple_conreg_admin_member_options:
     eid: ^[0-9]+$
     option: ^[0-9]*$
 
+simple_conreg_admin_member_addons:
+  path: 'admin/members/addons/{eid}/{addon}'
+  defaults:
+    _title: 'Member Options'
+    _form: '\Drupal\simple_conreg\SimpleConregAdminMemberAddOns'
+    eid: 1
+    addon: 0
+  requirements:
+    _permission: 'view membership add-ons'
+    eid: ^[0-9]+$
+    addon: ^[0-9]*$
+
 simple_conreg_admin_mailout_emails:
   path: 'admin/members/mailout/{eid}'
   defaults:
@@ -304,16 +316,6 @@ simple_conreg_admin_member_summary:
     eid: 1
   requirements:
     _permission: 'view membership summary'
-    eid: ^[0-9]+$
-
-simple_conreg_admin_member_addons:
-  path: 'members/add-ons/{eid}'
-  defaults:
-    _title: 'Member Add-Ons'
-    _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminMemberAddOns'
-    eid: 1
-  requirements:
-    _permission: 'view membership add-ons'
     eid: ^[0-9]+$
 
 simple_conreg_admin_child_member_ages:

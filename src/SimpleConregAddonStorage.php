@@ -151,5 +151,30 @@ class SimpleConregAddonStorage
     return $entries;
   }
 
+  public static function loadAddOnReport($eid, $addOn) {
+    // Read all fields from the conreg_addons table.
+    $select = db_select('conreg_members', 'm');
+    $select->join('conreg_member_addons', 'a', 'm.mid = a.mid');
+    $select->addField('m', 'member_no');
+    $select->addField('m', 'first_name');
+    $select->addField('m', 'last_name');
+    $select->addField('m', 'email');
+    $select->addField('a', 'addon_name');
+    $select->addField('a', 'addon_option');
+    $select->addField('a', 'addon_info');
+    $select->addField('a', 'addon_amount');
+    $select->addField('a', 'payment_ref');
+    $select->condition('m.eid', $eid);
+    $select->condition('m.is_paid', 1);
+    $select->condition("m.is_deleted", FALSE); //Only include members who aren't deleted.
+    $select->condition('a.is_paid', 1);
+    if (!empty($addOn))
+      $select->condition('a.addon_name', $addOn);
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    return $entries;
+  }
+
 }
 

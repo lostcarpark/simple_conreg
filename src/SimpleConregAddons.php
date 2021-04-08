@@ -48,7 +48,7 @@ class SimpleConregAddons
   }
 
   /**
-   * Cet current event config.
+   * get addons from event config.
    *
    * Parameters: Event ID.
    */
