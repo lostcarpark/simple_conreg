@@ -186,6 +186,13 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('badge_name_options'),
     );
 
+    $form['simple_conreg_members']['badge_name_default'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Badge name default option'),
+      '#description' => $this->t('Default badge option code. Leave blank to have no default option selected.'),
+      '#default_value' => $config->get('badge_name_default'),
+    );
+
     $form['simple_conreg_members']['days'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Days'),
@@ -963,6 +970,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('member_upgrades', $vals['simple_conreg_members']['upgrades']);
     $config->set('badge_types', $vals['simple_conreg_members']['badge_types']);
     $config->set('badge_name_options', $vals['simple_conreg_members']['badge_name_options']);
+    $config->set('badge_name_default', $vals['simple_conreg_members']['badge_name_default']);
     $config->set('days', $vals['simple_conreg_members']['days']);
     $config->set('member_no_digits', $vals['simple_conreg_members']['digits']);
     $config->set('registration_intro', $vals['simple_conreg_intros']['registration_intro']);

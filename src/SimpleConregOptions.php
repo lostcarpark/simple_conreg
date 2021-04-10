@@ -185,6 +185,22 @@ class SimpleConregOptions {
   }
 
   /**
+   * If member name has been entered, customise the badge name options.
+   */
+  public static function badgeNameOptionsForName($eid, $firstName, $lastName, $maxLength, &$config = NULL) {
+    $badgeNameOptions = self::badgeNameOptions($eid, $config);
+    if (!(empty($firstName) && empty($lastName))) {
+      if (array_key_exists('F', $badgeNameOptions))
+        $badgeNameOptions['F'] = substr($firstName, 0, $maxLength);
+      if (array_key_exists('N', $badgeNameOptions))
+        $badgeNameOptions['N'] = substr($firstName . ' ' . $lastName, 0, $maxLength);
+      if (array_key_exists('L', $badgeNameOptions))
+        $badgeNameOptions['L'] = substr($lastName . ', ' . $firstName, 0, $maxLength);
+    }
+    return $badgeNameOptions;
+  }
+
+  /**
    * Return list of days from config.
    *
    * Parameters: Optional config.

@@ -155,6 +155,9 @@ class SimpleConregAddons
               '#default_value' => '0.00',
               '#step' => '0.01',
               '#min' => 0,
+              '#attributes' => array(
+                'class' => ["edit-free-amt"],
+              ),
             );
             if (isset($saved[$addOnId])) {
               if (isset($saved[$addOnId]) && $saved[$addOnId]['is_paid'] ) {
@@ -180,7 +183,9 @@ class SimpleConregAddons
   {
     $addOnTotal = 0;
     $addOnGlobal = 0;
+    $addOnGlobalMinusFree = 0;
     $addOnMembers = [];
+    $addOnMembersMinusFree = [];
     
     foreach ($config->get('add-ons') as $addOnId => $addOnVals) {
       // If add-on set, get values.
@@ -196,11 +201,13 @@ class SimpleConregAddons
           if (!empty($option)) {
             $addOnGlobal += $addOnPrices[$option];
             $addOnTotal += $addOnPrices[$option];
+            $addOnGlobalMinusFree += $addOnPrices[$option];
           }
           $free_amount = $form_values['payment']['global_add_on'][$addOnId]['free_amount'];
           if (!empty($free_amount)) {
             $addOnGlobal += $free_amount;
             $addOnTotal += $free_amount;
+            // Don't add to $addOnGlobalMinusFree.
           }
         }
         else {
@@ -214,18 +221,20 @@ class SimpleConregAddons
             if (!empty($option)) {
               $addOnMembers[$member] += $addOnPrices[$option];
               $addOnTotal += $addOnPrices[$option];
+              $addOnMembersMinusFree[$member] += $addOnPrices[$option];
             }
             $free_amount = $memberVals['add_on'][$addOnId]['free_amount'];
             if (!empty($free_amount)) {
               $addOnMembers[$member] += $free_amount;
               $addOnTotal += $free_amount;
+              // Dpn't add to $addOnMembersMinusFree.
             }
           }
         }
       }
     }
 
-    return [$addOnTotal, $addOnGlobal, $addOnMembers];
+    return [$addOnTotal, $addOnGlobal, $addOnGlobalMinusFree, $addOnMembers, $addOnMembersMinusFree];
   }
   
   //
