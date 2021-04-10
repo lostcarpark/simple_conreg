@@ -313,14 +313,14 @@ class SimpleConregController extends ControllerBase {
     $totalAmount = 0;
     foreach ($entries = SimpleConregStorage::adminMemberAmountPaidSummaryLoad($eid) as $entry) {
       // Calculate total received at that rate.
-      $entry['total_paid'] = $entry['member_price'] * $entry['num'];
+      $entry['total_paid'] = number_format($entry['member_price'] * $entry['num'], 2);
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
       $total += $entry['num'];
       $totalAmount += $entry['total_paid'];
     }
     //Add a row for the total.
-    $rows[] = array(t("Total"), $total, $totalAmount);
+    $rows[] = array(t("Total"), $total, number_format($totalAmount, 2));
     $content['amount_paid_summary'] = array(
       '#type' => 'table',
       '#header' => $headers,
@@ -350,14 +350,14 @@ class SimpleConregController extends ControllerBase {
       if (isset($types->types[$entry['member_type']]))
         $entry['member_type'] = (isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type']);
       // Calculate total received at that rate.
-      $entry['total_paid'] = $entry['member_price'] * $entry['num'];
+      $entry['total_paid'] = number_format($entry['member_price'] * $entry['num'], 2);
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
       $total += $entry['num'];
       $totalAmount += $entry['total_paid'];
     }
     //Add a row for the total.
-    $rows[] = array(t("Total"), "", $total, $totalAmount);
+    $rows[] = array(t("Total"), "", $total, number_format($totalAmount, 2));
     $content['type_amount_paid_summary'] = array(
       '#type' => 'table',
       '#header' => $headers,
@@ -379,19 +379,23 @@ class SimpleConregController extends ControllerBase {
       t('Month'), 
       t('Number of members'), 
       t('Total Paid'),
+      t('Cumulative members'), 
+      t('Cumulative Total Paid'),
     );
     $total = 0;
     $totalAmount = 0;
     foreach ($entries = SimpleConregStorage::adminMemberByDateSummaryLoad($eid) as $entry) {
       // Convert month to name.
       $entry['month'] = $months[$entry['month']];
-      // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
       $total += $entry['num'];
       $totalAmount += $entry['total_paid'];
+      $entry['cumulative'] = $total;
+      $entry['cumulativeAmount'] = number_format($totalAmount, 2);
+      // Sanitize each entry.
+      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
     }
     //Add a row for the total.
-    $rows[] = array(t("Total"), "", $total, $totalAmount);
+    $rows[] = array(t("Total"), "", $total, number_format($totalAmount, 2), $total, number_format($totalAmount, 2));
     $content['by_date_summary'] = array(
       '#type' => 'table',
       '#header' => $headers,
