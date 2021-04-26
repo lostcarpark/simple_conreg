@@ -78,6 +78,7 @@ class SimpleConregConfig {
     $config->set('fields.display_label', $vals['simple_conreg_fields']['display_label']);
     $config->set('fields.display_description', $vals['simple_conreg_fields']['display_description']);
     $config->set('fields.communication_method_label', $vals['simple_conreg_fields']['communication_method_label']);
+    $config->set('fields.communication_method_description', $vals['simple_conreg_fields']['communication_method_description']);
     $config->set('fields.same_address_label', $vals['simple_conreg_fields']['same_address_label']);
     $config->set('fields.street_label', $vals['simple_conreg_fields']['street_label']);
     $config->set('fields.street2_label', $vals['simple_conreg_fields']['street2_label']);

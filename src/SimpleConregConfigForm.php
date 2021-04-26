@@ -357,6 +357,12 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $fieldsetConfig->get('fields.communication_method_label'),
     );
 
+    $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['communication_method_description'] = array(
+      '#type' => 'textarea',
+      '#title' => $this->t('Communication method description (leave empty for no description)'),
+      '#default_value' => $fieldsetConfig->get('fields.communication_method_description'),
+    );
+
     $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['same_address_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Same address as member 1 label (leave empty to remove field)'),
