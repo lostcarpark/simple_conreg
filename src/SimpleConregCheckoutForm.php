@@ -106,6 +106,7 @@ class SimpleConregCheckoutForm extends FormBase {
 
     // Set up payment lines on Stripe.
     $items = [];
+    $total = 0;
     foreach ($payment->paymentLines as $line) {
       // Only add member to payment if price greater than zero...
       if ($line->amount > 0) {
@@ -117,38 +118,61 @@ class SimpleConregCheckoutForm extends FormBase {
           'quantity' => 1,
         ];
       }
+      else {
+        $this->processPaymentLine($line);
+      }
+      $total += $line->amount;
     }
     
-    // Set up return URLs.
-    $success = Url::fromRoute("simple_conreg_checkout", ["payid" => $payment->payId,"key" => $payment->randomKey], ['absolute' => TRUE])->toString();
-    $cancel = Url::fromRoute("simple_conreg_register", ["eid" => $eid], ['absolute' => TRUE])->toString();
+    // Only redirect to Stripe if something to pay for...
+    if ($total > 0) {
+      // Set up return URLs.
+      $success = Url::fromRoute("simple_conreg_checkout", ["payid" => $payment->payId,"key" => $payment->randomKey], ['absolute' => TRUE])->toString();
+      $cancel = Url::fromRoute("simple_conreg_register", ["eid" => $eid], ['absolute' => TRUE])->toString();
 
-    // Set up Stripe Session.
-    $session = \Stripe\Checkout\Session::create([
-      'payment_method_types' => ['card'],
-      'customer_email' => $email,
-      'line_items' => $items,
-      'success_url' => $success,
-      'cancel_url' => $cancel,
-    ]);
-    
-    // Update the payment with the session ID.
-    $payment->sessionId = $session->id;
-    $payment->save();
+      // Set up Stripe Session.
+      $session = \Stripe\Checkout\Session::create([
+        'payment_method_types' => ['card'],
+        'customer_email' => $email,
+        'line_items' => $items,
+        'success_url' => $success,
+        'cancel_url' => $cancel,
+      ]);
+      
+      // Update the payment with the session ID.
+      $payment->sessionId = $session->id;
+      $payment->save();
 
-    $from['#title'] = $this->t("Transferring to Stripe");
+      $from['#title'] = $this->t("Transferring to Stripe");
 
-    // Attach the Javascript library and set up parameters.
-    $form['#attached'] = [
-      'library' => ['simple_conreg/conreg_checkout'],
-      'drupalSettings' => ['simple_conreg' => ['checkout' => ['public_key' => $config->get('payments.public_key'), 'session_id' => $session->id]]]
-    ];
+      // Attach the Javascript library and set up parameters.
+      $form['#attached'] = [
+        'library' => ['simple_conreg/conreg_checkout'],
+        'drupalSettings' => ['simple_conreg' => ['checkout' => ['public_key' => $config->get('payments.public_key'), 'session_id' => $session->id]]]
+      ];
 
-    $form['security_message'] = array(
-      '#markup' => $this->t('You will be transferred to Stripe to securely accept your payment. Your browser will return after payment processed.'),
-      '#prefix' => '<div>',
-      '#suffix' => '</div>',
-    );
+      $form['security_message'] = array(
+        '#markup' => $this->t('You will be transferred to Stripe to securely accept your payment. Your browser will return after payment processed.'),
+        '#prefix' => '<div>',
+        '#suffix' => '</div>',
+      );
+    }
+    else { // Nothing to pay for, so just mark paid.
+      $payment->paidDate = time();
+      $payment->paymentMethod = "Free";
+      $payment->paymentRef = "N/A";
+      $payment->save();
+
+      $message = str_replace('[reference]',
+                             $payment->paymentRef,
+                             $config->get('thanks.thank_you_message'));
+      $format = $config->get('thanks.thank_you_format');
+
+      $form['#title'] = $this->t('Thank You');
+      $form['message'] = array(
+        '#markup' => check_markup($message, $format),
+      );
+    }
 
     return $form;
   }
@@ -185,43 +209,47 @@ class SimpleConregCheckoutForm extends FormBase {
         
         // Process the payment lines.
         foreach ($payment->paymentLines as $line) {
-          switch ($line->type) {
-            case "member":
-              // Only update member if not already paid.
-              $member = SimpleConregStorage::load(['mid' => $line->mid, 'is_paid' => 0, 'is_deleted' => 0]);
-              if (isset($member)) {
-                $eid = $member['eid'];
-                if (!isset($eventConfigs[$eid])) {
-                  $eventConfigs[$eid] = $this->config('simple_conreg.settings.'.$eid);
-                }
-                $update['mid'] = $line->mid;
-                $update['is_paid'] = 1;
-                $update['payment_id'] = $session->payment_intent;
-                $update['payment_method'] = 'Stripe';
-                $update['update_date'] = time();
-                $result = SimpleConregStorage::update($update);
-
-                // If email address populated, send confirmation email.
-                if (!empty($member['email']))
-                  $this->sendConfirmationEmail($eventConfigs[$eid], $member);
-
-                // Create ClickUp tasks for options.
-                $optionVals = SimpleConregFieldOptions::getMemberOptionValues($line->mid);
-                SimpleConregClickUp::createMemberTasks($eid, $line->mid, $optionVals, $eventConfigs[$eid]);                
-              }
-              break;
-            case "upgrade":
-              $member = SimpleConregStorage::load(['mid' => $line->mid, 'is_deleted' => 0]);
-              if (isset($member)) {
-                $mgr = new SimpleConregUpgradeManager($member['eid']);
-                if ($mgr->loadUpgrades($line->mid, 0)) {
-                  $mgr->completeUpgrades($payment->paymentAmount, $payment->paymentMethod, $payment->paymentRef);
-                }
-              }
-              break;
-          }
+          $this->processPaymentLine($line);
         }
       }
+    }
+  }
+  
+  private function processPaymentLine($line) {
+    switch ($line->type) {
+      case "member":
+        // Only update member if not already paid.
+        $member = SimpleConregStorage::load(['mid' => $line->mid, 'is_paid' => 0, 'is_deleted' => 0]);
+        if (isset($member)) {
+          $eid = $member['eid'];
+          if (!isset($eventConfigs[$eid])) {
+            $eventConfigs[$eid] = $this->config('simple_conreg.settings.'.$eid);
+          }
+          $update['mid'] = $line->mid;
+          $update['is_paid'] = 1;
+          $update['payment_id'] = $session->payment_intent;
+          $update['payment_method'] = 'Stripe';
+          $update['update_date'] = time();
+          $result = SimpleConregStorage::update($update);
+
+          // If email address populated, send confirmation email.
+          if (!empty($member['email']))
+            $this->sendConfirmationEmail($eventConfigs[$eid], $member);
+
+          // Create ClickUp tasks for options.
+          $optionVals = SimpleConregFieldOptions::getMemberOptionValues($line->mid);
+          SimpleConregClickUp::createMemberTasks($eid, $line->mid, $optionVals, $eventConfigs[$eid]);                
+        }
+        break;
+      case "upgrade":
+        $member = SimpleConregStorage::load(['mid' => $line->mid, 'is_deleted' => 0]);
+        if (isset($member)) {
+          $mgr = new SimpleConregUpgradeManager($member['eid']);
+          if ($mgr->loadUpgrades($line->mid, 0)) {
+            $mgr->completeUpgrades($payment->paymentAmount, $payment->paymentMethod, $payment->paymentRef);
+          }
+        }
+        break;
     }
   }
 
