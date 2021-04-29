@@ -248,6 +248,7 @@ class SimpleConregRegistrationForm extends FormBase {
       $form['members']['member'.$cnt]['type'] = array(
         '#type' => 'select',
         '#title' => $fieldsetConfig->get('fields.membership_type_label'),
+        '#description' => $fieldsetConfig->get('fields.membership_type_description'),
         '#options' => $types->publicOptions,
         '#required' => TRUE,
         '#attributes' => array('class' => array('edit-member-type')),

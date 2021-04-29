@@ -284,10 +284,11 @@ class SimpleConregConfigForm extends ConfigFormBase {
     );
 
     $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['name_description'] = array(
-      '#type' => 'textfield',
+      '#type' => 'textarea',
       '#title' => $this->t('Name description (discription to appear under both name fields)'),
       '#default_value' => $fieldsetConfig->get('fields.name_description'),
       '#maxlength' => 255, 
+      '#rows' => 2
     );
 
     $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['email_label'] = array(
@@ -304,6 +305,13 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#required' => TRUE,
     );
 
+    $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['membership_type_description'] = array(
+      '#type' => 'textarea',
+      '#title' => $this->t('Description for membership type field'),
+      '#default_value' => $fieldsetConfig->get('fields.membership_type_description'),
+      '#rows' => 2
+    );
+
     $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['membership_days_label'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Membership days label (required)'),
@@ -312,10 +320,11 @@ class SimpleConregConfigForm extends ConfigFormBase {
     );
 
     $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['membership_days_description'] = array(
-      '#type' => 'textfield',
+      '#type' => 'textarea',
       '#title' => $this->t('Membership days description'),
       '#default_value' => $fieldsetConfig->get('fields.membership_days_description'),
       '#maxlength' => 255, 
+      '#rows' => 2
     );
 
     $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['badge_name_option_label'] = array(
@@ -333,10 +342,11 @@ class SimpleConregConfigForm extends ConfigFormBase {
     );
 
     $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['badge_name_description'] = array(
-      '#type' => 'textfield',
+      '#type' => 'textarea',
       '#title' => $this->t('Badge name description'),
       '#default_value' => $fieldsetConfig->get('fields.badge_name_description'),
       '#maxlength' => 255, 
+      '#rows' => 2
     );
 
     $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['display_label'] = array(
@@ -346,9 +356,10 @@ class SimpleConregConfigForm extends ConfigFormBase {
     );
 
     $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['display_description'] = array(
-      '#type' => 'textfield',
+      '#type' => 'textarea',
       '#title' => $this->t('Display name on membership list description (description below display name field; if display name blank, this text will be displayed in place of the field)'),
       '#default_value' => $fieldsetConfig->get('fields.display_description'),
+      '#rows' => 2
     );
 
     $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['communication_method_label'] = array(
@@ -361,6 +372,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#type' => 'textarea',
       '#title' => $this->t('Communication method description (leave empty for no description)'),
       '#default_value' => $fieldsetConfig->get('fields.communication_method_description'),
+      '#rows' => 2
     );
 
     $form['simple_conreg_fieldsets'][$fieldsetContainer]['simple_conreg_fields']['same_address_label'] = array(

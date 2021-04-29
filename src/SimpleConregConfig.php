@@ -70,6 +70,7 @@ class SimpleConregConfig {
     $config->set('fields.name_description', $vals['simple_conreg_fields']['name_description']);
     $config->set('fields.email_label', $vals['simple_conreg_fields']['email_label']);
     $config->set('fields.membership_type_label', $vals['simple_conreg_fields']['membership_type_label']);
+    $config->set('fields.membership_type_description', $vals['simple_conreg_fields']['membership_type_description']);
     $config->set('fields.membership_days_label', $vals['simple_conreg_fields']['membership_days_label']);
     $config->set('fields.membership_days_description', $vals['simple_conreg_fields']['membership_days_description']);
     $config->set('fields.badge_name_option_label', $vals['simple_conreg_fields']['badge_name_option_label']);
