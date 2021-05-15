@@ -1,0 +1,5 @@
+name: ConReg AirTable
+type: module
+description: 'Add AirTable integration to ConReg.'
+core: 8.x
+

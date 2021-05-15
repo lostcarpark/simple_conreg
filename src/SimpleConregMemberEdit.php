@@ -60,11 +60,10 @@ class SimpleConregMemberEdit extends FormBase {
 
 
     // Load the member record.
-    $member = SimpleConregStorage::load(['eid' => $eid, 'mid' => $mid, 'is_paid' => 1]);
-    $memberType = $member['member_type'];
-    $fieldsetConfig = $types->types[$memberType]->config;
+    $member = Member::loadMember($mid);
+    
     // Check member exists.
-    if (!is_array($member)) {
+    if (!is_object($member) || empty($member->mid) || $member->eid != $eid || !$member->is_paid) {
       // Member not in database. Display error.
       $form['error'] = array(
         '#markup' => $this->t('Sorry, we couldn\'t find that member.'),
@@ -73,17 +72,14 @@ class SimpleConregMemberEdit extends FormBase {
       );
       return $form;
     }
-    $lead_mid = $member['lead_mid'];
-
-    // Add member options to member array.
-    $member['options'] = SimpleConregFieldOptions::getMemberOptionValues($mid);
+    $fieldsetConfig = $types->types[$member->member_type]->config;
 
     // Check out who is editing.
     $user = \Drupal::currentUser();
     $email = $user->getEmail();
 
     // Get the member with the matching email address.
-    $owner = SimpleConregStorage::load(['eid' => $eid, 'email' => $email, 'mid' => $lead_mid, 'is_paid' => 1]);
+    $owner = SimpleConregStorage::load(['eid' => $eid, 'email' => $email, 'mid' => $member->lead_mid, 'is_paid' => 1]);
     // If couldn't find member with matching Lead MID, check on MID, as editor may not be group leader.
     if (!is_array($owner))
       $owner = SimpleConregStorage::load(['eid' => $eid, 'email' => $email, 'mid' => $mid, 'is_paid' => 1]);
@@ -118,26 +114,26 @@ class SimpleConregMemberEdit extends FormBase {
     );
 
     $form['member']['member_no'] = array(
-      '#markup' => $this->t('Member number: @member_no', ['@member_no' => $member['member_no']]),
+      '#markup' => $this->t('Member number: @member_no', ['@member_no' => $member->member_no]),
       '#prefix' => '<div>',
       '#suffix' => '</div>',
     );
 
     $form['member']['first_name'] = array(
-      '#markup' => $fieldsetConfig->get('fields.first_name_label') . ': ' .$member['first_name'],
+      '#markup' => $fieldsetConfig->get('fields.first_name_label') . ': ' .$member->first_name,
       '#prefix' => '<div>',
       '#suffix' => '</div>',
     );
 
     $form['member']['last_name'] = array(
-      '#markup' => $fieldsetConfig->get('fields.last_name_label') . ': ' . $member['last_name'],
+      '#markup' => $fieldsetConfig->get('fields.last_name_label') . ': ' . $member->last_name,
       '#prefix' => '<div>',
       '#suffix' => '</div>',
     );
 
     if (!$config->get('member_edit.email_editable')) {
       $form['member']['email'] = array(
-        '#markup' => $fieldsetConfig->get('fields.email_label') . ': ' . $member['email'],
+        '#markup' => $fieldsetConfig->get('fields.email_label') . ': ' . $member->email,
         '#prefix' => '<div>',
         '#suffix' => '</div>',
       );
@@ -145,22 +141,22 @@ class SimpleConregMemberEdit extends FormBase {
 
     if (!$config->get('member_edit.badge_name_editable')) {
       $form['member']['badge_name'] = array(
-        '#markup' => $fieldsetConfig->get('fields.badge_name_label') . ': ' . $member['badge_name'],
+        '#markup' => $fieldsetConfig->get('fields.badge_name_label') . ': ' . $member->badge_name,
         '#prefix' => '<div>',
         '#suffix' => '</div>',
       );
     }
 
     $form['member']['type'] = array(
-      '#markup' => $fieldsetConfig->get('fields.membership_type_label') . ': ' . $types->privateOptions[$member['member_type']],
+      '#markup' => $fieldsetConfig->get('fields.membership_type_label') . ': ' . $types->privateOptions[$member->member_type],
       '#prefix' => '<div>',
       '#suffix' => '</div>',
     );
 
     $dayVals = '';
     $sep = '';
-    if (isset($member['days'])) {
-      foreach(explode('|', $member['days']) as $day) {
+    if (isset($member->days)) {
+      foreach(explode('|', $member->days) as $day) {
         $dayVals .= $sep . $days[$day];
         $sep = ', ';
       }
@@ -175,7 +171,7 @@ class SimpleConregMemberEdit extends FormBase {
       $form['member']['email'] = array(
         '#type' => 'email',
         '#title' => $fieldsetConfig->get('fields.email_label'),
-        '#default_value' => (isset($member['email']) ? $member['email'] : ''),
+        '#default_value' => (isset($member->email) ? $member->email : ''),
       );
     }
 
@@ -184,7 +180,7 @@ class SimpleConregMemberEdit extends FormBase {
       $form['member']['badge_name'] = array(
         '#type' => 'textfield',
         '#title' => $fieldsetConfig->get('fields.badge_name_label'),
-        '#default_value' => $member['badge_name'],
+        '#default_value' => $member->badge_name,
         '#required' => TRUE,
         '#maxlength' => (empty($badgename_max_length) ? 128 : $badgename_max_length),
         '#attributes' => array(
@@ -199,7 +195,7 @@ class SimpleConregMemberEdit extends FormBase {
         '#title' => $fieldsetConfig->get('fields.display_label'),
         '#description' => $this->t('Select how you would like to appear on the membership list.'),
         '#options' => SimpleConregOptions::display(),
-        '#default_value' => (isset($member['display']) ? $member['display'] : 'F'),
+        '#default_value' => (isset($member->display) ? $member->display : 'F'),
         '#required' => TRUE,
       );
     }
@@ -210,7 +206,7 @@ class SimpleConregMemberEdit extends FormBase {
         '#title' => $fieldsetConfig->get('fields.communication_method_label'),
         '#description' => $fieldsetConfig->get('fields.communication_method_description'),
         '#options' => SimpleConregOptions::communicationMethod($eid, $config, FALSE),
-        '#default_value' => (isset($member['communication_method']) ? $member['communication_method'] : 'E'),
+        '#default_value' => (isset($member->communication_method) ? $member->communication_method : 'E'),
         '#required' => TRUE,
       );
     }
@@ -220,7 +216,7 @@ class SimpleConregMemberEdit extends FormBase {
       $form['member']['street'] = array(
         '#type' => 'textfield',
         '#title' => $fieldsetConfig->get('fields.street_label'),
-        '#default_value' => $member['street'],
+        '#default_value' => $member->street,
       );
     }
 
@@ -228,7 +224,7 @@ class SimpleConregMemberEdit extends FormBase {
       $form['member']['street2'] = array(
         '#type' => 'textfield',
         '#title' => $fieldsetConfig->get('fields.street2_label'),
-        '#default_value' => $member['street2'],
+        '#default_value' => $member->street2,
       );
     }
 
@@ -236,7 +232,7 @@ class SimpleConregMemberEdit extends FormBase {
       $form['member']['city'] = array(
         '#type' => 'textfield',
         '#title' => $fieldsetConfig->get('fields.city_label'),
-        '#default_value' => $member['city'],
+        '#default_value' => $member->city,
       );
     }
 
@@ -244,7 +240,7 @@ class SimpleConregMemberEdit extends FormBase {
       $form['member']['county'] = array(
         '#type' => 'textfield',
         '#title' => $fieldsetConfig->get('fields.county_label'),
-        '#default_value' => $member['county'],
+        '#default_value' => $member->county,
       );
     }
 
@@ -252,7 +248,7 @@ class SimpleConregMemberEdit extends FormBase {
       $form['member']['postcode'] = array(
         '#type' => 'textfield',
         '#title' => $fieldsetConfig->get('fields.postcode_label'),
-        '#default_value' => $member['postcode'],
+        '#default_value' => $member->postcode,
       );
     }
 
@@ -261,7 +257,7 @@ class SimpleConregMemberEdit extends FormBase {
         '#type' => 'select',
         '#title' => $fieldsetConfig->get('fields.country_label'),
         '#options' => $countryOptions,
-        '#default_value' => (isset($member['country']) ? $member['country'] : $defaultCountry),
+        '#default_value' => (isset($member->country) ? $member->country : $defaultCountry),
         '#required' => TRUE,
       );
     }
@@ -270,7 +266,7 @@ class SimpleConregMemberEdit extends FormBase {
       $form['member']['phone'] = array(
         '#type' => 'tel',
         '#title' => $fieldsetConfig->get('fields.phone_label'),
-        '#default_value' => $member['phone'],
+        '#default_value' => $member->phone,
       );
     }
 
@@ -278,7 +274,7 @@ class SimpleConregMemberEdit extends FormBase {
       $form['member']['birth_date'] = array(
         '#type' => 'date',
         '#title' => $fieldsetConfig->get('fields.birth_date_label'),
-        '#default_value' => $member['birth_date'],
+        '#default_value' => $member->birth_date,
       );
     }
 
@@ -286,7 +282,7 @@ class SimpleConregMemberEdit extends FormBase {
       $form['member']['age'] = array(
         '#type' => 'number',
         '#title' => $fieldsetConfig->get('fields.age_label'),
-        '#default_value' => $member['age'],
+        '#default_value' => $member->age,
       );
     }
 
@@ -301,7 +297,7 @@ class SimpleConregMemberEdit extends FormBase {
       $form['member']['extra_flag1'] = array(
         '#type' => 'checkbox',
         '#title' => $fieldsetConfig->get('extras.flag1'),
-        '#default_value' => $member['extra_flag1'],
+        '#default_value' => $member->extra_flag1,
       );
     }
 
@@ -309,13 +305,13 @@ class SimpleConregMemberEdit extends FormBase {
       $form['member']['extra_flag2'] = array(
         '#type' => 'checkbox',
         '#title' => $fieldsetConfig->get('extras.flag2'),
-        '#default_value' => $member['extra_flag2'],
+        '#default_value' => $member->extra_flag2,
       );
     }
 
     $optionCallbacks = [];
     $callback = [$this, 'updateMemberOptionFields'];
-    $fieldset = isset($types->types[$member['member_type']]->fieldset) ? $types->types[$member['member_type']]->fieldset : 0;
+    $fieldset = isset($types->types[$member->member_type]->fieldset) ? $types->types[$member->member_type]->fieldset : 0;
     SimpleConregFieldOptions::addOptionFields($eid, $fieldset, $form['member'], $form_values['member'], $optionCallbacks, $callback, NULL, $member);
 
     $form['submit'] = array(
@@ -331,6 +327,7 @@ class SimpleConregMemberEdit extends FormBase {
       '#limit_validation_errors' => [],
     );
 
+    $form_state->set('member', $member);
     $form_state->set('mid', $mid);
     $form_state->set('fieldset', $fieldset);
     $form_state->set('badgename_max_length', $badgename_max_length);
@@ -406,6 +403,7 @@ class SimpleConregMemberEdit extends FormBase {
     $eid = $form_state->get('eid');
     $mid = $form_state->get('mid');
     $fieldset = $form_state->get('fieldset');
+    $member = $form_state->get('member');
 
     $config = $this->config('simple_conreg.settings.'.$eid);
     $form_values = $form_state->getValues();
@@ -413,35 +411,26 @@ class SimpleConregMemberEdit extends FormBase {
     // Process option fields to remove any modifications from form values.
     $optionVals = [];
     SimpleConregFieldOptions::procesOptionFields($eid, $fieldset, $form_values['member'], $optionVals);
+    $member->setOptions($optionVals);
 
     // Save the submitted entry.
-    $entry = [
-      'mid' => $mid,
-      'badge_name' => trim($form_values['member']['']),
-      'update_date' => time(),
-    ];
-    if (isset($form_values['member']['email'])) $entry['email'] = trim($form_values['member']['email']);
-    if (isset($form_values['member']['badge_name'])) $entry['badge_name'] = trim($form_values['member']['badge_name']);
-    if (isset($form_values['member']['display'])) $entry['display'] = $form_values['member']['display'];
-    if (isset($form_values['member']['communication_method'])) $entry['communication_method'] = $form_values['member']['communication_method'];
-    if (isset($form_values['member']['street'])) $entry['street'] = trim($form_values['member']['street']);
-    if (isset($form_values['member']['street2'])) $entry['street2'] = trim($form_values['member']['street2']);
-    if (isset($form_values['member']['city'])) $entry['city'] = trim($form_values['member']['city']);
-    if (isset($form_values['member']['county'])) $entry['county'] = trim($form_values['member']['county']);
-    if (isset($form_values['member']['postcode'])) $entry['postcode'] = trim($form_values['member']['postcode']);
-    if (isset($form_values['member']['country'])) $entry['country'] = trim($form_values['member']['country']);
-    if (isset($form_values['member']['phone'])) $entry['phone'] = trim($form_values['member']['phone']);
-    if (isset($form_values['member']['birth_date'])) $entry['birth_date'] = $form_values['member']['birth_date'];
-    if (isset($form_values['member']['age'])) $entry['age'] = $form_values['member']['age'];
-    if (isset($form_values['member']['extra_flag1'])) $entry['extra_flag1'] = $form_values['member']['extra_flag1'];
-    if (isset($form_values['member']['extra_flag2'])) $entry['extra_flag2'] = $form_values['member']['extra_flag2'];
-    $return = SimpleConregStorage::update($entry);
+    if (isset($form_values['member']['email'])) $member->email = trim($form_values['member']['email']);
+    if (isset($form_values['member']['badge_name'])) $member->badge_name = trim($form_values['member']['badge_name']);
+    if (isset($form_values['member']['display'])) $member->display = $form_values['member']['display'];
+    if (isset($form_values['member']['communication_method'])) $member->communication_method = $form_values['member']['communication_method'];
+    if (isset($form_values['member']['street'])) $member->street = trim($form_values['member']['street']);
+    if (isset($form_values['member']['street2'])) $member->street2 = trim($form_values['member']['street2']);
+    if (isset($form_values['member']['city'])) $member->city = trim($form_values['member']['city']);
+    if (isset($form_values['member']['county'])) $member->county = trim($form_values['member']['county']);
+    if (isset($form_values['member']['postcode'])) $member->postcode = trim($form_values['member']['postcode']);
+    if (isset($form_values['member']['country'])) $member->country = trim($form_values['member']['country']);
+    if (isset($form_values['member']['phone'])) $member->phone = trim($form_values['member']['phone']);
+    if (isset($form_values['member']['birth_date'])) $member->birth_date = $form_values['member']['birth_date'];
+    if (isset($form_values['member']['age'])) $member->age = $form_values['member']['age'];
+    if (isset($form_values['member']['extra_flag1'])) $member->extra_flag1 = $form_values['member']['extra_flag1'];
+    if (isset($form_values['member']['extra_flag2'])) $member->extra_flag2 = $form_values['member']['extra_flag2'];
 
-    // Update member field options.
-    SimpleConregFieldOptions::updateOptionFields($mid, $optionVals);
-
-    // Create ClickUp tasks for options.
-    SimpleConregClickUp::createMemberTasks($eid, $mid, $optionVals);
+    $return = $member->saveMember();
 
     // All members saved. Now save any add-ons.
     SimpleConregAddons::saveMemberAddons($config, $form_values, $mid);

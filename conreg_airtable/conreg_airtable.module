@@ -1,0 +1,61 @@
+<?php
+
+use Drupal\simple_conreg\Member;
+use Drupal\conreg_airtable\AirTable;
+
+/*
+ * Implement hook_convention_member_added()
+ *
+ * Called when new member created.
+ * Add new member to AirTable.
+ */
+
+function conreg_airtable_convention_member_added(Member $member)
+{
+  AirTable::addMembers($member->eid, [$member->mid]);
+}
+
+/*
+ * Implement hook_convention_member_updated()
+ *
+ * Called when member changes.
+ * Check if member exists on AirTable. If present, update existing member, if not add them.
+ */
+
+function conreg_airtable_convention_member_updated(Member $member)
+{
+  $connection = \Drupal::database();
+  $query = $connection->select('conreg_airtable_members', 'a');
+  $query->addField('a', 'airtable_id');
+  $query->condition('a.mid', $member->mid);
+  $airtable_id = $query->execute()->fetchField();
+
+  if (empty($airtable_id)) {
+    AirTable::addMembers($member->eid, [$member->mid]);
+  }
+  else {
+    AirTable::updateMembers($member->eid, [$member->mid => $airtable_id]);
+  }
+}
+
+/*
+ * Implement hook_convention_member_deleted()
+ *
+ * Called when new member deleted.
+ * Remove member to from AirTable.
+ */
+
+function conreg_airtable_convention_member_deleted(Member $member)
+{
+  $connection = \Drupal::database();
+  $query = $connection->select('conreg_airtable_members', 'a');
+  $query->addField('a', 'airtable_id');
+  $query->condition('a.mid', $member->mid);
+  $airtable_id = $query->execute()->fetchField();
+
+  if (!empty($airtable_id)) {
+    AirTable::deleteMember($member->eid, $airtable_id);
+  }
+}
+
+

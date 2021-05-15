@@ -354,26 +354,27 @@ class SimpleConregAdminMembers extends FormBase {
     $form_values = $form_state->getValues();
     $saved_members = SimpleConregStorage::loadAllMemberNos($eid);
     $max_member = SimpleConregStorage::loadMaxMemberNo($eid);
-    foreach ($form_values["table"] as $mid => $member) {
-      if (($member["is_approved"] != $saved_members[$mid]["is_approved"]) ||
-          ($member["is_approved"] && $member["member_no"] != $saved_members[$mid]["member_no"])) {
-        if ($member["is_approved"]) {
-	        if (empty($member["member_no"])) {
+    foreach ($form_values["table"] as $mid => $memberLine) {
+      $member = Member::loadMember($mid);
+      if (($memberLine["is_approved"] != $member->is_approved) ||
+          ($memberLine["is_approved"] && $memberLine["member_no"] != $member->member_no)) {
+        $member->is_approved = $memberLine["is_approved"];
+        if ($memberLine["is_approved"]) {
+	        if (empty($memberLine["member_no"])) {
 	          // No member no specified, so assign next one.
 	          $max_member++;
-	          $member_no = $max_member;
+	          $member->member_no = $max_member;
 	        } else {
 	          // Member no specified. Adjust next member no.
-	          $member_no = $member["member_no"];
-	          if ($member_no > $max_member)
-	            $max_member = $member_no;
+	          $member->member_no = $memberLine["member_no"];
+	          if ($member->member_no > $max_member)
+	            $max_member = $member->member_no;
 	        }
 	      } else {
 	        // No member number for unapproved members.
-	        $member_no = 0;
+	        $member->member_no = 0;
 	      }
-        $entry = ['mid' => $mid, 'is_approved' => $member["is_approved"], 'member_no' => $member_no, 'update_date' => time()];
-        $return = SimpleConregStorage::update($entry);
+        $return = $member->saveMember();
       }
     }
     \Drupal\Core\Cache\Cache::invalidateTags(['simple-conreg-member-list']);

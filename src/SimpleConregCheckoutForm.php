@@ -58,6 +58,8 @@ class SimpleConregCheckoutForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state, $payid = NULL, $key = NULL, $return = '') {
 
+    $form_state->set('return', $return);
+
     // Load payment details.
     if (is_numeric($payid) && is_numeric($key) && SimpleConregPaymentStorage::checkPaymentKey($payid, $key)) {
       $payment = SimpleConregPayment::load($payid);      
@@ -71,15 +73,25 @@ class SimpleConregCheckoutForm extends FormBase {
     // Get event ID to fetch Stripe keys.
     // If payment has MID, get event from member. If not, assume event 1 (will come up with a better long term solution). 
     if (isset($payment) && isset($payment->paymentLines[0]) && !empty($payment->paymentLines[0]->mid)) {
-      $member = SimpleConregStorage::load(array("mid"=>$payment->paymentLines[0]->mid));
-      $eid = $member['eid'];
-      $email = $member['email'];
+      $mid = $payment->paymentLines[0]->mid;
+      $member = Member::loadMember($mid);
+      $eid = $member->eid;
+      if (empty(trim($member->email)) && $mid != $member->lead_mid) {
+        $lead_member = Member::loadMember($member->lead_mid);
+        $email = $lead_member->email;
+      }
+      else {
+        $email = $member->email;
+      }
+      $form_state->set('mid', $mid);
     }
     else {
       $eid = 1;
       $email = '';
     }
     $config = $this->config('simple_conreg.settings.'.$eid);
+
+    $form_state->set('eid', $eid);
 
     // Set your secret key: remember to change this to your live secret key in production
     // See your keys here: https://dashboard.stripe.com/account/apikeys
@@ -119,7 +131,7 @@ class SimpleConregCheckoutForm extends FormBase {
         ];
       }
       else {
-        $this->processPaymentLine($line);
+        $this->processWithoutPayment($line);
       }
       $total += $line->amount;
     }
@@ -188,9 +200,6 @@ class SimpleConregCheckoutForm extends FormBase {
       ],
     ]);
 
-    // Could potentially need to use multiple configs for multiple events.
-    $eventConfigs = [];
-
     // Loop through received events and mark payments complete.
     foreach ($events->autoPagingIterator() as $event) {
       $session = $event->data->object;
@@ -209,52 +218,66 @@ class SimpleConregCheckoutForm extends FormBase {
         
         // Process the payment lines.
         foreach ($payment->paymentLines as $line) {
-          $this->processPaymentLine($line);
+          $this->processPaymentLine($line, $session);
         }
       }
     }
   }
   
-  private function processPaymentLine($line) {
+  private function processPaymentLine($line, $session)
+  {
     switch ($line->type) {
       case "member":
         // Only update member if not already paid.
-        $member = SimpleConregStorage::load(['mid' => $line->mid, 'is_paid' => 0, 'is_deleted' => 0]);
-        if (isset($member)) {
-          $eid = $member['eid'];
-          if (!isset($eventConfigs[$eid])) {
-            $eventConfigs[$eid] = $this->config('simple_conreg.settings.'.$eid);
-          }
-          $update['mid'] = $line->mid;
-          $update['is_paid'] = 1;
-          $update['payment_id'] = $session->payment_intent;
-          $update['payment_method'] = 'Stripe';
-          $update['update_date'] = time();
-          $result = SimpleConregStorage::update($update);
+        $member = Member::loadMember($line->mid);
+        if (is_object($member) && !$member->is_paid && !$member->is_deleted) {
+          $member->is_paid = 1;
+          $member->payment_id = $session->payment_intent;
+          $member->payment_method = 'Stripe';
+          $result = $member->saveMember();
 
           // If email address populated, send confirmation email.
-          if (!empty($member['email']))
-            $this->sendConfirmationEmail($eventConfigs[$eid], $member);
-
-          // Create ClickUp tasks for options.
-          $optionVals = SimpleConregFieldOptions::getMemberOptionValues($line->mid);
-          SimpleConregClickUp::createMemberTasks($eid, $line->mid, $optionVals, $eventConfigs[$eid]);                
+          if (!empty($member->email))
+            $this->sendConfirmationEmail((array)$member);
         }
         break;
       case "upgrade":
-        $member = SimpleConregStorage::load(['mid' => $line->mid, 'is_deleted' => 0]);
-        if (isset($member)) {
-          $mgr = new SimpleConregUpgradeManager($member['eid']);
-          if ($mgr->loadUpgrades($line->mid, 0)) {
+        $member = Member::loadMember($line->mid);
+        if (isset($member) && is_object($member) && !$member->is_deleted) {
+          $mgr = new SimpleConregUpgradeManager($member->eid);
+          if ($mgr->loadUpgrades($member->mid, 0)) {
+            $payment = SimpleConregPayment::loadBySessionId($session->id);
             $mgr->completeUpgrades($payment->paymentAmount, $payment->paymentMethod, $payment->paymentRef);
           }
         }
         break;
     }
   }
-
-  private function sendConfirmationEmail($config, $member)
+  
+  private function processWithoutPayment($line)
   {
+    switch ($line->type) {
+      case "member":
+        // Only update member if not already paid.
+        $member = Member::loadMember($line->mid);
+        if (is_object($member) && !$member->is_paid && !$member->is_deleted) {
+          $member->is_paid = 1;
+          $member->payment_id = 'N/A';
+          $member->payment_method = 'Free';
+          $result = $member->saveMember();
+
+          // If email address populated, send confirmation email.
+          if (!empty($member->email))
+            $this->sendConfirmationEmail((array)$member);
+        }
+        break;
+    }
+  }
+
+  private function sendConfirmationEmail($member)
+  {
+    $config = $this->config('simple_conreg.settings.'.$member['eid']);
+
     // Set up parameters for receipt email.
     $params = ['eid' => $member['eid'], 'mid' => $member['mid']];
     $params['subject'] = $config->get('confirmation.template_subject');

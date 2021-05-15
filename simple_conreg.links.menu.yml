@@ -40,16 +40,6 @@ simple_conreg.admin.bulkemail:
   route_name: simple_conreg_admin_bulk_email
   weight: 10
 
-simple_conreg.config_clickup:
-  title: ClickUp Integration
-  route_name: simple_conreg_config_clickup
-  weight: 13
-
-simple_conreg.config_clickup_options:
-  title: ClickUp Options
-  route_name: simple_conreg_config_clickup_options
-  weight: 14
-
 simple_conreg.admin.members:
   title: Membership Admin
   route_name: simple_conreg_admin_members

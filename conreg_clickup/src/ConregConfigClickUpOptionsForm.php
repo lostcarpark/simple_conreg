@@ -1,26 +1,30 @@
 <?php
 /**
  * @file
- * Contains \Drupal\simple_conreg\SimpleConregConfigClickUpOptionsForm
+ * Contains \Drupal\conreg_clickup\ConregConfigClickUpOptionsForm
  */
-namespace Drupal\simple_conreg;
+namespace Drupal\conreg_clickup;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\simple_conreg\SimpleConregStorage;
+use Drupal\simple_conreg\SimpleConregEventStorage;
+use Drupal\simple_conreg\SimpleConregConfig;
+use Drupal\simple_conreg\SimpleConregFieldOptions;
 use Drupal\devel;
 
 /**
  * Configure simple_conreg settings for this site.
  */
-class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
+class ConregConfigClickUpOptionsForm extends ConfigFormBase
 {
   /** 
    * {@inheritdoc}
    */
   public function getFormId()
   {
-    return 'simple_conreg_config_clickup_options';
+    return 'conreg_config_clickup_options';
   }
 
   /** 
@@ -58,7 +62,7 @@ class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
     $optionTitles = SimpleConregFieldOptions::getFieldOptionsTitles($eid, $config);
 
     $memberNames = [];
-    $teams = SimpleConregClickUp::getTeam();
+    $teams = ConregClickUp::getTeam();
     foreach ($teams['teams'] as $team) {
       foreach ($team['members'] as $member) {
         $memberNames[$member['user']['id']] = $member['user']['username'];
@@ -188,7 +192,7 @@ class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
         '#title' => $this->t('Create tasks for existing members'),
       );
       
-      $count = SimpleConregClickUp::getMembersWithoutTasks($eid, $options, TRUE);
+      $count = ConregClickUp::getMembersWithoutTasks($eid, $options, TRUE);
 
       $form['groups'][$groupName]['create']['count'] = array(
         '#markup' => $this->t('@count users have options without ClickUp tasks.', ['@count' => $count]),
@@ -254,14 +258,14 @@ class SimpleConregConfigClickUpOptionsForm extends ConfigFormBase
     $buttonGroups = $form_state->get('buttonGroups');
     $vals = $form_state->getValues();
     $group = $buttonGroups[$form_state->getTriggeringElement()['#name']];
-    $members = SimpleConregClickUp::getMembersWithoutTasks($eid, $groupOptions[$group], FALSE);
+    $members = ConregClickUp::getMembersWithoutTasks($eid, $groupOptions[$group], FALSE);
     \Drupal::messenger()->addMessage($this->t('Creating tasks for @name.', ['@name' => $group]));
     $i = 0;
     foreach ($members as $member) {
       if ($i++ >= 10) break;
       $memberRec = SimpleConregStorage::load(['mid' => $member['mid']]);
       $optionVals = SimpleConregFieldOptions::getMemberOptionValues($member['mid']);
-      SimpleConregClickUp::createMemberTasks($eid, $member['mid'], $optionVals, $config);
+      ConregClickUp::createMemberTasks($eid, $member['mid'], $optionVals, $config);
       \Drupal::messenger()->addMessage($this->t('Tasks created for member @name.', ['@name' => $memberRec['first_name'] . ' ' . $memberRec['last_name']]));
     }
     \Drupal::messenger()->addMessage($this->t('Created tasks for @number members.', ['@number' => $i]));

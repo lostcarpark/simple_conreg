@@ -1,0 +1,5 @@
+name: ConReg SimpleNews
+type: module
+description: 'Add SimpleNews integration to ConReg.'
+core: 8.x
+

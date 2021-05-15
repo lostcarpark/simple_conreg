@@ -1,9 +1,9 @@
 <?php
 /**
  * @file
- * Contains \Drupal\simple_conreg\SimpleConregConfigClickUpForm
+ * Contains \Drupal\conreg_clickup\ConregConfigClickUpForm
  */
-namespace Drupal\simple_conreg;
+namespace Drupal\conreg_clickup;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -11,16 +11,16 @@ use Drupal\Core\Url;
 use Drupal\devel;
 
 /**
- * Configure simple_conreg settings for this site.
+ * Configure conreg_clickup settings for this site.
  */
-class SimpleConregConfigClickUpForm extends ConfigFormBase
+class ConregConfigClickUpForm extends ConfigFormBase
 {
   /** 
    * {@inheritdoc}
    */
   public function getFormId()
   {
-    return 'simple_conreg_config_clickup';
+    return 'conreg_config_clickup';
   }
 
   /** 
@@ -29,7 +29,7 @@ class SimpleConregConfigClickUpForm extends ConfigFormBase
   protected function getEditableConfigNames()
   {
     return [
-      'simple_conreg.settings',
+      'conreg_clickup.settings',
     ];
   }
 
@@ -46,20 +46,20 @@ class SimpleConregConfigClickUpForm extends ConfigFormBase
     // Check if code returned from ClickUp...
     $code = \Drupal::request()->query->get('code');
     if (!empty($code)) {
-      $token = SimpleConregClickUp::getToken($clientId, $clientSecret, $code);
+      $token = ConregClickUp::getToken($clientId, $clientSecret, $code);
 
       $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.clickup');
       $config->set('clickup.token', $token);
       $config->save();
 
       // Redirect to remove code from URL.
-      return $this->redirect('simple_conreg_config_clickup');
+      return $this->redirect('conreg_config_clickup');
     }
 
     $code = $config->get('clickup.code');
     $token = $config->get('clickup.token');
 
-    $return_url = Url::fromRoute('simple_conreg_config_clickup', [], ['absolute' => TRUE]);
+    $return_url = Url::fromRoute('conreg_config_clickup', [], ['absolute' => TRUE]);
     $url = Url::fromUri('https://app.clickup.com/api', ['query' => ['client_id' => $clientId, 'redirect_uri' => $return_url->toString()]]);
     $external_link = \Drupal::l(t('Authenticate link to ClickUp'), $url);
 
@@ -109,7 +109,7 @@ class SimpleConregConfigClickUpForm extends ConfigFormBase
     );
 
     if (!empty($token)) {
-      $teams = SimpleConregClickUp::getTeam($token);
+      $teams = ConregClickUp::getTeam($token);
       
       foreach ($teams['teams'] as $team) {
         $form['simple_conreg_clickup_team_'.$team['id']] = array(
@@ -132,9 +132,9 @@ class SimpleConregConfigClickUpForm extends ConfigFormBase
             '#suffix' => '</div>',
           );
         }
-        $spaces = SimpleConregClickUp::getSpaces($team['id'], $token);
+        $spaces = ConregClickUp::getSpaces($team['id'], $token);
         foreach ($spaces['spaces'] as $space) {
-          $lists = SimpleConregClickUp::getLists($space['id'], $token);
+          $lists = ConregClickUp::getLists($space['id'], $token);
           foreach ($lists['lists'] as $list) {
             $form['simple_conreg_clickup_lists_'.$team['id']]['list_'.$list['id']] = array(
               '#markup' => $this->t('@id: @listname', ['@id' => $list['id'], '@listname' => $list['name']]),
@@ -142,7 +142,7 @@ class SimpleConregConfigClickUpForm extends ConfigFormBase
               '#suffix' => '</div>',
             );
           }
-          $folders = SimpleConregClickUp::getFolders($space['id'], $token);
+          $folders = ConregClickUp::getFolders($space['id'], $token);
           foreach ($folders['folders'] as $folder) {
             $form['simple_conreg_clickup_folders_'.$team['id']]['folder_'.$folder['id']] = array(
               '#markup' => $this->t('Folder: @foldername', ['@foldername' => $folder['name']]),
@@ -216,7 +216,7 @@ class SimpleConregConfigClickUpForm extends ConfigFormBase
     $vals = $form_state->getValues();
 
     $message = '';
-    $taskId = SimpleConregClickUp::createTask(
+    $taskId = ConregClickUp::createTask(
               $vals['simple_conreg_clickup_test']['list_id'],
               $vals['simple_conreg_clickup_test']['assignees'],
               $vals['simple_conreg_clickup_test']['title'],

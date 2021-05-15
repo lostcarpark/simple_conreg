@@ -1,0 +1,5 @@
+conreg_clickup.config_airtable_options:
+  title: AirTable Options
+  route_name: conreg_config_airtable_options
+  weight: 34
+

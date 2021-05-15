@@ -200,7 +200,8 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by payment method to render array.
    */
-  public function memberAdminMemberListBadgeSummary($eid, &$content) {
+  public function memberAdminMemberListBadgeSummary($eid, &$content)
+  {
     $types = SimpleConregOptions::badgeTypes($eid);
     $headers = array(
       t('Badge Type'), 
@@ -232,7 +233,8 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by payment method to render array.
    */
-  public function memberAdminMemberListDaysSummary($eid, &$content) {
+  public function memberAdminMemberListDaysSummary($eid, &$content)
+  {
     $days = SimpleConregOptions::days($eid);
 
     $dayTotals = [];
@@ -275,26 +277,33 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by badge type to render array.
    */
-  public function memberAdminMemberListPaymentMethodSummary($eid, &$content) {
-    $rows = array();
-    $headers = array(
+  public function memberAdminMemberListPaymentMethodSummary($eid, &$content)
+  {
+    $headers = [
       t('Payment Method'),
       t('Number of members'),
-    );
+    ];
+    // Set up table.
+    $rows = [
+      '#type' => 'table',
+      '#header' => $headers,
+      '#empty' => t('No entries available.'),
+    ];
     $total = 0;
     foreach ($entries = SimpleConregStorage::adminMemberPaymentMethodSummaryLoad($eid) as $entry) {
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $rows[] = [
+        'payment_method' => ['#markup' => SafeMarkup::checkPlain($entry[payment_method])],
+        'num' => ['#markup' => $entry['num']],
+      ];
       $total += $entry['num'];
     }
     //Add a row for the total.
-    $rows[] = array(t("Total"), $total);
-    $content['payment_method_summary'] = array(
-      '#type' => 'table',
-      '#header' => $headers,
-      '#rows' => $rows,
-      '#empty' => t('No entries available.'),
-    );
+    $rows['total'] = [
+      'payment_method' => ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
+      'num' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+    ];
+    $content['payment_method_summary'] = $rows;
 
     return $content;
   }
@@ -302,31 +311,39 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by badge type to render array.
    */
-  public function memberAdminMemberListAmountPaidSummary($eid, &$content) {
-    $rows = array();
-    $headers = array(
+  public function memberAdminMemberListAmountPaidSummary($eid, &$content)
+  {
+    $headers = [
       t('Amount Paid'), 
       t('Number of members'), 
       t('Total Paid'),
-    );
-    $total = 0;
-    $totalAmount = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberAmountPaidSummaryLoad($eid) as $entry) {
-      // Calculate total received at that rate.
-      $entry['total_paid'] = number_format($entry['member_price'] * $entry['num'], 2);
-      // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
-      $total += $entry['num'];
-      $totalAmount += $entry['total_paid'];
-    }
-    //Add a row for the total.
-    $rows[] = array(t("Total"), $total, number_format($totalAmount, 2));
-    $content['amount_paid_summary'] = array(
+    ];
+    $rows = [
       '#type' => 'table',
       '#header' => $headers,
-      '#rows' => $rows,
       '#empty' => t('No entries available.'),
-    );
+    ];
+    $total = 0;
+    $total_amount = 0;
+    foreach ($entries = SimpleConregStorage::adminMemberAmountPaidSummaryLoad($eid) as $entry) {
+      // Calculate total received at that rate.
+      $total_paid = $entry['member_price'] * $entry['num'];
+      // Sanitize each entry.
+      $rows[] = [
+        'member_price' => ['#markup' => $entry['member_price']],
+        'num' => ['#markup' => $entry['num']],
+        'total_paid' => ['#markup' => number_format($total_paid, 2)],
+      ];
+      $total += $entry['num'];
+      $total_amount += $total_paid;
+    }
+    //Add a row for the total.
+    $rows['total'] = [
+      'member_price' => ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
+      'num' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      'total_paid' => ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
+    ];
+    $content['amount_paid_summary'] = $rows;
 
     return $content;
   }
@@ -334,74 +351,100 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by member type and amount paid to render array.
    */
-  public function memberAdminMemberListAmountPaidByTypeSummary($eid, &$content) {
+  public function memberAdminMemberListAmountPaidByTypeSummary($eid, &$content)
+  {
     $types = SimpleConregOptions::memberTypes($eid);
-    $rows = array();
-    $headers = array(
+    $headers = [
       t('Member Type'), 
       t('Amount Paid'), 
       t('Number of members'), 
       t('Total Paid'),
-    );
+    ];
+    $rows = [
+      '#type' => 'table',
+      '#header' => $headers,
+      '#empty' => t('No entries available.'),
+    ];
     $total = 0;
-    $totalAmount = 0;
+    $total_amount = 0;
     foreach ($entries = SimpleConregStorage::adminMemberAmountPaidByTypeSummaryLoad($eid) as $entry) {
       // Replace type code with description.
       if (isset($types->types[$entry['member_type']]))
         $entry['member_type'] = (isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type']);
       // Calculate total received at that rate.
-      $entry['total_paid'] = number_format($entry['member_price'] * $entry['num'], 2);
+      $total_paid = $entry['member_price'] * $entry['num'];
+      $entry['total_paid'] = number_format($total_paid, 2);
       // Sanitize each entry.
+      $rows[] = [
+        'type' => ['#markup' => SafeMarkup::checkPlain(isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'])],
+        'member_price' => ['#markup' => $entry['member_price']],
+        'num' => ['#markup' => $entry['num']],
+        'total_paid' => ['#markup' => number_format($total_paid, 2)],
+      ];
       $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+
+      // Add to totals.
       $total += $entry['num'];
-      $totalAmount += $entry['total_paid'];
+      $total_amount += $total_paid;
     }
     //Add a row for the total.
-    $rows[] = array(t("Total"), "", $total, number_format($totalAmount, 2));
-    $content['type_amount_paid_summary'] = array(
-      '#type' => 'table',
-      '#header' => $headers,
-      '#rows' => $rows,
-      '#empty' => t('No entries available.'),
-    );
+    $rows['total'] = [
+      'type' => ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
+      'member_price' => ['#markup' => '', '#wrapper_attributes' => ['class' => ['table-total']]],
+      'num' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      'total_paid' => ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
+    ];
+    $content['type_amount_paid_summary'] = $rows;
 
     return $content;
   }
   
   /**
-   * Add a summary by member type and amount paid to render array.
+   * Add a summary by date joined to render array.
    */
-  public function memberAdminMemberListByDateSummary($eid, &$content) {
+  public function memberAdminMemberListByDateSummary($eid, &$content)
+  {
     $months = DateHelper::monthNames();
-    $rows = array();
-    $headers = array(
+    $headers = [
       t('Year'), 
       t('Month'), 
       t('Number of members'), 
       t('Total Paid'),
       t('Cumulative members'), 
       t('Cumulative Total Paid'),
-    );
+    ];
+    $rows = [
+      '#type' => 'table',
+      '#header' => $headers,
+      '#empty' => t('No entries available.'),
+    ];
     $total = 0;
-    $totalAmount = 0;
+    $total_amount = 0;
     foreach ($entries = SimpleConregStorage::adminMemberByDateSummaryLoad($eid) as $entry) {
       // Convert month to name.
       $entry['month'] = $months[$entry['month']];
       $total += $entry['num'];
-      $totalAmount += $entry['total_paid'];
-      $entry['cumulative'] = $total;
-      $entry['cumulativeAmount'] = number_format($totalAmount, 2);
+      $total_amount += $entry['total_paid'];
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $rows[] = [
+        'year' => ['#markup' => SafeMarkup::checkPlain($entry['year'])],
+        'month' => ['#markup' => SafeMarkup::checkPlain($entry['month'])],
+        'num' => ['#markup' => $entry['num']],
+        'total_paid' => ['#markup' => number_format($entry['total_paid'], 2)],
+        'cumulative' => ['#markup' => $total],
+        'cumulative_amount' => ['#markup' => number_format($total_amount, 2)],
+      ];
     }
     //Add a row for the total.
-    $rows[] = array(t("Total"), "", $total, number_format($totalAmount, 2), $total, number_format($totalAmount, 2));
-    $content['by_date_summary'] = array(
-      '#type' => 'table',
-      '#header' => $headers,
-      '#rows' => $rows,
-      '#empty' => t('No entries available.'),
-    );
+    $rows['total'] = [
+      'year' => ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
+      'month' => ['#markup' => '', '#wrapper_attributes' => ['class' => ['table-total']]],
+      'num' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      'total_paid' => ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
+      'cumulative' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      'cumulative_amount' => ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
+    ];
+    $content['by_date_summary'] = $rows;
 
     return $content;
   }

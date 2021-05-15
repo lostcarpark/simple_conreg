@@ -2,21 +2,24 @@
 
 /**
  * @file
- * Contains \Drupal\simple_conreg\SimpleConregClickUp.
+ * Contains \Drupal\conreg_clickup\ConregClickUp.
  */
 
-namespace Drupal\simple_conreg;
+namespace Drupal\conreg_clickup;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Url;
 use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\simple_conreg\SimpleConregConfig;
+use Drupal\simple_conreg\SimpleConregStorage;
+use Drupal\simple_conreg\SimpleConregFieldOptions;
 use Drupal\devel;
 use GuzzleHttp\Exception\RequestException;
 
 /**
  * List options for Simple Convention Registration.
  */
-class SimpleConregClickUp
+class ConregClickUp
 {
 
   /**

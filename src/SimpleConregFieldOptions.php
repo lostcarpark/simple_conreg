@@ -156,7 +156,7 @@ class SimpleConregFieldOptions {
    *
    * Parameters: Event ID, Fieldset, Form to add to.
    */
-  public static function addOptionFields($eid, $fieldset, &$memberForm, &$memberVals, &$optionCallbacks, $callback, $memberNo = NULL, $member = NULL)
+  public static function addOptionFields($eid, $fieldset, &$memberForm, &$memberVals, &$optionCallbacks, $callback, $memberNo = NULL, Member $member = NULL)
   {
     // Read the option field from the database.
     $fieldOptions = self::getFieldOptions($eid, NULL, $fieldset);
@@ -197,7 +197,7 @@ class SimpleConregFieldOptions {
         $optionCallbacks[$callbackKey] = ['group', $memberNo, $key];
       }
       // If linked field is not a checkbox, or it is and it's been checked, display the options as checkboxes.
-      if (!isset($field) || $field['#type'] != 'checkbox' || $memberVals[$key][$key] || (!isset($memberVals[$key][$key]) && isset($member) && $member[$key])) {
+      if (!isset($field) || $field['#type'] != 'checkbox' || $memberVals[$key][$key] || (!isset($memberVals[$key][$key]) && isset($member) && isset($member->$key) && $member->$key)) {
         $memberForm[$key]['options'] = [
           '#type' => 'fieldset',
           '#title' => t($fieldOptions[$key]['title']),
@@ -215,7 +215,7 @@ class SimpleConregFieldOptions {
             $memberForm[$key]['options'][$optid]['#required'] = TRUE;
           }
           // Check if saved value.
-          if (array_key_exists($optid, $member['options']))
+          if (array_key_exists($optid, $member->options))
             $memberForm[$key]['options'][$optid]['#default_value'] = TRUE;
           // Check if option can have detail.
           if (isset($optionDetails['detail']) && !empty($optionDetails['detail'])) {
@@ -231,13 +231,13 @@ class SimpleConregFieldOptions {
               '#suffix' => '</div>',
             ];
             // If option selected, put detail in placeholder.
-            if ($memberVals[$key]['options'][$optid] || (!isset($memberVals[$key]['options'][$optid]) && isset($member['options'][$optid]))) {
+            if ($memberVals[$key]['options'][$optid] || (!isset($memberVals[$key]['options'][$optid]) && isset($member->options[$optid]))) {
               $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid] = [
                 '#type' => 'textfield',
                 '#title' => $optionDetails['detail'],
               ];
-              if (array_key_exists($optid, $member['options']))
-                $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid]['#default_value'] = $member['options'][$optid]['option_detail'];
+              if (array_key_exists($optid, $member->options))
+                $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid]['#default_value'] = $member->options[$optid]['option_detail'];
               if ($optionDetails['required']) {
                 $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid]['#required'] = TRUE;
               }

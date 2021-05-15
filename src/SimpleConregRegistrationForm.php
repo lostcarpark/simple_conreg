@@ -829,9 +829,8 @@ class SimpleConregRegistrationForm extends FormBase {
       }
 
       // Save the submitted entry.
-      $entry = array(
+      $entry = [
         'eid' => $eid,
-        'lead_mid' => $lead_mid,
         'random_key' => $rand_key,
         'member_type' => $memberPrices[$cnt]->memberType,
         'days' => $memberPrices[$cnt]->days,
@@ -873,17 +872,21 @@ class SimpleConregRegistrationForm extends FormBase {
         'payment_amount' => $totalPrice,
         'join_date' => time(),
         'update_date' => time(),
-      );
+      ];
+      if ($cnt > 1)
+        $entry['lead_mid'] = $lead_mid;
       // Add member details to parameters for email.
       $confirm_params["members"][$cnt] = $entry;
       // Insert to database table.
-      $result = SimpleConregStorage::insert($entry);
+      
+      //$result = SimpleConregStorage::insert($entry);
+      $member = Member::newMember($entry);
+      $member->setOptions($optionVals);
+      $result = $member->saveMember();
       
       if ($result) {
-        // Now we have the member ID we can save the field options.
-        SimpleConregFieldOptions::insertOptionFields($result, $optionVals);
         // Store the member ID for use when saving add-ons.
-        $memberIDs[$cnt] = $result;
+        $memberIDs[$cnt] = $member->mid;
         // Add a payment line for the member.
         $payment->add(new SimpleConregPaymentLine($result,
                                                  'member',
@@ -896,13 +899,10 @@ class SimpleConregRegistrationForm extends FormBase {
       }
       if ($cnt == 1) {
         // For first member, get key from insert statement to use for lead member ID.
-        $lead_mid = $result;
-        $lead_key = $rand_key;
-        $lead_name = trim($entry['first_name'].' '.$entry['last_name']);
-        $lead_postcode = trim($entry['postcode']);
-        // Update first member with own member ID as lead member ID.
-        $update = array('mid' => $lead_mid, 'lead_mid' => $lead_mid);
-        $result = SimpleConregStorage::update($update);
+        $lead_mid = $member->lead_mid;
+        $lead_key = $member->random_key;
+        $lead_name = trim($member->first_name.' '.$member->last_name);
+        $lead_postcode = trim($member->postcode);
       }
 
       // Check Simplenews module loaded.

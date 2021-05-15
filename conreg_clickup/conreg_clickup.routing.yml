@@ -1,0 +1,18 @@
+conreg_config_clickup:
+  path: 'admin/config/conreg/clickup'
+  defaults:
+    _title: 'ConReg ClickUp Integration'
+    _form: '\Drupal\conreg_clickup\ConregConfigClickUpForm'
+  requirements:
+    _permission: 'configure ClickUp integration'
+
+conreg_config_clickup_options:
+  path: 'admin/config/conreg/clickup/options/{eid}'
+  defaults:
+    _title: 'ConReg ClickUp Options'
+    _form: '\Drupal\conreg_clickup\ConregConfigClickUpOptionsForm'
+    eid: 1
+  requirements:
+    _permission: 'configure ClickUp integration'
+    eid: ^[0-9]+$
+

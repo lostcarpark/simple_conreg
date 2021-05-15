@@ -28,10 +28,6 @@
   title: Bulk email sending
   description: Allow administrator to send bulk emails to members
 
-'integration convention with ClickUp':
-  title: Integrate convention with ClickUp
-  description: Set up ClickUp integration to create tasks when member options are selected
-
 'view membership details':
   title: View membership details
   description: Allow users to view lists of members (including private data)

@@ -54,3 +54,9 @@ conreg_bulkemail:
   dependencies:
     - core/jquery
 
+conreg_admin:
+  version: 1.x
+  css:
+    theme:
+      css/simple_conreg_admin.css: {}
+  

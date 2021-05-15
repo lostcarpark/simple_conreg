@@ -60,20 +60,23 @@ class SimpleConregUpgradeManager
     return $this->lead_mid;
   }
   
-  public function loadUpgrades($leadMid, $isPaid)
+  public function loadUpgrades($mid, $isPaid)
   {
     $this->upgrades = [];
-    $this->lead_mid = $leadMid;
-    $upgrades = SimpleConregUpgradeStorage::loadAll(['lead_mid' => $this->lead_mid, 'is_paid' => $isPaid]);
+    $upgrades = SimpleConregUpgradeStorage::loadAll(['lead_mid' => $mid, 'is_paid' => $isPaid]);
+    if (empty($upgrades)) {
+      $upgrades = SimpleConregUpgradeStorage::loadAll(['mid' => $mid, 'is_paid' => $isPaid]);
+    }
     if (!empty($upgrades)) {
+      $this->leadMid = $upgrades['lead_mid'];
       foreach ($upgrades as $upgrade) {
         $this->add(new SimpleConregUpgrade($this->eid, $upgrade['mid'], NULL, $this->lead_mid, $upgrade['from_type'], $upgrade['from_days'], 
                                            $upgrade['to_type'], $upgrade['to_days'], $upgrade['to_badge_type'], $upgrade['upgrade_price']));
       }
       return TRUE;
     }
-    else
-      return FALSE;
+
+    return FALSE;
   }
   
   public function completeUpgrades($payment_amount, $payment_method, $payment_id)

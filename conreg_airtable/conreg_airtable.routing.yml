@@ -1,0 +1,10 @@
+conreg_config_airtable_options:
+  path: 'admin/config/conreg/airtable/options/{eid}'
+  defaults:
+    _title: 'ConReg AirTable Options'
+    _form: '\Drupal\conreg_airtable\ConfigAirTableForm'
+    eid: 1
+  requirements:
+    _permission: 'configure AirTable integration'
+    eid: ^[0-9]+$
+
