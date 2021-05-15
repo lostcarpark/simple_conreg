@@ -215,7 +215,7 @@ class SimpleConregFieldOptions {
             $memberForm[$key]['options'][$optid]['#required'] = TRUE;
           }
           // Check if saved value.
-          if (array_key_exists($optid, $member->options))
+          if (!is_null($member) && is_array($member->options) && array_key_exists($optid, $member->options))
             $memberForm[$key]['options'][$optid]['#default_value'] = TRUE;
           // Check if option can have detail.
           if (isset($optionDetails['detail']) && !empty($optionDetails['detail'])) {
@@ -231,12 +231,12 @@ class SimpleConregFieldOptions {
               '#suffix' => '</div>',
             ];
             // If option selected, put detail in placeholder.
-            if ($memberVals[$key]['options'][$optid] || (!isset($memberVals[$key]['options'][$optid]) && isset($member->options[$optid]))) {
+            if ($memberVals[$key]['options'][$optid] || (!isset($memberVals[$key]['options'][$optid]) && !is_null($member) && is_array($member->options) && isset($member->options[$optid]))) {
               $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid] = [
                 '#type' => 'textfield',
                 '#title' => $optionDetails['detail'],
               ];
-              if (array_key_exists($optid, $member->options))
+              if (!is_null($member) && is_array($member->options) && array_key_exists($optid, $member->options))
                 $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid]['#default_value'] = $member->options[$optid]['option_detail'];
               if ($optionDetails['required']) {
                 $memberForm[$key]['options']['container_'.$optid]['detail_'.$optid]['#required'] = TRUE;

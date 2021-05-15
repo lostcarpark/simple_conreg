@@ -179,13 +179,20 @@ class SimpleConregAddons
     return $addons;
   }
   
-  function getAllAddonPrices($config, $form_values)
+  public static function getAllAddonPrices($config, $form_values)
   {
     $addOnTotal = 0;
     $addOnGlobal = 0;
     $addOnGlobalMinusFree = 0;
     $addOnMembers = [];
     $addOnMembersMinusFree = [];
+    
+    $memberQty = (isset($form_values['global']['member_quantity']) ? $form_values['global']['member_quantity'] : 1);
+    for ($cnt = 1; $cnt<=$memberQty+1; $cnt++) {
+      // No form values, so return a dummy entry.
+      $addOnMembers[$cnt] = 0;
+      $addOnMembersMinusFree[$cnt] = 0;
+    }
     
     foreach ($config->get('add-ons') as $addOnId => $addOnVals) {
       // If add-on set, get values.
@@ -197,13 +204,13 @@ class SimpleConregAddons
         // If global is set, only display if there's a member number.
         if ($addon['global']) {
           //$id = "global_addon_'.$addOnId.'_info";
-          $option = $form_values['payment']['global_add_on'][$addOnId]['option'];
+          $option = (isset($form_values['payment']['global_add_on'][$addOnId]['option']) ? $form_values['payment']['global_add_on'][$addOnId]['option'] : '');
           if (!empty($option)) {
             $addOnGlobal += $addOnPrices[$option];
             $addOnTotal += $addOnPrices[$option];
             $addOnGlobalMinusFree += $addOnPrices[$option];
           }
-          $free_amount = $form_values['payment']['global_add_on'][$addOnId]['free_amount'];
+          $free_amount = (isset($form_values['payment']['global_add_on'][$addOnId]['free_amount']) ? $form_values['payment']['global_add_on'][$addOnId]['free_amount'] : '');
           if (!empty($free_amount)) {
             $addOnGlobal += $free_amount;
             $addOnTotal += $free_amount;
@@ -211,23 +218,26 @@ class SimpleConregAddons
           }
         }
         else {
-          foreach ($form_values['members'] as $memberKey => $memberVals) {
-            $member = substr($memberKey, 6); // memberKey should be in the form "member1". We want the 1.
+          if (isset($form_values) && array_key_exists('members', $form_values)) {
+            foreach ($form_values['members'] as $memberKey => $memberVals) {
+              $member = substr($memberKey, 6); // memberKey should be in the form "member1". We want the 1.
 
-            if (!array_key_exists($member, $addOnMembers))
-              $addOnMembers[$member] = 0;  // Check if member total has been initialised.
-            //$id = 'member_addon_'.$addOnId.'_info_'.$member;
-            $option = $memberVals['add_on'][$addOnId]['option'];
-            if (!empty($option)) {
-              $addOnMembers[$member] += $addOnPrices[$option];
-              $addOnTotal += $addOnPrices[$option];
-              $addOnMembersMinusFree[$member] += $addOnPrices[$option];
-            }
-            $free_amount = $memberVals['add_on'][$addOnId]['free_amount'];
-            if (!empty($free_amount)) {
-              $addOnMembers[$member] += $free_amount;
-              $addOnTotal += $free_amount;
-              // Dpn't add to $addOnMembersMinusFree.
+              if (!array_key_exists($member, $addOnMembers))
+                $addOnMembers[$member] = 0;  // Check if member total has been initialised.
+              //$id = 'member_addon_'.$addOnId.'_info_'.$member;
+              $option = (isset($memberVals['add_on'][$addOnId]['option']) ? $memberVals['add_on'][$addOnId]['option'] : '');
+              if (!empty($option)) {
+                $addOnPrice = floatval($addOnPrices[$option]);
+                $addOnMembers[$member] += $addOnPrice;
+                $addOnTotal += $addOnPrice;
+                $addOnMembersMinusFree[$member] += $addOnPrice;
+              }
+              $free_amount = (isset($memberVals['add_on'][$addOnId]['free_amount']) ? $memberVals['add_on'][$addOnId]['free_amount'] : 0);
+              if (!empty($free_amount)) {
+                $addOnMembers[$member] += $free_amount;
+                $addOnTotal += $free_amount;
+                // Dpn't add to $addOnMembersMinusFree.
+              }
             }
           }
         }
@@ -294,7 +304,7 @@ class SimpleConregAddons
   // Save the add-ons from for each member.
   //
   
-  function saveAddons($config, $form_values, $memberIDs, SimpleConregPayment $payment = NULL)
+  public static function saveAddons($config, $form_values, $memberIDs, SimpleConregPayment $payment = NULL)
   {
     $payId = $payment->getId();
     foreach ($config->get('add-ons') as $addOnName => $addOnVals) {
@@ -383,7 +393,7 @@ class SimpleConregAddons
   /*
    * Update all addons for a payment and set is_paid to true.
    */
-  function markPaid($payId, $paymentRef)
+  public static function markPaid($payId, $paymentRef)
   {
     $update = [
       'payid' => $payId,
@@ -396,7 +406,7 @@ class SimpleConregAddons
   /*
    * Return an array of all add-ons for a member.
    */
-  function getMemberAddons($config, $mid)
+  public static function getMemberAddons($config, $mid)
   {
     $symbol = $config->get('payments.symbol');
     $addons = $config->get('add-ons');

@@ -194,7 +194,7 @@ class SimpleConregRegistrationForm extends FormBase {
         $fieldsetConfig = SimpleConregConfig::getFieldsetConfig($eid, 0);
         $memberFieldsets[$cnt] = 0;
       }
-      if ($memberFieldsets[$cnt] != $prevFieldsets[$cnt]) {
+      if (isset($memberFieldsets[$cnt]) && $memberFieldsets[$cnt] != $prevFieldsets[$cnt]) {
         $memberFieldsetChanged = TRUE;
       }
 
@@ -724,13 +724,15 @@ class SimpleConregRegistrationForm extends FormBase {
         $form_state->setErrorByName('members][member'.$cnt.'][last_name');
       }
       // Check that if first name selected for badge, that first name has actually been entered.
-      if ($form_values['members']['member'.$cnt]['badge_name_option']=='F' &&
+      if (!isset($form_values['members']['member'.$cnt]['badge_name_option']) ||
+          $form_values['members']['member'.$cnt]['badge_name_option']=='F' &&
           (empty($form_values['members']['member'.$cnt]['first_name']) ||
            empty(trim($form_values['members']['member'.$cnt]['first_name'])))) {
         $form_state->setErrorByName('members][member'.$cnt.'][first_name', $this->t('You cannot choose first name for badge unless you enter a first name'));
       }
       // Check that if the "other" option has been chosen for badge name, that a badge name has been entered.
-      if ($form_values['members']['member'.$cnt]['badge_name_option']=='O' &&
+      if (!isset($form_values['members']['member'.$cnt]['badge_name_option']) ||
+          $form_values['members']['member'.$cnt]['badge_name_option']=='O' &&
           (empty($form_values['members']['member'.$cnt]['badge_name']['other']) ||
            empty(trim($form_values['members']['member'.$cnt]['badge_name']['other'])))) {
         $form_state->setErrorByName('members][member'.$cnt.'][badge_name][other', $this->t('Please enter your badge name'));
@@ -970,7 +972,8 @@ class SimpleConregRegistrationForm extends FormBase {
    * Method to calculate price of all members, and subtract any discounts.
    */
   public function getAllMemberPrices($config, $form_values, $memberQty, $types, $addOnPrices, $symbol,
-                                     $discountEnabled, $discountFreeEvery) {
+                                     $discountEnabled, $discountFreeEvery)
+  {
     $fullPrice = 0;
     $fullMinusFree = 0;
     $discountPrice = 0;
@@ -984,13 +987,12 @@ class SimpleConregRegistrationForm extends FormBase {
     list($addOnTotal, $globalTotal, $globalMinusFree, $addOnMembers, $addOnMembersMinusFree) = SimpleConregAddons::getAllAddonPrices($config, $form_values);
     $fullPrice = $globalTotal;
     $fullMinusFree = $globalMinusFree;
-    
-    
+
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
       // Check member price.
       $memberPrices[$cnt] = $this->getMemberPrice($form_values, $cnt, $types, $addOnMembers[$cnt], $addOnMembersMinusFree[$cnt], $symbol);
       if ($memberPrices[$cnt]->basePrice > 0)
-        $prices[] = (object)['memberNo' => $memberPrices[$cnt]->memberNo + (isset($addOnMembers[i]) ? $addOnMembers[i] : 0),
+        $prices[] = (object)['memberNo' => $memberPrices[$cnt]->memberNo + (isset($addOnMembers[$cnt]) ? $addOnMembers[$cnt] : 0),
                              'basePrice' => $memberPrices[$cnt]->basePrice];
       $fullPrice += $memberPrices[$cnt]->price;
       $fullMinusFree += $memberPrices[$cnt]->priceMinusFree;
@@ -1019,6 +1021,7 @@ class SimpleConregRegistrationForm extends FormBase {
     // Calculate total price with discounts.
     $totalPrice = $fullPrice + $discountPrice;
     $totalPriceMinusFree = $fullMinusFree + $discountPrice;
+
     return [$fullPrice, $discountPrice, $totalPrice, $totalPriceMinusFree, $memberPrices];
   }
   

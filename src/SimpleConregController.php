@@ -183,15 +183,15 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
       // Replace type code with description.
       $content['summary'][] = [
-        'type' => ['#markup' => SafeMarkup::checkPlain(isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'])],
-        'member_type' => ['#markup' => $entry['num']],
+        ['#markup' => SafeMarkup::checkPlain(isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'])],
+        ['#markup' => $entry['num']],
       ];
       $total += $entry['num'];
     }
     //Add a row for the total.
     $content['summary']['total'] = [
-      'type' => ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
-      'number' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
     ];
 
     return $content;
@@ -216,15 +216,15 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminMemberBadgeSummaryLoad($eid) as $entry) {
       // Replace type code with description.
       $content['badge_summary'][] = [
-        'type' => ['#markup' => SafeMarkup::checkPlain(isset($types[trim($entry['badge_type'])]) ? $types[trim($entry['badge_type'])] : $entry['badge_type'])],
-        'member_type' => ['#markup' => $entry['num']],
+        ['#markup' => SafeMarkup::checkPlain(isset($types[trim($entry['badge_type'])]) ? $types[trim($entry['badge_type'])] : $entry['badge_type'])],
+        ['#markup' => $entry['num']],
       ];
       $total += $entry['num'];
     }
     //Add a row for the total.
     $content['badge_summary']['total'] = [
-      'type' => ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
-      'number' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
     ];
 
     return $content;
@@ -261,14 +261,14 @@ class SimpleConregController extends ControllerBase {
     foreach ($dayTotals as $key=>$val) {
       // Sanitize each entry.
       $content['days_summary'][] = [
-        'type' => ['#markup' => SafeMarkup::checkPlain(isset($days[$key]) ? $days[$key] : $key)],
-        'member_type' => ['#markup' => $val],
+        ['#markup' => SafeMarkup::checkPlain(isset($days[$key]) ? $days[$key] : $key)],
+        ['#markup' => $val],
       ];
     }
     //Add a row for the total.
     $content['days_summary']['total'] = [
-      'type' => ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
-      'number' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
     ];
 
     return $content;
@@ -293,15 +293,15 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminMemberPaymentMethodSummaryLoad($eid) as $entry) {
       // Sanitize each entry.
       $rows[] = [
-        'payment_method' => ['#markup' => SafeMarkup::checkPlain($entry[payment_method])],
-        'num' => ['#markup' => $entry['num']],
+        ['#markup' => SafeMarkup::checkPlain($entry['payment_method'])],
+        ['#markup' => $entry['num']],
       ];
       $total += $entry['num'];
     }
     //Add a row for the total.
     $rows['total'] = [
-      'payment_method' => ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
-      'num' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
     ];
     $content['payment_method_summary'] = $rows;
 
@@ -330,18 +330,18 @@ class SimpleConregController extends ControllerBase {
       $total_paid = $entry['member_price'] * $entry['num'];
       // Sanitize each entry.
       $rows[] = [
-        'member_price' => ['#markup' => $entry['member_price']],
-        'num' => ['#markup' => $entry['num']],
-        'total_paid' => ['#markup' => number_format($total_paid, 2)],
+        ['#markup' => $entry['member_price']],
+        ['#markup' => $entry['num']],
+        ['#markup' => number_format($total_paid, 2)],
       ];
       $total += $entry['num'];
       $total_amount += $total_paid;
     }
     //Add a row for the total.
     $rows['total'] = [
-      'member_price' => ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
-      'num' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
-      'total_paid' => ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
     ];
     $content['amount_paid_summary'] = $rows;
 
@@ -376,12 +376,11 @@ class SimpleConregController extends ControllerBase {
       $entry['total_paid'] = number_format($total_paid, 2);
       // Sanitize each entry.
       $rows[] = [
-        'type' => ['#markup' => SafeMarkup::checkPlain(isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'])],
-        'member_price' => ['#markup' => $entry['member_price']],
-        'num' => ['#markup' => $entry['num']],
-        'total_paid' => ['#markup' => number_format($total_paid, 2)],
+        ['#markup' => SafeMarkup::checkPlain(isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'])],
+        ['#markup' => $entry['member_price']],
+        ['#markup' => $entry['num']],
+        ['#markup' => number_format($total_paid, 2)],
       ];
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
 
       // Add to totals.
       $total += $entry['num'];
@@ -389,10 +388,10 @@ class SimpleConregController extends ControllerBase {
     }
     //Add a row for the total.
     $rows['total'] = [
-      'type' => ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
-      'member_price' => ['#markup' => '', '#wrapper_attributes' => ['class' => ['table-total']]],
-      'num' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
-      'total_paid' => ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => '', '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
     ];
     $content['type_amount_paid_summary'] = $rows;
 
@@ -427,22 +426,22 @@ class SimpleConregController extends ControllerBase {
       $total_amount += $entry['total_paid'];
       // Sanitize each entry.
       $rows[] = [
-        'year' => ['#markup' => SafeMarkup::checkPlain($entry['year'])],
-        'month' => ['#markup' => SafeMarkup::checkPlain($entry['month'])],
-        'num' => ['#markup' => $entry['num']],
-        'total_paid' => ['#markup' => number_format($entry['total_paid'], 2)],
-        'cumulative' => ['#markup' => $total],
-        'cumulative_amount' => ['#markup' => number_format($total_amount, 2)],
+        ['#markup' => SafeMarkup::checkPlain($entry['year'])],
+        ['#markup' => SafeMarkup::checkPlain($entry['month'])],
+        ['#markup' => $entry['num']],
+        ['#markup' => number_format($entry['total_paid'], 2)],
+        ['#markup' => $total],
+        ['#markup' => number_format($total_amount, 2)],
       ];
     }
     //Add a row for the total.
     $rows['total'] = [
-      'year' => ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
-      'month' => ['#markup' => '', '#wrapper_attributes' => ['class' => ['table-total']]],
-      'num' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
-      'total_paid' => ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
-      'cumulative' => ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
-      'cumulative_amount' => ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => '', '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
     ];
     $content['by_date_summary'] = $rows;
 
