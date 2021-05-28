@@ -12,8 +12,8 @@ use Drupal\Core\Url;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\simple_conreg\Member;
 use Drupal\simple_conreg\SimpleConregConfig;
-use Drupal\simple_conreg\SimpleConregStorage;
-use Drupal\simple_conreg\SimpleConregFieldOptions;
+//use Drupal\simple_conreg\SimpleConregStorage;
+//use Drupal\simple_conreg\FieldOptions;
 use Drupal\devel;
 use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Exception\RequestException;
@@ -166,11 +166,11 @@ class AirTable
       return $response;
     }
     catch (ClientException $e) {
-dpm($e->getMessage());
+      \Drupal::logger('conreg_airtable')->info('Client Exception updating entry in Airtable: @message', ['@message' => $e->getMessage()]);
       return false;
     }
     catch (TransferException $e) {
-dpm($e->getMessage());
+      \Drupal::logger('conreg_airtable')->info('Transfer Exception updating entry in Airtable: @message', ['@message' => $e->getMessage()]);
       return false;
     }
 
@@ -193,11 +193,11 @@ dpm($e->getMessage());
       return $response;
     }
     catch (ClientException $e) {
-dpm($e->getMessage());
+      \Drupal::logger('conreg_airtable')->info('Client Exception deleting from Airtable: @message', ['@message' => $e->getMessage()]);
       return false;
     }
     catch (TransferException $e) {
-dpm($e->getMessage());
+      \Drupal::logger('conreg_airtable')->info('Transfer Exception deleting from Airtable: @message', ['@message' => $e->getMessage()]);
       return false;
     }
 
