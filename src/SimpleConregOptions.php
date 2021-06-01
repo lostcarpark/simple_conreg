@@ -265,10 +265,21 @@ class SimpleConregOptions {
   /**
    * Return list of display options for membership list.
    */
-  public static function display() {
-    return ['F' => t('Full name and badge name'),
+  public static function display($eid = 1, $config = NULL) {
+    // Get the config display options.
+    if (is_null($config)) {
+      $config = SimpleConregConfig::getConfig($eid);
+    }
+    $options = explode("\n", $config->get('display_options.options'));
+    $display_options = [];
+    foreach ($options as $option) {
+      list($code, $description) = array_pad(explode('|', trim($option)), 2, '');
+      $display_options[$code] = $description;
+    }
+    return $display_options;
+    /* return ['F' => t('Full name and badge name'),
             'B' => t('Badge name only'),
-            'N' => t('Not at all')];
+            'N' => t('Not at all')]; */
   }
 
   /**

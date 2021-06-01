@@ -585,6 +585,23 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('communications_method.options'),
     );  
 
+    /*
+     * Fields for display options.
+     */
+    $form['simple_conreg_display_options'] = array(
+      '#type' => 'details',
+      '#title' => $this->t('Display options'),
+      '#tree' => TRUE,
+      '#group' => 'admin',
+    );
+
+    $form['simple_conreg_display_options']['options'] = array(
+      '#type' => 'textarea',
+      '#title' => $this->t('Display options'),
+      '#description' => $this->t('Put each display option on a line with single character code, description, separated by | character (e.g. "F|Full name and badge name").'),
+      '#default_value' => $config->get('display_options.options'),
+    );  
+
 
     /*
      * Fields for options.
@@ -598,8 +615,8 @@ class SimpleConregConfigForm extends ConfigFormBase {
 
     $form['simple_conreg_options']['option_groups'] = array(
       '#type' => 'textarea',
-      '#title' => $this->t('Options'),
-      '#description' => $this->t('Put each option group on a line with group ID, field name to attach to, and group title, separated by | character (e.g. "1|extra_flag1|Please tick the areas you\'d like to volunteer").'),
+      '#title' => $this->t('Option Groups'),
+      '#description' => $this->t('Put each option group on a line with group ID, field name to attach to, group title, and local/global (0/1), separated by | character (e.g. "1|extra_flag1|Please tick the areas you\'d like to volunteer|0").'),
       '#default_value' => $config->get('simple_conreg_options.option_groups'),
     );  
 
@@ -610,83 +627,6 @@ class SimpleConregConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('simple_conreg_options.options'),
     );  
 
-
-    /*
-     * Fields for add on choices and options.
-     */
-    $form['addons'] = array(
-      '#type' => 'details',
-      '#title' => $this->t('Add-ons'),
-      '#group' => 'admin',
-    );
-
-    $form['addons']['simple_conreg_addons'] = array(
-      '#type' => 'fieldset',
-      '#title' => $this->t('Add-ons'),
-      '#tree' => TRUE,
-    );
-
-    $form['addons']['simple_conreg_addons']['global'] = array(
-      '#type' => 'checkbox',
-      '#title' => $this->t('Global add-on (uncheck for add-on per member)'),
-      '#default_value' => $config->get('add_ons.global'),
-    );
-
-    $form['addons']['simple_conreg_addons']['label'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Label'),
-      '#default_value' => $config->get('add_ons.label'),
-    );  
-
-    $form['addons']['simple_conreg_addons']['description'] = array(
-      '#type' => 'textarea',
-      '#title' => $this->t('Description'),
-      '#default_value' => $config->get('add_ons.description'),
-    );  
-
-    $form['addons']['simple_conreg_addons']['options'] = array(
-      '#type' => 'textarea',
-      '#title' => $this->t('Options'),
-      '#description' => $this->t('Put each add-on on a line with description and price separated by | character.'),
-      '#default_value' => $config->get('add_ons.options'),
-    );  
-
-    $form['addons']['simple_conreg_addon_info'] = array(
-      '#type' => 'fieldset',
-      '#title' => $this->t('Add-on Information'),
-      '#tree' => TRUE,
-    );
-
-    $form['addons']['simple_conreg_addon_info']['label'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Label'),
-      '#description' => t('If you would like to capture optional information about the add-on, please provide label and description for the information field.'),
-      '#default_value' => $config->get('add_on_info.label'),
-    );  
-
-    $form['addons']['simple_conreg_addon_info']['description'] = array(
-      '#type' => 'textarea',
-      '#title' => $this->t('Description'),
-      '#default_value' => $config->get('add_on_info.description'),
-    );  
-
-    $form['addons']['simple_conreg_addon_free'] = array(
-      '#type' => 'fieldset',
-      '#title' => $this->t('Add-on Free Input Amount'),
-      '#tree' => TRUE,
-    );
-
-    $form['addons']['simple_conreg_addon_free']['label'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Label'),
-      '#default_value' => $config->get('add_on_free.label'),
-    );  
-
-    $form['addons']['simple_conreg_addon_free']['description'] = array(
-      '#type' => 'textarea',
-      '#title' => $this->t('Description'),
-      '#default_value' => $config->get('add_on_free.description'),
-    );  
 
     /*
      * Display settings - entries per page.
@@ -994,6 +934,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('registration_intro', $vals['simple_conreg_intros']['registration_intro']);
     $config->set('payment_intro', $vals['simple_conreg_intros']['payment_intro']);
     $config->set('communications_method.options', $vals['simple_conreg_communication']['options']);
+    $config->set('display_options.options', $vals['simple_conreg_display_options']['options']);
     $config->set('simple_conreg_options.option_groups', $vals['simple_conreg_options']['option_groups']);
     $config->set('simple_conreg_options.options', $vals['simple_conreg_options']['options']);
     $config->set('add_ons.global', $vals['simple_conreg_addons']['global']);
