@@ -568,7 +568,9 @@ class SimpleConregRegistrationForm extends FormBase {
     $form['payment']['submit'] = [
       '#type' => 'submit',
       '#value' => $submitLabel,
-        '#attributes' => ['id' => 'edit-payment-submit'],
+      '#attributes' => ['id' => 'edit-payment-submit'],
+      '#prefix' => '<div id="Submit">',
+      '#suffix' => '</div>',
     ];
 
     $form_state->set('member_types', $curMemberTypes);
@@ -623,7 +625,7 @@ class SimpleConregRegistrationForm extends FormBase {
       }
     }
     $ajax_response->addCommand(new HtmlCommand('#Pricing', $form['payment']['price']));
-    $ajax_response->addCommand(new HtmlCommand('#edit-payment-submit', $form['payment']['submit']));
+    $ajax_response->addCommand(new HtmlCommand('#Submit', $form['payment']['submit']));
 
     return $ajax_response;
   }
