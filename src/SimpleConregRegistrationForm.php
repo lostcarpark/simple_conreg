@@ -623,6 +623,7 @@ class SimpleConregRegistrationForm extends FormBase {
       }
     }
     $ajax_response->addCommand(new HtmlCommand('#Pricing', $form['payment']['price']));
+    $ajax_response->addCommand(new HtmlCommand('#edit-payment-submit', $form['payment']['submit']));
 
     return $ajax_response;
   }
