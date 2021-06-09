@@ -130,15 +130,16 @@ class SimpleConregRegistrationForm extends FormBase {
     list($fullPrice, $discountPrice, $totalPrice, $totalPriceMinusFree, $memberPrices) =
       $this->getAllMemberPrices($config, $form_values, $memberQty, $types->types, $addOnPrices, $symbol, $discountEnabled, $discountFreeEvery);
   
-    $form = array(
+    $form = [
       '#tree' => TRUE,
       '#cache' => ['max-age' => 0],
       '#prefix' => '<div id="regform">',
       '#suffix' => '</div>',
-      '#attached' => array(
-        'library' => array('simple_conreg/conreg_form'),
-      ),
-    );
+      '#attached' => [
+        'library' => ['simple_conreg/conreg_form'],
+        'drupalSettings' => [],
+      ],
+    ];
 
     $form['intro'] = array(
       '#markup' => $config->get('registration_intro'),
@@ -209,9 +210,10 @@ class SimpleConregRegistrationForm extends FormBase {
         '#title' => $fieldsetConfig->get('fields.first_name_label'),
         '#size' => 29,
         '#maxlength' => (empty($firstname_max_length) ? 128 : $firstname_max_length),
-        '#attributes' => array(
+        '#attributes' => [
           'id' => "edit-members-member$cnt-first-name",
-          'class' => array('edit-members-first-name')),
+          'class' => ['edit-members-first-name'],
+        ],
         '#required' => ($fieldsetConfig->get('fields.first_name_mandatory') ? TRUE : FALSE),
       );
 
@@ -320,7 +322,7 @@ class SimpleConregRegistrationForm extends FormBase {
       // Add badge name max to Drupal Settings for JavaScript to use.
       $badgename_max_length = $fieldsetConfig->get('fields.badge_name_max_length');
       if (empty($badgename_max_length)) $badgename_max_length = 128;
-      $form['#attached']['drupalSettings'] = ['simple_conreg' => ['badge_name_max' => $badgename_max_length]];
+      $form['#attached']['drupalSettings']['simple_conreg'] = ['badge_name_max' => $badgename_max_length];
 
       $firstName = (isset($form_values['members']['member'.$cnt]['first_name']) ? $form_values['members']['member'.$cnt]['first_name'] : '');
       $lastName = (isset($form_values['members']['member'.$cnt]['last_name']) ? $form_values['members']['member'.$cnt]['last_name'] : '');
@@ -555,10 +557,19 @@ class SimpleConregRegistrationForm extends FormBase {
                    ['@symbol' => $symbol, '@total' => number_format($totalPrice, 2)]),
     );
 
-    $form['payment']['submit'] = array(
+    $form['#attached']['drupalSettings']['submit'] = ['payment' => $config->get('submit.payment'), 'free' => $config->get('submit.free')];
+    if (empty($totalPrice)) {
+      $submitLabel = $config->get('submit.free');
+    }
+    else {
+      $submitLabel = $config->get('submit.payment');
+    }
+
+    $form['payment']['submit'] = [
       '#type' => 'submit',
-      '#value' => t('Proceed to payment page'),
-    );
+      '#value' => $submitLabel,
+        '#attributes' => ['id' => 'edit-payment-submit'],
+    ];
 
     $form_state->set('member_types', $curMemberTypes);
     $form_state->set('member_days', $curMemberDays);

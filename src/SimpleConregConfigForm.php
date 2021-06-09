@@ -679,6 +679,32 @@ class SimpleConregConfigForm extends ConfigFormBase {
 
 
     /*
+     * Fields for submit buttons.
+     */
+
+    $form['simple_conreg_submit'] = array(
+      '#type' => 'details',
+      '#title' => $this->t('Submit Button'),
+      '#tree' => TRUE,
+      '#group' => 'admin',
+    );
+
+    $form['simple_conreg_submit']['submit_payment'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Label for Submit with payment'),
+      '#description' => $this->t('Label to be displayed when price is greater than zero.'),
+      '#default_value' => $config->get('submit.payment'),
+    );  
+
+    $form['simple_conreg_submit']['submit_free'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Label for Submit when no charge'),
+      '#description' => $this->t('Label to be displayed when price is equal to zero.'),
+      '#default_value' => $config->get('submit.free'),
+    );  
+
+
+    /*
      * Fields for Thank You page.
      */
 
@@ -949,6 +975,8 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $config->set('reference.default_country', $vals['simple_conreg_reference']['default_country']);
     $config->set('reference.countries', $vals['simple_conreg_reference']['countries']);
     $config->set('reference.geoplugin', $vals['simple_conreg_reference']['geoplugin']);
+    $config->set('submit.payment', $vals['simple_conreg_submit']['submit_payment']);
+    $config->set('submit.free', $vals['simple_conreg_submit']['submit_free']);
     $config->set('thanks.thank_you_message', $vals['simple_conreg_thanks']['thank_you_message']['value']);
     $config->set('thanks.thank_you_format', $vals['simple_conreg_thanks']['thank_you_message']['format']);
     $config->set('discount.enable', $vals['simple_conreg_discount']['enable']);

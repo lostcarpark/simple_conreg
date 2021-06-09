@@ -33,6 +33,12 @@
           total += Number($(this).val());
         });
         $("#total-value").text(total.toFixed(2));
+        if (total == 0) {
+          $("#edit-payment-submit").val(drupalSettings.submit.free);
+        }
+        else {
+          $("#edit-payment-submit").val(drupalSettings.submit.payment);
+        }
       });
     }
   };
