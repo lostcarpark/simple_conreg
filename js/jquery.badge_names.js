@@ -3,7 +3,9 @@ var badgeTimer;
 Drupal.behaviors.badges = {
   attach: function (context) {
     jQuery("#upload").hide();
-    jQuery(".badge-name").textfit('bestfit');
+    jQuery(".badge-name").each(function(i, obj) {
+      textFit(document.getElementById(obj.id), {multiLine: true});
+    });
     jQuery("#edit-view-do-upload").click(function() {
       window.scrollTo(0, 0);
       jQuery("#upload").show();

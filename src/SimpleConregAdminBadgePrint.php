@@ -34,6 +34,7 @@ class SimpleConregAdminBadgePrint extends FormBase {
     $form_state->set('eid', $eid);
 
     $config = SimpleConregConfig::getConfig($eid);
+    $memberTypes = SimpleConregOptions::memberTypes($eid, $config);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
     $days = SimpleConregOptions::days($eid, $config);
     $digits = $config->get('member_no_digits');
@@ -181,6 +182,7 @@ class SimpleConregAdminBadgePrint extends FormBase {
       $options['member_no_to'] = (isset($form_values['view']['number']['member_no_to']) ? $form_values['view']['number']['member_no_to'] : '');
     }
     foreach(SimpleConregStorage::adminMemberBadges($eid, $max_num_badges, $options) as $member) {
+      $member_type = isset($memberTypes->types[$member['member_type']]) ? $memberTypes->types[$member['member_type']]->name : $member['member_type'];
       $badge_type = isset($badgeTypes[$member['badge_type']]) ? $badgeTypes[$member['badge_type']] : $member['badge_type'];
       $member_no = $member['badge_type'] . sprintf("%0".$digits."d", $member['member_no']);
       if (!empty($member['days'])) {
@@ -192,16 +194,16 @@ class SimpleConregAdminBadgePrint extends FormBase {
       }
       $form['member'.$member['mid']] = [
         '#markup' => 
-'<div id="mid'.$member['mid'].'" class="badge badge-type-'.$badge_type.'">
+'<div id="mid'.$member['mid'].'" class="badge badge-type-'.$badge_type.' member-type-'.$member_type.'">
   <div class="badge-side badge-left">
     <div class="badge-type">'.$badge_type.'</div>
     <div class="badge-number">'.$member_no.'</div>
-    <div class="badge-name">'.$member['badge_name'].'</div>
+    <div id="badge-name-mid'.$member['mid'].'-left" class="badge-name">'.$member['badge_name'].'</div>
     <div class="badge-days">'.$member_days.'</div>
   </div><div class="badge-side badge-right">
     <div class="badge-type">'.$badge_type.'</div>
     <div class="badge-number">'.$member_no.'</div>
-    <div class="badge-name">'.$member['badge_name'].'</div>
+    <div id="badge-name-mid'.$member['mid'].'-right" class="badge-name">'.$member['badge_name'].'</div>
     <div class="badge-days">'.$member_days.'</div>
   </div>
 </div>',

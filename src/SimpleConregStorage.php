@@ -512,6 +512,7 @@ class SimpleConregStorage {
     $select->addField('m', 'badge_name');
     $select->addField('m', 'badge_type');
     $select->addField('m', 'days');
+    $select->addField('m', 'member_type');
     $select->addField('m', 'mid');
     $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
