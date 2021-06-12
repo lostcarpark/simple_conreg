@@ -4,7 +4,7 @@ Drupal.behaviors.badges = {
   attach: function (context) {
     jQuery("#upload").hide();
     jQuery(".badge-name").each(function(i, obj) {
-      textFit(document.getElementById(obj.id), {multiLine: true});
+      textFit(document.getElementById(obj.id), {maxFontSize: 120, multiLine: true});
     });
     jQuery("#edit-view-do-upload").click(function() {
       window.scrollTo(0, 0);
