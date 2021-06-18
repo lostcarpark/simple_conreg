@@ -192,9 +192,13 @@ class SimpleConregAdminBadgePrint extends FormBase {
         }
         $member_days = implode(', ', $dayDescs);
       }
+      $optionClasses = [];
+      foreach (FieldOptionStorage::getMemberOptions($member['mid']) as $option) {
+        $optionClasses[] = 'field-option-' . $option['optid'];
+      }
       $form['member'.$member['mid']] = [
         '#markup' => 
-'<div id="mid'.$member['mid'].'" class="badge badge-type-'.$badge_type.' member-type-'.$member_type.'">
+'<div id="mid' . $member['mid'] . '" class="badge badge-type-' . $badge_type . ' member-type-' . $member_type . ' ' . implode(' ', $optionClasses) . '">
   <div class="badge-side badge-left">
     <div class="badge-type">'.$badge_type.'</div>
     <div class="badge-number">'.$member_no.'</div>
