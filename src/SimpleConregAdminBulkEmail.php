@@ -168,7 +168,7 @@ class SimpleConregAdminBulkEmail extends FormBase {
     $options = [];
     $options['member_no_from'] = (isset($vals['options']['member_no_from']) ? $vals['options']['member_no_from'] : 0);
     $options['member_no_to'] = (isset($vals['options']['member_no_to']) ? $vals['options']['member_no_to'] : 0);
-    foreach(SimpleConregStorage::adminMemberBadges($eid, false, $options) as $member) {
+    foreach(SimpleConregStorage::adminMemberBadges($eid, FALSE, $options) as $member) {
       $ids .= $member['mid'] . "\n";
     }
     $form['sending']['ids']['#value'] = $ids;

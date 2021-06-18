@@ -12,7 +12,7 @@ use Drupal\Core\Url;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\simple_conreg\SimpleConregConfig;
 use Drupal\simple_conreg\SimpleConregStorage;
-use Drupal\simple_conreg\SimpleConregFieldOptions;
+use Drupal\simple_conreg\FieldOptions;
 use Drupal\devel;
 use GuzzleHttp\Exception\RequestException;
 
@@ -246,7 +246,7 @@ class ConregClickUp
     $member = SimpleConregStorage::load(['eid' => $eid, 'mid' => $mid]);
     $memberName = $member['first_name'] . ' ' . $member['last_name'];
     
-    $optionTitles = SimpleConregFieldOptions::getFieldOptionsTitles($eid, $config);
+    $optionTitles = FieldOptions::getFieldOptionsTitles($eid, $config);
 
     // Loop through each option group and check if any options set.
     foreach ($config->get('clickup_option_groups') as $groupName => $groupVals) {

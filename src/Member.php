@@ -16,12 +16,7 @@ class Member
   public $options;
 
   /**
-   * Constructs a new ModuleHandler object.
-   *
-   * @param \Drupal\Core\Extension\ModuleHandler $module_handler
-   *   The module handler.
-   * @param \Psr\Log\LoggerInterface $logger
-   *   A logger instance
+   * Constructs a new Member object.
    */
   public function __construct()
   {
@@ -41,7 +36,7 @@ class Member
     $member = self::newMember(SimpleConregStorage::load(['mid' => $mid]));
     
     // Add member options to member object.
-    $member->options = SimpleConregFieldOptions::getMemberOptionValues($mid);
+    $member->options = MemberOption::loadAllMemberOptions($mid);
 
     return $member;
   }
@@ -79,7 +74,11 @@ class Member
     
     // Update member field options.
     if (is_array($this->options)) {
-      SimpleConregFieldOptions::updateOptionFields($this->mid, $this->options);
+      foreach ($this->options as $option) {
+        $option->mid = $this->mid;
+        $option->saveMemberOption();
+      }
+      //FieldOptions::updateOptionFields($this->mid, $this->options);
     }
     
     return $return;
@@ -100,6 +99,10 @@ class Member
 
   public function setOptions($options)
   {
+    // First, set the member ID for all options.
+    foreach ($options as $optid => $option) {
+      $options[$optid]->mid = $this->mid;
+    }
     $this->options = $options;
   }
   

@@ -77,4 +77,4 @@
   description: Allow users to help members to join at a convention fan table
 
 permission_callbacks:
-  - Drupal\simple_conreg\SimpleConregFieldOptions::permissions
+  - Drupal\simple_conreg\FieldOptionPermissions::permissions

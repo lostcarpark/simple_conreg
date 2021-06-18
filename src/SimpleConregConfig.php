@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\simple_conreg\SimpleConregFieldOptions.
+ * Contains \Drupal\simple_conreg\SimpleConregConfig.
  */
 
 namespace Drupal\simple_conreg;

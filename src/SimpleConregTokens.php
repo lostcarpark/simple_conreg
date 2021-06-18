@@ -285,12 +285,14 @@ class SimpleConregTokens {
     $this->plain_display .= "\n$reg_date\n";
     $this->display .= '<table>';
 
+    $fieldOptions = new FieldOptions($this->eid, $this->config);
+
     foreach ($members as $index => $cur_member) {
       // Get fieldset config for member type.
       $memberType = $cur_member['raw_member_type'];
       $fieldsetConfig = $this->typeVals[$memberType]->config;
       // Get member options from database.
-      $memberOptions = SimpleConregFieldOptions::getMemberOptions($this->eid, NULL, $cur_member['mid']);
+      $memberOptions = $fieldOptions->getMemberOptions($cur_member['mid']);
       // Look up labels for fields to email.
       $member_seq ++;
       $member_heading = t('Member @seq', ['@seq' => $member_seq]);

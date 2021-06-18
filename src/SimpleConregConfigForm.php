@@ -616,14 +616,14 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $form['simple_conreg_options']['option_groups'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Option Groups'),
-      '#description' => $this->t('Put each option group on a line with group ID, field name to attach to, group title, and local/global (0/1), separated by | character (e.g. "1|extra_flag1|Please tick the areas you\'d like to volunteer|0").'),
+      '#description' => $this->t('Put each option group on a line with group ID, field name to attach to, group title, local/global (0/1), and private/public (0/1 - groups with 0 will only be visible to admins), separated by | character (e.g. "1|extra_flag1|Please tick the areas you\'d like to volunteer|0|1").'),
       '#default_value' => $config->get('simple_conreg_options.option_groups'),
     );  
 
     $form['simple_conreg_options']['options'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Options'),
-      '#description' => $this->t('Put each option on a line with option ID, group ID, option title, detail title, detail required (1/0), weight (bigger number goes to bottom), comma setprated list of fieldsets to include it, and must be checked, separated by | character (e.g. "1|1| Help with pre-con tasks|Please provide details of areas you\'d like to help|0|1|0,1|0").'),
+      '#description' => $this->t('Put each option on a line with option ID, group ID, option title, detail title, detail required (1/0), weight (bigger number goes to bottom), comma separated list of fieldsets to include it, and must be checked, separated by | character (e.g. "1|1|Help with pre-con tasks|Please provide details of areas you\'d like to help|0|1|0,1|0").'),
       '#default_value' => $config->get('simple_conreg_options.options'),
     );  
 

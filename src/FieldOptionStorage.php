@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\simple_conreg\SimpleConregFieldOptionStorage
+ * Contains \Drupal\simple_conreg\FieldOptionStorage
  */
 
 use Drupal\Core\Database\Connection;
@@ -10,8 +10,34 @@ use Drupal\devel;
 
 namespace Drupal\simple_conreg;
 
-class SimpleConregFieldOptionStorage {
+class FieldOptionStorage {
 
+  public static function upsertMemberOption($option)
+  {
+    // Make sure the datestamp gets updated.
+    $option['update_date'] = time();
+
+    // It would be great to use the upsert function, but sadly it doesn't appear to allow composite keys.
+    $connection = \Drupal::database();
+    $select = $connection->select('conreg_member_options', 'm');
+    $select->addField('m', 'optid');
+    $select->condition('m.mid', $option['mid']);
+    $select->condition('m.optid', $option['optid']);
+    $optid = $select->execute()->fetchField();
+
+    if (empty($optid)) {
+      $connection->insert('conreg_member_options')
+        ->fields($option)
+        ->execute();
+    }
+    else {
+      $connection->update('conreg_member_options')
+          ->fields($option)
+          ->condition('mid', $mid)
+          ->condition('optid', $optid)
+          ->execute();
+    }
+  }
 
   public static function insertMemberOptions($mid, &$options)
   {
@@ -53,7 +79,8 @@ class SimpleConregFieldOptionStorage {
           ])
           ->condition('mid', $mid)
           ->condition('optid', $optid)
-          ->execute(); }
+          ->execute();
+        }
         $options[$optid]['changed'] = FALSE;
     }
     
@@ -104,6 +131,7 @@ class SimpleConregFieldOptionStorage {
     
     $select = $connection->select('conreg_member_options', 'm');
     // Select these specific fields for the output.
+    $select->addField('m', 'mid');
     $select->addField('m', 'optid');
     $select->addField('m', 'is_selected');
     $select->addField('m', 'option_detail');
@@ -117,7 +145,7 @@ class SimpleConregFieldOptionStorage {
     // Turn result into associative array.
     $memberOptions = [];
     foreach ($entries as $entry) {
-      $memberOptions[$entry['optid']] = ['optid' => $entry['optid'], 'is_selected' => $entry['is_selected'], 'option_detail' => $entry['option_detail']];
+      $memberOptions[$entry['optid']] = ['mid' => $entry['mid'], 'optid' => $entry['optid'], 'is_selected' => $entry['is_selected'], 'option_detail' => $entry['option_detail']];
     }
 
     return $memberOptions;

@@ -49,7 +49,7 @@ class SimpleConregEmailer {
       $message['preview'] = $body;
 
       // Only attach badge image if referenced in body.
-      if (strpos($body, '[badge]') !== false) {
+      if (strpos($body, '[badge]') !== FALSE) {
         // Set ID for attachment.
         $badge_id = "conreg-badge".$params['mid'];
         $badge = '<img src="cid:' . $badge_id . '" />';

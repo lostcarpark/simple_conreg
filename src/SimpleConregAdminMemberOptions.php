@@ -47,7 +47,8 @@ class SimpleConregAdminMemberOptions extends FormBase {
     $displayOptions = SimpleConregOptions::display();
     $pageSize = $config->get('display.page_size');
 
-    $groupList = SimpleConregFieldOptions::getFieldOptionGroupedList($eid, $config);
+    $fieldOptions = new FieldOptions($eid, $config);
+    $groupList = $fieldOptions->getFieldOptionGroupedList();
 
     $user = \Drupal::currentUser();
     $groupTitles = [];
@@ -192,7 +193,7 @@ class SimpleConregAdminMemberOptions extends FormBase {
 
     if (!empty($selOption)) {
       // Fetch all entries for selected option or group.
-      $entries = SimpleConregFieldOptionStorage::adminOptionMemberListLoad($eid, $selOption);
+      $entries = FieldOptionStorage::adminOptionMemberListLoad($eid, $selOption);
       // Reorganise to put all entries for a member in the same row.
       $optRows = [];
       foreach ($entries as $entry) {

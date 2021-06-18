@@ -96,7 +96,7 @@ class SimpleConregAdminMemberEdit extends FormBase
       '#prefix' => '<div id="regform">',
       '#suffix' => '</div>',
       '#attached' => [
-        'library' => ['simple_conreg/conreg_form'],
+        'library' => ['simple_conreg/conreg_form', 'simple_conreg/conreg_fieldoptions']
       ],
     ];
 
@@ -304,10 +304,15 @@ class SimpleConregAdminMemberEdit extends FormBase
       );
     }
 
-    $optionCallbacks = [];
-    $callback = [$this, 'updateMemberOptionFields'];
     $fieldset = isset($types->types[$member->member_type]->fieldset) ? $types->types[$member->member_type]->fieldset : 0;
-    SimpleConregFieldOptions::addOptionFields($eid, $fieldset, $form['member'], $form_values['member'], $optionCallbacks, $callback, NULL, $member);
+
+    // Get field options from form state. If not set, get from config.
+    $fieldOptions = $form_state->get('fieldOptions');
+    if (is_null($fieldOptions)) {
+      $fieldOptions = new FieldOptions($eid, $config);
+    }
+    // Add the field options to the form. Display both global and member fields. Display public and private fields.
+    $fieldOptions->addOptionFields($fieldset, $form['member'], $member, NULL, TRUE);
 
     $form['member']['is_paid'] = array(
       '#type' => 'checkbox',
@@ -447,10 +452,13 @@ class SimpleConregAdminMemberEdit extends FormBase
       $member_no = 0;
     }
 
+    // Get field options from form state. If not set, get from config.
+    $fieldOptions = $form_state->get('fieldOptions');
+    if (is_null($fieldOptions)) {
+      $fieldOptions = new FieldOptions($eid, $config);
+    }
     // Process option fields to remove any modifications from form values.
-    $optionVals = [];
-    SimpleConregFieldOptions::procesOptionFields($eid, $fieldset, $form_values['member'], $optionVals);
-    $member->setOptions($optionVals);
+    $fieldOptions->procesOptionFields($fieldset, $form_values['member'], $mid, $member->options);
 
     // Save the submitted entry.
     $member->is_approved = $form_values['member']['is_approved'];

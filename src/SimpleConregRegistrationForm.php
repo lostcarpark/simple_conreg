@@ -136,7 +136,7 @@ class SimpleConregRegistrationForm extends FormBase {
       '#prefix' => '<div id="regform">',
       '#suffix' => '</div>',
       '#attached' => [
-        'library' => ['simple_conreg/conreg_form'],
+        'library' => ['simple_conreg/conreg_form', 'simple_conreg/conreg_fieldoptions'],
         'drupalSettings' => [],
       ],
     ];
@@ -321,7 +321,9 @@ class SimpleConregRegistrationForm extends FormBase {
 
       // Add badge name max to Drupal Settings for JavaScript to use.
       $badgename_max_length = $fieldsetConfig->get('fields.badge_name_max_length');
-      if (empty($badgename_max_length)) $badgename_max_length = 128;
+      if (empty($badgename_max_length)) {
+        $badgename_max_length = 128;
+      }
       $form['#attached']['drupalSettings']['simple_conreg'] = ['badge_name_max' => $badgename_max_length];
 
       $firstName = (isset($form_values['members']['member'.$cnt]['first_name']) ? $form_values['members']['member'.$cnt]['first_name'] : '');
@@ -508,10 +510,24 @@ class SimpleConregRegistrationForm extends FormBase {
         );
       }
       
-      $callback = [$this, 'updateMemberOptionFields'];
       $fieldset = isset($types->types[$memberType]->fieldset) ? $types->types[$memberType]->fieldset : 0;
-      SimpleConregFieldOptions::addOptionFields($eid, $fieldset, $form['members']['member'.$cnt], $form_values['members']['member'.$cnt], $optionCallbacks, $callback, $cnt);
+
+      // Get field options from form state. If not set, get from config.
+      $fieldOptions = $form_state->get('fieldOptions');
+      if (is_null($fieldOptions)) {
+        $fieldOptions = new FieldOptions($eid, $config);
+      }
+      // Add the field options to the form. Display both global and member fields. Display only public fields.
+      $fieldOptions->addOptionFields($fieldset, $form['members']['member'.$cnt], NULL, FALSE, FALSE);
     }
+
+    $form['global_options'] = [
+      '#prefix' => '<div id="global-options">',
+      '#suffix' => '</div>',
+    ];
+
+    // Add the field options to the form. Display global fields. Display only public fields.
+    $fieldOptions->addOptionFields(0, $form['global_options'], NULL, TRUE, FALSE);
 
     $form['payment'] = array(
       '#type' => 'fieldset',
@@ -798,6 +814,12 @@ class SimpleConregRegistrationForm extends FormBase {
     $confirm_params['from'] = $config->get('confirmation.from_name').' <'.$config->get('confirmation.from_email').'>';
     
     $payment = new SimpleConregPayment();
+
+    // Get field options from form state. If not set, get from config.
+    $fieldOptions = $form_state->get('fieldOptions');
+    if (is_null($fieldOptions)) {
+      $fieldOptions = new FieldOptions($eid, $config);
+    }
     
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
       // Look up the member type, and get the default badge type for member type.
@@ -810,7 +832,11 @@ class SimpleConregRegistrationForm extends FormBase {
       $fieldset = $types->types[$member_type]->fieldset;
       $fieldsetConfig = $types->types[$member_type]->config;
       $optionVals = [];
-      SimpleConregFieldOptions::procesOptionFields($eid, $fieldset, $form_values['members']['member'.$cnt], $optionVals);
+      // Process option fields to remove any modifications from form values.
+      $fieldOptions->procesOptionFields($fieldset, $form_values['members']['member'.$cnt], 0, $optionVals);
+
+      // Also process global options for each member.
+      $fieldOptions->procesOptionFields($fieldset, $form_values['global_options'], 0, $optionVals);
     
       $badgename_max_length = $fieldsetConfig->get('fields.badge_name_max_length');
       if (empty($badgename_max_length)) $badgename_max_length = 128;

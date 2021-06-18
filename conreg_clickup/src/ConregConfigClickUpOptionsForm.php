@@ -11,7 +11,7 @@ use Drupal\Core\Url;
 use Drupal\simple_conreg\SimpleConregStorage;
 use Drupal\simple_conreg\SimpleConregEventStorage;
 use Drupal\simple_conreg\SimpleConregConfig;
-use Drupal\simple_conreg\SimpleConregFieldOptions;
+use Drupal\simple_conreg\FieldOptions;
 use Drupal\devel;
 
 /**
@@ -59,7 +59,7 @@ class ConregConfigClickUpOptionsForm extends ConfigFormBase
     // Get config for event and fieldset.    
     $config = SimpleConregConfig::getConfig($eid);
     
-    $optionTitles = SimpleConregFieldOptions::getFieldOptionsTitles($eid, $config);
+    $optionTitles = FieldOptions::getFieldOptionsTitles($eid, $config);
 
     $memberNames = [];
     $teams = ConregClickUp::getTeam();
@@ -264,7 +264,7 @@ class ConregConfigClickUpOptionsForm extends ConfigFormBase
     foreach ($members as $member) {
       if ($i++ >= 10) break;
       $memberRec = SimpleConregStorage::load(['mid' => $member['mid']]);
-      $optionVals = SimpleConregFieldOptions::getMemberOptionValues($member['mid']);
+      $optionVals = FieldOptions::getMemberOptionValues($member['mid']);
       ConregClickUp::createMemberTasks($eid, $member['mid'], $optionVals, $config);
       \Drupal::messenger()->addMessage($this->t('Tasks created for member @name.', ['@name' => $memberRec['first_name'] . ' ' . $memberRec['last_name']]));
     }

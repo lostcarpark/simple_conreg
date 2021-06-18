@@ -239,7 +239,7 @@ class SimpleConregPaymentForm extends FormBase {
       ));
 
       // Check that it was paid:
-      if ($charge->paid == true) {
+      if ($charge->paid) {
 
         $payment_id = $charge->id;
         \Drupal::messenger()->addMessage($this->t("Your payment has been accepted. Thank you for joining. Your payment confirmation ID is @payment", array('@payment' => $payment_id)));

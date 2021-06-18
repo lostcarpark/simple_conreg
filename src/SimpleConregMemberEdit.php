@@ -93,14 +93,14 @@ class SimpleConregMemberEdit extends FormBase {
       return $form;
     }
 
-    $form = array(
+    $form = [
       '#tree' => TRUE,
       '#prefix' => '<div id="regform">',
       '#suffix' => '</div>',
-      '#attached' => array(
-        'library' => array('simple_conreg/conreg_form')
-      ),
-    );
+      '#attached' => [
+        'library' => ['simple_conreg/conreg_form', 'simple_conreg/conreg_fieldoptions']
+      ],
+    ];
 
     $form['member'] = array(
       '#type' => 'fieldset',
@@ -309,10 +309,15 @@ class SimpleConregMemberEdit extends FormBase {
       );
     }
 
-    $optionCallbacks = [];
-    $callback = [$this, 'updateMemberOptionFields'];
     $fieldset = isset($types->types[$member->member_type]->fieldset) ? $types->types[$member->member_type]->fieldset : 0;
-    SimpleConregFieldOptions::addOptionFields($eid, $fieldset, $form['member'], $form_values['member'], $optionCallbacks, $callback, NULL, $member);
+    
+    // Get field options from form state. If not set, get from config.
+    $fieldOptions = $form_state->get('fieldOptions');
+    if (is_null($fieldOptions)) {
+      $fieldOptions = new FieldOptions($eid, $config);
+    }
+    // Add the field options to the form. Display both global and member fields. Display only public fields.
+    $fieldOptions->addOptionFields($fieldset, $form['member'], $member, NULL, FALSE);
 
     $form['submit'] = array(
       '#type' => 'submit',
@@ -408,10 +413,13 @@ class SimpleConregMemberEdit extends FormBase {
     $config = $this->config('simple_conreg.settings.'.$eid);
     $form_values = $form_state->getValues();
 
+    // Get field options from form state. If not set, get from config.
+    $fieldOptions = $form_state->get('fieldOptions');
+    if (is_null($fieldOptions)) {
+      $fieldOptions = new FieldOptions($eid, $config);
+    }
     // Process option fields to remove any modifications from form values.
-    $optionVals = [];
-    SimpleConregFieldOptions::procesOptionFields($eid, $fieldset, $form_values['member'], $optionVals);
-    $member->setOptions($optionVals);
+    $fieldOptions->procesOptionFields($fieldset, $form_values['member'], $mid, $member->options);
 
     // Save the submitted entry.
     if (isset($form_values['member']['email'])) $member->email = trim($form_values['member']['email']);
@@ -433,7 +441,7 @@ class SimpleConregMemberEdit extends FormBase {
     $return = $member->saveMember();
 
     // All members saved. Now save any add-ons.
-    SimpleConregAddons::saveMemberAddons($config, $form_values, $mid);
+    //SimpleConregAddons::saveMemberAddons($config, $form_values, $mid);
 
     if ($return) {
 

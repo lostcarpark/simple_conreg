@@ -8,6 +8,13 @@ conreg_form:
   dependencies:
     - core/jquery
 
+conreg_fieldoptions:
+  version: 1.x
+  js:
+    js/conreg_fieldoptions.js: {}
+  dependencies:
+    - core/jquery
+
 conreg_checkout:
   version: 1.x
   js:

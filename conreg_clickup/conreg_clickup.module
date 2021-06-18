@@ -10,6 +10,6 @@ use Drupal\conreg_clickup\ConregClickUp;
 function conreg_clickup_convention_member_updated(Member $member)
 {
   // Create ClickUp tasks for options.
-  ConregClickUp::createMemberTasks($member->eid, $member->mid, $member->getOptions());
+  //ConregClickUp::createMemberTasks($member->eid, $member->mid, $member->getOptions());
 }
 
