@@ -18,6 +18,10 @@
       $(".field-has-options").each(function(i, obj) {
         showOptions(obj);
       });
+      // Attach handler to option group fieldset.
+      $(".field-option-group").each(function(i, obj) {
+        setOptionMustSelect(obj);
+      });
       // Loop through fieldOption checkboxes and hide details where applicable.
       $(".field-option-has-detail").each(function(i, obj) {
         showDetail(obj);
@@ -25,6 +29,19 @@
     }
   }
 })(jQuery);
+
+function setOptionMustSelect(obj) {
+  obj.querySelectorAll(".must-select").forEach(function(option) {
+    if (obj.style.display == "none") {
+      option.required = false;
+      option.parentNode.querySelector("label").classList.remove("form-required");
+    }
+    else {
+      option.required = true;
+      option.parentNode.querySelector("label").classList.add("form-required");
+    }
+  });
+}
 
 function showOptions(obj) {
   var show = obj.checked;
@@ -36,23 +53,29 @@ function showOptions(obj) {
   else {
     options.style.display = "none";
   }
-  options.querySelectorAll(".must-select").forEach(function(option) {
-    option.required = show;
-  });
+  setOptionMustSelect(options);
 }
 
 function showDetail(obj) {
   var show = obj.checked;
   var container = obj.parentNode.parentNode;
   var detail = container.querySelector('.field-option-detail').parentNode;
+  var label = detail.querySelector('label');
   if (show) {
     detail.style.display = "block";
   }
   else {
     detail.style.display = "none";
   }
-  container.querySelectorAll(".detail-required").forEach(function(textfield) {
-    textfield.required = show;
+  detail.querySelectorAll(".detail-required").forEach(function(textfield) {
+    if (show) {
+      textfield.required = true;
+      label.classList.add("form-required");
+    }
+    else {
+      textfield.required = false;
+      label.classList.remove("form-required");
+    }
   });
 }
 

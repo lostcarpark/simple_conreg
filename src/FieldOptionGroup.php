@@ -58,6 +58,9 @@ class FieldOptionGroup {
     $options = [
       '#type' => 'fieldset',
       '#title' => t($this->title),
+      '#attributes' => [
+        'class' => ['field-option-group'],
+      ],
     ];
     foreach ($this->options as $option) {
       // Create a div to contain the option.
@@ -74,7 +77,7 @@ class FieldOptionGroup {
         ],
       ];
       if (isset($option->mustSelect) && $option->mustSelect == 1) {
-        $options[$option->optionId]['option']['#required'] = TRUE;
+        //$options[$option->optionId]['option']['#required'] = TRUE;
         $options[$option->optionId]['option']['#attributes']['class'][] = 'must-select';
       }
       // If option has detail, add the detail.
