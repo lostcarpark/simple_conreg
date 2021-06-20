@@ -33,8 +33,8 @@ class FieldOptionStorage {
     else {
       $connection->update('conreg_member_options')
           ->fields($option)
-          ->condition('mid', $mid)
-          ->condition('optid', $optid)
+          ->condition('mid', $option['mid'])
+          ->condition('optid', $option['optid'])
           ->execute();
     }
   }

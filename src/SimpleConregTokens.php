@@ -285,7 +285,7 @@ class SimpleConregTokens {
     $this->plain_display .= "\n$reg_date\n";
     $this->display .= '<table>';
 
-    $fieldOptions = new FieldOptions($this->eid, $this->config);
+    $fieldOptions = FieldOptions::getFieldOptions($this->eid);
 
     foreach ($members as $index => $cur_member) {
       // Get fieldset config for member type.

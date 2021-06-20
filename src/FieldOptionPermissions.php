@@ -31,7 +31,7 @@ class FieldOptionPermissions {
 
     $events = SimpleConregEventStorage::eventOptions();
     foreach ($events as $event) {
-      $fieldOptions = new FieldOptions($event['eid']);
+      $fieldOptions = FieldOptions::getFieldOptions($event['eid']);
       foreach ($fieldOptions->getFieldOptionList() as $option) {
         $permissions += [
           'view field option ' . $option['optid'] . ' event ' . $event['eid'] => [

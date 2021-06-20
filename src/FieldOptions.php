@@ -65,6 +65,23 @@ class FieldOptions {
     return $this;
   }
   
+  /*
+   * Static function to get Field Options from cache if possible. If not in cache, process from settings.
+   */
+  public static function getFieldOptions($eid)
+  {
+    $cid = 'simple_conreg:fieldOptions_' . $eid;
+    
+    $fieldOptions = NULL;
+    if ($cache = \Drupal::cache()->get($cid)) {
+      $fieldOptions = $cache->data;
+    }
+    else {
+      $fieldOptions = new FieldOptions($eid);
+      \Drupal::cache()->set($cid, $fieldOptions);
+    }
+    return $fieldOptions;
+  }
 
   /**
    * Fetch field option titles from config.

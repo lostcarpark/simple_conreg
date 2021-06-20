@@ -47,7 +47,7 @@ class SimpleConregAdminMemberOptions extends FormBase {
     $displayOptions = SimpleConregOptions::display();
     $pageSize = $config->get('display.page_size');
 
-    $fieldOptions = new FieldOptions($eid, $config);
+    $fieldOptions = FieldOptions::getFieldOptions($eid);
     $groupList = $fieldOptions->getFieldOptionGroupedList();
 
     $user = \Drupal::currentUser();

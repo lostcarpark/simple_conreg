@@ -515,7 +515,7 @@ class SimpleConregRegistrationForm extends FormBase {
       // Get field options from form state. If not set, get from config.
       $fieldOptions = $form_state->get('fieldOptions');
       if (is_null($fieldOptions)) {
-        $fieldOptions = new FieldOptions($eid, $config);
+        $fieldOptions = FieldOptions::getFieldOptions($eid);
       }
       // Add the field options to the form. Display both global and member fields. Display only public fields.
       $fieldOptions->addOptionFields($fieldset, $form['members']['member'.$cnt], NULL, FALSE, FALSE);
@@ -818,7 +818,7 @@ class SimpleConregRegistrationForm extends FormBase {
     // Get field options from form state. If not set, get from config.
     $fieldOptions = $form_state->get('fieldOptions');
     if (is_null($fieldOptions)) {
-      $fieldOptions = new FieldOptions($eid, $config);
+      $fieldOptions = FieldOptions::getFieldOptions($eid);
     }
     
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {

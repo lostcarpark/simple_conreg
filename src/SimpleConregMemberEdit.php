@@ -314,7 +314,7 @@ class SimpleConregMemberEdit extends FormBase {
     // Get field options from form state. If not set, get from config.
     $fieldOptions = $form_state->get('fieldOptions');
     if (is_null($fieldOptions)) {
-      $fieldOptions = new FieldOptions($eid, $config);
+      $fieldOptions = FieldOptions::getFieldOptions($eid);
     }
     // Add the field options to the form. Display both global and member fields. Display only public fields.
     $fieldOptions->addOptionFields($fieldset, $form['member'], $member, NULL, FALSE);
@@ -416,7 +416,7 @@ class SimpleConregMemberEdit extends FormBase {
     // Get field options from form state. If not set, get from config.
     $fieldOptions = $form_state->get('fieldOptions');
     if (is_null($fieldOptions)) {
-      $fieldOptions = new FieldOptions($eid, $config);
+      $fieldOptions = FieldOptions::getFieldOptions($eid);
     }
     // Process option fields to remove any modifications from form values.
     $fieldOptions->procesOptionFields($fieldset, $form_values['member'], $mid, $member->options);
