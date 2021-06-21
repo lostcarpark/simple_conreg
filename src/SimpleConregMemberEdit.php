@@ -336,7 +336,6 @@ class SimpleConregMemberEdit extends FormBase {
     $form_state->set('mid', $mid);
     $form_state->set('fieldset', $fieldset);
     $form_state->set('badgename_max_length', $badgename_max_length);
-    $form_state->set('option_callbacks', $optionCallbacks);
     return $form;
   }
   
@@ -357,24 +356,6 @@ class SimpleConregMemberEdit extends FormBase {
     return $ajax_response;
   }
   
-  // Callback function for option fields - add/remove detail field.
-  public function updateMemberOptionFields(array $form, FormStateInterface $form_state)
-  {
-    // Get the triggering element.    
-    $trigger = $form_state->getTriggeringElement()['#name'];
-    // Get array of items to return, keyed by trigering element.
-    $optionCallbacks = $form_state->get('option_callbacks');
-    $callback = $optionCallbacks[$trigger];
-    // Build the index of the element to return.
-    switch ($callback[0]) {
-      case 'group':
-        return $form['member'][$callback[2]];
-      case 'detail':
-        return $form['member'][$callback[2]]['options']['container_'.$callback[3]];
-    }
-  }
-
-
   /*
    * Validate form before submit.
    */

@@ -18,6 +18,7 @@ use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\user\Entity\User;
 use Drupal\node\NodeInterface;
 use Drupal\devel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -179,7 +180,7 @@ class SimpleConregAdminMemberEdit extends FormBase
       '#required' => TRUE,
       '#maxlength' => (empty($badgename_max_length) ? 128 : $badgename_max_length),
       '#attributes' => [
-        'id' => "edit-members-member$cnt-badge-name",
+        'id' => "edit-member-badge-name",
         'class' => ['edit-members-badge-name'],
       ],
     ];
@@ -375,25 +376,7 @@ class SimpleConregAdminMemberEdit extends FormBase
     $form_state->set('member', $member);
     $form_state->set('mid', $mid);
     $form_state->set('fieldset', $fieldset);
-    $form_state->set('option_callbacks', $optionCallbacks);
     return $form;
-  }
-
-  // Callback function for option fields - add/remove detail field.
-  public function updateMemberOptionFields(array $form, FormStateInterface $form_state)
-  {
-    // Get the triggering element.    
-    $trigger = $form_state->getTriggeringElement()['#name'];
-    // Get array of items to return, keyed by trigering element.
-    $optionCallbacks = $form_state->get('option_callbacks');
-    $callback = $optionCallbacks[$trigger];
-    // Build the index of the element to return.
-    switch ($callback[0]) {
-      case 'group':
-        return $form['member'][$callback[2]];
-      case 'detail':
-        return $form['member'][$callback[2]]['options']['container_'.$callback[3]];
-    }
   }
 
   /*
@@ -492,10 +475,10 @@ class SimpleConregAdminMemberEdit extends FormBase
 
     $return = $member->saveMember();
 
-    
-    if ($form_values["member"]["is_checked_in"]) {
+    if (!empty($form_values["member"]["is_checked_in"])) {
+      $user = User::load(\Drupal::currentUser()->id());
       $entry['check_in_date'] = time();
-      $entry['check_in_by'] = $uid;
+      $entry['check_in_by'] = $user->get('uid')->value;
     }
 
     $join_date = $form_values['member']['join_date']->getTimestamp();

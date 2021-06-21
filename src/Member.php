@@ -53,8 +53,10 @@ class Member
     // If no mid set, inserting new member.
     if (empty($this->mid)) {
       $return = SimpleConregStorage::insert($entry);
-      if (isset($return))
+      if (isset($return)) {
         $this->mid = $return;
+        $this->updateOptionMids();
+      }
       if (empty($this->lead_mid)) {
         // For lead_mid not passed in, must be first member, so update lead_mid to mid.
         $this->lead_mid = $return;
@@ -62,16 +64,25 @@ class Member
         $update = array('mid' => $this->mid, 'lead_mid' => $this->lead_mid);
         $result = SimpleConregStorage::update($update);
       }
+      // Update member options.
+      $this->saveMemberOptions();
       // Invoke member added hook.
       \Drupal::moduleHandler()->invokeAll('convention_member_added', ['member' => $this]);
     }
     else {
       // Updating an existing member.
       $return = SimpleConregStorage::update($entry);
+      // Update member options.
+      $this->saveMemberOptions();
       // Invoke member updated hook.
       \Drupal::moduleHandler()->invokeAll('convention_member_updated', ['member' => $this]);
     }
     
+    return $return;
+  }
+  
+  public function saveMemberOptions()
+  {
     // Update member field options.
     if (is_array($this->options)) {
       foreach ($this->options as $option) {
@@ -80,8 +91,6 @@ class Member
       }
       //FieldOptions::updateOptionFields($this->mid, $this->options);
     }
-    
-    return $return;
   }
 
   public function deleteMember()
@@ -99,11 +108,16 @@ class Member
 
   public function setOptions($options)
   {
+    $this->updateOptionMids();
+    $this->options = $options;
+  }
+
+  public function updateOptionMids()
+  {
     // First, set the member ID for all options.
     foreach ($options as $optid => $option) {
       $options[$optid]->mid = $this->mid;
     }
-    $this->options = $options;
   }
   
   public function getOptions()

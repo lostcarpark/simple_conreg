@@ -209,7 +209,7 @@ class FieldOptions {
         foreach ($memberVals[$group->fieldName]['options'] as $optid => $optionInfo) {
           // We only want to store the option if it is already part of the member, or it has been set on the form.
           if (isset($memberOptions[$optid] ) || $optionInfo['option']) {
-            $memberOptions[$optid] = new MemberOption($mid, $optid, $optionInfo['option'], $optionInfo['detail']);
+            $memberOptions[$optid] = new MemberOption($mid, $optid, $optionInfo['option'], isset($optionInfo['detail']) ? $optionInfo['detail'] : '');
           }
         }
         // If the option is attached to a regular field, put the field value back in its parent, so the values look like they would if options hadn't been added.

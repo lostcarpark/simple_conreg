@@ -127,9 +127,6 @@ class SimpleConregOptions {
         if (!isset($upgradeOptions[$fromtype][$fromdays])) {
           $upgradeOptions[$fromtype][$fromdays][0] = $types->types[$fromtype]->name;
         }
-        // Remove any extra spacing.
-        $code = trim($code);
-        $fieldset = trim($fieldset);
         // Store 
         $upgradeOptions[$fromtype][$fromdays][$upid] = $desc;
         $upgradeVals[$upid] = (object)[
@@ -138,7 +135,7 @@ class SimpleConregOptions {
           'toType' => $totype,
           'toDays' => $todays,
           'toBadgeType' => $tobadge,
-          'desc' => desc,
+          'desc' => $desc,
           'price' => $price];
       }
     }

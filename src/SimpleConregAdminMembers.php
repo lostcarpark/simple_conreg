@@ -343,7 +343,7 @@ class SimpleConregAdminMembers extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-  	  $saved_members = SimpleConregStorage::loadAllMemberNos($eid);
+	  //$saved_members = SimpleConregStorage::loadAllMemberNos($eid);
   }
 
   /**

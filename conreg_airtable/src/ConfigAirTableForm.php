@@ -10,6 +10,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\simple_conreg\SimpleConregConfig;
 use Drupal\simple_conreg\SimpleConregEventStorage;
+use Drupal\simple_conreg\FieldOptions;
 use Drupal\devel;
 
 /**
@@ -56,6 +57,8 @@ class ConfigAirTableForm extends ConfigFormBase
 
     $config = SimpleConregConfig::getConfig($eid);
 
+    $fieldOptions = FieldOptions::getFieldOptions($eid);
+
     $api_url = $config->get('airtable.api_url');
     $api_key = $config->get('airtable.api_key');
 
@@ -85,7 +88,7 @@ class ConfigAirTableForm extends ConfigFormBase
       '#type' => 'markup',
       '#prefix' => '<div class="conreg_info">',
       '#suffix' => '</div>',
-      '#markup' => 'To connect AirTable, fill out API URL for the table and API Key below.',
+      '#markup' => $this->t('To connect AirTable, fill out API URL for the table and API Key below.'),
     );
 
     $form['airtable']['airtable_authenticate']['api_url'] = array(
@@ -179,8 +182,64 @@ class ConfigAirTableForm extends ConfigFormBase
     foreach ($fields as $field) {
       $form['mapping'][$field] = array(
         '#type' => 'textfield',
-        '#title' => $this->t('Field to map "@field" to', ['@field' => $field]),
+        '#title' => $this->t('Column to map "@field" to', ['@field' => $field]),
         '#default_value' => $config->get('airtable.mappings.'.$field),
+      );
+    }
+
+
+    /**
+     * Field mappings for option groups.
+     */
+
+    $form['option_groups'] = array(
+      '#type' => 'details',
+      '#title' => $this->t('Option Groups'),
+      '#group' => 'admin',
+      '#weight' => 1,
+      '#tree' => TRUE,
+    );
+
+    $form['option_groups']['info'] = array(
+      '#type' => 'markup',
+      '#prefix' => '<div class="conreg_info">',
+      '#suffix' => '</div>',
+      '#markup' => $this->t('Option groups may be mapped to AitTable columns. All options selected will be inserted in the column, but if details are entered, they will not. It is recommended to use Option Fields for options with details.'),
+    );
+    
+    foreach ($fieldOptions->groups as $group) {
+      $form['option_groups'][$group->groupId] = array(
+        '#type' => 'textfield',
+        '#title' => $this->t('Column to map "@group" to', ['@group' => $group->title]),
+        '#default_value' => $config->get('airtable.option_groups.'.$group->groupId),
+      );
+    }
+
+
+    /**
+     * Field mappings for option fields.
+     */
+
+    $form['option_fields'] = array(
+      '#type' => 'details',
+      '#title' => $this->t('Option Fields'),
+      '#group' => 'admin',
+      '#weight' => 1,
+      '#tree' => TRUE,
+    );
+
+    $form['option_fields']['info'] = array(
+      '#type' => 'markup',
+      '#prefix' => '<div class="conreg_info">',
+      '#suffix' => '</div>',
+      '#markup' => $this->t('Option fields will map an individual option and it\'s details to an AirTable column.'),
+    );
+
+    foreach ($fieldOptions->options as $option) {
+      $form['option_fields'][$option->optionId] = array(
+        '#type' => 'textfield',
+        '#title' => $this->t('Column to map "@group" to', ['@group' => $option->title]),
+        '#default_value' => $config->get('airtable.option_fields.'.$option->optionId),
       );
     }
 
@@ -201,7 +260,7 @@ class ConfigAirTableForm extends ConfigFormBase
       '#type' => 'markup',
       '#prefix' => '<div class="conreg_info">',
       '#suffix' => '</div>',
-      '#markup' => 'This button will add all members who aren\'t already on AirTable. Useful if you add AirTable to a convention with existing members.',
+      '#markup' => $this->t('This button will add all members who aren\'t already on AirTable. Useful if you add AirTable to a convention with existing members.'),
     );
 
     $form['bulk']['submit_add'] = array(
@@ -215,7 +274,7 @@ class ConfigAirTableForm extends ConfigFormBase
       '#type' => 'markup',
       '#prefix' => '<div class="conreg_info">',
       '#suffix' => '</div>',
-      '#markup' => 'This button will update details for all members on AirTable. Useful if you add extra columns to an AirTable and need to populate them.',
+      '#markup' => $this->t('This button will update details for all members on AirTable. Useful if you add extra columns to an AirTable and need to populate them.'),
     );
 
     $form['bulk']['submit_update'] = array(
@@ -249,7 +308,6 @@ class ConfigAirTableForm extends ConfigFormBase
     foreach ($result as $mid) {
       $mids[] = $mid['mid'];
       if (count($mids) >= 10) {
-//break;
         AirTable::addMembers($eid, $mids);
         $mids = [];
       }
@@ -277,7 +335,6 @@ class ConfigAirTableForm extends ConfigFormBase
     $query->condition('m.is_deleted', 0);
     $query->condition('m.is_paid', 1);
 
-//$max=3;    
     $result = $query->execute()->fetchAll(\PDO::FETCH_ASSOC);
     $airtable_ids = [];
     foreach ($result as $mid) {
@@ -285,8 +342,6 @@ class ConfigAirTableForm extends ConfigFormBase
       if (count($airtable_ids) >= 10) {
         AirTable::updateMembers($eid, $airtable_ids);
         $airtable_ids = [];
-//if ($max-- <= 0)
-//  return;
       }
     }
     if (count($airtable_ids)) {
@@ -308,6 +363,12 @@ class ConfigAirTableForm extends ConfigFormBase
     $config->set('airtable.api_key', $vals['airtable_authenticate']['api_key']);
     foreach ($vals['mapping'] as $key => $val) {
       $config->set('airtable.mappings.'.$key, $val);
+    }
+    foreach ($vals['option_groups'] as $key => $val) {
+      $config->set('airtable.option_groups.'.$key, $val);
+    }
+    foreach ($vals['option_fields'] as $key => $val) {
+      $config->set('airtable.option_fields.'.$key, $val);
     }
     $config->save();
 
