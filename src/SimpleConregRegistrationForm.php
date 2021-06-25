@@ -338,30 +338,22 @@ class SimpleConregRegistrationForm extends FormBase {
         '#attributes' => [
           'class' => ['edit-members-badge-name-option', "edit-members-member$cnt-badge-name-option"]
         ],
-        '#ajax' => [
-          'callback' => [$this, 'updateMemberBadgeNameCallback'],
-          'event' => 'change',
-        ],
       ];
 
       $form['members']['member'.$cnt]['badge_name'] = array(
-        '#prefix' => '<div id="memberBadgeName'.$cnt.'">',
+        '#prefix' => '<div id="memberBadgeName'.$cnt.'" class="edit-members-badge-name-container">',
         '#suffix' => '</div>',
       );
 
       // Check if "other" selected for badge name option, and display badge name textbox.
-      if (!empty($form_values['members']['member'.$cnt]['badge_name_option']) &&
-          $form_values['members']['member'.$cnt]['badge_name_option']=='O') {
-        $form['members']['member'.$cnt]['badge_name']['other'] = array(
-          '#type' => 'textfield',
-          '#title' => $fieldsetConfig->get('fields.badge_name_label'),
-          '#required' => TRUE,
-          '#maxlength' => $badgename_max_length,
-          '#attributes' => array(
-            'id' => "edit-members-member$cnt-badge-name",
-            'class' => array('edit-members-badge-name')),
-        );
-      }
+      $form['members']['member'.$cnt]['badge_name']['other'] = array(
+        '#type' => 'textfield',
+        '#title' => $fieldsetConfig->get('fields.badge_name_label'),
+        '#maxlength' => $badgename_max_length,
+        '#attributes' => array(
+          'id' => "edit-members-member$cnt-badge-name",
+          'class' => array('edit-members-badge-name-other')),
+      );
 
       if (!empty($fieldsetConfig->get('fields.display_label'))) {
         $form['members']['member'.$cnt]['display'] = array(
