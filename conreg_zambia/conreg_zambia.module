@@ -22,32 +22,34 @@ function conreg_zambia_convention_member_updated(Member $member)
     return;
   }
 
-  // Next, check at least one of the expected member options is selected for the member.
+  // Once confirmed, we'll see if user is already on Zambia.
   $zambia = new Zambia(SimpleConregConfig::getConfig($member->eid));
-  $optionFields =  $zambia->config->get('zambia.option_fields');
-
-  $match = FALSE;
-  foreach ($optionFields as $optId => $optVal) {
-    if ($optVal) {
-      if (isset($member->options[$optId]) && $member->options[$optId]->isSelected) {
-        $match = TRUE;
+  $user = new ZambiaUser($zambia);
+  if ($user->load($member->mid)) {
+    // Member is already on Zambia, so we want to update their details, even if they've changed their preferences.
+    $user->save($member, false);
+  }
+  else {
+    // Member not on Zambia, so make sure automatic member saving is active.
+    if ($zambia->config->get('zambia_auto.enabled')) {
+      // Next, check at least one of the expected member options has been selected by the member.
+      $optionFields =  $zambia->config->get('zambia.option_fields');
+      $match = FALSE;
+      foreach ($optionFields as $optId => $optVal) {
+        if ($optVal) {
+          if (isset($member->options[$optId]) && $member->options[$optId]->isSelected) {
+            $match = TRUE;
+          }
+        }
+      }
+      // If option match found, proceed to update or add member.
+      if ($match) {
+        // Save new user.
+        $user->save($member, false);
+        // Send email to user.
+        $zambia->sendInviteEmail($user);
       }
     }
   }
-  // If option match found, proceed to update or add member.
-  if ($match) {
-    $user = new ZambiaUser($zambia);
-    if ($user->load($member->mid)) {
-      // Member already on Zambia. Just update details.
-      $user->save($member, false);
-    }
-    else {
-      // Save new user.
-      $user->save($member, false);
-      // Send email to user.
-      $zambia->sendInviteEmail($user);
-    }
-  }
-
 
 }

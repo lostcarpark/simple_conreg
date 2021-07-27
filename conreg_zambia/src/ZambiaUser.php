@@ -77,6 +77,8 @@ class ZambiaUser
     
     // Only save other tables if password not already set.
     if (empty($this->hashedPassword)) {
+      // To do: make other options for participant name available.
+      $participantName = $member->first_name . ' ' . $member->last_name;
       // Save the participant to set the password.
       $this->saveParticipant($zambiaCon);
       // Loop through Zambia permissions, and save the ones set in config.
@@ -109,20 +111,26 @@ class ZambiaUser
         ->execute();  
   }
 
-  private function saveParticipant($zambiaCon)
+  private function saveParticipant($zambiaCon, $publicationName = NULL)
   {
     if (empty($this->hashedPassword)) {
       $this->password = $this->generatePassword(12);
       $this->hashedPassword = password_hash(trim($this->password), PASSWORD_DEFAULT);
     }
     
+    $fields = [
+      'badgeid' => $this->badgeId,
+      'password' => $this->hashedPassword,
+      'share_email' => 1,
+      'data_retention' => 0,
+    ];
+    
+    if (!empty($publicationName)) {
+      $fields['pubsname'] = publicationName;
+    }
+    
     $return_value = $zambiaCon->upsert('Participants')
-        ->fields([
-                'badgeid' => $this->badgeId,
-                'password' => $this->hashedPassword,
-                'share_email' => 1,
-                'data_retention' => 0,
-                ])
+        ->fields($fields)
         ->key('badgeid')
         ->execute();  
   }
@@ -141,7 +149,7 @@ class ZambiaUser
 
   function generatePassword($chars) 
   {
-    $data = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcefghijklmnopqrstuvwxyz!%^&*()[]{};:@#,/<>';
+    $data = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcefghijklmnopqrstuvwxyz!%^*()[]{};:@#,/';
     return substr(str_shuffle($data), 0, $chars);
   }
 }
