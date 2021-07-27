@@ -262,6 +262,27 @@ class ConfigZambiaForm extends ConfigFormBase
       '#markup' => $this->t('Manually add members and send invite emails.'),
     );
 
+    $form['manual_invites']['member_search'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Search for member'),
+    );
+
+    $form['manual_invites']['search_button'] = [
+      '#type' => 'button',
+      '#value' => $this->t('Search'),
+      '#ajax' => [
+        'wrapper' => 'search-results',
+        'callback' => array($this, 'callbackSearch'),
+        'event' => 'click',
+      ],
+    ];
+
+    $form['manual_invites']['search_results'] = array(
+      '#type' => 'markup',
+      '#prefix' => '<div id="search-results">',
+      '#suffix' => '</div>',
+    );
+
     $form['manual_invites']['member_range'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Member Number Range to Invite'),
@@ -357,6 +378,68 @@ class ConfigZambiaForm extends ConfigFormBase
     }
 
     return $form['manual_invites']['result'];
+  }
+
+  public function callbackSearch(array $form, FormStateInterface $form_state) {
+    $vals = $form_state->getValues();
+    $form['manual_invites']['search_results']['head'] = [
+      '#type' => 'markup',
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
+      '#markup' => $this->t('Search results for @terms.', ['@terms' => $vals['manual_invites']['member_search']]),
+    ];
+
+    $connection = \Drupal::database();
+    $select = $connection->select('conreg_members', 'm');
+    // Select these specific fields for the output.
+    $select->addField('m', 'member_no');
+    $select->addField('m', 'first_name');
+    $select->addField('m', 'last_name');
+    $select->addField('m', 'email');
+    $select->leftJoin('conreg_zambia', 'z', 'm.mid = z.mid');
+    $select->addField('z', 'badgeid');
+    $select->condition('m.is_paid', 1);
+    $select->condition('m.is_approved', 1);
+    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+    foreach (explode(' ', $vals['manual_invites']['member_search']) as $word) {
+      // Escape search word to prevent dangerous characters.
+      $esc_word = '%'.db_like($word).'%';
+      $likes = $select->orConditionGroup()
+        ->condition('m.first_name', $esc_word, 'LIKE')
+        ->condition('m.last_name', $esc_word, 'LIKE')
+        ->condition('m.badge_name', $esc_word, 'LIKE')
+        ->condition('m.email', $esc_word, 'LIKE');
+      $select->condition($likes);
+    }
+    $select->orderBy('m.member_no');
+    // Make sure we only get items 0-49, for scalability reasons.
+    //$select->range(0, 50);
+
+    $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+    $rows = array();
+    $headers = array(
+      t('Member No'),
+      t('First Name'),
+      t('Last Name'),
+      t('email'),
+      t('Zambia Badge ID'),
+    );
+
+    foreach ($entries as $entry) {
+      // Sanitize each entry.
+      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+    }
+    
+    $form['manual_invites']['search_results']['table'] = array(
+      '#type' => 'table',
+      '#header' => $headers,
+      '#rows' => $rows,
+      '#empty' => t('No entries available.'),
+      '#sticky' => TRUE,
+    );
+
+    return $form['manual_invites']['search_results'];
   }
   
   private function addMemberToZambia($memberNo, $override, $reset, $dontEmail, $optionFields)
