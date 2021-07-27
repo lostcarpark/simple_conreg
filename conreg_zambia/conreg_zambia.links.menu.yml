@@ -1,0 +1,5 @@
+conreg_clickup.config_zambia_options:
+  title: Zambia Options
+  route_name: conreg_config_zambia_options
+  weight: 38
+

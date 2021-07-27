@@ -40,7 +40,17 @@ class Member
 
     return $member;
   }
-  
+
+  public static function loadMemberByMemberNo($memberNo)
+  {
+    $member = self::newMember(SimpleConregStorage::load(['member_no' => $memberNo]));
+    
+    // Add member options to member object.
+    $member->options = MemberOption::loadAllMemberOptions($member->mid);
+
+    return $member;
+  }
+
   public function saveMember()
   {
     // Transfer object members into array.

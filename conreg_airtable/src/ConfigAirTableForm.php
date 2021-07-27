@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Contains \Drupal\conreg_clickup\ConfigAirTableForm
+ * Contains \Drupal\conreg_airtable\ConfigAirTableForm
  */
 namespace Drupal\conreg_airtable;
 

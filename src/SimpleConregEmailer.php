@@ -15,6 +15,10 @@ use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Component\Render\PlainTextOutput;
 use Drupal\Core\StreamWrapper\PublicStream;
 
+// Define message formats.
+define('CONREG_FORMAT_PLAIN', 'text/plain');
+define('CONREG_FORMAT_HTML', 'text/html');
+
 class SimpleConregEmailer {
 
   // Function to create an email for specified member.
@@ -32,9 +36,11 @@ class SimpleConregEmailer {
           $params['to'] = $tokens->html['[email]'];
         else {
           $params['to'] = $tokens->html['[lead_email]'];
-          $params['body'] = t('Note: we are you writing to you as contact for [full_name].') . "\n\n" . $params['body'];
+          $params['body'] = t('<p>Note: we are you writing to you as contact for [full_name].</p>') . $params['body'];
         }
       }
+      // Set the message type.
+      $message['headers']['Content-Type'] = CONREG_FORMAT_HTML;
       // Set member values in params.
       if (is_array($tokens->vals))
         foreach($tokens->vals as $key=>$val) {
@@ -45,11 +51,11 @@ class SimpleConregEmailer {
       // Store params in message to return.
       $message['params'] = $params;
       $message['subject'] = $tokens->applyTokens($params['subject']);
-      $body = $tokens->applyTokens($params['body'], FALSE);
+      $body = [$tokens->applyTokens(preg_replace("/[\n\r]+/", '', $params['body']), FALSE)];
       $message['preview'] = $body;
 
       // Only attach badge image if referenced in body.
-      if (strpos($body, '[badge]') !== FALSE) {
+      if (strpos($body[0], '[badge]') !== FALSE) {
         // Set ID for attachment.
         $badge_id = "conreg-badge".$params['mid'];
         $badge = '<img src="cid:' . $badge_id . '" />';
@@ -67,22 +73,15 @@ class SimpleConregEmailer {
         $message['params']['images'][] = $file;
       }
 
-      $config = \Drupal::config('simple_conreg.settings.'.$params['eid']);
+     $config = \Drupal::config('simple_conreg.settings.'.$params['eid']);
       if ($config->get('confirmation.format_html')) {
-        // Set up HTML email (todo: add plain text option).
-        $message['headers']['Content-Type'] = 'text/html; charset=UTF-8';
         // Split body into an array.
         if (!empty($badge)) {
-          $body = str_replace('[badge]', $badge, $body);
+          $body[0] = str_replace('[badge]', $badge, $body[0]);
         }
-        $body = explode('\n', $body);
         $message['body'] = array_map(function ($body) {
           return Markup::create($body);
         }, $body);
-        
-        //$message['body'][] = \Drupal\Core\Render\Markup::create($body);
-        //$message['body'][] = check_markup($body, $format);  // HTML version of message body.
-        $message['plain'] = \Drupal\Component\Utility\SafeMarkup::checkPlain($tokens->applyTokens($params['body'], TRUE));  // Plain text version of body.
       } else {
         //$message['body'][] = \Drupal\Component\Render\PlainTextOutput::renderFromHtml("There's no telling what will happen with \"this\" or this & this>.");
         $message['body'][] = \Drupal\Component\Utility\SafeMarkup::checkPlain($tokens->applyTokens($params['body'], TRUE));  // Plain text version of body.

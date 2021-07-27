@@ -1,0 +1,66 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the conreg_zambia module.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function conreg_zambia_requirements($phase)
+{
+  $requirements = [];
+  return $requirements;
+}
+
+/**
+ * Implements hook_install().
+ *
+ * Creates some default entries on this module custom table.
+ *
+ * @see hook_install()
+ * @ingroup conreg_zambia
+ */
+function conreg_zambia_install()
+{
+}
+
+/**
+ * Implements hook_schema().
+ *
+ * Defines the database tables used by this module.
+ *
+ * @see hook_schema()
+ * @ingroup conreg_zambia
+ */
+function conreg_zambia_schema()
+{
+  // create table conreg_zambia (mid int primary key, zambia_user_id varchar(255) not null, update_date int not null);
+  $schema['conreg_zambia'] = array(
+    'description' => 'Stores events on the registration system.',
+    'fields' => array(
+      'mid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique event ID.',
+      ),
+      'badgeid' => array(
+        'type' => 'varchar',
+        'length' => 15,
+        'not null' => TRUE,
+        'description' => 'Name of the event.',
+      ),
+      'update_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp for the date and time last updated.',
+      ),
+    ),
+    'primary key' => array('mid'),
+  );
+
+  return $schema;
+}
+
