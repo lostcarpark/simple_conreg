@@ -1,0 +1,10 @@
+conreg_config_zambia_options:
+  path: 'admin/config/conreg/zambia/options/{eid}'
+  defaults:
+    _title: 'ConReg Zambia Options'
+    _form: '\Drupal\conreg_zambia\Form\ConfigZambiaForm'
+    eid: 1
+  requirements:
+    _permission: 'configure Zambia integration'
+    eid: ^[0-9]+$
+

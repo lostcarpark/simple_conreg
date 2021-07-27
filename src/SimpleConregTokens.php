@@ -161,7 +161,7 @@ class SimpleConregTokens {
   }
 
   // Function to return help text containing allowed tokens.
-  public static function tokenHelp() {
+  public static function tokenHelp($extra = null) {
     $tokens = 
       ['[site_name]',
        '[event_name]',
@@ -189,6 +189,9 @@ class SimpleConregTokens {
        '[login_expiry]',
        '[login_expiry_medium]',
       ];
+    if (!is_null($extra) && is_array($extra)) {
+      $tokens = array_merge($tokens, $extra);
+    }
     return t("Available tokens: @tokens", ['@tokens' => implode(', ', $tokens)]);
   }
 
@@ -301,7 +304,7 @@ class SimpleConregTokens {
       if (!empty($cur_member['member_no'])) {
         $label = t('Member Number');
         $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member['member_no'].'</td></tr>';
-        $this->plain_display .= $label.":\t".$member_no."\n";
+        $this->plain_display .= $label.":\t".$cur_member['member_no']."\n";
       }
       foreach ($confirm_labels as $key=>$val) {
         if (!empty($fieldsetConfig) && !empty($fieldsetConfig->get($val))) {
@@ -387,7 +390,19 @@ class SimpleConregTokens {
     $this->plain_display .= $label.":\t".$payment_amount."\n";
     $this->display .= '</table>';
   }
+  
+  /***
+   * Can be called if extra tokens are needed.
+   * To do: strip out any HTML from the plain text version.
+   */
+  public function addExtraTokens($extra) {
+    $this->plain = array_merge($this->plain, $extra);
+    $this->html = array_merge($this->html, $extra);
+  }
 
+  /***
+   * Apply the tokens to the message.
+   */
   public function applyTokens($message, $use_plain = FALSE) {
     // Select which set of tokens to use.
     if ($use_plain)
@@ -403,9 +418,10 @@ class SimpleConregTokens {
         $replace[] = $val;
       }
       return str_replace($find, $replace, $message);
-      }
-    else
+    }
+    else {
       return $message;
+    }
   }
 
   public function previewTokens($message, $use_plain = FALSE) {
