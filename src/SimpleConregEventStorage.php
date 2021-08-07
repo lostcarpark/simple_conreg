@@ -14,7 +14,7 @@ class SimpleConregEventStorage {
   /**
    * Save an event in the database.
    *
-   * The underlying DBTNG function is db_insert().
+   * The underlying DBTNG function is $connection->insert().
    *
    * Exception handling is shown in this example. It could be simplified
    * without the try/catch blocks, but since an insert will throw an exception
@@ -30,7 +30,7 @@ class SimpleConregEventStorage {
    * @throws \Exception
    *   When the database insert fails.
    *
-   * @see db_insert()
+   * @see $connection->insert()
    */
   public static function insert($entry) {
     $return_value = NULL;
@@ -58,7 +58,7 @@ class SimpleConregEventStorage {
    * @return int
    *   The number of updated rows.
    *
-   * @see db_update()
+   * @see $connection->update()
    */
   public static function update($entry) {
     $connection = \Drupal::database();
@@ -85,7 +85,7 @@ class SimpleConregEventStorage {
    *   An array containing at least the person identifier 'pid' element of the
    *   entry to delete.
    *
-   * @see db_delete()
+   * @see $connection->delete()
    */
   public static function delete($entry) {
     $connection = \Drupal::database();
