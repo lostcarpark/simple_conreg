@@ -68,7 +68,7 @@ class SimpleConregTokens {
       // Get login expiry time.
       $expiryDate = self::updateLoginExpiryDate($mid);
       $this->html['[login_expiry]'] = $expiryDate;
-      $this->html['[login_expiry_medium]'] = format_date($expiryDate, 'medium');
+      $this->html['[login_expiry_medium]'] = \Drupal::service('date.formatter')->format($expiryDate, 'medium');
       $login_url = \Drupal\Core\Url::fromRoute('simple_conreg_login',
         ['mid' => $this->vals['mid'], 'key' => $this->vals['random_key'], 'expiry' => $expiryDate],
         ['absolute' => TRUE]
@@ -283,7 +283,7 @@ class SimpleConregTokens {
       'extra_flag2' => 'extras.flag2',
     );
 
-    $reg_date = t('Registered on @date', ['@date' => format_date($members[0]['join_date'])]);
+    $reg_date = t('Registered on @date', ['@date' => \Drupal::service('date.formatter')->format($members[0]['join_date'])]);
     $this->display .= '<h3>' . $reg_date . '</h3>';
     $this->plain_display .= "\n$reg_date\n";
     $this->display .= '<table>';
