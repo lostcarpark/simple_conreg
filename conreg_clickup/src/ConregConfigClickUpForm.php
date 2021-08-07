@@ -62,8 +62,6 @@ class ConregConfigClickUpForm extends ConfigFormBase
 
     $return_url = Url::fromRoute('conreg_config_clickup', [], ['absolute' => TRUE]);
     $url = Url::fromUri('https://app.clickup.com/api', ['query' => ['client_id' => $clientId, 'redirect_uri' => $return_url->toString()]]);
-dpm($url->toString());
-    //$external_link = \Drupal::l(t('Authenticate link to ClickUp'), $url);
     $external_link = Link::fromTextAndUrl(t('Authenticate link to ClickUp'), $url);
 
 
@@ -84,7 +82,7 @@ dpm($url->toString());
       '#type' => 'markup',
       '#prefix' => '<div>',
       '#suffix' => '</div>',
-      '#markup' => $external_link,
+      '#markup' => $external_link->toString(),
     );
 
     $form['simple_conreg_clickup'] = array(
