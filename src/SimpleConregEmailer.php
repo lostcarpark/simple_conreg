@@ -52,7 +52,7 @@ class SimpleConregEmailer {
       $message['params'] = $params;
       $message['subject'] = $tokens->applyTokens($params['subject']);
       $body = [$tokens->applyTokens(preg_replace("/[\n\r]+/", '', $params['body']), FALSE)];
-      $message['preview'] = $body;
+      $message['preview'] = implode("\n", $body);
 
       // Only attach badge image if referenced in body.
       if (strpos($body[0], '[badge]') !== FALSE) {
