@@ -8,6 +8,7 @@ namespace Drupal\conreg_clickup;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\Core\Link;
 use Drupal\devel;
 
 /**
@@ -61,7 +62,9 @@ class ConregConfigClickUpForm extends ConfigFormBase
 
     $return_url = Url::fromRoute('conreg_config_clickup', [], ['absolute' => TRUE]);
     $url = Url::fromUri('https://app.clickup.com/api', ['query' => ['client_id' => $clientId, 'redirect_uri' => $return_url->toString()]]);
-    $external_link = \Drupal::l(t('Authenticate link to ClickUp'), $url);
+dpm($url->toString());
+    //$external_link = \Drupal::l(t('Authenticate link to ClickUp'), $url);
+    $external_link = Link::fromTextAndUrl(t('Authenticate link to ClickUp'), $url);
 
 
     $form['simple_conreg_authenticate'] = array(

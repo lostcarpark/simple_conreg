@@ -1,5 +1,5 @@
 name: ConReg Zambia
 type: module
 description: 'Add Zambia integration to ConReg.'
-core: 8.x
+core_version_requirement: ^8.8 || ^9
 

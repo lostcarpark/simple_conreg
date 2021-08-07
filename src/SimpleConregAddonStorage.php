@@ -4,11 +4,11 @@
  * @file
  * Contains \Drupal\simple_conreg\SimpleConregAddonStorage
  */
+namespace Drupal\simple_conreg;
 
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\devel;
-
-namespace Drupal\simple_conreg;
 
 class SimpleConregAddonStorage
 {
@@ -37,8 +37,9 @@ class SimpleConregAddonStorage
   public static function insert($entry)
   {
     $return_value = NULL;
+    $connection = \Drupal::database();
     try {
-      $return_value = db_insert('conreg_member_addons')
+      $return_value = $connection->insert('conreg_member_addons')
           ->fields($entry)
           ->execute();
     }
@@ -63,9 +64,10 @@ class SimpleConregAddonStorage
    * @see db_update()
    */
   public static function update($entry) {
+    $connection = \Drupal::database();
     try {
       // db_update()...->execute() returns the number of rows updated.
-      $count = db_update('conreg_member_addons')
+      $count = $connection->update('conreg_member_addons')
           ->fields($entry)
           ->condition('addonid', $entry['addonid'])
           ->execute();
@@ -81,9 +83,10 @@ class SimpleConregAddonStorage
 
 
   public static function updateByPayId($entry) {
+    $connection = \Drupal::database();
     try {
       // db_update()...->execute() returns the number of rows updated.
-      $count = db_update('conreg_member_addons')
+      $count = $connection->update('conreg_member_addons')
           ->fields($entry)
           ->condition('payid', $entry['payid'])
           ->execute();
@@ -108,7 +111,8 @@ class SimpleConregAddonStorage
    * @see db_delete()
    */
   public static function delete($entry) {
-    db_delete('conreg_member_addons')
+    $connection = \Drupal::database();
+    $connection->delete('conreg_member_addons')
         ->condition('addonid', $entry['addonid'])
         ->execute();
   }
@@ -119,8 +123,9 @@ class SimpleConregAddonStorage
    *
    */
   public static function load($entry = array()) {
+    $connection = \Drupal::database();
     // Read all fields from the conreg_addons table.
-    $select = db_select('conreg_member_addons', 'addons');
+    $select = $connection->select('conreg_member_addons', 'addons');
     $select->fields('addons');
 
     // Add each field and value as a condition to this query.
@@ -137,8 +142,9 @@ class SimpleConregAddonStorage
    *
    */
   public static function loadAll($entry = array()) {
+    $connection = \Drupal::database();
     // Read all fields from the conreg_addons table.
-    $select = db_select('conreg_member_addons', 'addons');
+    $select = $connection->select('conreg_member_addons', 'addons');
     $select->fields('addons');
 
     // Add each field and value as a condition to this query.
@@ -152,8 +158,9 @@ class SimpleConregAddonStorage
   }
 
   public static function loadAddOnReport($eid, $addOn) {
+    $connection = \Drupal::database();
     // Read all fields from the conreg_addons table.
-    $select = db_select('conreg_members', 'm');
+    $select = $connection->select('conreg_members', 'm');
     $select->join('conreg_member_addons', 'a', 'm.mid = a.mid');
     $select->addField('m', 'member_no');
     $select->addField('m', 'first_name');

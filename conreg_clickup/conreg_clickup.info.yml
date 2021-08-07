@@ -1,5 +1,5 @@
 name: ConReg ClickUp
 type: module
 description: 'Add ClickUp integration to ConReg.'
-core: 8.x
+core_version_requirement: ^8.8 || ^9
 

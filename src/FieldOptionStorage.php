@@ -4,11 +4,10 @@
  * @file
  * Contains \Drupal\simple_conreg\FieldOptionStorage
  */
+namespace Drupal\simple_conreg;
 
 use Drupal\Core\Database\Connection;
 use Drupal\devel;
-
-namespace Drupal\simple_conreg;
 
 class FieldOptionStorage {
 
