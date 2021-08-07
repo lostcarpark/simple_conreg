@@ -34,13 +34,14 @@ class SimpleConregEventStorage {
    */
   public static function insert($entry) {
     $return_value = NULL;
+    $connection = \Drupal::database();
     try {
-      $return_value = db_insert('conreg_events')
+      $return_value = $connection->insert('conreg_events')
           ->fields($entry)
           ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('db_insert failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->insert failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');
@@ -60,15 +61,16 @@ class SimpleConregEventStorage {
    * @see db_update()
    */
   public static function update($entry) {
+    $connection = \Drupal::database();
     try {
-      // db_update()...->execute() returns the number of rows updated.
-      $count = db_update('conreg_events')
+      // $connection->update()...->execute() returns the number of rows updated.
+      $count = $connection->update('conreg_events')
           ->fields($entry)
           ->condition('eid', $entry['eid'])
           ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('db_update failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->update failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');
@@ -86,7 +88,8 @@ class SimpleConregEventStorage {
    * @see db_delete()
    */
   public static function delete($entry) {
-    db_delete('conreg_events')
+    $connection = \Drupal::database();
+    $connection->delete('conreg_events')
         ->condition('eid', $entry['eid'])
         ->execute();
   }
@@ -96,8 +99,9 @@ class SimpleConregEventStorage {
    *
    */
   public static function load($entry = array()) {
+    $connection = \Drupal::database();
     // Read all fields from the conreg_events table.
-    $select = db_select('conreg_events', 'events');
+    $select = $connection->select('conreg_events', 'events');
     $select->fields('events');
 
     // Add each field and value as a condition to this query.
@@ -113,8 +117,9 @@ class SimpleConregEventStorage {
    *
    */
   public static function loadAll($entry = array()) {
+    $connection = \Drupal::database();
     // Read all fields from the conreg_events table.
-    $select = db_select('conreg_events', 'events');
+    $select = $connection->select('conreg_events', 'events');
     $select->fields('events');
 
     // Add each field and value as a condition to this query.
@@ -133,7 +138,8 @@ class SimpleConregEventStorage {
    *
    */
   public static function eventOptions() {
-    $select = db_select('conreg_events', 'e');
+    $connection = \Drupal::database();
+    $select = $connection->select('conreg_events', 'e');
     // Select these specific fields for the output.
     $select->addField('e', 'eid');
     $select->addField('e', 'event_name');
