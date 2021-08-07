@@ -11,7 +11,7 @@ use Drupal\devel;
 use Drupal\Core\File\FileSystemInterface;
 
 use Drupal\Core\Render\Markup;
-use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Component\Utility\Html;
 use Drupal\Component\Render\PlainTextOutput;
 use Drupal\Core\StreamWrapper\PublicStream;
 
@@ -83,8 +83,7 @@ class SimpleConregEmailer {
           return Markup::create($body);
         }, $body);
       } else {
-        //$message['body'][] = \Drupal\Component\Render\PlainTextOutput::renderFromHtml("There's no telling what will happen with \"this\" or this & this>.");
-        $message['body'][] = \Drupal\Component\Utility\SafeMarkup::checkPlain($tokens->applyTokens($params['body'], TRUE));  // Plain text version of body.
+        $message['body'][] = Html::escape($tokens->applyTokens($params['body'], TRUE));  // Plain text version of body.
       }
       if (empty($params['from'])) {
         $from = $config->get('confirmation.from_name')." <".$config->get('confirmation.from_email').">";

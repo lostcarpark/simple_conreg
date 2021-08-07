@@ -15,7 +15,7 @@ use Drupal\Core\Ajax\CssCommand;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
-use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Component\Utility\Html;
 use Drupal\devel;
 
 
@@ -90,22 +90,21 @@ class SimpleConregMemberPortal extends FormBase {
         $mid = $entry['mid'];
         // Sanitize each entry.
         $is_paid = $entry['is_paid'];
-        //$row = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $entry);
         $row = array();
         $row['mid'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['member_no']),
+          '#markup' => Html::escape($entry['member_no']),
         );
         $row['first_name'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['first_name']),
+          '#markup' => Html::escape($entry['first_name']),
         );
         $row['last_name'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['last_name']),
+          '#markup' => Html::escape($entry['last_name']),
         );
         $row['email'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['email']),
+          '#markup' => Html::escape($entry['email']),
         );
         $row['badge_name'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['badge_name']),
+          '#markup' => Html::escape($entry['badge_name']),
         );
         $memberType = trim($entry['member_type']);
         if (isset($upgrades->options[$memberType][$entry['days']]))
@@ -118,7 +117,7 @@ class SimpleConregMemberPortal extends FormBase {
           );
         else
           $row['member_type'] = array(
-            '#markup' => SafeMarkup::checkPlain(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
+            '#markup' => Html::escape(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
           );
 
 
@@ -131,7 +130,7 @@ class SimpleConregMemberPortal extends FormBase {
         } else
           $memberDays = '';
         $row['days'] = array(
-          '#markup' => SafeMarkup::checkPlain($memberDays),
+          '#markup' => Html::escape($memberDays),
         );
         $row['is_paid'] = array(
           '#markup' => $is_paid ? $this->t('Yes') : $this->t('No'),
@@ -177,23 +176,13 @@ class SimpleConregMemberPortal extends FormBase {
       $is_paid = $entry['is_paid'];
       
       if (!$is_paid) {
-        //$row = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $entry);
         $row = [];
         $row['type'] = ['#markup' => t('Member')];
-        $row['name'] = ['#markup' => SafeMarkup::checkPlain($entry['first_name'] . ' ' . $entry['last_name'])];
-        $row['email'] = ['#markup' => SafeMarkup::checkPlain($entry['email'])];
+        $row['name'] = ['#markup' => Html::escape($entry['first_name'] . ' ' . $entry['last_name'])];
+        $row['email'] = ['#markup' => Html::escape($entry['email'])];
         $memberType = isset($types->types[trim($entry['member_type'])]->name) ? $types->types[trim($entry['member_type'])]->name : trim($entry['member_type']);
-        $row['member_type'] = ['#markup' => SafeMarkup::checkPlain($memberType)];
-        $row['price'] = ['#markup' => SafeMarkup::checkPlain($entry['member_price'])];
-  /*      $row['link'] = array(
-          '#type' => 'dropbutton',
-          '#links' => array(
-            'edit_button' => array(
-              'title' => $this->t('View'),
-              'url' => Url::fromRoute ('simple_conreg_admin_members_edit', ['eid' => $eid, 'mid' => $mid]),
-            ),
-          ),
-        );*/
+        $row['member_type'] = ['#markup' => Html::escape($memberType)];
+        $row['price'] = ['#markup' => Html::escape($entry['member_price'])];
         $unpaid[$mid] = $row;
         $display_unpaid = TRUE;
       }
@@ -201,10 +190,10 @@ class SimpleConregMemberPortal extends FormBase {
       foreach (SimpleConregAddonStorage::loadAll(['mid' =>$mid, 'is_paid' => 0]) as $addon) {
         $row = [];
         $row['type'] = ['#markup' => t('Add-on')];
-        $row['name'] = ['#markup' => SafeMarkup::checkPlain($entry['first_name'] . ' ' . $entry['last_name'])];
-        $row['email'] = ['#markup' => SafeMarkup::checkPlain($entry['email'])];
-        $row['member_type'] = ['#markup' => SafeMarkup::checkPlain($addon['addon_name'] . (isset($addon['addon_option']) ? ' - ' . $addon['addon_option'] : ''))];
-        $row['price'] = ['#markup' => SafeMarkup::checkPlain($addon['addon_amount'])];
+        $row['name'] = ['#markup' => Html::escape($entry['first_name'] . ' ' . $entry['last_name'])];
+        $row['email'] = ['#markup' => Html::escape($entry['email'])];
+        $row['member_type'] = ['#markup' => Html::escape($addon['addon_name'] . (isset($addon['addon_option']) ? ' - ' . $addon['addon_option'] : ''))];
+        $row['price'] = ['#markup' => Html::escape($addon['addon_amount'])];
         $unpaid['addon_'.$addon['addonid']] = $row;
         $display_unpaid = TRUE;
       }
