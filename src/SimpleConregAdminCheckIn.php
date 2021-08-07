@@ -15,7 +15,7 @@ use Drupal\Core\Ajax\CssCommand;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Link;
 use Drupal\Core\URL;
-use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Component\Utility\Html;
 use Drupal\devel;
 
 
@@ -45,7 +45,7 @@ class SimpleConregAdminCheckIn extends FormBase {
       if (isset($descriptions[$status]))
         $entry['is_checked_in'] = $descriptions[$status];
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
       $total += $entry['num'];
     }
     //Add a row for the total.
@@ -172,29 +172,28 @@ class SimpleConregAdminCheckIn extends FormBase {
         $mid = $entry['mid'];
         // Sanitize each entry.
         $is_paid = $entry['is_paid'];
-        //$row = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $entry);
         $row = array();
         $row['mid'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['member_no']),
+          '#markup' => Html::escape($entry['member_no']),
         );
         $row['first_name'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['first_name']),
+          '#markup' => Html::escape($entry['first_name']),
         );
         $row['last_name'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['last_name']),
+          '#markup' => Html::escape($entry['last_name']),
         );
         $row['email'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['email']),
+          '#markup' => Html::escape($entry['email']),
         );
         $row['badge_name'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['badge_name']),
+          '#markup' => Html::escape($entry['badge_name']),
         );
         $row['registered_by'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['registered_by']),
+          '#markup' => Html::escape($entry['registered_by']),
         );
         $memberType = trim($entry['member_type']);
         $row['member_type'] = array(
-          '#markup' => SafeMarkup::checkPlain(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
+          '#markup' => Html::escape(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
         );
         if (!empty($entry['days'])) {
           $dayDescs = [];
@@ -205,14 +204,14 @@ class SimpleConregAdminCheckIn extends FormBase {
         } else
           $memberDays = '';
         $row['days'] = array(
-          '#markup' => SafeMarkup::checkPlain($memberDays),
+          '#markup' => Html::escape($memberDays),
         );
         $badgeType = trim($entry['badge_type']);
         $row['badge_type'] = array(
-          '#markup' => SafeMarkup::checkPlain(isset($badgeTypes[$badgeType]) ? $badgeTypes[$badgeType] : $badgeType),
+          '#markup' => Html::escape(isset($badgeTypes[$badgeType]) ? $badgeTypes[$badgeType] : $badgeType),
         );
         $row['comment'] = array(
-          '#markup' => SafeMarkup::checkPlain(trim(substr($entry['comment'], 0, 20))),
+          '#markup' => Html::escape(trim(substr($entry['comment'], 0, 20))),
         );
         $row['is_paid'] = array(
           '#markup' => $is_paid ? $this->t('Yes') : $this->t('No'),
@@ -276,23 +275,22 @@ class SimpleConregAdminCheckIn extends FormBase {
       $mid = $entry['mid'];
       // Sanitize each entry.
       $is_paid = $entry['is_paid'];
-      //$row = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $entry);
       $row = [];
       $row['first_name'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['first_name']),
+        '#markup' => Html::escape($entry['first_name']),
       );
       $row['last_name'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['last_name']),
+        '#markup' => Html::escape($entry['last_name']),
       );
       $row['email'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['email']),
+        '#markup' => Html::escape($entry['email']),
       );
       $row['badge_name'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['badge_name']),
+        '#markup' => Html::escape($entry['badge_name']),
       );
       $memberType = trim($entry['member_type']);
       $row['member_type'] = array(
-        '#markup' => SafeMarkup::checkPlain(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
+        '#markup' => Html::escape(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
       );
       if (!empty($entry['days'])) {
         $dayDescs = [];
@@ -303,10 +301,10 @@ class SimpleConregAdminCheckIn extends FormBase {
       } else
         $memberDays = '';
       $row['days'] = array(
-        '#markup' => SafeMarkup::checkPlain($memberDays),
+        '#markup' => Html::escape($memberDays),
       );
       $row['price'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['member_total']),
+        '#markup' => Html::escape($entry['member_total']),
       );
       $row["is_selected"] = array(
         //'#attributes' => array('name' => 'is_approved_'.$mid, 'id' => 'edit_is_approved_'.$mid),

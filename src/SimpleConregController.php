@@ -8,7 +8,7 @@
 namespace Drupal\simple_conreg;
 
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Component\Utility\Html;
 use Drupal\user\Entity\User;
 use Drupal\Core\Datetime\DateHelper;
 use Drupal\Core\File\FileSystemInterface;
@@ -115,7 +115,7 @@ class SimpleConregController extends ControllerBase {
       else
         $key = $member[$order] . $member_no;  // Append member number to ensure uniqueness.
       if (!empty($entry['display']) && $entry['display'] != 'N' && !empty($entry['country'])) {
-        $rows[$key] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $member);
+        $rows[$key] = array_map('Drupal\Component\Utility\Html::escape', $member);
       }
       $total++;
     }
@@ -146,7 +146,7 @@ class SimpleConregController extends ControllerBase {
       if (!empty($entry['country'])) {
         // Sanitize each entry.
         $entry['country'] = trim($countryOptions[$entry['country']]);
-        $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+        $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
         $total += $entry['num'];
       }
     }
@@ -183,7 +183,7 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
       // Replace type code with description.
       $content['summary'][] = [
-        ['#markup' => SafeMarkup::checkPlain(isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'])],
+        ['#markup' => Html::escape(isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'])],
         ['#markup' => $entry['num']],
       ];
       $total += $entry['num'];
@@ -216,7 +216,7 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminMemberBadgeSummaryLoad($eid) as $entry) {
       // Replace type code with description.
       $content['badge_summary'][] = [
-        ['#markup' => SafeMarkup::checkPlain(isset($types[trim($entry['badge_type'])]) ? $types[trim($entry['badge_type'])] : $entry['badge_type'])],
+        ['#markup' => Html::escape(isset($types[trim($entry['badge_type'])]) ? $types[trim($entry['badge_type'])] : $entry['badge_type'])],
         ['#markup' => $entry['num']],
       ];
       $total += $entry['num'];
@@ -261,7 +261,7 @@ class SimpleConregController extends ControllerBase {
     foreach ($dayTotals as $key=>$val) {
       // Sanitize each entry.
       $content['days_summary'][] = [
-        ['#markup' => SafeMarkup::checkPlain(isset($days[$key]) ? $days[$key] : $key)],
+        ['#markup' => Html::escape(isset($days[$key]) ? $days[$key] : $key)],
         ['#markup' => $val],
       ];
     }
@@ -293,7 +293,7 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminMemberPaymentMethodSummaryLoad($eid) as $entry) {
       // Sanitize each entry.
       $rows[] = [
-        ['#markup' => SafeMarkup::checkPlain($entry['payment_method'])],
+        ['#markup' => Html::escape($entry['payment_method'])],
         ['#markup' => $entry['num']],
       ];
       $total += $entry['num'];
@@ -376,7 +376,7 @@ class SimpleConregController extends ControllerBase {
       $entry['total_paid'] = number_format($total_paid, 2);
       // Sanitize each entry.
       $rows[] = [
-        ['#markup' => SafeMarkup::checkPlain(isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'])],
+        ['#markup' => Html::escape(isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'])],
         ['#markup' => $entry['member_price']],
         ['#markup' => $entry['num']],
         ['#markup' => number_format($total_paid, 2)],
@@ -426,8 +426,8 @@ class SimpleConregController extends ControllerBase {
       $total_amount += $entry['total_paid'];
       // Sanitize each entry.
       $rows[] = [
-        ['#markup' => SafeMarkup::checkPlain($entry['year'])],
-        ['#markup' => SafeMarkup::checkPlain($entry['month'])],
+        ['#markup' => Html::escape($entry['year'])],
+        ['#markup' => Html::escape($entry['month'])],
         ['#markup' => $entry['num']],
         ['#markup' => number_format($entry['total_paid'], 2)],
         ['#markup' => $total],
@@ -558,7 +558,7 @@ class SimpleConregController extends ControllerBase {
       $entry['is_paid'] = isset($yesNo[$entry['is_paid']]) ? $yesNo[$entry['is_paid']] : $entry['is_paid'];
       $entry['is_approved'] = isset($yesNo[$entry['is_approved']]) ? $yesNo[$entry['is_approved']] : $entry['is_approved'];
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
     }
     $content['table'] = array(
       '#type' => 'table',
@@ -675,7 +675,7 @@ class SimpleConregController extends ControllerBase {
         $entry['days'] = implode(', ', $dayDescs);
       }
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
     }
     $content['table'] = array(
       '#type' => 'table',
@@ -714,7 +714,7 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminMemberAddOns($eid) as $entry) {
       $total += $entry['add_on_price'];
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
     }
     
     $rows[] = [t('Total'), '', '', '', '', number_format($total, 2)];
@@ -758,7 +758,7 @@ class SimpleConregController extends ControllerBase {
 
     foreach ($entries = SimpleConregStorage::adminMemberChildMembers($eid) as $entry) {
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
     }
     
     $content['table'] = array(
@@ -812,7 +812,7 @@ class SimpleConregController extends ControllerBase {
       // Take out the ZZ9 Option column.
       unset($entry['add_on']);
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
     }
     $this->memberAdminZZ9ListTable($content, $zz9_option, $headers, $rows, $table++);
     // Don't cache this page.
@@ -845,7 +845,7 @@ class SimpleConregController extends ControllerBase {
 
     foreach ($entries = SimpleConregStorage::adminProgrammeMemberListLoad($eid) as $entry) {
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
     }
     $content['table'] = array(
       '#type' => 'table',
@@ -883,7 +883,7 @@ class SimpleConregController extends ControllerBase {
 
     foreach ($entries = SimpleConregStorage::adminVolunteerMemberListLoad($eid) as $entry) {
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
     }
     $content['table'] = array(
       '#type' => 'table',
@@ -931,7 +931,7 @@ class SimpleConregController extends ControllerBase {
     $rows = array();
     foreach ($entries = SimpleConregStorage::advancedLoad() as $entry) {
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $entry);
+      $rows[] = array_map('Drupal\Component\Utility\Html::escape', $entry);
     }
     $content['table'] = array(
       '#type' => 'table',

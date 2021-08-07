@@ -15,7 +15,7 @@ use Drupal\Core\Ajax\CssCommand;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
-use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Component\Utility\Html;
 use Drupal\devel;
 
 /**
@@ -206,26 +206,25 @@ class SimpleConregAdminMembers extends FormBase {
       $mid = $entry['mid'];
       // Sanitize each entry.
       $is_paid = $entry['is_paid'];
-      //$row = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', $entry);
       $row = array();
       $row['first_name'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['first_name']),
+        '#markup' => Html::escape($entry['first_name']),
       );
       $row['last_name'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['last_name']),
+        '#markup' => Html::escape($entry['last_name']),
       );
       $row['email'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['email']),
+        '#markup' => Html::escape($entry['email']),
       );
       $row['badge_name'] = array(
-        '#markup' => SafeMarkup::checkPlain($entry['badge_name']),
+        '#markup' => Html::escape($entry['badge_name']),
       );
       $row['display'] = array(
-        '#markup' => SafeMarkup::checkPlain(isset($displayOptions[$entry['display']]) ? $displayOptions[$entry['display']] : $entry['display']),
+        '#markup' => Html::escape(isset($displayOptions[$entry['display']]) ? $displayOptions[$entry['display']] : $entry['display']),
       );
       $memberType = trim($entry['member_type']);
       $row['member_type'] = array(
-        '#markup' => SafeMarkup::checkPlain(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
+        '#markup' => Html::escape(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
       );
       if (!empty($entry['days'])) {
         $dayDescs = [];
@@ -236,11 +235,11 @@ class SimpleConregAdminMembers extends FormBase {
       } else
         $memberDays = '';
       $row['days'] = array(
-        '#markup' => SafeMarkup::checkPlain($memberDays),
+        '#markup' => Html::escape($memberDays),
       );
       $badgeType = trim($entry['badge_type']);
       $row['badge_type'] = array(
-        '#markup' => SafeMarkup::checkPlain(isset($badgeTypes[$badgeType]) ? $badgeTypes[$badgeType] : $badgeType),
+        '#markup' => Html::escape(isset($badgeTypes[$badgeType]) ? $badgeTypes[$badgeType] : $badgeType),
       );
       $row['is_paid'] = array(
         '#markup' => $is_paid ? $this->t('Yes') : $this->t('No'),
