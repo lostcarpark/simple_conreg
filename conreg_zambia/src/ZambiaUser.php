@@ -80,7 +80,7 @@ class ZambiaUser
       // To do: make other options for participant name available.
       $participantName = $member->first_name . ' ' . $member->last_name;
       // Save the participant to set the password.
-      $this->saveParticipant($zambiaCon);
+      $this->saveParticipant($zambiaCon, $participantName);
       // Loop through Zambia permissions, and save the ones set in config.
       foreach ($this->zambia->roles as $role => $value) {
         if ($value) {
@@ -126,7 +126,7 @@ class ZambiaUser
     ];
     
     if (!empty($publicationName)) {
-      $fields['pubsname'] = publicationName;
+      $fields['pubsname'] = $publicationName;
     }
     
     $return_value = $zambiaCon->upsert('Participants')
