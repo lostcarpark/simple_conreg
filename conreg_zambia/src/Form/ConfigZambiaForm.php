@@ -403,7 +403,7 @@ class ConfigZambiaForm extends ConfigFormBase
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     foreach (explode(' ', $vals['manual_invites']['member_search']) as $word) {
       // Escape search word to prevent dangerous characters.
-      $esc_word = '%'.db_like($word).'%';
+      $esc_word = '%'.$connection->escapeLike($word).'%';
       $likes = $select->orConditionGroup()
         ->condition('m.first_name', $esc_word, 'LIKE')
         ->condition('m.last_name', $esc_word, 'LIKE')
