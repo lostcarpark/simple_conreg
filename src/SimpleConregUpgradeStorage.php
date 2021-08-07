@@ -14,7 +14,7 @@ class SimpleConregUpgradeStorage {
   /**
    * Save an entry in the database.
    *
-   * The underlying DBTNG function is db_insert().
+   * The underlying DBTNG function is $connection->insert().
    *
    * Exception handling is shown in this example. It could be simplified
    * without the try/catch blocks, but since an insert will throw an exception
@@ -30,17 +30,18 @@ class SimpleConregUpgradeStorage {
    * @throws \Exception
    *   When the database insert fails.
    *
-   * @see db_insert()
+   * @see $connection->insert()
    */
   public static function insert($entry) {
     $return_value = NULL;
+    $connection = \Drupal::database();
     try {
-      $return_value = db_insert('conreg_upgrades')
+      $return_value = $connection->insert('conreg_upgrades')
           ->fields($entry)
           ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('db_insert failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->insert failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');
@@ -57,18 +58,19 @@ class SimpleConregUpgradeStorage {
    * @return int
    *   The number of updated rows.
    *
-   * @see db_update()
+   * @see $connection->update()
    */
   public static function update($entry) {
+    $connection = \Drupal::database();
     try {
-      // db_update()...->execute() returns the number of rows updated.
-      $count = db_update('conreg_upgrades')
+      // $connection->update()...->execute() returns the number of rows updated.
+      $count = $connection->update('conreg_upgrades')
           ->fields($entry)
           ->condition('upgid', $entry['upgid'])
           ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('db_update failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->update failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');
@@ -85,18 +87,19 @@ class SimpleConregUpgradeStorage {
    * @return int
    *   The number of updated rows.
    *
-   * @see db_update()
+   * @see $connection->update()
    */
   public static function updateByLeadMid($entry) {
+    $connection = \Drupal::database();
     try {
-      // db_update()...->execute() returns the number of rows updated.
-      $count = db_update('conreg_upgrades')
+      // $connection->update()...->execute() returns the number of rows updated.
+      $count = $connection->update('conreg_upgrades')
           ->fields($entry)
           ->condition('lead_mid', $entry['lead_mid'])
           ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('db_update failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->update failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');
@@ -112,23 +115,26 @@ class SimpleConregUpgradeStorage {
    *   An array containing at least the person identifier 'pid' element of the
    *   entry to delete.
    *
-   * @see db_delete()
+   * @see $connection->delete()
    */
   public static function delete($entry) {
-    db_delete('conreg_upgrades')
+    $connection = \Drupal::database();
+    $connection->delete('conreg_upgrades')
         ->condition('upgid', $entry['upgid'])
         ->execute();
   }
 
   public static function deleteUnpaidByMid($mid) {
-    db_delete('conreg_upgrades')
+    $connection = \Drupal::database();
+    $connection->delete('conreg_upgrades')
         ->condition('mid', $mid)
         ->condition('is_paid', 0)
         ->execute();
   }
 
   public static function deleteUnpaidByLeadMid($lead_mid) {
-    db_delete('conreg_upgrades')
+    $connection = \Drupal::database();
+    $connection->delete('conreg_upgrades')
         ->condition('lead_mid', $lead_mid)
         ->condition('is_paid', 0)
         ->execute();
@@ -139,8 +145,9 @@ class SimpleConregUpgradeStorage {
    *
    */
   public static function load($entry = array()) {
+    $connection = \Drupal::database();
     // Read all fields from the conreg_upgrades table.
-    $select = db_select('conreg_upgrades', 'upgrades');
+    $select = $connection->select('conreg_upgrades', 'upgrades');
     $select->fields('upgrades');
 
     // Add each field and value as a condition to this query.
@@ -156,8 +163,9 @@ class SimpleConregUpgradeStorage {
    *
    */
   public static function loadAll($entry = array()) {
+    $connection = \Drupal::database();
     // Read all fields from the conreg_upgrades table.
-    $select = db_select('conreg_upgrades', 'upgrades');
+    $select = $connection->select('conreg_upgrades', 'upgrades');
     $select->fields('upgrades');
 
     // Add each field and value as a condition to this query.

@@ -16,7 +16,7 @@ class SimpleConregAddonStorage
   /**
    * Save an entry in the database.
    *
-   * The underlying DBTNG function is db_insert().
+   * The underlying DBTNG function is $connection->insert().
    *
    * Exception handling is shown in this example. It could be simplified
    * without the try/catch blocks, but since an insert will throw an exception
@@ -32,7 +32,7 @@ class SimpleConregAddonStorage
    * @throws \Exception
    *   When the database insert fails.
    *
-   * @see db_insert()
+   * @see $connection->insert()
    */
   public static function insert($entry)
   {
@@ -44,7 +44,7 @@ class SimpleConregAddonStorage
           ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('db_insert failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->insert failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');
@@ -61,19 +61,19 @@ class SimpleConregAddonStorage
    * @return int
    *   The number of updated rows.
    *
-   * @see db_update()
+   * @see $connection->update()
    */
   public static function update($entry) {
     $connection = \Drupal::database();
     try {
-      // db_update()...->execute() returns the number of rows updated.
+      // $connection->update()...->execute() returns the number of rows updated.
       $count = $connection->update('conreg_member_addons')
           ->fields($entry)
           ->condition('addonid', $entry['addonid'])
           ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('db_update failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->update failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');
@@ -85,14 +85,14 @@ class SimpleConregAddonStorage
   public static function updateByPayId($entry) {
     $connection = \Drupal::database();
     try {
-      // db_update()...->execute() returns the number of rows updated.
+      // $connection->update()...->execute() returns the number of rows updated.
       $count = $connection->update('conreg_member_addons')
           ->fields($entry)
           ->condition('payid', $entry['payid'])
           ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('db_update failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->update failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');
@@ -108,7 +108,7 @@ class SimpleConregAddonStorage
    *   An array containing at least the person identifier 'pid' element of the
    *   entry to delete.
    *
-   * @see db_delete()
+   * @see $connection->delete()
    */
   public static function delete($entry) {
     $connection = \Drupal::database();

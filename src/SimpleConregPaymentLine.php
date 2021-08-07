@@ -4,10 +4,9 @@
  * @file
  * Contains \Drupal\simple_conreg\SimpleConregPaymentLine
  */
+namespace Drupal\simple_conreg;
 
 use Drupal\devel;
-
-namespace Drupal\simple_conreg;
 
 class SimpleConregPaymentLine
 {

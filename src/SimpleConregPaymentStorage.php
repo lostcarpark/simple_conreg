@@ -15,7 +15,7 @@ class SimpleConregPaymentStorage
   /**
    * Save an entry in the database.
    *
-   * The underlying DBTNG function is db_insert().
+   * The underlying DBTNG function is $connection->insert().
    *
    * Exception handling is shown in this example. It could be simplified
    * without the try/catch blocks, but since an insert will throw an exception
@@ -31,18 +31,19 @@ class SimpleConregPaymentStorage
    * @throws \Exception
    *   When the database insert fails.
    *
-   * @see db_insert()
+   * @see $connection->insert()
    */
   public static function insert($entry)
   {
     $return_value = NULL;
+    $connection = \Drupal::database();
     try {
-      $return_value = db_insert('conreg_payments')
+      $return_value = $connection->insert('conreg_payments')
           ->fields($entry)
           ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('db_insert failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->insert failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');
@@ -52,13 +53,14 @@ class SimpleConregPaymentStorage
 
   public static function insertLine($entry) {
     $return_value = NULL;
+    $connection = \Drupal::database();
     try {
-      $return_value = db_insert('conreg_payment_lines')
+      $return_value = $connection->insert('conreg_payment_lines')
           ->fields($entry)
           ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('db_insert failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->insert failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');
@@ -74,18 +76,19 @@ class SimpleConregPaymentStorage
    * @return int
    *   The number of updated rows.
    *
-   * @see db_update()
+   * @see $connection->update()
    */
   public static function update($entry) {
+    $connection = \Drupal::database();
     try {
-      // db_update()...->execute() returns the number of rows updated.
-      $count = db_update('conreg_payments')
+      // $connection->update()...->execute() returns the number of rows updated.
+      $count = $connection->update('conreg_payments')
           ->fields($entry)
           ->condition('payid', $entry['payid'])
           ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('db_update failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->update failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');
@@ -94,15 +97,16 @@ class SimpleConregPaymentStorage
   }
 
   public static function updateLine($entry) {
+    $connection = \Drupal::database();
     try {
-      // db_update()...->execute() returns the number of rows updated.
-      $count = db_update('conreg_payment_lines')
+      // $connection->update()...->execute() returns the number of rows updated.
+      $count = $connection->update('conreg_payment_lines')
           ->fields($entry)
           ->condition('lineid', $entry['lineid'])
           ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('db_update failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->update failed. Message = %message, query= %query', array(
             '%message' => $e->getMessage(),
             '%query' => $e->query_string,
           )), 'error');
@@ -118,16 +122,18 @@ class SimpleConregPaymentStorage
    *   An array containing at least the person identifier 'pid' element of the
    *   entry to delete.
    *
-   * @see db_delete()
+   * @see $connection->delete()
    */
   public static function delete($entry) {
-    db_delete('conreg_payments')
+    $connection = \Drupal::database();
+    $connection->delete('conreg_payments')
         ->condition('payid', $entry['payid'])
         ->execute();
   }
 
   public static function deleteLine($entry) {
-    db_delete('conreg_payment_lines')
+    $connection = \Drupal::database();
+    $connection->delete('conreg_payment_lines')
         ->condition('lineid', $entry['lineid'])
         ->execute();
   }
@@ -138,8 +144,9 @@ class SimpleConregPaymentStorage
    *
    */
   public static function load($entry = array()) {
+    $connection = \Drupal::database();
     // Read all fields from the conreg_payments table.
-    $select = db_select('conreg_payments', 'payments');
+    $select = $connection->select('conreg_payments', 'payments');
     $select->fields('payments');
 
     // Add each field and value as a condition to this query.
@@ -151,8 +158,9 @@ class SimpleConregPaymentStorage
   }
 
   public static function loadLine($entry = array()) {
+    $connection = \Drupal::database();
     // Read all fields from the conreg_payments table.
-    $select = db_select('conreg_payment_lines', 'payments');
+    $select = $connection->select('conreg_payment_lines', 'payments');
     $select->fields('payments');
 
     // Add each field and value as a condition to this query.
@@ -168,8 +176,9 @@ class SimpleConregPaymentStorage
    *
    */
   public static function loadAll($entry = array()) {
+    $connection = \Drupal::database();
     // Read all fields from the conreg_payments table.
-    $select = db_select('conreg_payments', 'payments');
+    $select = $connection->select('conreg_payments', 'payments');
     $select->fields('payments');
 
     // Add each field and value as a condition to this query.
@@ -183,8 +192,9 @@ class SimpleConregPaymentStorage
   }
 
   public static function loadAllLines($entry = array()) {
+    $connection = \Drupal::database();
     // Read all fields from the conreg_payments table.
-    $select = db_select('conreg_payment_lines', 'payments');
+    $select = $connection->select('conreg_payment_lines', 'payments');
     $select->fields('payments');
 
     // Add each field and value as a condition to this query.
@@ -202,8 +212,9 @@ class SimpleConregPaymentStorage
    */
   public static function checkPaymentKey($payid, $key)
   {
+    $connection = \Drupal::database();
     // Read all fields from the conreg_member_payments table.
-    $select = db_select('conreg_payments', 'payments');
+    $select = $connection->select('conreg_payments', 'payments');
     $select->fields('payments');
     $select->condition("payid", $payid);
     $select->condition("random_key", $key);
