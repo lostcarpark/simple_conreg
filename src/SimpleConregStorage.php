@@ -4,11 +4,10 @@
  * @file
  * Contains \Drupal\simple_conreg\SimpleConregStorage
  */
+namespace Drupal\simple_conreg;
 
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\devel;
-
-namespace Drupal\simple_conreg;
 
 class SimpleConregStorage {
 
