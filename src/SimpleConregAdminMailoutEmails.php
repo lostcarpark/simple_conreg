@@ -15,7 +15,7 @@ use Drupal\Core\Ajax\CssCommand;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Link;
 use Drupal\Core\URL;
-use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Component\Utility\Html;
 use Drupal\devel;
 
 /**
@@ -116,18 +116,18 @@ class SimpleConregAdminMailoutEmails extends FormBase {
           $row = array();
           if ($showName) {
             $row['first_name'] = array(
-              '#markup' => SafeMarkup::checkPlain($entry['first_name']),
+              '#markup' => Html::escape($entry['first_name']),
             );
             $row['last_name'] = array(
-              '#markup' => SafeMarkup::checkPlain($entry['last_name']),
+              '#markup' => Html::escape($entry['last_name']),
             );
           }
           $row['email'] = array(
-            '#markup' => SafeMarkup::checkPlain($entry['email']),
+            '#markup' => Html::escape($entry['email']),
           );
           if ($showMethod) {
             $row['communication_method'] = array(
-              '#markup' => SafeMarkup::checkPlain($entry['communication_method']),
+              '#markup' => Html::escape($entry['communication_method']),
             );
           }
           $form['table'][] = $row;

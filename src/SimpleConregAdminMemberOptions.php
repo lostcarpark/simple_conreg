@@ -15,7 +15,7 @@ use Drupal\Core\Ajax\CssCommand;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Link;
 use Drupal\Core\URL;
-use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Component\Utility\Html;
 use Drupal\devel;
 
 /**
@@ -208,14 +208,14 @@ class SimpleConregAdminMemberOptions extends FormBase {
       foreach ($optRows as $entry) {
         $row = array();
         $row['first_name'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['first_name']),
+          '#markup' => Html::escape($entry['first_name']),
         );
         $row['last_name'] = array(
-          '#markup' => SafeMarkup::checkPlain($entry['last_name']),
+          '#markup' => Html::escape($entry['last_name']),
         );
         if ($showEmail) {
           $row['email'] = array(
-            '#markup' => SafeMarkup::checkPlain($entry['email']),
+            '#markup' => Html::escape($entry['email']),
           );
         }
         $rowTotal = 0;
@@ -228,7 +228,7 @@ class SimpleConregAdminMemberOptions extends FormBase {
           else
             $val = '';
           $row['option_'.$display] = array(
-            '#markup' => SafeMarkup::checkPlain($val),
+            '#markup' => Html::escape($val),
           );
         }
         $row['total'] = [
