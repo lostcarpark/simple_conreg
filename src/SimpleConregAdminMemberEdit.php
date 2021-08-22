@@ -402,6 +402,8 @@ class SimpleConregAdminMemberEdit extends FormBase
     $mid = $form_state->get('mid');
     $fieldset = $form_state->get('fieldset');
     $member = $form_state->get('member');
+    $options = $member->options;
+    unset($member->options); // Remove options form member object so it doesn't save it.
 
     $config = $this->config('simple_conreg.settings.'.$eid);
     $form_values = $form_state->getValues();
@@ -441,7 +443,7 @@ class SimpleConregAdminMemberEdit extends FormBase
       $fieldOptions = FieldOptions::getFieldOptions($eid);
     }
     // Process option fields to remove any modifications from form values.
-    $fieldOptions->procesOptionFields($fieldset, $form_values['member'], $mid, $member->options);
+    $fieldOptions->procesOptionFields($fieldset, $form_values['member'], $mid, $options);
 
     // Save the submitted entry.
     $member->is_approved = $form_values['member']['is_approved'];
