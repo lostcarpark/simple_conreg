@@ -88,7 +88,7 @@ class SimpleConregAdminMemberOptions extends FormBase {
     $group = \Drupal::request()->query->get('group');
     $option = \Drupal::request()->query->get('option');
 
-    $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
+    $tempstore = \Drupal::service('tempstore.private')->get('simple_conreg');
     // If form values submitted, use the display value that was submitted over the passed in values.
     if (isset($form_values['selOption']))
       $selection = $form_values['selOption'];

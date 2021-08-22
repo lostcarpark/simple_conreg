@@ -90,7 +90,7 @@ class SimpleConregAdminMembers extends FormBase {
                 'custom' => $this->t('Custom search'),
                ];
 
-    $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
+    $tempstore = \Drupal::service('tempstore.private')->get('simple_conreg');
     // If form values submitted, use the display value that was submitted over the passed in values.
     if (isset($form_values['display']))
       $display = $form_values['display'];

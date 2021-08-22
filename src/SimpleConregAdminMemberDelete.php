@@ -161,7 +161,7 @@ class SimpleConregAdminMemberDelete extends FormBase {
   public function submitCancel(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
     // Get session state to return to correct page.
-    $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
+    $tempstore = \Drupal::service('tempstore.private')->get('simple_conreg');
     $display = $tempstore->get('display');
     $page = $tempstore->get('page');
     // Redirect to member list.
@@ -179,7 +179,7 @@ class SimpleConregAdminMemberDelete extends FormBase {
     $member->deleteMember();    
     
     // Get session state to return to correct page.
-    $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
+    $tempstore = \Drupal::service('tempstore.private')->get('simple_conreg');
     $display = $tempstore->get('display');
     $page = $tempstore->get('page');
     // Redirect to member list.

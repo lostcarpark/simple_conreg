@@ -312,8 +312,8 @@ class SimpleConregAdminMemberEdit extends FormBase
     if (is_null($fieldOptions)) {
       $fieldOptions = FieldOptions::getFieldOptions($eid);
     }
-    // Add the field options to the form. Display both global and member fields. Display public and private fields.
-    $fieldOptions->addOptionFields($fieldset, $form['member'], $member, NULL, TRUE);
+    // Add the field options to the form. Display both global and member fields. Display public and private fields. 
+    $fieldOptions->addOptionFields($fieldset, $form['member'], $member, NULL, TRUE, FALSE);
 
     $form['member']['is_paid'] = array(
       '#type' => 'checkbox',
@@ -386,7 +386,7 @@ class SimpleConregAdminMemberEdit extends FormBase
   public function submitCancel(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
     // Get session state to return to correct page.
-    $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
+    $tempstore = \Drupal::service('tempstore.private')->get('simple_conreg');
     $display = $tempstore->get('display');
     $page = $tempstore->get('page');
     // Redirect to member list.
@@ -540,7 +540,7 @@ class SimpleConregAdminMemberEdit extends FormBase
       }
 
       // Get session state to return to correct page.
-      $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
+      $tempstore = \Drupal::service('tempstore.private')->get('simple_conreg');
       $display = $tempstore->get('display');
       $page = $tempstore->get('page');
 

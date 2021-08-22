@@ -157,7 +157,7 @@ class FieldOptions {
    * $memberNo - >=1 only show member options. =0 only show Global options. =-1 show global and member options.
    * $member - Member object containing saved member.
    */
-  public function addOptionFields($fieldSet, &$memberForm, Member $member = NULL, $showGlobal = NULL, $showPrivate = FALSE)
+  public function addOptionFields($fieldSet, &$memberForm, Member $member = NULL, $showGlobal = NULL, $showPrivate = FALSE, $requireMandatory = TRUE)
   {
     // Loop through each field option.
     foreach ($this->fieldSets[$fieldSet] as $group) {
@@ -180,7 +180,7 @@ class FieldOptions {
           $memberForm[$group->fieldName][$group->fieldName] = $field;
           $memberForm[$group->fieldName][$group->fieldName]['#attributes']['class'][] = 'field-has-options';
         }
-        $memberForm[$group->fieldName]['options'] = $group->groupForm($member);
+        $memberForm[$group->fieldName]['options'] = $group->groupForm($member, $requireMandatory);
       }
     }
   }
