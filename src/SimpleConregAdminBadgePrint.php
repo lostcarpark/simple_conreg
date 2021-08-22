@@ -10,6 +10,7 @@ namespace Drupal\simple_conreg;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Component\Utility\Html;
 //use Drupal\file\Entity\File;
 use Drupal\devel;
 
@@ -185,6 +186,7 @@ class SimpleConregAdminBadgePrint extends FormBase {
       $member_type = str_replace(' ', '-', isset($memberTypes->types[$member['member_type']]) ? $memberTypes->types[$member['member_type']]->name : $member['member_type']);
       $badge_type = str_replace(' ', '-', isset($badgeTypes[$member['badge_type']]) ? $badgeTypes[$member['badge_type']] : $member['badge_type']);
       $member_no = $member['badge_type'] . sprintf("%0".$digits."d", $member['member_no']);
+      $badge_name = Html::escape($member['badge_name']);
       if (!empty($member['days'])) {
         $dayDescs = [];
         foreach(explode('|', $member['days']) as $day) {
@@ -202,12 +204,12 @@ class SimpleConregAdminBadgePrint extends FormBase {
   <div class="badge-side badge-left">
     <div class="badge-type">'.$badge_type.'</div>
     <div class="badge-number">'.$member_no.'</div>
-    <div id="badge-name-mid'.$member['mid'].'-left" class="badge-name">'.$member['badge_name'].'</div>
+    <div id="badge-name-mid'.$member['mid'].'-left" class="badge-name">'.$badge_name.'</div>
     <div class="badge-days">'.$member_days.'</div>
   </div><div class="badge-side badge-right">
     <div class="badge-type">'.$badge_type.'</div>
     <div class="badge-number">'.$member_no.'</div>
-    <div id="badge-name-mid'.$member['mid'].'-right" class="badge-name">'.$member['badge_name'].'</div>
+    <div id="badge-name-mid'.$member['mid'].'-right" class="badge-name">'.$badge_name.'</div>
     <div class="badge-days">'.$member_days.'</div>
   </div>
 </div>',

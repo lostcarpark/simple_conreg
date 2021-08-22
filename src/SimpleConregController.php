@@ -115,7 +115,7 @@ class SimpleConregController extends ControllerBase {
       else
         $key = $member[$order] . $member_no;  // Append member number to ensure uniqueness.
       if (!empty($entry['display']) && $entry['display'] != 'N' && !empty($entry['country'])) {
-        $rows[$key] = array_map('Drupal\Component\Utility\Html::escape', $member);
+        $rows[$key] = $member;
       }
       $total++;
     }
@@ -146,7 +146,7 @@ class SimpleConregController extends ControllerBase {
       if (!empty($entry['country'])) {
         // Sanitize each entry.
         $entry['country'] = trim($countryOptions[$entry['country']]);
-        $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
+        $rows[] = $entry;
         $total += $entry['num'];
       }
     }
@@ -183,7 +183,7 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
       // Replace type code with description.
       $content['summary'][] = [
-        ['#markup' => Html::escape(isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'])],
+        ['#markup' => isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type']],
         ['#markup' => $entry['num']],
       ];
       $total += $entry['num'];
@@ -216,7 +216,7 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminMemberBadgeSummaryLoad($eid) as $entry) {
       // Replace type code with description.
       $content['badge_summary'][] = [
-        ['#markup' => Html::escape(isset($types[trim($entry['badge_type'])]) ? $types[trim($entry['badge_type'])] : $entry['badge_type'])],
+        ['#markup' => isset($types[trim($entry['badge_type'])]) ? $types[trim($entry['badge_type'])] : $entry['badge_type']],
         ['#markup' => $entry['num']],
       ];
       $total += $entry['num'];
@@ -261,7 +261,7 @@ class SimpleConregController extends ControllerBase {
     foreach ($dayTotals as $key=>$val) {
       // Sanitize each entry.
       $content['days_summary'][] = [
-        ['#markup' => Html::escape(isset($days[$key]) ? $days[$key] : $key)],
+        ['#markup' => isset($days[$key]) ? $days[$key] : $key],
         ['#markup' => $val],
       ];
     }
@@ -293,7 +293,7 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminMemberPaymentMethodSummaryLoad($eid) as $entry) {
       // Sanitize each entry.
       $rows[] = [
-        ['#markup' => Html::escape($entry['payment_method'])],
+        ['#markup' => $entry['payment_method']],
         ['#markup' => $entry['num']],
       ];
       $total += $entry['num'];
@@ -376,7 +376,7 @@ class SimpleConregController extends ControllerBase {
       $entry['total_paid'] = number_format($total_paid, 2);
       // Sanitize each entry.
       $rows[] = [
-        ['#markup' => Html::escape(isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'])],
+        ['#markup' => isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type']],
         ['#markup' => $entry['member_price']],
         ['#markup' => $entry['num']],
         ['#markup' => number_format($total_paid, 2)],
@@ -426,8 +426,8 @@ class SimpleConregController extends ControllerBase {
       $total_amount += $entry['total_paid'];
       // Sanitize each entry.
       $rows[] = [
-        ['#markup' => Html::escape($entry['year'])],
-        ['#markup' => Html::escape($entry['month'])],
+        ['#markup' => $entry['year']],
+        ['#markup' => $entry['month']],
         ['#markup' => $entry['num']],
         ['#markup' => number_format($entry['total_paid'], 2)],
         ['#markup' => $total],
@@ -558,7 +558,7 @@ class SimpleConregController extends ControllerBase {
       $entry['is_paid'] = isset($yesNo[$entry['is_paid']]) ? $yesNo[$entry['is_paid']] : $entry['is_paid'];
       $entry['is_approved'] = isset($yesNo[$entry['is_approved']]) ? $yesNo[$entry['is_approved']] : $entry['is_approved'];
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
+      $rows[] = $entry;
     }
     $content['table'] = array(
       '#type' => 'table',
@@ -675,7 +675,7 @@ class SimpleConregController extends ControllerBase {
         $entry['days'] = implode(', ', $dayDescs);
       }
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
+      $rows[] = $entry;
     }
     $content['table'] = array(
       '#type' => 'table',
@@ -698,7 +698,6 @@ class SimpleConregController extends ControllerBase {
     );
 
     $table = 0;
-    $zz9_option = "";
     $rows = array();
     $headers = array(
       t('First Name'),
@@ -714,7 +713,7 @@ class SimpleConregController extends ControllerBase {
     foreach ($entries = SimpleConregStorage::adminMemberAddOns($eid) as $entry) {
       $total += $entry['add_on_price'];
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
+      $rows[] = $entry;
     }
     
     $rows[] = [t('Total'), '', '', '', '', number_format($total, 2)];
@@ -740,7 +739,6 @@ class SimpleConregController extends ControllerBase {
     );
 
     $table = 0;
-    $zz9_option = "";
     $rows = array();
     $headers = array(
       t('Member No'),
@@ -758,7 +756,7 @@ class SimpleConregController extends ControllerBase {
 
     foreach ($entries = SimpleConregStorage::adminMemberChildMembers($eid) as $entry) {
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
+      $rows[] = $entry;
     }
     
     $content['table'] = array(
@@ -768,53 +766,6 @@ class SimpleConregController extends ControllerBase {
       '#empty' => t('No entries available.'),
       '#sticky' => TRUE,
     );
-    // Don't cache this page.
-    $content['#cache']['max-age'] = 0;
-
-    return $content;
-  }
-
-  public function memberAdminZZ9List($eid) {
-    $content = array();
-
-    $content['message'] = array(
-      '#markup' => $this->t('Here is a list of all Lazlar Lyricon 3 members of ZZ9.'),
-    );
-
-    $table = 0;
-    $zz9_option = "";
-    $rows = array();
-    $headers = array(
-      t('First Name'),
-      t('Last Name'),
-      t('Email'),
-      t('Badge Name'),
-      t('Street'),
-      t('City'),
-      t('County'),
-      t('Postcode'),
-      t('Country'),
-      t('Phone'),
-      t('Birth Date'),
-      t('ZZ9 No'),
-      t('Allow Committee'),
-      t('Allow Members'),
-    );
-
-    foreach ($entries = SimpleConregStorage::adminZZ9MemberListLoad($eid) as $entry) {
-      if ($zz9_option != $entry['add_on']) {
-        if (!empty($zz9_option)) {
-          $this->memberAdminZZ9ListTable($content, $zz9_option, $headers, $rows, $table++);
-          $rows = array();
-        }
-        $zz9_option = $entry['add_on'];
-      }
-      // Take out the ZZ9 Option column.
-      unset($entry['add_on']);
-      // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
-    }
-    $this->memberAdminZZ9ListTable($content, $zz9_option, $headers, $rows, $table++);
     // Don't cache this page.
     $content['#cache']['max-age'] = 0;
 
@@ -845,7 +796,7 @@ class SimpleConregController extends ControllerBase {
 
     foreach ($entries = SimpleConregStorage::adminProgrammeMemberListLoad($eid) as $entry) {
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
+      $rows[] = $entry;
     }
     $content['table'] = array(
       '#type' => 'table',
@@ -883,7 +834,7 @@ class SimpleConregController extends ControllerBase {
 
     foreach ($entries = SimpleConregStorage::adminVolunteerMemberListLoad($eid) as $entry) {
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
+      $rows[] = $entry;
     }
     $content['table'] = array(
       '#type' => 'table',
@@ -894,54 +845,6 @@ class SimpleConregController extends ControllerBase {
     // Don't cache this page.
     $content['#cache']['max-age'] = 0;
 
-    return $content;
-  }
-
-  public function memberAdminZZ9ListTable(&$content, $zz9_option, $headers, $rows, $tableNo) {
-    $content['heading'.$tableNo] = array(
-      '#markup' => '<h2>'.$zz9_option.'</h2>',
-    );
-    $content['table'.$tableNo] = array(
-      '#type' => 'table',
-      '#header' => $headers,
-      '#rows' => $rows,
-      '#empty' => t('No entries available.'),
-    );
-  }
-
-  /**
-   * Render a filtered list of entries in the database.
-   */
-  public function entryAdvancedList() {
-    $content = array();
-
-    $content['message'] = array(
-      '#markup' => $this->t('A more complex list of entries in the database.') . ' ' .
-      $this->t('Only the entries with name = "John" and age older than 18 years are shown, the username of the person who created the entry is also shown.'),
-    );
-
-    $headers = array(
-      t('Id'),
-      t('Created by'),
-      t('Name'),
-      t('Surname'),
-      t('Age'),
-    );
-
-    $rows = array();
-    foreach ($entries = SimpleConregStorage::advancedLoad() as $entry) {
-      // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\Html::escape', $entry);
-    }
-    $content['table'] = array(
-      '#type' => 'table',
-      '#header' => $headers,
-      '#rows' => $rows,
-      '#attributes' => array('id' => 'dbtng-example-advanced-list'),
-      '#empty' => t('No entries available.'),
-    );
-    // Don't cache this page.
-    $content['#cache']['max-age'] = 0;
     return $content;
   }
 

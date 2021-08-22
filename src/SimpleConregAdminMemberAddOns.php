@@ -49,7 +49,7 @@ class SimpleConregAdminMemberAddOns extends FormBase {
       $options[$key] = (!empty($val['free']['label']) ? $val['free']['label'] : $val['addon']['label']);
     }
 
-    $tempstore = \Drupal::service('user.private_tempstore')->get('simple_conreg');
+    $tempstore = \Drupal::service('tempstore.private')->get('simple_conreg');
     // If form values submitted, use the display value that was submitted over the passed in values.
     if (isset($form_values['selAddOn']))
       $selection = $form_values['selAddOn'];

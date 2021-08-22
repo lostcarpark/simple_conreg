@@ -53,7 +53,7 @@ class FieldOptionGroup {
     $this->options[$option->optionId] = $option;
   }
 
-  public function groupForm(&$member)
+  public function groupForm(&$member, $requireMandatory = TRUE)
   {
     $options = [
       '#type' => 'fieldset',
@@ -76,7 +76,7 @@ class FieldOptionGroup {
           'class' => ['field-option'],
         ],
       ];
-      if (isset($option->mustSelect) && $option->mustSelect == 1) {
+      if (isset($option->mustSelect) && $option->mustSelect == 1 && $requireMandatory) {
         //$options[$option->optionId]['option']['#required'] = TRUE;
         $options[$option->optionId]['option']['#attributes']['class'][] = 'must-select';
       }
