@@ -475,42 +475,30 @@ class SimpleConregAdminMemberEdit extends FormBase
     if (isset($form_values['member']['payment_id'])) $member->payment_id = $form_values['member']['payment_id'];
     $member->is_checked_in = $form_values['member']['is_checked_in'];
 
-    $return = $member->saveMember();
-
     if (!empty($form_values["member"]["is_checked_in"])) {
       $user = User::load(\Drupal::currentUser()->id());
-      $entry['check_in_date'] = time();
-      $entry['check_in_by'] = $user->get('uid')->value;
+      $member->check_in_date = time();
+      $member->check_in_by = $user->get('uid')->value;
     }
 
     $join_date = $form_values['member']['join_date']->getTimestamp();
     // If Join Date specified, use it. If not, use current date/time.
     if ($join_date == 0)
-      $entry['join_date'] = time();
+      $member->join_date = time();
     else
       // Date specified, and successfully converted into timestamp.
-      $entry['join_date'] = $join_date;
+      $member->join_date = $join_date;
 
     if (isset($mid)) {
-      // Update the member record.
-      $entry['mid'] = $mid;
-      $entry['update_date'] = time();
-      $return = SimpleConregStorage::update($entry);
+      // Existing member. Member ID should already be set, but make sure.
+      $member->mid = $mid;
     } else {
-      // Specify the event.
-      $entry['eid'] = $eid;
-      $entry['update_date'] = time();
-      // Insert to database table.
-      $mid = SimpleConregStorage::insert($entry);
-      
-      // After saving new member, get key from insert statement to use for lead member ID.
-      $lead_mid = $mid;
-      $lead_key = $rand_key;
-      // Update member with own member ID as lead member ID.
-      $update = array('mid' => $lead_mid, 'lead_mid' => $lead_mid);
-      $return = SimpleConregStorage::update($update);
+      // New member. Event ID must be set.
+      $member->eid = $eid;
     }
 
+    $return = $member->saveMember();
+    
     if ($return) {
 
       // Check Simplenews module loaded.
