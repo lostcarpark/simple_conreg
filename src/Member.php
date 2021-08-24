@@ -41,9 +41,9 @@ class Member
     return $member;
   }
 
-  public static function loadMemberByMemberNo($memberNo)
+  public static function loadMemberByMemberNo($eid, $memberNo)
   {
-    $member = self::newMember(SimpleConregStorage::load(['member_no' => $memberNo]));
+    $member = self::newMember(SimpleConregStorage::load(['eid' => $eid, 'member_no' => $memberNo, 'is_deleted' => 0]));
     
     // Add member options to member object.
     $member->options = MemberOption::loadAllMemberOptions($member->mid);

@@ -361,11 +361,11 @@ class ConfigZambiaForm extends ConfigFormBase
         list($min, $max) = array_pad(explode('-', $range), 2, '');
         If (empty($max)) {
           // If no max set, range is single number in min.
-          $output[] = $this->addMemberToZambia($min, $vals['manual_invites']['override'], $vals['manual_invites']['reset'], $vals['manual_invites']['dont_email'], $vals['option_fields']);
+          $output[] = $this->addMemberToZambia($eid, $min, $vals['manual_invites']['override'], $vals['manual_invites']['reset'], $vals['manual_invites']['dont_email'], $vals['option_fields']);
         }
         else {
           for ($num = $min; $num <= $max; $num++) {
-            $output[] = $this->addMemberToZambia($num, $vals['manual_invites']['override'], $vals['manual_invites']['reset'], $vals['manual_invites']['dont_email'], $vals['option_fields']);
+            $output[] = $this->addMemberToZambia($eid, $num, $vals['manual_invites']['override'], $vals['manual_invites']['reset'], $vals['manual_invites']['dont_email'], $vals['option_fields']);
           }
         }
       // Log an event to show a member check occurred.
@@ -445,9 +445,9 @@ class ConfigZambiaForm extends ConfigFormBase
     return $form['manual_invites']['search_results'];
   }
   
-  private function addMemberToZambia($memberNo, $override, $reset, $dontEmail, $optionFields)
+  private function addMemberToZambia($eid, $memberNo, $override, $reset, $dontEmail, $optionFields)
   {
-    $member = Member::loadMemberByMemberNo($memberNo);
+    $member = Member::loadMemberByMemberNo($eid, $memberNo);
     $match = FALSE;
     foreach ($optionFields as $optId => $optVal) {
       if ($optVal) {
