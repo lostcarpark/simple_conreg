@@ -96,8 +96,8 @@ class ConfigZambiaForm extends ConfigFormBase
     );
 
     $zambiaRoles = [];
-    $testCount = $this->zambia->test();
-    if ($testCount == NULL) {
+    $test = $this->zambia->test($count);
+    if ($test == NULL) {
       $form['zambia']['zambia_authenticate']['info'] = array(
         '#type' => 'markup',
         '#prefix' => '<div class="conreg_info">',
@@ -122,7 +122,7 @@ class ConfigZambiaForm extends ConfigFormBase
       );
     
     }
-    elseif ($testCount == FALSE) {
+    elseif ($test == FALSE) {
       $form['zambia']['zambia_authenticate']['info'] = array(
         '#type' => 'markup',
         '#prefix' => '<div class="conreg_info">',
@@ -135,7 +135,7 @@ class ConfigZambiaForm extends ConfigFormBase
         '#type' => 'markup',
         '#prefix' => '<div class="conreg_info">',
         '#suffix' => '</div>',
-        '#markup' => $this->t('Tested Zambia database connection. @count Zambia users found.', ['@count' => $testCount]),
+        '#markup' => $this->t('Tested Zambia database connection. @count Zambia users found.', ['@count' => $count]),
       );
     }
 
@@ -154,7 +154,7 @@ class ConfigZambiaForm extends ConfigFormBase
     );
     
     // Put checkboxes on roles.
-    if ($testCount) {
+    if ($test) {
       $zambiaRoles = $this->zambia->getPermissionRoles();
       $form['zambia']['zambia_authenticate']['roles'] = array(
         '#type' => 'fieldset',
@@ -382,6 +382,8 @@ class ConfigZambiaForm extends ConfigFormBase
 
   public function callbackSearch(array $form, FormStateInterface $form_state) {
     $vals = $form_state->getValues();
+    $eid = $form_state->get('eid');
+
     $form['manual_invites']['search_results']['head'] = [
       '#type' => 'markup',
       '#prefix' => '<div>',
@@ -398,6 +400,7 @@ class ConfigZambiaForm extends ConfigFormBase
     $select->addField('m', 'email');
     $select->leftJoin('conreg_zambia', 'z', 'm.mid = z.mid');
     $select->addField('z', 'badgeid');
+    $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
     $select->condition('m.is_approved', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
