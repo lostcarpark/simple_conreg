@@ -70,7 +70,7 @@ class Zambia
       \Drupal::logger('type')->error($e->getMessage());
       $result = NULL;
     }
-    return $result
+    return $result;
   }
   
   public function getPermissionRoles()

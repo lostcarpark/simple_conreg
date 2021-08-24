@@ -431,7 +431,7 @@ class ConfigZambiaForm extends ConfigFormBase
 
     foreach ($entries as $entry) {
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $rows[] = $entry;// array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
     }
     
     $form['manual_invites']['search_results']['table'] = array(
