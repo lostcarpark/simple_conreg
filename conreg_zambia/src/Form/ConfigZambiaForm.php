@@ -170,6 +170,12 @@ class ConfigZambiaForm extends ConfigFormBase
       }
     }
 
+    $form['zambia']['zambia_authenticate']['interested_default'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Default "Interested" to true when adding new members.'),
+      '#default_value' => $config->get('zambia.interested_default'),
+    );
+
     $form['zambia']['zambia_authenticate']['url'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Zambia URL',),
@@ -338,6 +344,7 @@ class ConfigZambiaForm extends ConfigFormBase
     foreach ($vals['zambia_authenticate']['roles'] as $key => $val) {
       $config->set('zambia.roles.' . $key, $val);
     }
+    $config->set('zambia.interested_default', $vals['zambia_authenticate']['interested_default']);
     $config->set('zambia.url', $vals['zambia_authenticate']['url']);
     foreach ($vals['option_fields'] as $key => $val) {
       $config->set('zambia.option_fields.' . $key, $val);

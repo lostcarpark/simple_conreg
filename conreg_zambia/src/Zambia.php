@@ -20,6 +20,7 @@ class Zambia
   public $prefix;
   public $digits;
   public $roles;
+  public $interested_default;
 
   /**
    * Constructs a new Member object.
@@ -34,6 +35,8 @@ class Zambia
     $this->prefix = $config->get('zambia.prefix');
     $this->digits = $config->get('zambia.digits');
     $this->roles = $config->get('zambia.roles');
+    $this->interested_default = $config->get('zambia.interested_default');
+dpm($this->interested_default, "Default");
   }
 
   /** 

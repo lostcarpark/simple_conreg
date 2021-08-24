@@ -117,12 +117,14 @@ class ZambiaUser
       $this->password = $this->generatePassword(12);
       $this->hashedPassword = password_hash(trim($this->password), PASSWORD_DEFAULT);
     }
-    
+
+dpm($this->zambia->interested_default, "Interested");
     $fields = [
       'badgeid' => $this->badgeId,
       'password' => $this->hashedPassword,
       'share_email' => 1,
       'data_retention' => 0,
+      'interested' => $this->zambia->interested_default,
     ];
     
     if (!empty($publicationName)) {
