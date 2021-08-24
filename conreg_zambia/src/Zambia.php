@@ -51,24 +51,26 @@ class Zambia
    *   FALSE: Connected but query failed.
    *   Other: Number of records in CongoDump.
    */
-  public function test()
+  public function test(&$count)
   {
     try {
       $con = $this->getZambiaConnection();
-      return $con->select('CongoDump', 'C')
+      $count = $con->select('CongoDump', 'C')
               ->fields('C')
               ->countQuery()
               ->execute()
               ->fetchField();
+      $result = TRUE;
     }
     catch (DatabaseException $e) {
       \Drupal::logger('type')->error($e->getMessage());
-      return FALSE;
+      $result = FALSE;
     }
     catch (\PDOException $e) {
       \Drupal::logger('type')->error($e->getMessage());
-      return NULL;
+      $result = NULL;
     }
+    return $result
   }
   
   public function getPermissionRoles()
