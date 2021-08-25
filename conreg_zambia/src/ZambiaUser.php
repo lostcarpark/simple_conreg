@@ -118,7 +118,6 @@ class ZambiaUser
       $this->hashedPassword = password_hash(trim($this->password), PASSWORD_DEFAULT);
     }
 
-dpm($this->zambia->interested_default, "Interested");
     $fields = [
       'badgeid' => $this->badgeId,
       'password' => $this->hashedPassword,
