@@ -36,7 +36,6 @@ class Zambia
     $this->digits = $config->get('zambia.digits');
     $this->roles = $config->get('zambia.roles');
     $this->interested_default = $config->get('zambia.interested_default');
-dpm($this->interested_default, "Default");
   }
 
   /** 
