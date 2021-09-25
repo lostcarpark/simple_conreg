@@ -56,8 +56,8 @@ class SimpleConregOptions {
           $defaultDays = $dayName;
         }
         $fieldCount = count($typeFields);
-        if ($fieldCount > 8) {
-          for ($fieldNo = 8; $fieldNo < $fieldCount; $fieldNo++) {
+        if ($fieldCount > 9) {
+          for ($fieldNo = 9; $fieldNo < $fieldCount; $fieldNo++) {
             list($dayCode, $dayDesc, $dayName, $dayPrice) = array_pad(explode('~', $typeFields[$fieldNo]), 4, '');
               $dayOptions[$dayCode] = $dayDesc;
               $days[$dayCode] = (object)[
