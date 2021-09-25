@@ -31,13 +31,14 @@ class SimpleConregOptions {
 
     $types = explode("\n", $config->get('member_types')); // One type per line.
     $typeVals = [];
+    $firstOptions = [];
     $publicOptions = [];
     $privateOptions = [];
     $publicNames = [];
     foreach ($types as $type) {
       if (!empty($type)) {
         $typeFields = array_pad(explode('|', $type), 8, '');
-        list($code, $desc, $name, $price, $badgeType, $fieldset, $active, $defaultDays) = $typeFields;
+        list($code, $desc, $name, $price, $badgeType, $fieldset, $allowFirst, $active, $defaultDays) = $typeFields;
         // Remove any extra spacing.
         $code = trim($code);
         $fieldset = trim($fieldset);
@@ -69,6 +70,9 @@ class SimpleConregOptions {
         // Put description in specific array for populating drop-down. Put all options in private array, but only active options in public array.
         $privateOptions[$code] = trim($desc);
         if ($active) {
+          if ($allowFirst) {
+            $firstOptions[$code] = trim($desc);
+          }
           $publicOptions[$code] = trim($desc);
           $publicNames[$code] = trim($name);
         }
@@ -79,6 +83,7 @@ class SimpleConregOptions {
           'price' => trim($price),
           'badgeType' => trim($badgeType),
           'fieldset' => trim($fieldset),
+          'allowFirst' => trim($allowFirst),
           'active' => $active,
           'defaultDays' => $defaultDays,
           'config' => SimpleConregConfig::getFieldsetConfig($eid, $fieldset),
@@ -90,6 +95,7 @@ class SimpleConregOptions {
 
     // Stash member types in static variable in case needed again.
     $member_types[$eid] = (object)[
+      'firstOptions' => $firstOptions,
       'publicOptions' => $publicOptions,
       'privateOptions' => $privateOptions,
       'publicNames' => $publicNames,
