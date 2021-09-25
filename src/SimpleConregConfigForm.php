@@ -161,7 +161,7 @@ class SimpleConregConfigForm extends ConfigFormBase {
     $form['simple_conreg_members']['types'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Member types'),
-      '#description' => $this->t('Put each membership type on a line with type code, description, name, price,  default badge type, and fieldset number separated by | character (e.g. J|Junior Attending|Junior|50|A|1). Optionally, add a field per day, consisting of Day Code~Description~Short Name~Price (e.g. Sa~Saturday~Sat~25)'),
+      '#description' => $this->t('Put each membership type on a line with type code, description, name, price, default badge type, fieldset number, allowed for first member (0/1), and active (0/1) separated by | character (e.g. J|Junior Attending|Junior|50|A|1|1|1). Optionally, add a field per day, consisting of Day Code~Description~Short Name~Price (e.g. Sa~Saturday~Sat~25)'),
       '#default_value' => $config->get('member_types'),
     );
 
