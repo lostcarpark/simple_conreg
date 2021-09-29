@@ -1,0 +1,10 @@
+conreg_config_discord_invitebot:
+  path: 'admin/config/conreg/discord/{eid}'
+  defaults:
+    _title: 'Discord InviteBot'
+    _form: '\Drupal\conreg_discord\Form\ConfigDiscordForm'
+    eid: 1
+  requirements:
+    _permission: 'configure discord invitebot'
+    eid: ^[0-9]+$
+

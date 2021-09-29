@@ -1,0 +1,66 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the conreg_discord module.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function conreg_discord_requirements($phase)
+{
+  $requirements = [];
+  return $requirements;
+}
+
+/**
+ * Implements hook_install().
+ *
+ * Creates some default entries on this module custom table.
+ *
+ * @see hook_install()
+ * @ingroup conreg_discord
+ */
+function conreg_discord_install()
+{
+}
+
+/**
+ * Implements hook_schema().
+ *
+ * Defines the database tables used by this module.
+ *
+ * @see hook_schema()
+ * @ingroup conreg_discord
+ */
+function conreg_discord_schema()
+{
+  // create table conreg_discord (mid int primary key, invite_code varchar(100) not null, update_date int not null);
+  $schema['conreg_discord'] = array(
+    'description' => 'Stores events on the registration system.',
+    'fields' => array(
+      'mid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique event ID.',
+      ),
+      'invite_code' => array(
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+        'description' => 'Name of the event.',
+      ),
+      'update_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp for the date and time last updated.',
+      ),
+    ),
+    'primary key' => array('mid'),
+  );
+
+  return $schema;
+}
+
