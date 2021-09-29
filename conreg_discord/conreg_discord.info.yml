@@ -1,0 +1,5 @@
+name: ConReg Discord InviteBot
+type: module
+description: 'Create Discord invitations from ConReg.'
+core_version_requirement: ^8.8 || ^9
+

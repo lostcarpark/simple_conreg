@@ -1,0 +1,5 @@
+conreg_discord.config_invitebot:
+  title: Discord InviteBot
+  route_name: conreg_config_discord_invitebot
+  weight: 39
+
