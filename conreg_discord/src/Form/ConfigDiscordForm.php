@@ -27,7 +27,7 @@ class ConfigDiscordForm extends ConfigFormBase
   private $discord;
   private $memberTypes;
 
-  /** 
+  /**
    * {@inheritdoc}
    */
   public function getFormId()
@@ -35,7 +35,7 @@ class ConfigDiscordForm extends ConfigFormBase
     return 'conreg_config_discord_options';
   }
 
-  /** 
+  /**
    * {@inheritdoc}
    */
   protected function getEditableConfigNames()
@@ -45,7 +45,7 @@ class ConfigDiscordForm extends ConfigFormBase
     ];
   }
 
-  /** 
+  /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $eid = 1)
@@ -108,59 +108,24 @@ class ConfigDiscordForm extends ConfigFormBase
 
     if (!empty($token) && !empty($channelId)) {
       $this->discord = new Discord($token, $channelId);
-      $channel = $this->discord->getChannel();
-      $form['discord']['discord_authenticate']['channel_info'] = array(
-        '#type' => 'markup',
-        '#prefix' => '<div class="conreg_info">',
-        '#suffix' => '</div>',
-        '#markup' => $this->t('Channel Name: @name', ['@name' => $channel->name]),
-      );
-    }
-/*
-    $form['discord']['zambia_authenticate']['prefix'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Zambia badgeid prefix',),
-      '#description' => $this->t('Specify a letter to prefix the member number.'),
-      '#default_value' => $this->config->get('zambia.prefix'),
-    );
-    
-    $form['discord']['zambia_authenticate']['digits'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Zambia digits in badgeid',),
-      '#description' => $this->t('Specify number of digits to pad member number.'),
-      '#default_value' => $this->config->get('zambia.digits'),
-    );
-    
-    // Put checkboxes on roles.
-    if ($test) {
-      $zambiaRoles = $this->zambia->getPermissionRoles();
-      $form['discord']['zambia_authenticate']['roles'] = array(
-        '#type' => 'fieldset',
-        '#title' => $this->t('Select Zambia Roles to assign new members'),
-        '#tree' => TRUE,
-      );
-      foreach ($zambiaRoles as $role) {
-        $form['discord']['zambia_authenticate']['roles'][$role['permroleid']] = array(
-          '#type' => 'checkbox',
-          '#title' => $role['permrolename'],
-          '#default_value' => $this->config->get('zambia.roles.'.$role['permroleid']),
+      if ($this->discord->getChannel()) {
+        $form['discord']['discord_authenticate']['channel_info'] = array(
+          '#type' => 'markup',
+          '#prefix' => '<div class="conreg_info">',
+          '#suffix' => '</div>',
+          '#markup' => $this->t('Channel Name: @name', ['@name' => $this->discord->channel->name]),
+        );
+      }
+      else {
+        $form['discord']['discord_authenticate']['channel_info'] = array(
+          '#type' => 'markup',
+          '#prefix' => '<div class="conreg_info">',
+          '#suffix' => '</div>',
+          '#markup' => $this->t('Error connecting to channel: @name', ['@name' => $this->discord->message]),
         );
       }
     }
 
-    $form['discord']['zambia_authenticate']['interested_default'] = array(
-      '#type' => 'checkbox',
-      '#title' => $this->t('Default "Interested" to true when adding new members.'),
-      '#default_value' => $this->config->get('zambia.interested_default'),
-    );
-
-    $form['discord']['zambia_authenticate']['url'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Zambia URL',),
-      '#description' => $this->t('The URL of the Zambia site (to include in invitation email).'),
-      '#default_value' => $this->config->get('zambia.url'),
-    );
-*/
     /**
      * Member types to generate invites for.
      */
@@ -313,7 +278,7 @@ class ConfigDiscordForm extends ConfigFormBase
     return parent::buildForm($form, $form_state);
   }
 
-  /** 
+  /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
@@ -337,7 +302,7 @@ class ConfigDiscordForm extends ConfigFormBase
     parent::submitForm($form, $form_state);
   }
 
-  /** 
+  /**
    * Callback function for "Generate Invites" button.
    */
   public function callbackGenerateInvites(array $form, FormStateInterface $form_state) {
@@ -363,14 +328,14 @@ class ConfigDiscordForm extends ConfigFormBase
     else {
       $form['discord_invites']['replace']['result']['#markup'] = $this->t('Member numbers not in correct format.');
     }
-    
+
     // Update count of members awaiting invites.
     $form['discord_invites']['replace']['waiting']['#markup'] = $this->getAwaitingInviteCount($eid);
 
     return $form['discord_invites']['replace'];
   }
 
-  /** 
+  /**
    * Invite all members - up to maximum number - when no member range specified.
    */
   private function inviteAllMembers($eid, array $form, $vals) {
@@ -382,7 +347,7 @@ class ConfigDiscordForm extends ConfigFormBase
     }
     $form['discord_invites']['replace']['result']['#markup'] = $this->t('Inviting all members...');
     $memberNos = $this->getAwaitingMemberNos($eid);
-    $output = []; 
+    $output = [];
     foreach ($memberNos as $memRec) {
       //$invite = print_r($memRec['member_no'], TRUE);
       $invite = $this->inviteToDiscord($eid, $memRec['member_no'], $vals['discord_invites']['override'], $vals['discord_invites']['resend'], $vals['discord_invites']['regenerate'], $vals['discord_invites']['dont_email'], $vals['option_fields']);
@@ -398,13 +363,13 @@ class ConfigDiscordForm extends ConfigFormBase
     $form['discord_invites']['replace']['result']['#markup'] .= '<p>Invites sent: ' . $count . '</p>';
   }
 
-  /** 
+  /**
    * Invite members in specified range.
    */
   private function inviteMemberRange($eid, array $form, $vals) {
     $max = $vals['discord_invites']['max_invites'];
     $count = 0;
-    $output = []; 
+    $output = [];
     foreach (explode(',', $vals['discord_invites']['member_range']) as $range) {
       list($min, $max) = array_pad(explode('-', $range), 2, '');
       If (empty($max)) {
@@ -437,11 +402,14 @@ class ConfigDiscordForm extends ConfigFormBase
     $form['discord_invites']['replace']['result']['#markup'] .= '<p>Invites sent: ' . $count . '</p>';
   }
 
+  /**
+   * Handle generate and send an invitation.
+   */
   private function inviteToDiscord($eid, $memberNo, $override, $resend, $regenerate, $dontEmail, $optionFields)
   {
     $connection = \Drupal::database();
 
-    // Get the member details.    
+    // Get the member details.
     $member = Member::loadMemberByMemberNo($eid, $memberNo);
 
     // Check if the member type is enabled for Discord, unless override checked.
@@ -465,28 +433,31 @@ class ConfigDiscordForm extends ConfigFormBase
 
     // Decide whether we need to generate an invite.
     if (empty($inviteCode) || $regenerate) {
-      $newCode = $this->discord->getChannelInvite();
-      $inviteCode = $newCode;
-      if (!empty($inviteCode)) {
-        $connection->upsert('conreg_discord')
-          ->fields([
-                  'mid' => $member->mid,
-                  'invite_code' => $inviteCode,
-                  'update_date' => time(),
-                  ])
-          ->key('mid')
-          ->execute();
+      if ($this->discord->getChannelInvite()) {
+        $inviteCode = $this->discord->inviteCode;
+        if (!empty($inviteCode)) {
+          $connection->upsert('conreg_discord')
+            ->fields([
+                    'mid' => $member->mid,
+                    'invite_code' => $inviteCode,
+                    'update_date' => time(),
+                    ])
+            ->key('mid')
+            ->execute();
+        }
+      }
+      else if (!empty($this->discord->message)) {
       }
     }
 
     //return "<p>Invite member no $memberNo; member ".$member->mid."; type ".$member->member_type."; match $match; invite code $inviteCode; new code $newCode</p>";
-    if (!empty($newCode) || $resend) {    
+    if (!empty($newCode) || $resend) {
       $inviteUrl = Discord::INVITE_URL . $inviteCode;
       if (!$dontEmail) {
         // Send email to user.
         $this->sendInviteEmail($member, $inviteUrl);
       }
-      
+
       return $this->t('<p>Member Name: @first_name @last_name<br />'.
                       'Member No: @member_no<br />'.
                       'Email: @email<br />'.
@@ -496,13 +467,13 @@ class ConfigDiscordForm extends ConfigFormBase
     // If invite not sent, return false.
     return FALSE;
   }
-  
+
   private function getAwaitingInviteCount($eid)
   {
     $query = $this->getQuery($eid);
     return $this->t('Number of members awaiting invitations: @count', ['@count' => $query->countQuery()->execute()->fetchField()]);
   }
-  
+
   private function getAwaitingMemberNos($eid)
   {
     $query = $this->getQuery($eid);
@@ -517,7 +488,7 @@ class ConfigDiscordForm extends ConfigFormBase
     $subquery = $connection->select('conreg_discord', 'd');
     $subquery->addExpression('NULL');
     $subquery->where("m.mid = d.mid");
-    
+
     $query = $connection->select('conreg_members', 'm');
     $query->condition('m.eid', $eid);
     $query->condition('m.is_paid', 1);
@@ -529,13 +500,13 @@ class ConfigDiscordForm extends ConfigFormBase
     $query->notExists($subquery);
     return $query;
   }
-  
+
   public function sendInviteEmail(Member $member, $inviteUrl)
   {
     // Get ConReg tokens, so we can add Zambia tokens.
     $tokens = new SimpleConregTokens($member->eid, $member->mid);
     $tokens->addExtraTokens(['[invite_url]' => $inviteUrl]);
-    
+
     // Set up parameters for receipt email.
     $params = ['eid' => $member->eid, 'mid' => $member->mid, 'tokens' => $tokens];
     $params['subject'] = $this->config->get('discord.template_subject');
