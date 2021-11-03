@@ -23,6 +23,9 @@ class Discord
   const INVITE_URL = 'https://discordapp.com/invite/';
   public $token;
   public $channelId;
+  public $channel;
+  public $inviteCode;
+  public $message;
   
   /**
    * Constructs a new Member object.
@@ -39,15 +42,25 @@ class Discord
   public function getChannel()
   {
     $client = \Drupal::httpClient();
-    $response = $client->get(self::BASE_URL . '/channels/' . $this->channelId, [
-      'headers' => [
-        'Content-type' => 'application/json',
-        'Authorization' => 'Bot ' . $this->token,
-      ],
-    ])->getBody()->getContents();
-    $decoded = (object)Json::decode($response);
+    try {
+      $response = $client->get(self::BASE_URL . '/channels/' . $this->channelId, [
+        'headers' => [
+          'Content-type' => 'application/json',
+          'Authorization' => 'Bot ' . $this->token,
+        ],
+      ])->getBody()->getContents();
+      $this->channel = (object)Json::decode($response);
+      $this->message = '';
+    }
+    catch (RequestException $e) {
+      $response = $e->getResponse();
+      $response_info = Json::decode($response->getBody()->getContents());
+      $this->message = t('Failed to get channel information with error: @error (@code).', ['@error' => $response_info['channel_id'][0], '@code' => $response->getStatusCode()]);
+      watchdog_exception('Remote API Connection', $e, $message);
+      return FALSE;
+    }
 
-    return $decoded;
+    return TRUE;
   }
 
   /**
@@ -61,16 +74,27 @@ class Discord
         'max_uses' => 1,
         'unique' => true,
     ];
-    $response = $client->post(self::BASE_URL . '/channels/' . $this->channelId . '/invites', [
-      'headers' => [
-        'Content-type' => 'application/json',
-        'Authorization' => 'Bot ' . $this->token,
-      ],
-      'body' => json_encode($json, JSON_FORCE_OBJECT),
-    ])->getBody()->getContents();
-    $decoded = (object)Json::decode($response);
-    
-    return $decoded->code;
+    try {
+      $response = $client->post(self::BASE_URL . '/channels/' . $this->channelId . '/invites', [
+        'headers' => [
+          'Content-type' => 'application/json',
+          'Authorization' => 'Bot ' . $this->token,
+        ],
+        'body' => json_encode($json, JSON_FORCE_OBJECT),
+      ])->getBody()->getContents();
+      $decoded = (object)Json::decode($response);
+      $this->inviteCode = $decoded->code;
+      $this->message = '';
+    }
+    catch (RequestException $e) {
+      $response = $e->getResponse();
+      $response_info = Json::decode($response->getBody()->getContents());
+      $this->message = t('Failed to create invite code with error: @error (@code).', ['@error' => $response_info['channel_id'][0], '@code' => $response->getStatusCode()]);
+      watchdog_exception('Remote API Connection', $e, $message);
+      return FALSE;
+    }
+
+    return TRUE;
   }
 
 }
