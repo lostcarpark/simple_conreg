@@ -71,7 +71,17 @@ class SimpleConregAdminFanTable extends FormBase {
       '#suffix' => '</div>',
     );
 
-    SimpleConregController::memberAdminMemberListSummary($eid, $form);
+    $form['summary'] = array(
+      '#type' => 'fieldset',
+      '#title' => $this->t('Membership summary'),
+    );
+
+    SimpleConregController::memberAdminMemberListSummary($eid, $form['summary']);
+
+    $form['search'] = array(
+      '#type' => 'fieldset',
+      '#title' => $this->t('Search registered members'),
+    );
 
     $headers = array(
       'member_no' => ['data' => t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
@@ -89,13 +99,13 @@ class SimpleConregAdminFanTable extends FormBase {
     );
 
 
-    $form['search'] = array(
+    $form['search']['search'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Custom search term'),
       '#default_value' => trim($search),
     );
     
-    $form['search_button'] = array(
+    $form['search']['search_button'] = array(
       '#type' => 'button',
       '#value' => t('Search'),
       '#attributes' => array('id' => "searchBtn"),
@@ -107,7 +117,7 @@ class SimpleConregAdminFanTable extends FormBase {
       ),
     );
 
-    $form['table'] = array(
+    $form['search']['table'] = array(
       '#type' => 'table',
       '#header' => $headers,
       '#attributes' => array('id' => 'simple-conreg-admin-member-list'),
@@ -188,9 +198,14 @@ class SimpleConregAdminFanTable extends FormBase {
           ),
         );*/
 
-        $form['table'][$mid] = $row;
+        $form['search']['table'][$mid] = $row;
       }
     }
+
+    $form['unpaid'] = array(
+      '#type' => 'fieldset',
+      '#title' => $this->t('Members awaiting payment'),
+    );
 
     $headers = array(
       'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
@@ -204,7 +219,7 @@ class SimpleConregAdminFanTable extends FormBase {
       /*t('Action'),*/
     );
 
-    $form['unpaid'] = array(
+    $form['unpaid']['unpaid'] = array(
       '#type' => 'table',
       '#header' => $headers,
       '#attributes' => array('id' => 'simple-conreg-admin-member-list'),
@@ -266,7 +281,7 @@ class SimpleConregAdminFanTable extends FormBase {
         ),
       );*/
 
-      $form['unpaid'][$mid] = $row;
+      $form['unpaid']['unpaid'][$mid] = $row;
     }
     
     $form['add_members_button'] = array(
