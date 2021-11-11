@@ -198,6 +198,34 @@ class SimpleConregController extends ControllerBase {
   }
 
   /**
+   * Add a summary by member type to render array.
+   */
+  public function memberAdminMemberListSummaryHorizontal($eid, &$content)
+  {
+    $types = SimpleConregOptions::memberTypes($eid);
+    $headers = [];
+    $row = [];
+    $total = 0;
+    foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
+      // Replace type code with description.
+      $headers[] = isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'];
+      $row[] = ['#markup' => $entry['num']];
+      $total += $entry['num'];
+    }
+    //Add a row for the total.
+    $headers[] = t("Total");
+    $row[] = ['#markup' => $total];
+    $content['summary'] = [
+      '#type' => 'table',
+      '#header' => $headers,
+      '#empty' => t('No entries available.'),
+      $row,
+    ];
+
+    return $content;
+  }
+
+  /**
    * Add a summary by payment method to render array.
    */
   public function memberAdminMemberListBadgeSummary($eid, &$content)

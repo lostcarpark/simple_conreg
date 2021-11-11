@@ -76,7 +76,7 @@ class SimpleConregAdminFanTable extends FormBase {
       '#title' => $this->t('Membership summary'),
     );
 
-    SimpleConregController::memberAdminMemberListSummary($eid, $form['summary']);
+    SimpleConregController::memberAdminMemberListSummaryHorizontal($eid, $form['summary']);
 
     $form['search'] = array(
       '#type' => 'fieldset',
