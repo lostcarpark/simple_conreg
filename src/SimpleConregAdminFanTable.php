@@ -283,7 +283,7 @@ class SimpleConregAdminFanTable extends FormBase {
 
       $form['unpaid']['unpaid'][$mid] = $row;
     }
-    
+/*
     $form['add_members_button'] = array(
       '#type' => 'submit',
       '#value' => t('Add Members'),
@@ -303,7 +303,7 @@ class SimpleConregAdminFanTable extends FormBase {
       '#value' => $this->t('Pay Credit Card'),
       '#submit' => [[$this, 'payCard']],
     );    
-
+*/
     return $form;
   }
   
@@ -453,6 +453,9 @@ class SimpleConregAdminFanTable extends FormBase {
     $types = SimpleConregOptions::memberTypes($eid, $config);
     $days = SimpleConregOptions::days($eid, $config);
     $form_values = $form_state->getValues();
+
+    // Create a payment.
+    $payment = new SimpleConregPayment();
 
     $payment_amount = 0;
     $lead_mid = $form_state->get('leadmid');
