@@ -46,6 +46,15 @@
 
 .badge-days {
   position: absolute;
+  top: 0.5cm;
+  left: 0.5cm;
+  width: 8.4cm;
+  text-align: center;
+  font-size: .5cm;
+}
+
+.badge-country {
+  position: absolute;
   top: 5.1cm;
   left: 0.5cm;
   width: 8.4cm;

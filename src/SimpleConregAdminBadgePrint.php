@@ -38,6 +38,7 @@ class SimpleConregAdminBadgePrint extends FormBase {
     $memberTypes = SimpleConregOptions::memberTypes($eid, $config);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
     $days = SimpleConregOptions::days($eid, $config);
+    $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
     $digits = $config->get('member_no_digits');
 
     //Get any existing form values for use in AJAX validation.
@@ -194,6 +195,7 @@ class SimpleConregAdminBadgePrint extends FormBase {
         }
         $member_days = implode(', ', $dayDescs);
       }
+      $country = (array_key_exists($member['country'], $countryOptions) ? $countryOptions[$member['country']] : $member['country']);
       $optionClasses = [];
       foreach (FieldOptionStorage::getMemberOptions($member['mid']) as $option) {
         $optionClasses[] = 'field-option-' . $option['optid'];
@@ -206,11 +208,13 @@ class SimpleConregAdminBadgePrint extends FormBase {
     <div class="badge-number">'.$member_no.'</div>
     <div id="badge-name-mid'.$member['mid'].'-left" class="badge-name">'.$badge_name.'</div>
     <div class="badge-days">'.$member_days.'</div>
+    <div class="badge-country">'.$country.'</div>
   </div><div class="badge-side badge-right">
     <div class="badge-type">'.$badge_type.'</div>
     <div class="badge-number">'.$member_no.'</div>
     <div id="badge-name-mid'.$member['mid'].'-right" class="badge-name">'.$badge_name.'</div>
     <div class="badge-days">'.$member_days.'</div>
+    <div class="badge-country">'.$country.'</div>
   </div>
 </div>',
       ];
