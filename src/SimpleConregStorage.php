@@ -528,6 +528,7 @@ class SimpleConregStorage {
     $select->addField('m', 'badge_name');
     $select->addField('m', 'badge_type');
     $select->addField('m', 'days');
+    $select->addField('m', 'country');
     $select->addField('m', 'member_type');
     $select->addField('m', 'mid');
     $select->condition('m.eid', $eid);
