@@ -184,8 +184,8 @@ class SimpleConregAdminBadgePrint extends FormBase {
       $options['member_no_to'] = (isset($form_values['view']['number']['member_no_to']) ? $form_values['view']['number']['member_no_to'] : '');
     }
     foreach(SimpleConregStorage::adminMemberBadges($eid, $max_num_badges, $options) as $member) {
-      $member_type = str_replace(' ', '-', isset($memberTypes->types[$member['member_type']]) ? $memberTypes->types[$member['member_type']]->name : $member['member_type']);
-      $badge_type = str_replace(' ', '-', isset($badgeTypes[$member['badge_type']]) ? $badgeTypes[$member['badge_type']] : $member['badge_type']);
+      $member_type = isset($memberTypes->types[$member['member_type']]) ? $memberTypes->types[$member['member_type']]->name : $member['member_type'];
+      $badge_type = isset($badgeTypes[$member['badge_type']]) ? $badgeTypes[$member['badge_type']] : $member['badge_type'];
       $member_no = $member['badge_type'] . sprintf("%0".$digits."d", $member['member_no']);
       $badge_name = Html::escape($member['badge_name']);
       if (!empty($member['days'])) {
@@ -202,7 +202,7 @@ class SimpleConregAdminBadgePrint extends FormBase {
       }
       $form['member'.$member['mid']] = [
         '#markup' => 
-'<div id="mid' . $member['mid'] . '" class="badge badge-type-' . $badge_type . ' member-type-' . $member_type . ' ' . implode(' ', $optionClasses) . '">
+'<div id="mid' . $member['mid'] . '" class="badge badge-type-' . $member['badge_type'] . ' member-type-' . $member['member_type'] . ' ' . implode(' ', $optionClasses) . '">
   <div class="badge-side badge-left">
     <div class="badge-type">'.$badge_type.'</div>
     <div class="badge-number">'.$member_no.'</div>
