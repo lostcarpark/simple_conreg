@@ -283,7 +283,7 @@ class SimpleConregAdminFanTable extends FormBase {
 
       $form['unpaid']['unpaid'][$mid] = $row;
     }
-/*
+
     $form['add_members_button'] = array(
       '#type' => 'submit',
       '#value' => t('Add Members'),
@@ -303,7 +303,7 @@ class SimpleConregAdminFanTable extends FormBase {
       '#value' => $this->t('Pay Credit Card'),
       '#submit' => [[$this, 'payCard']],
     );    
-*/
+
     return $form;
   }
   
@@ -402,16 +402,26 @@ class SimpleConregAdminFanTable extends FormBase {
       array('eid' => $eid)
     );
   }
-  
+
   // If any member upgrades selected, save them so they can be charged.
-  public function saveUpgrades($eid, $form_values)
+  public function saveUpgrades($eid, $form_values, &$upgrade_price, SimpleConregPayment &$payment)
   {
     $mgr = new SimpleConregUpgradeManager($eid);
 
-    $lead_mid = NULL; // First member will set Lead MID, which will then be used for supsequent member upgrades.
-    foreach ($form_values["table"] as $mid => $member)
-      $mgr->Add(new SimpleConregUpgrade($eid, $mid, $member["member_type"], $lead_mid));
-      
+    $lead_mid = $this->getUserLeadMid($eid); // Get lead MID from .
+    foreach ($form_values["table"] as $mid => $memberRow) {
+      $upgrade = new SimpleConregUpgrade($eid, $mid, $memberRow["member_type"], $lead_mid);
+      // Only save upgrade if price is not null.
+      if (isset($upgrade->upgradePrice)) {
+        $mgr->Add($upgrade);
+        $member = SimpleConregStorage::load(['mid' => $mid]);
+        $payment->add(new SimpleConregPaymentLine($mid,
+                                                  'upgrade',
+                                                  t("Upgrade for @first_name @last_name", array('@first_name' => $member['first_name'], '@last_name' => $member['last_name'])),
+                                                  $upgrade->upgradePrice));
+      }
+    }
+    $upgrade_price = $mgr->getTotalPrice();
     $lead_mid = $mgr->saveUpgrades();
     return $lead_mid;
   }
@@ -426,7 +436,7 @@ class SimpleConregAdminFanTable extends FormBase {
     $form_values = $form_state->getValues();
 
     // Save any member upgrades.
-    $lead_mid = self::saveUpgrades($eid, $form_values);
+    $lead_mid = self::saveUpgrades($eid, $form_values, $upgrade_price, $payment);
 
     // Next check for any unpaid members to be paid.
     $toPay = [];
@@ -511,35 +521,36 @@ class SimpleConregAdminFanTable extends FormBase {
     $days = SimpleConregOptions::days($eid, $config);
     $form_values = $form_state->getValues();
 
+    // Create a payment.
+    $payment = new SimpleConregPayment();
+
     // Save any member upgrades.
-    $lead_mid = self::saveUpgrades($eid, $form_values);
+    $upgrade_price = 0;
+    $lead_mid = self::saveUpgrades($eid, $form_values, $upgrade_price, $payment);
 
     $payment_amount = 0;
     $toPay = $form_state->get('topay');
     // Loop through selected members to get lead and total price.
+    $unpaidMembers = [];
     foreach ($form_values['unpaid'] as $mid => $member) {
       if (isset($member['is_selected']) && $member['is_selected']) {
-        if ($member = SimpleConregStorage::load(['mid' => $mid])) {
+        if ($member = Member::loadMember($mid)) {
           // Make first member lead member.
           if (empty($lead_mid))
             $lead_mid = $mid;
-          $payment_amount += $member['member_total'];
+          $payment_amount += $member->member_total;
+          $unpaidMembers[$mid] = $member;
         }
       }
     }
-    // Loop again to update members.
-    foreach ($form_values['unpaid'] as $mid => $member) {
-      if (isset($member['is_selected']) && $member['is_selected']) {
-        $update = [
-          'mid' => $mid,
-          'lead_mid' => $lead_mid,
-          'payment_amount' => $payment_amount,
-        ];
-        SimpleConregStorage::update($update);
-      }
+    // Loop again through the selected unapid members and update lead member ID and total payment amount.
+    foreach ($unpaidMembers as $mid => $member) {
+      $member->lead_mid = $lead_mid;
+      $member->payment_amount = $payment_amount;
+      $member->saveMember();
     }
     // Assuming there are members/upgrades to pay for, redirect to payment form.
-    if ($lead_mid)
+    if ($lead_mid) {
       // Get the Lead Member key...
       $member = SimpleConregStorage::load(['mid' => $lead_mid]);
       $lead_key = $member['random_key'];
@@ -547,6 +558,7 @@ class SimpleConregAdminFanTable extends FormBase {
       $form_state->setRedirect('simple_conreg_fantable_payment',
         ['mid' => $lead_mid, 'key' => $lead_key]
       );
+    }
   }
 
   public function cancelAction(array &$form, FormStateInterface $form_state) {
