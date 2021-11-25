@@ -1,18 +1,21 @@
 <?php
 /**
  * @file
- * Contains \Drupal\simple_conreg\SimpleConregForm
+ * Contains \Drupal\simple_conreg\Form\EventConfigForm
  */
-namespace Drupal\simple_conreg;
+namespace Drupal\simple_conreg\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\devel;
+use Drupal\simple_conreg\SimpleConregEventStorage;
+use Drupal\simple_conreg\SimpleConregConfig;
+use Drupal\simple_conreg\SimpleConregTokens;
 
 /**
  * Configure simple_conreg settings for this site.
  */
-class SimpleConregConfigForm extends ConfigFormBase {
+class EventConfigForm extends ConfigFormBase {
   /** 
    * {@inheritdoc}
    */

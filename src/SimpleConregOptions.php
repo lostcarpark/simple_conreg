@@ -11,6 +11,131 @@ namespace Drupal\simple_conreg;
  * List options for Simple Convention Registration.
  */
 class SimpleConregOptions {
+  
+  // Function to get cache ID for member classes.
+  public static function getMemberClassCID($eid)
+  {
+    return 'conreg:memberClasses:' . $eid . ':' . \Drupal::languageManager()
+      ->getCurrentLanguage()
+      ->getId();
+  }
+  
+  /**
+   * Return list of membership classes (for customising field list a member type sees) from config.
+   *
+   * Parameters: Optional config.
+   */
+  public static function memberClasses($eid, &$config = NULL)
+  {
+    $cid = self::getMemberClassCID($eid);
+    if ($cache = \Drupal::cache()->get($cid)) {
+      return $cache->data;
+    }
+
+    // If config not passed in, we need to load it.
+    if (is_null($config))
+      $config = SimpleConregConfig::getConfig($eid);
+
+    $memberClasses = (object) [
+      'classes' => [],
+      'options' => [],
+    ];
+
+    $classArray = $config->get('member.classes');
+    if (empty($classArray)) {
+      // Member classes not stored, so check for legacy configurations.
+      $memberClasses->classes['Default'] = self::convertFieldsetToMemberClass($config, 'Default');
+      $memberClasses->options['Default'] = 'Default';
+      for ($cnt = 1; $cnt <=5; $cnt++) {
+        $fieldsetConfig = SimpleConregConfig::getFieldsetConfig($eid, $cnt);
+        if (!empty($fieldsetConfig)) {
+          $memberClasses->classes[$cnt] = self::convertFieldsetToMemberClass($fieldsetConfig, $cnt);
+          $memberClasses->options[$cnt] = $cnt;
+        }
+      }
+    }
+    else {
+      // Build object variable from configuration array.
+      foreach ($classArray as $classRef => $classVals) {
+        $className = isset($classVals['name']) ? $classVals['name'] : $classRef;
+        $memberClasses->classes[$classRef] = (object) [
+          'name' => $className,
+        ];
+        $memberClasses->options[$classRef] = $className;
+        foreach ($classVals as $category => $catVals) {
+          if ($category != 'name') {
+            $memberClasses->classes[$classRef]->$category = (object) [];
+            foreach ($catVals as $entryName => $entryVal) {
+              $memberClasses->classes[$classRef]->$category->$entryName = $entryVal;
+            }
+          }
+        }
+      }
+    }
+    \Drupal::cache()->set($cid, $memberClasses);
+    return $memberClasses;
+  }
+  
+  // Function to save member classes to 
+  public static function saveMemberClasses($eid, $memberClasses)
+  {
+    $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.settings.'.$eid);
+    // Get existing classes and check they haven't been deleted.
+    $classArray = $config->get('member.classes');
+    foreach ($classArray as $classRef => $val) {
+      if (!array_key_exists($classRef, $memberClasses->classes)) {
+        // Member Class not in memberClasses, so delete from configuration.
+        $config->clear("member.classes.$classRef");
+      }
+    }
+    // Save all member classes to configuration.
+    foreach ($memberClasses->classes as $classRef => $classVals) {
+      $config->set("member.classes.$classRef.name", $classVals->name);
+      foreach ($classVals as $category => $catVals) {
+        if ($category != 'name') {
+          foreach ($catVals as $entryName => $entryVal) {
+            $config->set("member.classes.$classRef.$category.$entryName", $entryVal);
+          }
+        }
+      }
+    }
+    $config->save();
+    \Drupal::cache()->invalidate(self::getMemberClassCID($eid));
+  }
+
+  // Function used to convert legacy fieldsets into MemberClasses.
+  private static function convertFieldsetToMemberClass($config, $name) {
+    $class = (object) [
+      'name' => $name,
+      'fields' => (object) [],
+      'mandatory' => (object) [],
+      'max_length' => (object) [],
+      'extras' => (object) [],
+    ];
+    foreach ($config->get('fields') as $key => $value) {
+      if (preg_match('/(.*)_label$/', $key, $matches)) {
+        $field = $matches[1];
+        $class->fields->$field = $value;
+      }
+      if (preg_match('/.*_description$|age_min$|age_max$/', $key, $matches)) {
+        $description = $matches[0];
+        $class->fields->$description = $value;
+      }
+      if (preg_match('/(.*)_mandatory$/', $key, $matches)) {
+        $mandatory = $matches[1];
+        $class->mandatory->$mandatory = $value;
+      }
+      if (preg_match('/(.*)_max_length$/', $key, $matches)) {
+        $max_length = $matches[1];
+        $class->max_length->$max_length = $value;
+      }
+    }
+    foreach ($config->get('extras') as $key => $value) {
+      $class->extras->$key = $value;
+    }
+    
+    return $class;
+  }
 
   /**
    * Return list of membership types from config.
@@ -105,7 +230,7 @@ class SimpleConregOptions {
   }
 
   /**
-   * Return list of membership types from config.
+   * Return list of membership upgrade paths available from config.
    *
    * Parameters: Optional config.
    */

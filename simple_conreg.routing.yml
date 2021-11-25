@@ -189,10 +189,30 @@ simple_conreg_portal_edit:
     mid: ^[0-9]+$
 
 simple_conreg_config:
-  path: 'admin/config/simple_conreg/{eid}'
+  path: 'admin/config/conreg/{eid}'
   defaults:
-    _title: 'Simple Convention Registration'
-    _form: '\Drupal\simple_conreg\SimpleConregConfigForm'
+    _title: 'Event Configuration'
+    _form: '\Drupal\simple_conreg\Form\EventConfigForm'
+    eid: 1
+  requirements:
+    _permission: 'configure convention registration'
+    eid: ^[0-9]+$
+
+simple_conreg_config_memberclasses:
+  path: 'admin/config/conreg/memberclasses/{eid}'
+  defaults:
+    _title: 'Member Classes'
+    _form: '\Drupal\simple_conreg\Form\EventMemberClassesForm'
+    eid: 1
+  requirements:
+    _permission: 'configure convention registration'
+    eid: ^[0-9]+$
+
+simple_conreg_config_membertypes:
+  path: 'admin/config/conreg/membertypes/{eid}'
+  defaults:
+    _title: 'Member Types'
+    _form: '\Drupal\simple_conreg\Form\EventMemberTypesForm'
     eid: 1
   requirements:
     _permission: 'configure convention registration'
