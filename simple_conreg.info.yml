@@ -1,4 +1,4 @@
-name: Simple Convention Registration
+name: ConrReg - Simple Convention Registration
 type: module
 description: 'A simple module to provide a convention registration form.'
 core_version_requirement: ^8.8 || ^9
