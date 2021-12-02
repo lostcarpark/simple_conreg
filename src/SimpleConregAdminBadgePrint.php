@@ -56,6 +56,9 @@ class SimpleConregAdminBadgePrint extends FormBase {
     if ($select_max = (isset($form_values['view']['max_badges'])) ? $form_values['view']['max_badges'] : 1) {
       $max_num_badges = (isset($form_values['view']['max']['max_num_badges']) ? $form_values['view']['max']['max_num_badges'] : 10);
     }
+    if ($select_blanks = (isset($form_values['view']['blanks'])) ? $form_values['view']['blanks'] : 0) {
+      
+    }
 
     $form['#attached'] = [
       'library' => ['simple_conreg/conreg_badges'],
@@ -166,6 +169,27 @@ class SimpleConregAdminBadgePrint extends FormBase {
       ];
     }
 
+    $form['view']['blanks'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Add blank badges'),
+      '#default_value' => $select_bymemberno,
+      '#ajax' => array(
+        'wrapper' => 'badge-form',
+        'callback' => array($this, 'updateForm'),
+        'event' => 'change',
+      ),
+    ];
+    if ($select_blanks) {
+      $form['view']['num_blanks'] = [
+        '#type' => 'fieldset',
+        '#title' => $this->t('Specify blank badge quantity'),
+      ];
+      $form['view']['num_blanks']['num'] = [
+        '#type' => 'number',
+        '#title' => $this->t('Number of blank badges to add'),
+      ];
+    }
+
     $form['view']['update'] = [
       '#type' => 'button',
       '#value' => $this->t('Update'),
@@ -219,6 +243,21 @@ class SimpleConregAdminBadgePrint extends FormBase {
 </div>',
       ];
     }
+    
+    if (isset($form_values['view']['num_blanks']['num']) && $form_values['view']['num_blanks']['num'] > 0) {
+      for ($cnt = 0; $cnt < $form_values['view']['num_blanks']['num']; $cnt++) {
+        $form['blank'.$cnt] = [
+          '#markup' => 
+'<div id="blank' . $cnt . '" class="badge badge-blank">
+  <div class="badge-side badge-left">
+    <div id="badge-name-blank'.$cnt.'-left" class="badge-name"></div>
+  </div><div class="badge-side badge-right">
+    <div id="badge-name-blank'.$cnt.'-right" class="badge-name"></div>
+  </div>
+</div>',
+        ];
+      }
+    }
     return $form;
   }
 
@@ -226,7 +265,7 @@ class SimpleConregAdminBadgePrint extends FormBase {
   public function updateForm(array $form, FormStateInterface $form_state)
   {
     // Form rebuilt with required number of members before callback. Return new form.
-    return $form;
+    return $form['view'];
   }
   
   
