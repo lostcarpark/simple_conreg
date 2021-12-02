@@ -16,3 +16,9 @@ simple_conreg.config_membertypes:
   base_route: simple_conreg_config
   weight: 3
 
+simple_conreg.config_addons:
+  title: Add-Ons
+  route_name: simple_conreg_config_addons
+  base_route: simple_conreg_config
+  weight: 4
+
