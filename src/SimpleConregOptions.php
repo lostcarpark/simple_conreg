@@ -11,30 +11,204 @@ namespace Drupal\simple_conreg;
  * List options for Simple Convention Registration.
  */
 class SimpleConregOptions {
+  
+  // Function to get cache ID for member classes.
+  public static function getMemberClassCID($eid)
+  {
+    return 'conreg:memberClasses:' . $eid . ':' . \Drupal::languageManager()
+      ->getCurrentLanguage()
+      ->getId();
+  }
+  
+  /**
+   * Return list of membership classes (for customising field list a member type sees) from config.
+   *
+   * Parameters: Optional config.
+   */
+  public static function memberClasses($eid, &$config = NULL)
+  {
+    $cid = self::getMemberClassCID($eid);
+    if ($cache = \Drupal::cache()->get($cid)) {
+      return $cache->data;
+    }
+
+    // If config not passed in, we need to load it.
+    if (is_null($config))
+      $config = SimpleConregConfig::getConfig($eid);
+
+    $memberClasses = (object) [
+      'classes' => [],
+      'options' => [],
+    ];
+
+    $classArray = $config->get('member.classes');
+    if (empty($classArray)) {
+      // Member classes not stored, so check for legacy fieldset configurations.
+      $memberClasses->classes['Default'] = self::convertFieldsetToMemberClass($config, 'Default');
+      $memberClasses->options['Default'] = 'Default';
+      for ($cnt = 1; $cnt <=5; $cnt++) {
+        $fieldsetConfig = SimpleConregConfig::getFieldsetConfig($eid, $cnt);
+        if (!empty($fieldsetConfig)) {
+          $memberClasses->classes[$cnt] = self::convertFieldsetToMemberClass($fieldsetConfig, $cnt);
+          $memberClasses->options[$cnt] = $cnt;
+        }
+      }
+    }
+    else {
+      // Build object variable from configuration array.
+      foreach ($classArray as $classRef => $classVals) {
+        $className = isset($classVals['name']) ? $classVals['name'] : $classRef;
+        $memberClasses->classes[$classRef] = (object) [
+          'name' => $className,
+        ];
+        $memberClasses->options[$classRef] = $className;
+        foreach ($classVals as $category => $catVals) {
+          if ($category != 'name') {
+            $memberClasses->classes[$classRef]->$category = (object) [];
+            foreach ($catVals as $entryName => $entryVal) {
+              $memberClasses->classes[$classRef]->$category->$entryName = $entryVal;
+            }
+          }
+        }
+      }
+    }
+    \Drupal::cache()->set($cid, $memberClasses);
+    return $memberClasses;
+  }
+  
+  // Function to save member classes to 
+  public static function saveMemberClasses($eid, $memberClasses)
+  {
+    $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.settings.'.$eid);
+    // Get existing classes and check they haven't been deleted.
+    $classArray = $config->get('member.classes');
+    foreach ($classArray as $classRef => $val) {
+      if (!array_key_exists($classRef, $memberClasses->classes)) {
+        // Member Class not in memberClasses, so delete from configuration.
+        $config->clear("member.classes.$classRef");
+      }
+    }
+    // Save all member classes to configuration.
+    foreach ($memberClasses->classes as $classRef => $classVals) {
+      $config->set("member.classes.$classRef.name", $classVals->name);
+      foreach ($classVals as $category => $catVals) {
+        if ($category != 'name') {
+          foreach ($catVals as $entryName => $entryVal) {
+            $config->set("member.classes.$classRef.$category.$entryName", $entryVal);
+          }
+        }
+      }
+    }
+    $config->save();
+    \Drupal::cache()->invalidate(self::getMemberClassCID($eid));
+  }
+
+  // Function used to convert legacy fieldsets into MemberClasses.
+  private static function convertFieldsetToMemberClass($config, $name) {
+    $class = (object) [
+      'name' => $name,
+      'fields' => (object) [],
+      'mandatory' => (object) [],
+      'max_length' => (object) [],
+      'extras' => (object) [],
+    ];
+    foreach ($config->get('fields') as $key => $value) {
+      if (preg_match('/(.*)_label$/', $key, $matches)) {
+        $field = $matches[1];
+        $class->fields->$field = $value;
+      }
+      if (preg_match('/.*_description$|age_min$|age_max$/', $key, $matches)) {
+        $description = $matches[0];
+        $class->fields->$description = $value;
+      }
+      if (preg_match('/(.*)_mandatory$/', $key, $matches)) {
+        $mandatory = $matches[1];
+        $class->mandatory->$mandatory = $value;
+      }
+      if (preg_match('/(.*)_max_length$/', $key, $matches)) {
+        $max_length = $matches[1];
+        $class->max_length->$max_length = $value;
+      }
+    }
+    foreach ($config->get('extras') as $key => $value) {
+      $class->extras->$key = $value;
+    }
+    
+    return $class;
+  }
+
+  // Function to get cache ID for member types.
+  public static function getMemberTypeCID($eid)
+  {
+    return 'conreg:memberTypes:' . $eid . ':' . \Drupal::languageManager()
+      ->getCurrentLanguage()
+      ->getId();
+  }
 
   /**
    * Return list of membership types from config.
    *
-   * Parameters: Optional config.
+   * Parameters: Event ID, Optional config.
    */
   public static function memberTypes($eid, &$config = NULL) {
-    static $member_types = [];
-
-    // If member types previously loaded, just return them.
-    if (!empty($member_types[$eid])) {
-      return $member_types[$eid];
+    $cid = self::getMemberTypeCID($eid);
+    if ($cache = \Drupal::cache()->get($cid)) {
+      return $cache->data;
     }
-  
+
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
+    $days = self::days($eid, $config);
 
+    $memberTypes = new \stdClass();
+    $memberTypes->types = [];
+    $memberTypes->firstOptions = [];
+    $memberTypes->publicOptions = [];
+    $memberTypes->privateOptions = [];
+    $memberTypes->publicNames = [];
+
+    $typesArray = $config->get('member.types');
+    if (empty($typesArray)) {
+      $typesArray = self::convertLegacyMemberTypes($eid, $config);
+    }
+    foreach ($typesArray as $typeCode => $typeVals) {
+      $type = new \stdClass();
+      foreach ($typeVals as $key => $val) {
+        if ($key == 'days') {
+          $type->days = [];
+          $type->dayOptions = [];
+          foreach ($val as $dayCode => $dayVals) {
+            $type->days[$dayCode] = (object) ['name' => $days[$dayCode], 'description' => $dayVals['description'], 'price' => $dayVals['price']];
+            $type->dayOptions[$dayCode] = $dayVals['description'];
+          }
+        }
+        elseif (!empty($key)) {
+          $type->$key = $val;
+        }
+      }
+      $memberTypes->types[$typeCode] = $type;
+      if ($type->active && $type->allowFirst) {
+        $memberTypes->firstOptions[$typeCode] = $type->description;
+      }
+      if ($type->active) {
+        $memberTypes->publicOptions[$typeCode] = $type->description;
+        $memberTypes->publicNames[$typeCode] = $type->name;
+      }
+      $memberTypes->privateOptions[$typeCode] = $type->description;
+    }
+    \Drupal::cache()->set($cid, $memberTypes);
+    return $memberTypes;
+  }
+
+  /**
+   * Return list of membership types from config.
+   *
+   * Parameters: Event ID, config.
+   */
+  public static function convertLegacyMemberTypes($eid, &$config) {
     $types = explode("\n", $config->get('member_types')); // One type per line.
     $typeVals = [];
-    $firstOptions = [];
-    $publicOptions = [];
-    $privateOptions = [];
-    $publicNames = [];
     foreach ($types as $type) {
       if (!empty($type)) {
         $typeFields = array_pad(explode('|', $type), 8, '');
@@ -51,61 +225,78 @@ class SimpleConregOptions {
         $days = [];
         $dayOptions = [];
         if (strpos($defaultDays, '~') !== FALSE) {
-          list($dayDesc, $dayName) = array_pad(explode('~', $defaultDays), 2, '');
-          $dayOptions[$code] = $dayDesc;
-          $defaultDays = $dayName;
+          list($dayDesc, $dayCode) = array_pad(explode('~', $defaultDays), 2, '');
+          $days[$dayCode] = [
+            'description' => trim($dayDesc),
+            'price' => trim($price)
+          ];
+          $defaultDays = $dayCode;
         }
         $fieldCount = count($typeFields);
         if ($fieldCount > 9) {
           for ($fieldNo = 9; $fieldNo < $fieldCount; $fieldNo++) {
             list($dayCode, $dayDesc, $dayName, $dayPrice) = array_pad(explode('~', $typeFields[$fieldNo]), 4, '');
-              $dayOptions[$dayCode] = $dayDesc;
-              $days[$dayCode] = (object)[
-                'name' => $dayName,
-                'description' => $dayDesc,
-                'price' => $dayPrice
+              $days[$dayCode] = [
+                'description' => trim($dayDesc),
+                'price' => trim($dayPrice)
               ];
           }
         }
-        // Put description in specific array for populating drop-down. Put all options in private array, but only active options in public array.
-        $privateOptions[$code] = trim($desc);
-        if ($active) {
-          if ($allowFirst) {
-            $firstOptions[$code] = trim($desc);
-          }
-          $publicOptions[$code] = trim($desc);
-          $publicNames[$code] = trim($name);
-        }
-        // Put all other values in an associative array.
         $typeVals[$code] = (object)[
           'name' => trim($name),
           'description' => trim($desc),
           'price' => trim($price),
           'badgeType' => trim($badgeType),
-          'fieldset' => trim($fieldset),
+          'memberClass' => trim($fieldset) == 0 ? 'Default' : trim($fieldset),
           'allowFirst' => trim($allowFirst),
-          'active' => $active,
-          'defaultDays' => $defaultDays,
-          'config' => SimpleConregConfig::getFieldsetConfig($eid, $fieldset),
+          'active' => trim($active),
+          'defaultDays' => trim($defaultDays),
           'days' => $days,
-          'dayOptions' => $dayOptions,
         ];
       }
     }
 
-    // Stash member types in static variable in case needed again.
-    $member_types[$eid] = (object)[
-      'firstOptions' => $firstOptions,
-      'publicOptions' => $publicOptions,
-      'privateOptions' => $privateOptions,
-      'publicNames' => $publicNames,
-      'types' => $typeVals];
+    return $typeVals;
+  }
 
-    return $member_types[$eid];
+  // Function to save member types to configuration.
+  public static function saveMemberTypes($eid, $memberTypes)
+  {
+    $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.settings.'.$eid);
+    // Get existing types and check they haven't been deleted.
+    $typeArray = $config->get('member.types');
+    foreach ($typeArray as $typeRef => $val) {
+      if (!array_key_exists($typeRef, $memberTypes->types)) {
+        // Member type not in memberTypes, so delete from configuration.
+        $config->clear("member.types.$typeRef");
+      }
+    }
+    // Save all member types to configuration.
+    foreach ($memberTypes->types as $typeRef => $typeVals) {
+      foreach ($typeVals as $key => $val) {
+        if ($key == 'days') {
+          foreach ($val as $dayCode => $dayVals) {
+            $config->set("member.types.$typeRef.days.$dayCode.description", $dayVals->description);
+            $config->set("member.types.$typeRef.days.$dayCode.price", $dayVals->price);
+          }
+        }
+        elseif ($key == 'dayOptions') {
+          // Do nothing - dayoptions are generated.
+        }
+        elseif ($key == '') {
+          // Don't save empty key.
+        }
+        else {
+          $config->set("member.types.$typeRef.$key", $val);
+        }
+      }
+    }
+    $config->save();
+    \Drupal::cache()->invalidate(self::getMembertypeCID($eid));
   }
 
   /**
-   * Return list of membership types from config.
+   * Return list of membership upgrade paths available from config.
    *
    * Parameters: Optional config.
    */

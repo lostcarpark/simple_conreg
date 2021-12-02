@@ -1,0 +1,18 @@
+simple_conreg.config:
+  title: Event Configuration
+  route_name: simple_conreg_config
+  base_route: simple_conreg_config
+  weight: 1
+
+simple_conreg.config_memberclasses:
+  title: Member Classes
+  route_name: simple_conreg_config_memberclasses
+  base_route: simple_conreg_config
+  weight: 2
+
+simple_conreg.config_membertypes:
+  title: Member Types
+  route_name: simple_conreg_config_membertypes
+  base_route: simple_conreg_config
+  weight: 3
+

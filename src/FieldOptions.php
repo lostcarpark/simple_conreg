@@ -14,7 +14,7 @@ class FieldOptions {
 
   public $groups;
   public $options;
-  public $fieldSets;
+  public $memberClasses;
 
   /**
    * Fetch field options from config.
@@ -30,7 +30,7 @@ class FieldOptions {
     // Initialise results arrays.
     $this->groups = [];
     $this->options = [];
-    $this->fieldSets = [];
+    $this->memberClasses = [];
 
     // Get option groups and split into lines.
     foreach (explode("\n", $config->get('simple_conreg_options.option_groups')) as $group) {
@@ -49,16 +49,16 @@ class FieldOptions {
           $fieldOption->setGroup($this->groups[$fieldOption->groupId]);
           $this->groups[$fieldOption->groupId]->addOption($fieldOption);
         }
-        // Add the field option into each required fieldset.
-        foreach ($fieldOption->fieldSets as $fieldSet) {
-          if (!isset($this->fieldSets[$fieldSet])) {
-            $this->fieldSets[$fieldSet] = [];
+        // Add the field option into each required class.
+        foreach ($fieldOption->inMemberClasses as $class) {
+          if (!isset($this->memberClasses[$class])) {
+            $this->memberClasses[$class] = [];
           }
-          if (!isset($this->fieldSets[$fieldSet][$fieldOption->groupId])) {
+          if (!isset($this->memberClasses[$class][$fieldOption->groupId])) {
             $newGroup = $this->groups[$fieldOption->groupId]->cloneGroup();
-            $this->fieldSets[$fieldSet][$fieldOption->groupId] = $newGroup;
+            $this->memberClasses[$class][$fieldOption->groupId] = $newGroup;
           }
-          $this->fieldSets[$fieldSet][$fieldOption->groupId]->options[] = $fieldOption;
+          $this->memberClasses[$class][$fieldOption->groupId]->options[] = $fieldOption;
         }
       }
     }
@@ -86,7 +86,7 @@ class FieldOptions {
   /**
    * Fetch field option titles from config.
    *
-   * Parameters: Event ID, Config, Fieldset.
+   * Parameters: Event ID, Config.
    */
   public static function getFieldOptionsTitles($eid, $config=NULL) 
   {
@@ -149,7 +149,7 @@ class FieldOptions {
    *
    * Parameters:
    * $eid - Event ID
-   * $fieldset - the set of fields for the member type (determines which options to show)
+   * $classRef - the member class for the member type (determines which options to show)
    * $memberForm - Form to add to options to.
    * $memberVals - Form values.
    * $optionCallbacks - Array to be populated with callbacks.
@@ -157,10 +157,10 @@ class FieldOptions {
    * $memberNo - >=1 only show member options. =0 only show Global options. =-1 show global and member options.
    * $member - Member object containing saved member.
    */
-  public function addOptionFields($fieldSet, &$memberForm, Member $member = NULL, $showGlobal = NULL, $showPrivate = FALSE, $requireMandatory = TRUE)
+  public function addOptionFields($classRef, &$memberForm, Member $member = NULL, $showGlobal = NULL, $showPrivate = FALSE, $requireMandatory = TRUE)
   {
     // Loop through each field option.
-    foreach ($this->fieldSets[$fieldSet] as $group) {
+    foreach ($this->memberClasses[$classRef] as $group) {
       // Check if field should be displayed -- IF $global is null (meaning display both global and member options) or $global matches the group value AND $public is false (meaning show public and private) or the group is public.
       if ((is_null($showGlobal) || $showGlobal == $group->global) && ($showPrivate || $group->public)) {
         // If the field exists on the form, save its value.
@@ -200,7 +200,7 @@ class FieldOptions {
    *
    * Parameters: Event ID, Fieldset, Form vals for member, and reference to array to return option values.
    */
-  public function procesOptionFields($fieldset, &$memberVals, $mid, &$memberOptions)
+  public function procesOptionFields($classRef, &$memberVals, $mid, &$memberOptions)
   {
     // Loop through each field on the member form.
     foreach ($this->groups as $group) {

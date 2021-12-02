@@ -200,6 +200,7 @@ class SimpleConregTokens {
   public function replaceMemberCodes(&$members) {
     // Labels for display option and communications method. Will add to config later.
     $types = SimpleConregOptions::memberTypes($this->eid, $this->config);
+    $memberClasses = SimpleConregOptions::memberClasses($eid, $config);
     $days = SimpleConregOptions::days($this->eid, $this->config);
     $this->typeVals = $types->types;
     $displayOptions = SimpleConregOptions::display();
@@ -260,25 +261,26 @@ class SimpleConregTokens {
       $types = SimpleConregOptions::memberTypes($this->eid, $this->config);
       $this->typeVals = $types->types;
     }
+    $memberClasses = SimpleConregOptions::memberClasses($eid, $config);
     // List of fields to add to mail for each member.
-    $confirm_labels = array(
-      'member_type' => 'fields.membership_type_label',
-      'days' => 'fields.membership_days_label',
-      'first_name' => 'fields.first_name_label',
-      'last_name' => 'fields.last_name_label',
-      'badge_name' => 'fields.badge_name_label',
-      'email' => 'fields.email_label',
-      'display' => 'fields.display_label',
-      'communications_method' => 'fields.communications_method_label',
-      'street' => 'fields.street_label',
-      'street2' => 'fields.street2_label',
-      'city' => 'fields.city_label',
-      'county' => 'fields.county_label',
-      'postcode' => 'fields.postcode_label',
-      'country' => 'fields.country_label',
-      'phone' => 'fields.phone_label',
-      'birth_date' => 'fields.birth_date_label',
-      'age' => 'fields.age_label',
+    $confirms = array(
+      'member_type' => 'fields.membership_type',
+      'days' => 'fields.membership_days',
+      'first_name' => 'fields.first_name',
+      'last_name' => 'fields.last_name',
+      'badge_name' => 'fields.badge_name',
+      'email' => 'fields.email',
+      'display' => 'fields.display',
+      'communications_method' => 'fields.communications_method',
+      'street' => 'fields.street',
+      'street2' => 'fields.street2',
+      'city' => 'fields.city',
+      'county' => 'fields.county',
+      'postcode' => 'fields.postcode',
+      'country' => 'fields.country',
+      'phone' => 'fields.phone',
+      'birth_date' => 'fields.birth_date',
+      'age' => 'fields.age',
       'extra_flag1' => 'extras.flag1',
       'extra_flag2' => 'extras.flag2',
     );
@@ -291,9 +293,11 @@ class SimpleConregTokens {
     $fieldOptions = FieldOptions::getFieldOptions($this->eid);
 
     foreach ($members as $index => $cur_member) {
-      // Get fieldset config for member type.
+      // Get member type.
       $memberType = $cur_member['raw_member_type'];
-      $fieldsetConfig = $this->typeVals[$memberType]->config;
+      // Get member class for selected member type.
+      $curMemberClassRef = (!empty($memberType) && isset($types->types[$memberType])) ? $types->types[$memberType]->memberClass : array_key_first($memberClasses->classes);
+      $curMemberClass = $memberClasses->classes[$curMemberClassRef];
       // Get member options from database.
       $memberOptions = $fieldOptions->getMemberOptions($cur_member['mid']);
       // Look up labels for fields to email.
@@ -306,13 +310,14 @@ class SimpleConregTokens {
         $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member['member_no'].'</td></tr>';
         $this->plain_display .= $label.":\t".$cur_member['member_no']."\n";
       }
-      foreach ($confirm_labels as $key=>$val) {
-        if (!empty($fieldsetConfig) && !empty($fieldsetConfig->get($val))) {
+      foreach ($confirms as $key=>$val) {
+        list($section, $entry) = explode('.', $val);
+        if (!empty($curMemberClass->$section->$entry)) {
           // Override name for badge name field, as we don't want it to say "Custom badge name".
           if ($key == 'badge_name')
             $label = t('Name on badge');
           else
-            $label = $fieldsetConfig->get($val);
+            $label = $curMemberClass->$section->$entry;
           $this->display .= '<tr><td>'.$label.'</td><td>'.$cur_member[$key].'</td></tr>';
           $this->plain_display .= $label.":\t".$cur_member[$key]."\n";
 
@@ -358,12 +363,12 @@ class SimpleConregTokens {
           $this->display .= '<tr><td>'.t("Add-on: @addon", ['@addon' => $addOnName]).'</td><td>'.$addon->option.'</td></tr>';
           $this->plain_display .= t("Add-on: @addon", ['@addon' => $addOnName]).":\t".$addon->option."\n";
         }
-        if (!empty($addon->info_label) && !empty($addon->info)) {
-          $this->display .= '<tr><td>'.$addon->info_label.'</td><td>'.$addon->info.'</td></tr>';
-          $this->plain_display .= $addon->info_label.":\t".$addon->info."\n";
+        if (!empty($addon->info) && !empty($addon->info)) {
+          $this->display .= '<tr><td>'.$addon->info.'</td><td>'.$addon->info.'</td></tr>';
+          $this->plain_display .= $addon->info.":\t".$addon->info."\n";
         }
-        if (!empty($addon->free_label) && !empty($addon->amount)) {
-          $addOnName = $addon->free_label;
+        if (!empty($addon->free) && !empty($addon->amount)) {
+          $addOnName = $addon->free;
           $this->display .= '<tr><td>'.t("Add-on: @addon", ['@addon' => $addOnName]).'</td><td>'.$addon->amount.'</td></tr>';
           $this->plain_display .= t("Add-on: @addon", ['@addon' => $addOnName]).":\t".$addon->amount."\n";
         }

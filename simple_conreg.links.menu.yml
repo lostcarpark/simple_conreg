@@ -20,7 +20,7 @@ simple_conreg.portal:
 
 
 simple_conreg.config:
-  title: Registration Config
+  title: Registration Configuration
   route_name: simple_conreg_config
   weight: 2
 

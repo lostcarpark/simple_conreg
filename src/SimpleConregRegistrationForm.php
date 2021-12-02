@@ -23,7 +23,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 
 /**
- * Simple form to add an entry, with all the interesting fields.
+ * Simple form to add an entry, with all the interesting fields->
  */
 class SimpleConregRegistrationForm extends FormBase {
 
@@ -94,7 +94,7 @@ class SimpleConregRegistrationForm extends FormBase {
       return $form;
     }
 
-    // Get config for event and fieldset.    
+    // Get config for event.    
     $config = SimpleConregConfig::getConfig($eid);
     if (empty($config->get('payments.system'))) {
       // Event not configured. Display error.
@@ -107,6 +107,7 @@ class SimpleConregRegistrationForm extends FormBase {
     }
 
     $types = SimpleConregOptions::memberTypes($eid, $config);
+    $memberClasses = SimpleConregOptions::memberClasses($eid, $config);
     $symbol = $config->get('payments.symbol');
     $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
     $defaultCountry = $config->get('reference.default_country');
@@ -176,27 +177,22 @@ class SimpleConregRegistrationForm extends FormBase {
     $curMemberDays = [];
     $prevMemberTypes = $form_state->get('member_types');
     $prevMemberDays = $form_state->get('member_days');
-    // Array to store fieldset for each member.
-    $memberFieldsets = [];
-    // Get the previous fieldsets to compare.
-    $prevFieldsets = $form_state->get('member_fieldsets');
-    $memberFieldsetChanged = FALSE;
+    // Array to store class for each member.
+    $selectedClasses = [];
+    // Get the previous classes to compare.
+    $prevSelectedClasses = $form_state->get('member_classes');
+    $selectedClassChanged = FALSE;
 
     for ($cnt=1; $cnt<=$memberQty; $cnt++) {
-      // Get the fieldset config for the current member type, or if none defined, get the default fieldset config.
+      // Get the member class for the current member type, or if none defined, get the default member class.
       $memberType = isset($form_values['members']['member'.$cnt]['type']) ? $form_values['members']['member'.$cnt]['type'] : '';
-      if (!empty($memberType)) {
-        $curMemberTypes[$cnt] = $memberType;
-        $fieldsetConfig = $types->types[$memberType]->config;
-        $memberFieldsets[$cnt] = $types->types[$memberType]->fieldset;
-      }
-      // No fieldset config found, so use default.
-      if (empty($fieldsetConfig)) {
-        $fieldsetConfig = SimpleConregConfig::getFieldsetConfig($eid, 0);
-        $memberFieldsets[$cnt] = 0;
-      }
-      if (isset($memberFieldsets[$cnt]) && $memberFieldsets[$cnt] != $prevFieldsets[$cnt]) {
-        $memberFieldsetChanged = TRUE;
+      $curMemberTypes[$cnt] = $memberType;
+      $curMemberClassRef = (!empty($memberType) && isset($types->types[$memberType])) ? $types->types[$memberType]->memberClass : array_key_first($memberClasses->classes);
+      $selectedClasses[$cnt] = $curMemberClassRef;
+      $curMemberClass = $memberClasses->classes[$curMemberClassRef];
+
+      if (isset($selectedClasses[$cnt]) && $selectedClasses[$cnt] != $prevSelectedClasses[$cnt]) {
+        $selectedClassChanged = TRUE;
       }
 
       $form['members']['member'.$cnt] = array(
@@ -204,41 +200,41 @@ class SimpleConregRegistrationForm extends FormBase {
         '#title' => $this->t('Member @number', array('@number' => $cnt)),
       );
 
-      $firstname_max_length = $fieldsetConfig->get('fields.first_name_max_length');
+      $firstname_max_length = $curMemberClass->max_length->first_name;
       $form['members']['member'.$cnt]['first_name'] = array(
         '#type' => 'textfield',
-        '#title' => $fieldsetConfig->get('fields.first_name_label'),
+        '#title' => $curMemberClass->fields->first_name,
         '#size' => 29,
         '#maxlength' => (empty($firstname_max_length) ? 128 : $firstname_max_length),
         '#attributes' => [
           'id' => "edit-members-member$cnt-first-name",
           'class' => ['edit-members-first-name'],
         ],
-        '#required' => ($fieldsetConfig->get('fields.first_name_mandatory') ? TRUE : FALSE),
+        '#required' => ($curMemberClass->mandatory->first_name ? TRUE : FALSE),
       );
 
-      $lastname_max_length = $fieldsetConfig->get('fields.last_name_max_length');
+      $lastname_max_length = $curMemberClass->max_length->last_name;
       $form['members']['member'.$cnt]['last_name'] = array(
         '#type' => 'textfield',
-        '#title' => $fieldsetConfig->get('fields.last_name_label'),
+        '#title' => $curMemberClass->fields->last_name,
         '#size' => 29,
         '#maxlength' => (empty($lastname_max_length) ? 128 : $lastname_max_length),
         '#attributes' => array(
           'id' => "edit-members-member$cnt-last-name",
           'class' => array('edit-members-last-name')),
-        '#required' => ($fieldsetConfig->get('fields.last_name_mandatory') ? TRUE : FALSE),
+        '#required' => ($curMemberClass->mandatory->last_name ? TRUE : FALSE),
       );
 
-      $form['members']['member'.$cnt]['name_descriptio'] = array(
+      $form['members']['member'.$cnt]['name_description'] = array(
         '#type' => 'markup',
-        '#markup' => $fieldsetConfig->get('fields.name_description'),
+        '#markup' => $curMemberClass->fields->name_description,
         '#prefix' => '<div class="description">',
         '#suffix' => '</div>',
       );
 
       $form['members']['member'.$cnt]['email'] = array(
         '#type' => 'email',
-        '#title' => $fieldsetConfig->get('fields.email_label'),
+        '#title' => $curMemberClass->fields->email,
       );
       if ($cnt==1) {
         $form['members']['member'.$cnt]['email']['#required'] = TRUE;
@@ -249,8 +245,8 @@ class SimpleConregRegistrationForm extends FormBase {
 
       $form['members']['member'.$cnt]['type'] = array(
         '#type' => 'select',
-        '#title' => $fieldsetConfig->get('fields.membership_type_label'),
-        '#description' => $fieldsetConfig->get('fields.membership_type_description'),
+        '#title' => $curMemberClass->fields->membership_type,
+        '#description' => $curMemberClass->fields->membership_type_description,
         '#options' => ($cnt == 1 ? $types->firstOptions : $types->publicOptions),
         '#required' => TRUE,
         '#attributes' => array('class' => array('edit-member-type')),
@@ -272,13 +268,13 @@ class SimpleConregRegistrationForm extends FormBase {
         if (count($types->types[$currentType]->dayOptions)) {
           // Track that the member has days set.
           $curMemberDays[$cnt] = TRUE;
-          // If day options available, we need to give them Ajax callbacks, and can't do a partial form update, so treat like fieldset change.
-          $memberFieldsetChanged = TRUE;
+          // If day options available, we need to give them Ajax callbacks, and can't do a partial form update, so treat like member class change.
+          $selectedClassChanged = TRUE;
           // Checkboxes for days.
           $form['members']['member'.$cnt]['dayOptions']['days'] = array(
             '#type' => 'checkboxes',
-            '#title' => $fieldsetConfig->get('fields.membership_days_label'),
-            '#description' => $fieldsetConfig->get('fields.membership_days_description'),
+            '#title' => $curMemberClass->fields->membership_days,
+            '#description' => $curMemberClass->fields->membership_days_description,
             '#options' => $types->types[$currentType]->dayOptions,
             '#attributes' => array(
               'class' => array('edit-members-days')),
@@ -294,7 +290,7 @@ class SimpleConregRegistrationForm extends FormBase {
           $curMemberDays[$cnt] = FALSE;
           // If current member type has no days, but previous one did, we need to refresh form.
           if (isset($prevMemberDays) && $prevMemberDays[$cnt])
-            $memberFieldsetChanged = TRUE;
+            $selectedClassChanged = TRUE;
         }
       }
 
@@ -320,7 +316,7 @@ class SimpleConregRegistrationForm extends FormBase {
       );
 
       // Add badge name max to Drupal Settings for JavaScript to use.
-      $badgename_max_length = $fieldsetConfig->get('fields.badge_name_max_length');
+      $badgename_max_length = $curMemberClass->max_length->badge_name;
       if (empty($badgename_max_length)) {
         $badgename_max_length = 128;
       }
@@ -330,8 +326,8 @@ class SimpleConregRegistrationForm extends FormBase {
       $lastName = (isset($form_values['members']['member'.$cnt]['last_name']) ? $form_values['members']['member'.$cnt]['last_name'] : '');
       $form['members']['member'.$cnt]['badge_name_option'] = [
         '#type' => 'radios',
-        '#title' => $fieldsetConfig->get('fields.badge_name_option_label'),
-        '#description' => $fieldsetConfig->get('fields.badge_name_description'),
+        '#title' => $curMemberClass->fields->badge_name_option,
+        '#description' => $curMemberClass->fields->badge_name_description,
         '#options' => SimpleConregOptions::badgeNameOptionsForName($eid, $firstName, $lastName, $badgename_max_length, $config),
         '#default_value' => $config->get('badge_name_default'),
         '#required' => TRUE,
@@ -348,18 +344,18 @@ class SimpleConregRegistrationForm extends FormBase {
       // Check if "other" selected for badge name option, and display badge name textbox.
       $form['members']['member'.$cnt]['badge_name']['other'] = array(
         '#type' => 'textfield',
-        '#title' => $fieldsetConfig->get('fields.badge_name_label'),
+        '#title' => $curMemberClass->fields->badge_name,
         '#maxlength' => $badgename_max_length,
         '#attributes' => array(
           'id' => "edit-members-member$cnt-badge-name",
           'class' => array('edit-members-badge-name-other')),
       );
 
-      if (!empty($fieldsetConfig->get('fields.display_label'))) {
+      if (!empty($curMemberClass->fields->display)) {
         $form['members']['member'.$cnt]['display'] = array(
           '#type' => 'select',
-          '#title' => $fieldsetConfig->get('fields.display_label'),
-          '#description' => $fieldsetConfig->get('fields.display_description'),
+          '#title' => $curMemberClass->fields->display,
+          '#description' => $curMemberClass->fields->display_description,
           '#options' => SimpleConregOptions::display(),
           '#default_value' => 'F',
           '#required' => TRUE,
@@ -368,25 +364,25 @@ class SimpleConregRegistrationForm extends FormBase {
         $form['members']['member'.$cnt]['display'] = array(
           '#prefix' => '<div id="memberDisplayMessage'.$cnt.'">',
           '#suffix' => '</div>',
-          '#markup' => $fieldsetConfig->get('fields.display_description'),
+          '#markup' => $curMemberClass->fields->display_description,
         );
       }
 
-      if (!empty($fieldsetConfig->get('fields.communication_method_label'))) {
+      if (!empty($curMemberClass->fields->communication_method)) {
         $form['members']['member'.$cnt]['communication_method'] = array(
           '#type' => 'select',
-          '#title' => $fieldsetConfig->get('fields.communication_method_label'),
-          '#description' => $fieldsetConfig->get('fields.communication_method_description'),
+          '#title' => $curMemberClass->fields->communication_method,
+          '#description' => $curMemberClass->fields->communication_method_description,
           '#options' => SimpleConregOptions::communicationMethod($eid, $config, TRUE),
           '#default_value' => 'E',
           '#required' => TRUE,
         );
       }
 
-      if ($cnt > 1 && !empty($fieldsetConfig->get('fields.same_address_label'))) {
+      if ($cnt > 1 && !empty($curMemberClass->fields->same_address)) {
         $form['members']['member'.$cnt]['same_address'] = array(
           '#type' => 'checkbox',
-          '#title' => $fieldsetConfig->get('fields.same_address_label'),
+          '#title' => $curMemberClass->fields->same_address,
           '#ajax' => array(
             'callback' => array($this, 'updateMemberAddressCallback'),
             'event' => 'change',
@@ -406,52 +402,52 @@ class SimpleConregRegistrationForm extends FormBase {
 
       // Always show address for member 1, and for other members if "same" box isn't checked.
       if ($cnt == 1 || !$same) {
-        if (!empty($fieldsetConfig->get('fields.street_label'))) {
+        if (!empty($curMemberClass->fields->street)) {
           $form['members']['member'.$cnt]['address']['street'] = array(
             '#type' => 'textfield',
-            '#title' => $fieldsetConfig->get('fields.street_label'),
-            '#required' => ($fieldsetConfig->get('fields.street_mandatory') ? TRUE : FALSE),
+            '#title' => $curMemberClass->fields->street,
+            '#required' => ($curMemberClass->mandatory->street ? TRUE : FALSE),
           );
         }
 
-        if (!empty($fieldsetConfig->get('fields.street2_label'))) {
+        if (!empty($curMemberClass->fields->street2)) {
           $form['members']['member'.$cnt]['address']['street2'] = array(
             '#type' => 'textfield',
-            '#title' => $fieldsetConfig->get('fields.street2_label'),
-            '#required' => ($fieldsetConfig->get('fields.street2_mandatory') ? TRUE : FALSE),
+            '#title' => $curMemberClass->fields->street2,
+            '#required' => ($curMemberClass->mandatory->street2 ? TRUE : FALSE),
           );
         }
 
-        if (!empty($fieldsetConfig->get('fields.city_label'))) {
+        if (!empty($curMemberClass->fields->city)) {
           $form['members']['member'.$cnt]['address']['city'] = array(
             '#type' => 'textfield',
-            '#title' => $fieldsetConfig->get('fields.city_label'),
-            '#required' => ($fieldsetConfig->get('fields.city_mandatory') ? TRUE : FALSE),
+            '#title' => $curMemberClass->fields->city,
+            '#required' => ($curMemberClass->mandatory->city ? TRUE : FALSE),
           );
         }
 
-        if (!empty($fieldsetConfig->get('fields.county_label'))) {
+        if (!empty($curMemberClass->fields->county)) {
           $form['members']['member'.$cnt]['address']['county'] = array(
             '#type' => 'textfield',
-            '#title' => $fieldsetConfig->get('fields.county_label'),
-            '#required' => ($fieldsetConfig->get('fields.county_mandatory') ? TRUE : FALSE),
+            '#title' => $curMemberClass->fields->county,
+            '#required' => ($curMemberClass->mandatory->county ? TRUE : FALSE),
           );
         }
 
-        if (!empty($fieldsetConfig->get('fields.postcode_label'))) {
+        if (!empty($curMemberClass->fields->postcode)) {
           $form['members']['member'.$cnt]['address']['postcode'] = array(
             '#type' => 'textfield',
-            '#title' => $fieldsetConfig->get('fields.postcode_label'),
-            '#required' => ($fieldsetConfig->get('fields.postcode_mandatory') ? TRUE : FALSE),
+            '#title' => $curMemberClass->fields->postcode,
+            '#required' => ($curMemberClass->mandatory->postcode ? TRUE : FALSE),
           );
         }
 
-        if (!empty($fieldsetConfig->get('fields.country_label'))) {
+        if (!empty($curMemberClass->fields->country)) {
           $form['members']['member'.$cnt]['address']['country'] = array(
             '#type' => 'select',
-            '#title' => $fieldsetConfig->get('fields.country_label'),
+            '#title' => $curMemberClass->fields->country,
             '#options' => $countryOptions,
-            '#required' => ($fieldsetConfig->get('fields.country_mandatory') ? TRUE : FALSE),
+            '#required' => ($curMemberClass->mandatory->country ? TRUE : FALSE),
           );
           if (!empty($defaultCountry)) {
             $form['members']['member'.$cnt]['address']['country']['#default_value'] = $defaultCountry;
@@ -459,58 +455,56 @@ class SimpleConregRegistrationForm extends FormBase {
         }
       }
 
-      if (!empty($fieldsetConfig->get('fields.phone_label'))) {
+      if (!empty($curMemberClass->fields->phone)) {
         $form['members']['member'.$cnt]['phone'] = array(
           '#type' => 'tel',
-          '#title' => $fieldsetConfig->get('fields.phone_label'),
+          '#title' => $curMemberClass->fields->phone,
         );
       }
 
-      if (!empty($fieldsetConfig->get('fields.birth_date_label'))) {
+      if (!empty($curMemberClass->fields->birth_date)) {
         $form['members']['member'.$cnt]['birth_date'] = array(
           '#type' => 'date',
-          '#title' => $fieldsetConfig->get('fields.birth_date_label'),
-          '#required' => ($fieldsetConfig->get('fields.birth_date_mandatory') ? TRUE : FALSE),
+          '#title' => $curMemberClass->fields->birth_date,
+          '#required' => ($curMemberClass->mandatory->birth_date ? TRUE : FALSE),
         );
       }
 
-      if (!empty($fieldsetConfig->get('fields.age_label'))) {
+      if (!empty($curMemberClass->fields->age)) {
         $ageOptions = [];
-        $min = $fieldsetConfig->get('fields.age_min');
-        $max = $fieldsetConfig->get('fields.age_max');
+        $min = $curMemberClass->fields->age_min;
+        $max = $curMemberClass->fields->age_max;
         for ($age=$min; $age<=$max; $age++)
           $ageOptions[$age] = $age;
         $form['members']['member'.$cnt]['age'] = array(
           '#type' => 'select',
-          '#title' => $fieldsetConfig->get('fields.age_label'),
+          '#title' => $curMemberClass->fields->age,
           '#options' => $ageOptions,
-          '#required' => ($fieldsetConfig->get('fields.age_mandatory') ? TRUE : FALSE),
+          '#required' => ($curMemberClass->mandatory->age ? TRUE : FALSE),
         );
       }
 
-      if (!empty($fieldsetConfig->get('extras.flag1'))) {
+      if (!empty($curMemberClass->extras->flag1)) {
         $form['members']['member'.$cnt]['extra_flag1'] = array(
           '#type' => 'checkbox',
-          '#title' => $fieldsetConfig->get('extras.flag1'),
+          '#title' => $curMemberClass->extras->flag1,
         );
       }
 
-      if (!empty($fieldsetConfig->get('extras.flag2'))) {
+      if (!empty($curMemberClass->extras->flag2)) {
         $form['members']['member'.$cnt]['extra_flag2'] = array(
           '#type' => 'checkbox',
-          '#title' => $fieldsetConfig->get('extras.flag2'),
+          '#title' => $curMemberClass->extras->flag2,
         );
       }
       
-      $fieldset = isset($types->types[$memberType]->fieldset) ? $types->types[$memberType]->fieldset : 0;
-
       // Get field options from form state. If not set, get from config.
       $fieldOptions = $form_state->get('fieldOptions');
       if (is_null($fieldOptions)) {
         $fieldOptions = FieldOptions::getFieldOptions($eid);
       }
-      // Add the field options to the form. Display both global and member fields. Display only public fields.
-      $fieldOptions->addOptionFields($fieldset, $form['members']['member'.$cnt], NULL, FALSE, FALSE);
+      // Add the field options to the form. Display both global and member fields-> Display only public fields->
+      $fieldOptions->addOptionFields($curMemberClassRef, $form['members']['member'.$cnt], NULL, FALSE, FALSE);
     }
 
     $form['global_options'] = [
@@ -518,8 +512,8 @@ class SimpleConregRegistrationForm extends FormBase {
       '#suffix' => '</div>',
     ];
 
-    // Add the field options to the form. Display global fields. Display only public fields.
-    $fieldOptions->addOptionFields(0, $form['global_options'], NULL, TRUE, FALSE);
+    // Add the field options to the form. Display global fields-> Display only public fields->
+    $fieldOptions->addOptionFields(array_key_first($memberClasses->classes), $form['global_options'], NULL, TRUE, FALSE);
 
     $form['payment'] = array(
       '#type' => 'fieldset',
@@ -583,8 +577,8 @@ class SimpleConregRegistrationForm extends FormBase {
 
     $form_state->set('member_types', $curMemberTypes);
     $form_state->set('member_days', $curMemberDays);
-    $form_state->set('member_fieldsets', $memberFieldsets);
-    $form_state->set('fieldset_changed', $memberFieldsetChanged);
+    $form_state->set('member_classes', $selectedClasses);
+    $form_state->set('selected_class_changed', $selectedClassChanged);
     $form_state->set('option_callbacks', $optionCallbacks);
     $form_state->set('total_price', $totalPrice);
     return $form;
@@ -596,12 +590,12 @@ class SimpleConregRegistrationForm extends FormBase {
     return $form;
   }
 
-  // Callback function for "member type" and "add-on" drop-downs. Replace price fields.
+  // Callback function for "member type" and "add-on" drop-downs. Replace price fields->
   public function updateMemberPriceCallback(array $form, FormStateInterface $form_state)
   {
-    // Check if fieldset has changed, which will require a full form refresh to update the member fields.
-    $memberFieldsetChanged = $form_state->get('fieldset_changed');
-    if ($memberFieldsetChanged) {
+    // Check if member class has changed, which will require a full form refresh to update the member fields->
+    $selectedClassChanged = $form_state->get('selected_class_changed');
+    if ($selectedClassChanged) {
       // Get the triggering element.    
       $trigger = $form_state->getTriggeringElement()['#name'];
       if (preg_match("/^members\[member(\d+)\]\[(\w+)\]/", $trigger, $matches)) {
@@ -611,7 +605,7 @@ class SimpleConregRegistrationForm extends FormBase {
         }
       }
     }
-    // Member fieldset has not changed, so we only need to update the prices.
+    // Member class has not changed, so we only need to update the prices.
     $ajax_response = new AjaxResponse();
     // Calculate price for each member.
     $memberQty = $form_state->getValue(array('global', 'member_quantity'));
@@ -737,7 +731,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $form_values = $form_state->getValues();
     $memberQty = $form_values['global']['member_quantity'];
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
-      // Check that either first name or last name has been entered. Will only arise if both first and last name are optional fields.
+      // Check that either first name or last name has been entered. Will only arise if both first and last name are optional fields->
       if ((empty($form_values['members']['member'.$cnt]['first_name']) ||
            empty(trim($form_values['members']['member'.$cnt]['first_name']))) &&
           (empty($form_values['members']['member'.$cnt]['last_name']) ||
@@ -768,6 +762,7 @@ class SimpleConregRegistrationForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
     $return = $form_state->get('return');
+    $memberClasses = $form_state->get('member_classes');
 
     $form_values = $form_state->getValues();
     
@@ -821,16 +816,15 @@ class SimpleConregRegistrationForm extends FormBase {
       } else
         $badge_type = 'A'; // This shouldn't happen, but if no default badge type found, hard code to A.
 
-      $fieldset = $types->types[$member_type]->fieldset;
-      $fieldsetConfig = $types->types[$member_type]->config;
+      $memberClass = (!empty($member_type) && isset($types->types[$member_type])) ? $types->types[$member_type]->memberClass : array_key_first($memberClasses->classes);
       $optionVals = [];
       // Process option fields to remove any modifications from form values.
-      $fieldOptions->procesOptionFields($fieldset, $form_values['members']['member'.$cnt], 0, $optionVals);
+      $fieldOptions->procesOptionFields($memberClass, $form_values['members']['member'.$cnt], 0, $optionVals);
 
       // Also process global options for each member.
-      $fieldOptions->procesOptionFields($fieldset, $form_values['global_options'], 0, $optionVals);
+      $fieldOptions->procesOptionFields($memberClass, $form_values['global_options'], 0, $optionVals);
     
-      $badgename_max_length = $fieldsetConfig->get('fields.badge_name_max_length');
+      $badgename_max_length = $memberClasses->classes[$memberClass]->max_length->badge_name; // $fieldsetConfig->get('fields->badge_name_max_length');
       if (empty($badgename_max_length)) $badgename_max_length = 128;
       // Check whether to use name or "other" badge name...
       switch($form_values['members']['member'.$cnt]['badge_name_option']) {
@@ -848,7 +842,7 @@ class SimpleConregRegistrationForm extends FormBase {
           break;
       }
     
-      // If "same" checkbox ticked for member, use member 1 for address fields.
+      // If "same" checkbox ticked for member, use member 1 for address fields->
       if ($cnt == 1 || $form_values['members']['member'.$cnt]['same_address'])
         $addressMember = 1;
       else
