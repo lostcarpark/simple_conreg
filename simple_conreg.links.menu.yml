@@ -24,12 +24,6 @@ simple_conreg.config:
   route_name: simple_conreg_config
   weight: 2
 
-simple_conreg.config_addons:
-  title: Add-Ons Configuration
-  route_name: simple_conreg_config_addons
-  base_route: simple_conreg_config
-  weight: 2
-
 simple_conreg.config_email:
   title: Convention Email Templates
   route_name: simple_conreg_config_email_templates

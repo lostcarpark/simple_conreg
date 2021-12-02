@@ -3,23 +3,25 @@
  * @file
  * Contains \Drupal\simple_conreg\SimpleConregForm
  */
-namespace Drupal\simple_conreg;
+namespace Drupal\simple_conreg\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\simple_conreg\SimpleConregEventStorage;
+use Drupal\simple_conreg\SimpleConregConfig;
 use Drupal\devel;
 
 /**
  * Configure simple_conreg settings for this site.
  */
-class SimpleConregConfigAddOnsForm extends ConfigFormBase
+class EventAddOnsForm extends ConfigFormBase
 {
   /**
    * {@inheritdoc}
    */
   public function getFormId()
   {
-    return 'simple_conreg_config_addons';
+    return 'simple_conreg_event_addons';
   }
 
   /** 

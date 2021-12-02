@@ -219,10 +219,10 @@ simple_conreg_config_membertypes:
     eid: ^[0-9]+$
 
 simple_conreg_config_addons:
-  path: 'admin/config/simple_conreg/addons/{eid}'
+  path: 'admin/config/conreg/addons/{eid}'
   defaults:
-    _title: 'Simple Convention Registration Add-ons'
-    _form: '\Drupal\simple_conreg\SimpleConregConfigAddOnsForm'
+    _title: 'Add-ons'
+    _form: '\Drupal\simple_conreg\Form\EventAddOnsForm'
     eid: 1
   requirements:
     _permission: 'configure convention add-ons'
