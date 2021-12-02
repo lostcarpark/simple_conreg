@@ -7,6 +7,7 @@ namespace Drupal\simple_conreg\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Component\Utility\Html;
 use Drupal\devel;
 use Drupal\simple_conreg\SimpleConregEventStorage;
 use Drupal\simple_conreg\SimpleConregConfig;
@@ -55,7 +56,7 @@ class EventMemberClassesForm extends ConfigFormBase {
       $memberClasses = SimpleConregOptions::memberClasses($eid);
       $form_state->set('member_classes', $memberClasses);
     }
-    
+
     $cloneMemberClassID = $form_state->get('clone_member_class_id');
     if (!empty($cloneMemberClassID)) {
       return $this->buildCloneForm($form, $form_state, $cloneMemberClassID, $memberClasses);
@@ -236,8 +237,6 @@ class EventMemberClassesForm extends ConfigFormBase {
 
     }
 
-dpm($memberClasses, "Classes");
-
     return parent::buildForm($form, $form_state);
   }
 
@@ -322,7 +321,7 @@ dpm($memberClasses, "Classes");
 
     parent::submitForm($form, $form_state);
   }
-  
+
   public function cloneSubmit(array &$form, FormStateInterface $form_state)
   {
     $memberClasses = $form_state->get('member_classes');

@@ -51,7 +51,7 @@ class SimpleConregConfigAddOnsForm extends ConfigFormBase
       return parent::buildForm($form, $form_state);
     }
 
-    // Get config for event and fieldset.    
+    // Get config for event.    
     $config = SimpleConregConfig::getConfig($eid);
 
     $form['admin'] = array(
@@ -183,15 +183,6 @@ class SimpleConregConfigAddOnsForm extends ConfigFormBase
     }
 
     return parent::buildForm($form, $form_state);
-  }
-
-  // Callback function for "fieldset" drop down.
-  public function updateFieldsetCallback(array $form, FormStateInterface $form_state) {
-    $fieldset = $form_state->getValue(['simple_conreg_fieldsets', 'fieldset']);
-    if (empty($fieldset))
-      $fieldset = 0;
-    $fieldsetContainer = "fieldset_container_$fieldset";
-    return $form['simple_conreg_fieldsets'][$fieldsetContainer];
   }
 
   /** 

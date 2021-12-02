@@ -19,7 +19,7 @@ class FieldOption {
   public $detailTitle;
   public $detailRequired;
   public $weight;
-  public $fieldSets;
+  public $inMemberClasses;
   public $mustSelect;
 
   /**
@@ -27,15 +27,15 @@ class FieldOption {
    */
   public function __construct()
   {
-    $fieldSets = [];
+    $inMemberClasses = [];
   }
 
   public function parseOption($optionLine) {
     $optionFields = array_pad(explode('|', $optionLine), 8, '');
     list($this->optionId, $this->groupId, $this->title, $this->detailTitle, $this->detailRequired, $this->weight, $belongsIn, $this->mustSelect) = $optionFields;
-    $fieldSets = [];
-    foreach (explode(',', trim($belongsIn)) as $fieldSet) {
-      $this->fieldSets[] = $fieldSet;
+    $inMemberClasses = [];
+    foreach (explode(',', trim($belongsIn)) as $inClass) {
+      $this->inMemberClasses[] = $inClass;
     }
   }
   
