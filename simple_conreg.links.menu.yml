@@ -6,7 +6,6 @@ simple_conreg.list:
   title: List Members
   route_name: simple_conreg_list
   weight: 0
-  parent: simple_conreg.register
 
 simple_conreg.check:
   title: Check Membership
@@ -88,7 +87,6 @@ simple_conreg.member_summary:
   title: Membership Summary
   route_name: simple_conreg_admin_member_summary
   weight: 6
-  parent: simple_conreg.register
 
 simple_conreg.programme_list:
   title: Programme Participant List
