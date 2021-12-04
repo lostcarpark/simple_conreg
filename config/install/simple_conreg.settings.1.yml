@@ -5,52 +5,41 @@ payments:
   private_key: ''
   currency: 'EUR'
   symbol: '€'
-
 badge_types: |
   A|Attending
   S|Supporting
   C|Committee
   G|Guest
   D|Dealer
-
 badge_name_options: |
   F|Given name only
   N|Full name on badge
   L|Family name, given name
   O|Custom badge name
-
 badge_name_default: F
-
 days: |
   W|Weekend
   Fr|Friday
   Sa|Saturday
   Su|Sunday
-
 member_no_digits: '4'
-
 registration_intro: 'This is a test site. You will not be registered for any convention.'
 payment_intro: 'This is a test payment. Do not use real credit cards. No charges will be applied. Sample test card: 4242424242424242 (use any future date and any 3 digits for CVV).'
-
 communications_method:
   options: |
     E|Electronic|1
     P|Paper|1
     B|Both|0
-
 display_options:
   options: |
     F|Full name and member name
     B|Member name only
     N|Not at all
-
 display:
   page_size: '15'
-
 submit:
   payment: 'Proceed to Payment Page'
   free: 'Complete Membership'
-
 confirmation:
   copy_us: 1
   from_name: ''
@@ -61,7 +50,6 @@ confirmation:
   template_body: "<p>Hi [first_name],</p>\r\n\r\n<p>This is to confirm you have joined [event_name].</p>\r\n\r\n<p>Your member details are:</p>\r\n\r\n<p>[member_details]</p>\r\n\r\n<p>Your payment reference is [payment_id].</p>\r\n\r\n<p>If you would like to upgrade your membership type, please visit our member portal by clicking on this link:&nbsp;[login_url]</p>\r\n\r\n<p>Best wishes,</p>\r\n\r\n<p>The [event_name] team.</p>\r\n"
   template_format: basic_html
   notification_subject: '[full_name] has joined [event_name] '
-
 member_editable:
   first_name: 1
   last_name: 1
@@ -80,15 +68,12 @@ member_editable:
   phone: 1
   birth_date: 0
   extra_flag2: 1
-
 checkin:
   display: 'N'
   communication_method: E
-
 thanks:
   thank_you_message: "<p>Thank you for registering for [event_name]!</p>\r\n\r\n<p>You will also receive an email confirmation. If you don't see it, please check your Spam folder.</p>\r\n\r\n<p>Your payment reference is <strong>[reference]</strong>.</p>\r\n\r\n<p>If you have chosen to appear on the public membership list, you will be added once your membership has been processed by the registration team.</p>\r\n"
   thank_you_format: basic_html
-
 member_check_intro: 'To check your membership details, please enter your email address below. For privacy reasons, we can only confirm your membership by email. If you don''t receive an email within a few minutes, please check your spam folder.'
 member_check:
   intro: 'To check your membership details, please enter your email address below. For privacy reasons, we can only confirm your membership by email. If you don''t receive an email within a few minutes, please check your spam folder.'
@@ -98,13 +83,11 @@ member_check:
   unknown_body: "<p>Hi,</p>\r\n\r\n<p>Thank you for checking your membership status for [event_name].</p>\r\n\r\n<p>Unfortunately, we can find no entry for this email address. If you think this is incorrect, please contact us.</p>\r\n\r\n<p>Best wishes,</p>\r\n\r\n<p>The [event_name] team.</p>\r\n"
   unknown_format: basic_html
   title: 'Check Membership and Volunteer'
-
 member_edit:
   intro_text: "<p>This page allows you to edit details of your membership. You may edit your badge name, but for real name changes, please contact our membership team.</p>\r\n"
   intro_format: basic_html
   email_editable: 0
   badge_name_editable: 1
-
 member:
   classes:
     Default:
@@ -201,8 +184,6 @@ member:
       allowFirst: 1
       active: 1
       defaultDays: W
-
-
 reference:
   default_country: IE
   countries: |
@@ -455,5 +436,3 @@ reference:
     YE|Yemen
     ZM|Zambia
     ZW|Zimbabwe
-
-
