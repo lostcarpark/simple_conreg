@@ -1,100 +1,91 @@
 simple_conreg.register:
   title: Register
   route_name: simple_conreg_register
+  weight: 0
 
 simple_conreg.list:
   title: List Members
   route_name: simple_conreg_list
-  weight: 0
+  weight: 1
 
 simple_conreg.check:
   title: Check Membership
   route_name: simple_conreg_check
-  weight: 1
+  weight: 2
 
 simple_conreg.portal:
   title: Member Portal
   route_name: simple_conreg_portal
-  weight: 1
+  weight: 3
 
 
 simple_conreg.config:
   title: Registration Configuration
   route_name: simple_conreg_config
-  weight: 2
+  weight: 12
 
 simple_conreg.config_email:
   title: Convention Email Templates
   route_name: simple_conreg_config_email_templates
-  weight: 3
+  weight: 13
 
 simple_conreg.admin.bulkemail:
   title: Membership Bulk Email Sender
   route_name: simple_conreg_admin_bulk_email
-  weight: 10
+  weight: 19
 
 simple_conreg.admin.members:
   title: Membership Admin
   route_name: simple_conreg_admin_members
-  weight: 4
+  weight: 11
 
 simple_conreg.admin.options:
   title: Membership Selected Options
   route_name: simple_conreg_admin_member_options
-  weight: 6
+  weight: 18
 
 simple_conreg.admin.mailout.emails:
   title: Membership Mailout Emails
   route_name: simple_conreg_admin_mailout_emails
-  weight: 6
+  weight: 19
 
 simple_conreg.admin.checkin:
   title: Membership Check In
   route_name: simple_conreg_admin_checkin
-  weight: 5
+  weight: 20
 
 simple_conreg.admin.fantable:
   title: Fan Table Registration
   route_name: simple_conreg_admin_fantable
-  weight: 5
+  weight: 20
 
 simple_conreg.member_list:
   title: Membership List
   route_name: simple_conreg_admin_member_list
-  weight: 2
+  weight: 14
 
 simple_conreg.member_badge_names:
   title: Badge Names
   route_name: simple_conreg_admin_member_badge_names
-  weight: 3
+  weight: 21
 
 simple_conreg.member_badges:
   title: Badge Printing
   route_name: simple_conreg_admin_member_badges
-  weight: 3
+  weight: 22
 
 simple_conreg.member_addons:
   title: Member Add-Ons
   route_name: simple_conreg_admin_member_addons
-  weight: 3
+  weight: 16
 
 simple_conreg.child_member_ages:
   title: Child Member Ages
   route_name: simple_conreg_admin_child_member_ages
-  weight: 10
+  weight: 17
 
 simple_conreg.member_summary:
   title: Membership Summary
   route_name: simple_conreg_admin_member_summary
-  weight: 6
-
-simple_conreg.programme_list:
-  title: Programme Participant List
-  route_name: simple_conreg_admin_programme_list
-  weight: 7
-
-simple_conreg.volunteer_list:
-  title: Volunteer List
-  route_name: simple_conreg_admin_volunteer_list
-  weight: 8
+  weight: 10
 
