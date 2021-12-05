@@ -148,6 +148,42 @@ member:
       allowFirst: 1
       active: 1
       defaultDays: W
+    U:
+      name: 'Low Income'
+      description: 'Low Income Adult - €25'
+      price: '25'
+      badgeType: A
+      memberClass: Default
+      allowFirst: 1
+      active: 1
+      defaultDays: W
+    C:
+      name: Child
+      description: 'Child - £15'
+      price: '15'
+      badgeType: A
+      memberClass: Default
+      allowFirst: 0
+      active: 1
+      defaultDays: W
+    I:
+      name: Infant
+      description: 'Infant (free)'
+      price: '0'
+      badgeType: A
+      memberClass: Default
+      allowFirst: 0
+      active: 1
+      defaultDays: W
+    S:
+      name: Supporting
+      description: 'Supporting (€25)'
+      price: '25'
+      badgeType: S
+      memberClass: Default
+      allowFirst: 1
+      active: 1
+      defaultDays: W
 reference:
   default_country: IE
   countries: |
