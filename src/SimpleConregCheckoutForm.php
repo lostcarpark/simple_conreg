@@ -124,7 +124,7 @@ class SimpleConregCheckoutForm extends FormBase {
       if ($line->amount > 0) {
         $items[] = [
           'name' => $line->lineDesc,
-          'description' => $line-lineDesc,
+          'description' => $line->lineDesc,
           'amount' => $line->amount * 100,
           'currency' => $config->get('payments.currency'),
           'quantity' => 1,
