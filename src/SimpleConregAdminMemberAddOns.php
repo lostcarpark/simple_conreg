@@ -99,7 +99,7 @@ class SimpleConregAdminMemberAddOns extends FormBase {
     foreach ($memberAddOns as $entry) {
       $total += $entry['addon_amount'];
       // Sanitize each entry.
-      $rows[] = array_map('Drupal\Component\Utility\SafeMarkup::checkPlain', (array) $entry);
+      $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
     }
     
     $rows[] = ['', '', '', '', t('Total'), '', '', number_format($total, 2), ''];
