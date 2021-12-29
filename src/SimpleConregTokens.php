@@ -261,7 +261,7 @@ class SimpleConregTokens {
       $types = SimpleConregOptions::memberTypes($this->eid, $this->config);
       $this->typeVals = $types->types;
     }
-    $memberClasses = SimpleConregOptions::memberClasses($eid, $config);
+    $memberClasses = SimpleConregOptions::memberClasses($this->eid, $this->config);
     // List of fields to add to mail for each member.
     $confirms = array(
       'member_type' => 'fields.membership_type',
