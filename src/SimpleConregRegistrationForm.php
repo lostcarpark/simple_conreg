@@ -191,7 +191,7 @@ class SimpleConregRegistrationForm extends FormBase {
       $selectedClasses[$cnt] = $curMemberClassRef;
       $curMemberClass = $memberClasses->classes[$curMemberClassRef];
 
-      if (isset($selectedClasses[$cnt]) && $selectedClasses[$cnt] != $prevSelectedClasses[$cnt]) {
+      if (isset($selectedClasses) && isset($selectedClasses[$cnt]) && $selectedClasses[$cnt] != $prevSelectedClasses[$cnt]) {
         $selectedClassChanged = TRUE;
       }
 
@@ -265,7 +265,7 @@ class SimpleConregRegistrationForm extends FormBase {
       if (!empty($form_values['members']['member'.$cnt]['type'])) {
         $currentType = $form_values['members']['member'.$cnt]['type'];
         // If current member type has day options, display 
-        if (count($types->types[$currentType]->dayOptions)) {
+        if (isset($types->types[$currentType]) && isset($types->types[$currentType]->dayOptions) && count($types->types[$currentType]->dayOptions)) {
           // Track that the member has days set.
           $curMemberDays[$cnt] = TRUE;
           // If day options available, we need to give them Ajax callbacks, and can't do a partial form update, so treat like member class change.
