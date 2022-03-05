@@ -1,0 +1,9 @@
+conreg_badges_list:
+  path: 'members/badges/list/{eid}'
+  defaults:
+    _title: 'Badge Names'
+    _form: '\Drupal\conreg_badges\Form\BadgeNamesForm'
+    eid: 1
+  requirements:
+    _permission: 'view membership badges'
+    eid: ^[0-9]+$
