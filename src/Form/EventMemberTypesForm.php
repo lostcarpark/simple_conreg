@@ -148,6 +148,8 @@ class EventMemberTypesForm extends ConfigFormBase {
     
       $form[$typeRef]['days'] = $this->buildDaysTable($typeRef, $type->days, $days);
 
+      $form[$typeRef]['upgrades'] = $this->buildUpgradePathTable($typeRef, $type->upgrades, $memberTypes, $badgeTypes, $days);
+
       $form[$typeRef]['clone'] = array(
         '#type' => 'submit',
         '#value' => t('Clone @name', ['@name' => $typeName]),
@@ -288,7 +290,79 @@ class EventMemberTypesForm extends ConfigFormBase {
     return $daysForm;
   }
 
-  
+  /** 
+   * Build table for upgrade paths table.
+   */
+  public function buildUpgradePathTable($typeRef, $upgrades, $memberTypes, $badgeTypes, $days) {
+
+    $upgradeForm = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Upgrades from @type', ['@type' => $memberTypes->types[$typeRef]->name]),
+    ];
+
+    $toTypes = [0 => '<None>'];
+    foreach ($memberTypes->types as $toRef => $toType) {
+      if ($typeRef != $toRef) {
+        $toTypes[$toRef] = $toType->name;
+      }
+    }
+    
+    $badgeTypes = array_merge([0 => '<None>'], $badgeTypes);
+
+    $headers = array(
+      'from_days' => ['data' => t('From Days')],
+      'to_type' => ['data' => t('To Type')],
+      'to_days' => ['data' => t('To Days')],
+      'new_badge' => ['data' => t('New Badge Type')],
+      'description' => ['data' => t('Description')],
+      'price' => ['data' => t('Price')],
+    );
+
+    $upgradeForm['upgradeTable']  = array(
+      '#type' => 'table',
+      '#header' => $headers,
+      '#attributes' => array('id' => 'conreg-member-type-'.$type.'-days'),
+      '#empty' => t('No entries available.'),
+      '#sticky' => TRUE,
+    );
+
+    /*
+    foreach ($days as $dayRef => $day) {
+      $row = [];
+      $row['day'] = array(
+        '#markup' => Html::escape($day),
+      );
+      $row["enable"] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Enable'),
+        '#default_value' => isset($typeDays[$dayRef]) ? TRUE : FALSE,
+      );
+      $row["description"] = array(
+        '#type' => 'textfield',
+        '#default_value' => $typeDays[$dayRef]->description,
+        '#size' => 10,
+      );
+      $row["price"] = array(
+        '#type' => 'number',
+        '#default_value' => $typeDays[$dayRef]->price,
+      );
+      $upgradeForm['upgradeTable'][$dayRef] = $row;
+    }
+    */
+    
+    $row = [
+      'from_days' => ['#type' => 'checkboxes', '#options' => $days],
+      'to_type' => ['#type' => 'select', '#options' => $toTypes],
+      'to_days' => ['#type' => 'checkboxes', '#options' => $days],
+      'new_badge' => ['#type' => 'select', '#options' => $badgeTypes],
+      'description' => ['#type' => 'textfield', '#default_value' => $typeDays[$dayRef]->description, '#size' => 15],
+      'price' => ['#type' => 'number', '#default_value' => $typeDays[$dayRef]->price, '#size' => 10],
+    ];
+    $upgradeForm['upgradeTable']['new'] = $row;
+    
+    return $upgradeForm;
+  }
+
   /** 
    * {@inheritdoc}
    */
@@ -297,6 +371,7 @@ class EventMemberTypesForm extends ConfigFormBase {
     $memberTypes = $form_state->get('member_types');
 
     $vals = $form_state->getValues();
+dpm($vals);
     $this->updateMemberTypes($memberTypes, $vals);
     SimpleConregOptions::saveMemberTypes($eid, $memberTypes);
 

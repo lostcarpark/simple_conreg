@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Contains \Drupal\simple_conreg\SimpleConregForm
+ * Contains \Drupal\simple_conreg\Form\EventAddOnsForm
  */
 namespace Drupal\simple_conreg\Form;
 
