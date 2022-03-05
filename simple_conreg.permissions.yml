@@ -32,10 +32,6 @@
   title: View membership details
   description: Allow users to view lists of members (including private data)
 
-'view membership badges':
-  title: View membership badge names
-  description: Allow users to view lists of member badge names (minimal private data)
-
 'view membership options':
   title: View membership options
   description: Allow users to view lists of members who have selected options (including private data)

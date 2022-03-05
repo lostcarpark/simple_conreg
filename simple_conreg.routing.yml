@@ -246,16 +246,6 @@ simple_conreg_admin_member_list:
     _permission: 'view membership details'
     eid: ^[0-9]+$
 
-simple_conreg_admin_member_badge_names:
-  path: 'members/badge_names/{eid}'
-  defaults:
-    _title: 'Badge Names'
-    _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminBadges'
-    eid: 1
-  requirements:
-    _permission: 'view membership badges'
-    eid: ^[0-9]+$
-
 simple_conreg_admin_member_badges:
   path: 'members/badges/{eid}'
   defaults:
