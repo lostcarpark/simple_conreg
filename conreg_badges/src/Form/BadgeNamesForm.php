@@ -51,40 +51,124 @@ class BadgeNamesForm extends FormBase
     $days = SimpleConregOptions::days($eid, $config);
     $digits = $config->get('member_no_digits');
 
-    $form = [];
+    $form = [
+      '#attached' => [
+        'library' => ['simple_conreg/conreg_tables'],
+      ],
+      '#prefix' => '<div id="memberform">',
+      '#suffix' => '</div>',
+    ];
+
+    $showMemberNo = (isset($form_values['showMemberNo']) ? $form_values['showMemberNo'] : TRUE);
+    $form['showMemberNo'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Show member number'),
+      '#default_value' => TRUE,
+      '#ajax' => [
+        'wrapper' => 'memberform',
+        'callback' => array($this, 'updateDisplayCallback'),
+        'event' => 'change',
+      ],
+    ];
+
+    $showMemberName = (isset($form_values['showMemberName']) ? $form_values['showMemberName'] : TRUE);
+    $form['showMemberName'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Show member name'),
+      '#default_value' => TRUE,
+      '#ajax' => [
+        'wrapper' => 'memberform',
+        'callback' => array($this, 'updateDisplayCallback'),
+        'event' => 'change',
+      ],
+    ];
+
+    $showBadgeName = (isset($form_values['showBadgeName']) ? $form_values['showBadgeName'] : TRUE);
+    $form['showBadgeName'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Show member name'),
+      '#default_value' => TRUE,
+      '#ajax' => [
+        'wrapper' => 'memberform',
+        'callback' => array($this, 'updateDisplayCallback'),
+        'event' => 'change',
+      ],
+    ];
+
+    $showBadgeTypes = (isset($form_values['showBadgeTypes']) ? $form_values['showBadgeTypes'] : TRUE);
+    $form['showBadgeTypes'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Show member types'),
+      '#default_value' => TRUE,
+      '#ajax' => [
+        'wrapper' => 'memberform',
+        'callback' => array($this, 'updateDisplayCallback'),
+        'event' => 'change',
+      ],
+    ];
+
+    $showDays = (isset($form_values['showDays']) ? $form_values['showDays'] : TRUE);
+    $form['showDays'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Show days'),
+      '#default_value' => TRUE,
+      '#ajax' => [
+        'wrapper' => 'memberform',
+        'callback' => array($this, 'updateDisplayCallback'),
+        'event' => 'change',
+      ],
+    ];
 
     $form['message'] = [
       '#markup' => $this->t('Here is a list of all paid convention members...'),
     ];
 
     $rows = [];
-    $headers = [
-      'member_no' => ['data' => $this->t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
-      'first_name' => ['data' => $this->t('First name'), 'field' => 'm.first_name'],
-      'last_name' => ['data' => $this->t('Last name'), 'field' => 'm.last_name'],
-      'badge_name' => ['data' => $this->t('Badge name'), 'field' => 'm.badge_name'],
-      'badge_type' => ['data' => $this->t('Badge type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      'days' => ['data' => $this->t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-    ];
+    $headers = [];
+    if ($showMemberNo) {
+      $headers['member_no'] = ['data' => $this->t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'];
+    }
+    if ($showMemberName) {
+      $headers['first_name'] = ['data' => $this->t('First name'), 'field' => 'm.first_name'];
+      $headers['last_name'] = ['data' => $this->t('Last name'), 'field' => 'm.last_name'];
+    }
+    if ($showBadgeName) {
+      $headers['badge_name'] = ['data' => $this->t('Badge name'), 'field' => 'm.badge_name'];
+    }
+    if ($showBadgeTypes) {
+      $headers['badge_type'] = ['data' => $this->t('Badge type'), 'class' => [RESPONSIVE_PRIORITY_LOW]];
+    }
+    if ($showDays) {
+      $headers['days'] = ['data' => $this->t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]];
+    }
 
     foreach ($entries = SimpleConregStorage::adminMemberBadges($eid) as $entry) {
       $row = [];
-      $row['member_no'] =
-        empty($entry['member_no']) ? 
-        "" :
-        $entry['badge_type'] . sprintf("%0" . $digits . "d", $entry['member_no']);
-      $row['first_name'] = $entry['first_name'];
-      $row['last_name'] = $entry['last_name'];
-      $row['badge_name'] = $entry['badge_name'];
-      $row['badge_type'] = isset($badgeTypes[$entry['badge_type']]) ? $badgeTypes[$entry['badge_type']] : $entry['badge_type'];
-      $dayDescs = [];
-      if (!empty($entry['days'])) {
-        foreach (explode('|', $entry['days']) as $day) {
-          $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
-        }
+      if ($showMemberNo) {
+        $row['member_no'] =
+          empty($entry['member_no']) ? 
+          "" :
+          $entry['badge_type'] . sprintf("%0" . $digits . "d", $entry['member_no']);
       }
-      $row['days'] = implode(', ', $dayDescs);
-      // Sanitize each entry.
+      if ($showMemberName) {
+        $row['first_name'] = $entry['first_name'];
+        $row['last_name'] = $entry['last_name'];
+      }
+      if ($showBadgeName) {
+        $row['badge_name'] = $entry['badge_name'];
+      }
+      if ($showBadgeTypes) {
+        $row['badge_type'] = isset($badgeTypes[$entry['badge_type']]) ? $badgeTypes[$entry['badge_type']] : $entry['badge_type'];
+      }
+      if ($showDays) {
+        $dayDescs = [];
+        if (!empty($entry['days'])) {
+          foreach (explode('|', $entry['days']) as $day) {
+            $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
+          }
+        }
+        $row['days'] = implode(', ', $dayDescs);
+      }
       $rows[] = $row;
     }
     $form['table'] = [
