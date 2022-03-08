@@ -7,6 +7,7 @@
 
 namespace Drupal\conreg_badges\Form;
 
+use Symfony\Component\HttpFoundation\Response;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Ajax\AjaxResponse;
@@ -38,7 +39,7 @@ class BadgeNamesForm extends FormBase
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $selection = 0)
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $export = false, $showMemberNo = true, $showMemberName = true, $showBadgeName = true, $showBadgeTypes = true, $showDays = true)
   {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
@@ -46,10 +47,24 @@ class BadgeNamesForm extends FormBase
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
 
-    $config = SimpleConregConfig::getConfig($eid);
-    $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
-    $days = SimpleConregOptions::days($eid, $config);
-    $digits = $config->get('member_no_digits');
+    if ($export) {
+      $badgeNameRows = $this->getBadgeNameRows($eid);
+      $output = '';
+      $separator = '';
+      foreach ($badgeNameRows->headers as $label) {
+        $output .= $separator . $label;
+        $separator = ',';
+      }
+      foreach ($badgeNameRows->rows as $row) {
+        $output .= "\n";
+        $separator = '';
+        foreach ($row as $value) {
+          $output .= $separator . $value;
+          $separator = ',';
+        }
+      }
+      return new Response($output);
+    }
 
     $form = [
       '#attached' => [
@@ -119,29 +134,68 @@ class BadgeNamesForm extends FormBase
       ],
     ];
 
+    $form['exportButton'] = array(
+      '#type' => 'submit',
+      '#value' => $this->t('Export Badge Names'),
+      '#submit' => array([$this, 'exportButtonSubmit']),
+    );
+
+
     $form['message'] = [
       '#markup' => $this->t('Here is a list of all paid convention members...'),
+      '#prefix' => '<div id="Heading">',
+      '#suffix' => '</div>',
     ];
 
-    $rows = [];
+    $badgeNameRows = $this->getBadgeNameRows($eid, $showMemberNo, $showMemberName, $showBadgeName, $showBadgeTypes, $showDays);
+
     $headers = [];
-    if ($showMemberNo) {
-      $headers['member_no'] = ['data' => $this->t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'];
-    }
-    if ($showMemberName) {
-      $headers['first_name'] = ['data' => $this->t('First name'), 'field' => 'm.first_name'];
-      $headers['last_name'] = ['data' => $this->t('Last name'), 'field' => 'm.last_name'];
-    }
-    if ($showBadgeName) {
-      $headers['badge_name'] = ['data' => $this->t('Badge name'), 'field' => 'm.badge_name'];
-    }
-    if ($showBadgeTypes) {
-      $headers['badge_type'] = ['data' => $this->t('Badge type'), 'class' => [RESPONSIVE_PRIORITY_LOW]];
-    }
-    if ($showDays) {
-      $headers['days'] = ['data' => $this->t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]];
+    foreach ($badgeNameRows->headers as $field => $label) {
+      $headers[$field] = ['data' => $label, 'field' => $field];
     }
 
+    $form['table'] = [
+      '#type' => 'table',
+      '#header' => $headers,
+      '#rows' => $badgeNameRows->rows,
+      '#empty' => $this->t('No entries available.'),
+      '#sticky' => TRUE,
+    ];
+    // Don't cache this page.
+    $form['#cache']['max-age'] = 0;
+
+    return $form;
+  }
+
+  /*
+   * Function to return two arrays, one containing the header labels, and the second containing the badge name rows.
+   */
+  private function getBadgeNameRows($eid, $showMemberNo = TRUE, $showMemberName = TRUE, $showBadgeName = TRUE, $showBadgeTypes = TRUE, $showDays = TRUE)
+  {
+    $config = SimpleConregConfig::getConfig($eid);
+    $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
+    $days = SimpleConregOptions::days($eid, $config);
+    $digits = $config->get('member_no_digits');
+
+    $headers = [];
+    if ($showMemberNo) {
+      $headers['member_no'] = $this->t('Member no');
+    }
+    if ($showMemberName) {
+      $headers['first_name'] = $this->t('First name');
+      $headers['last_name'] = $this->t('Last name');
+    }
+    if ($showBadgeName) {
+      $headers['badge_name'] = $this->t('Badge name');
+    }
+    if ($showBadgeTypes) {
+      $headers['badge_type'] = $this->t('Badge type');
+    }
+    if ($showDays) {
+      $headers['days'] = $this->t('Days');
+    }
+
+    $rows = [];
     foreach ($entries = SimpleConregStorage::adminMemberBadges($eid) as $entry) {
       $row = [];
       if ($showMemberNo) {
@@ -171,17 +225,8 @@ class BadgeNamesForm extends FormBase
       }
       $rows[] = $row;
     }
-    $form['table'] = [
-      '#type' => 'table',
-      '#header' => $headers,
-      '#rows' => $rows,
-      '#empty' => $this->t('No entries available.'),
-      '#sticky' => TRUE,
-    ];
-    // Don't cache this page.
-    $form['#cache']['max-age'] = 0;
 
-    return $form;
+    return (object)['headers' => $headers, 'rows' => $rows];
   }
 
   // Callback function for "display" drop down.
@@ -193,6 +238,21 @@ class BadgeNamesForm extends FormBase
 
   public function submitForm(array &$form, FormStateInterface $form_state)
   {
+  }
+
+  public function exportButtonSubmit(array &$form, FormStateInterface $form_state)
+  {
+    $content = "Hello World.";
+    $file_size = strlen($content);
+    header('Content-Description: File Transfer');
+    header('Content-Type: text/plain'); //Im assuming it is audio file you can have your own logic to assign content type dynamically for your file types
+    header('Content-Disposition: attachment; filename="badge_names.csv"'); //Im assuming it is audio mp3 file you can have your own logic to  assign file extension dynamically for your files 
+    header('Expires: 0');
+    header('Cache-Control: must-revalidate');
+    header('Pragma: public');
+    header('Content-Length: ' . $file_size);
+    flush();
+    echo($content);
   }
 
 }
