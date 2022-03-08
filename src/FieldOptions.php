@@ -10,7 +10,8 @@ namespace Drupal\simple_conreg;
 /**
  * List options for Simple Convention Registration.
  */
-class FieldOptions {
+class FieldOptions
+{
 
   public $groups;
   public $options;
@@ -62,16 +63,15 @@ class FieldOptions {
         }
       }
     }
-    return $this;
   }
-  
+
   /*
    * Static function to get Field Options from cache if possible. If not in cache, process from settings.
    */
   public static function getFieldOptions($eid)
   {
     $cid = 'simple_conreg:fieldOptions_' . $eid;
-    
+
     $fieldOptions = NULL;
     if ($cache = \Drupal::cache()->get($cid)) {
       $fieldOptions = $cache->data;
@@ -88,7 +88,7 @@ class FieldOptions {
    *
    * Parameters: Event ID, Config.
    */
-  public static function getFieldOptionsTitles($eid, $config=NULL) 
+  public static function getFieldOptionsTitles($eid, $config = NULL)
   {
     // If event config not passed in, load it.
     if (is_null($config)) {
@@ -132,7 +132,7 @@ class FieldOptions {
 
     return $memberOptions;
   }
-  
+
   /**
    * Fetch field options selected by member.
    *
@@ -143,7 +143,7 @@ class FieldOptions {
     // Get member's options from database.
     return FieldOptionStorage::getMemberOptions($mid, $selected);
   }
-  
+
   /**
    * Add field options to member form.
    *
@@ -166,7 +166,8 @@ class FieldOptions {
         // If the field exists on the form, save its value.
         if (array_key_exists($group->fieldName, $memberForm)) {
           $field = $memberForm[$group->fieldName];
-        } else {
+        }
+        else {
           unset($field); // Make sure there isn't a stored value from a previous field.
         }
         // Create a Div for our option field. Avoid having unique ID to simplify JavaScript.
@@ -192,7 +193,7 @@ class FieldOptions {
    */
   public function validateOptionFields(&$memberVals, &$optionVals)
   {
-    // To do: add checks for mandatory options.
+  // To do: add checks for mandatory options.
   }
 
   /**
@@ -205,10 +206,10 @@ class FieldOptions {
     // Loop through each field on the member form.
     foreach ($this->groups as $group) {
       // Check if fieldname exists in 
-      if (array_key_exists($group->fieldName, $memberVals)) {
+      if (!empty($memberVals) && array_key_exists($group->fieldName, $memberVals)) {
         foreach ($memberVals[$group->fieldName]['options'] as $optid => $optionInfo) {
           // We only want to store the option if it is already part of the member, or it has been set on the form.
-          if (isset($memberOptions[$optid] ) || $optionInfo['option']) {
+          if (isset($memberOptions[$optid]) || $optionInfo['option']) {
             $memberOptions[$optid] = new MemberOption($mid, $optid, $optionInfo['option'], isset($optionInfo['detail']) ? $optionInfo['detail'] : '');
           }
         }
@@ -254,7 +255,7 @@ class FieldOptions {
     }
     return $fieldOptions;
   }
-  
+
   /**
    * Get a list of all Options
    *
@@ -272,7 +273,7 @@ class FieldOptions {
       }
     }
     return $fieldOptions;
-  }  
+  }
+
 
 }
-
