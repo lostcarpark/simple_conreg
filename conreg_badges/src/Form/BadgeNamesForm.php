@@ -48,32 +48,7 @@ class BadgeNamesForm extends FormBase
     $form_values = $form_state->getValues();
 
     if ($export) {
-      $badgeNameRows = $this->getBadgeNameRows($eid,
-        empty($fields) || str_contains($fields, 'M'), // 'M' for Member No.
-        empty($fields) || str_contains($fields, 'N'), // 'N' for Name.
-        empty($fields) || str_contains($fields, 'B'), // 'B' for Badge Name.
-        empty($fields) || str_contains($fields, 'T'), // 'T' for Badge Type.
-        empty($fields) || str_contains($fields, 'D')); // 'D' for Days.
-      $output = '';
-      $separator = '';
-      foreach ($badgeNameRows->headers as $label) {
-        $output .= $separator . $label;
-        $separator = ',';
-      }
-      foreach ($badgeNameRows->rows as $row) {
-        $output .= "\n";
-        $separator = '';
-        foreach ($row as $value) {
-          $output .= $separator . $value;
-          $separator = ',';
-        }
-      }
-      $response = new Response($output);
-      $response->headers->set('Content-Type', 'text/csv');
-      $response->headers->set('Content-Disposition', 'attachment; filename=badge_names.csv');
-      $response->headers->set('Pragma', 'no-cache');
-      $response->headers->set('Expires', '0');
-      return $response;
+      return $this->exportBadges($eid, $fields);
     }
 
     $form = [
@@ -191,6 +166,46 @@ class BadgeNamesForm extends FormBase
     $form['#cache']['max-age'] = 0;
 
     return $form;
+  }
+
+  private function csvField($value)
+  {
+    if (str_contains($value, '"'))
+      $value = str_replace('"', '""', $value);
+    if (str_contains($value, '"') || str_contains($value, ','))
+      $value = '"' . $value . '"';
+    return $value;
+  }
+
+  private function exportBadges($eid, $fields)
+  {
+    $badgeNameRows = $this->getBadgeNameRows($eid,
+      empty($fields) || str_contains($fields, 'M'), // 'M' for Member No.
+      empty($fields) || str_contains($fields, 'N'), // 'N' for Name.
+      empty($fields) || str_contains($fields, 'B'), // 'B' for Badge Name.
+      empty($fields) || str_contains($fields, 'T'), // 'T' for Badge Type.
+      empty($fields) || str_contains($fields, 'D')); // 'D' for Days.
+    $output = '';
+    $separator = '';
+    foreach ($badgeNameRows->headers as $label) {
+      $output .= $separator . $this->csvField($label);
+      $separator = ',';
+    }
+    foreach ($badgeNameRows->rows as $row) {
+      $output .= "\n";
+      $separator = '';
+      foreach ($row as $value) {
+
+        $output .= $separator . $this->csvField($value);
+        $separator = ',';
+      }
+    }
+    $response = new Response($output);
+    $response->headers->set('Content-Type', 'text/csv');
+    $response->headers->set('Content-Disposition', 'attachment; filename=badge_names.csv');
+    $response->headers->set('Pragma', 'no-cache');
+    $response->headers->set('Expires', '0');
+    return $response;
   }
 
   /*
