@@ -10,17 +10,13 @@ conreg_badges_list:
     eid: ^[0-9]+$
 
 conreg_badges_list_export:
-  path: "members/badges/export/{eid}/{showMemberNo}/{showMemberName}/{showBadgeName}/{showBadgeTypes}/{showDays}"
+  path: "members/badges/export/{eid}/{fields}"
   defaults:
     _title: "Exporting Badge Names"
     _form: '\Drupal\conreg_badges\Form\BadgeNamesForm'
     eid: 1
     export: true
-    showMemberNo: true
-    showMemberName: true
-    showBadgeName: true
-    showBadgeTypes: true
-    showDays: true
+    fields: null
   requirements:
     _permission: "view membership badges"
     eid: ^[0-9]+$

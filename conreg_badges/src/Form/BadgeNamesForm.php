@@ -14,8 +14,8 @@ use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\AlertCommand;
 use Drupal\Core\Ajax\CssCommand;
 use Drupal\Core\Ajax\HtmlCommand;
+use Drupal\Core\Url;
 use Drupal\Core\Link;
-use Drupal\Core\URL;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\devel;
 use Drupal\simple_conreg\SimpleConregConfig;
@@ -39,7 +39,7 @@ class BadgeNamesForm extends FormBase
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $export = false, $showMemberNo = true, $showMemberName = true, $showBadgeName = true, $showBadgeTypes = true, $showDays = true)
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $export = false, $fields = null)
   {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
@@ -48,7 +48,12 @@ class BadgeNamesForm extends FormBase
     $form_values = $form_state->getValues();
 
     if ($export) {
-      $badgeNameRows = $this->getBadgeNameRows($eid);
+      $badgeNameRows = $this->getBadgeNameRows($eid,
+        empty($fields) || str_contains($fields, 'M'), // 'M' for Member No.
+        empty($fields) || str_contains($fields, 'N'), // 'N' for Name.
+        empty($fields) || str_contains($fields, 'B'), // 'B' for Badge Name.
+        empty($fields) || str_contains($fields, 'T'), // 'T' for Badge Type.
+        empty($fields) || str_contains($fields, 'D')); // 'D' for Days.
       $output = '';
       $separator = '';
       foreach ($badgeNameRows->headers as $label) {
@@ -63,7 +68,12 @@ class BadgeNamesForm extends FormBase
           $separator = ',';
         }
       }
-      return new Response($output);
+      $response = new Response($output);
+      $response->headers->set('Content-Type', 'text/csv');
+      $response->headers->set('Content-Disposition', 'attachment; filename=badge_names.csv');
+      $response->headers->set('Pragma', 'no-cache');
+      $response->headers->set('Expires', '0');
+      return $response;
     }
 
     $form = [
@@ -75,6 +85,7 @@ class BadgeNamesForm extends FormBase
     ];
 
     $showMemberNo = (isset($form_values['showMemberNo']) ? $form_values['showMemberNo'] : TRUE);
+    $exportFields = $showMemberNo ? 'M' : '';
     $form['showMemberNo'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Show member number'),
@@ -87,6 +98,7 @@ class BadgeNamesForm extends FormBase
     ];
 
     $showMemberName = (isset($form_values['showMemberName']) ? $form_values['showMemberName'] : TRUE);
+    $exportFields .= $showMemberName ? 'N' : '';
     $form['showMemberName'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Show member name'),
@@ -99,9 +111,10 @@ class BadgeNamesForm extends FormBase
     ];
 
     $showBadgeName = (isset($form_values['showBadgeName']) ? $form_values['showBadgeName'] : TRUE);
+    $exportFields .= $showBadgeName ? 'B' : '';
     $form['showBadgeName'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Show member name'),
+      '#title' => $this->t('Show badge name'),
       '#default_value' => TRUE,
       '#ajax' => [
         'wrapper' => 'memberform',
@@ -111,9 +124,10 @@ class BadgeNamesForm extends FormBase
     ];
 
     $showBadgeTypes = (isset($form_values['showBadgeTypes']) ? $form_values['showBadgeTypes'] : TRUE);
+    $exportFields .= $showBadgeTypes ? 'T' : '';
     $form['showBadgeTypes'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Show member types'),
+      '#title' => $this->t('Show badge types'),
       '#default_value' => TRUE,
       '#ajax' => [
         'wrapper' => 'memberform',
@@ -123,6 +137,7 @@ class BadgeNamesForm extends FormBase
     ];
 
     $showDays = (isset($form_values['showDays']) ? $form_values['showDays'] : TRUE);
+    $exportFields .= $showDays ? 'D' : '';
     $form['showDays'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Show days'),
@@ -134,11 +149,22 @@ class BadgeNamesForm extends FormBase
       ],
     ];
 
-    $form['exportButton'] = array(
-      '#type' => 'submit',
-      '#value' => $this->t('Export Badge Names'),
-      '#submit' => array([$this, 'exportButtonSubmit']),
+    $exportUrl = Url::fromRoute('conreg_badges_list_export', ['eid' => $eid, 'fields' => $exportFields], ['absolute' => TRUE]);
+    $exportLink = Link::fromTextAndUrl($this->t('Export Badge Names'), $exportUrl);
+
+    $form['simple_conreg_authenticate']['link'] = array(
+      '#type' => 'markup',
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
+      '#markup' => $exportLink->toString(),
     );
+
+    // Export button - currently export is a link, but may use button in future.
+    // $form['exportButton'] = array(
+    //   '#type' => 'submit',
+    //   '#value' => $this->t('Export Badge Names'),
+    //   '#submit' => array([$this, 'exportButtonSubmit']),
+    // );
 
 
     $form['message'] = [
