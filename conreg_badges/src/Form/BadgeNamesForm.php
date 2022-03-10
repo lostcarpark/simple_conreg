@@ -91,11 +91,11 @@ class BadgeNamesForm extends FormBase
     ];
 
     if (isset($form_values['updated'])) {
-      $updated = (new DrupalDateTime($form_values['updated']))->getTimestamp();
+      $update = empty($form_values['updated']) ? 0 : (new DrupalDateTime($form_values['updated']))->getTimestamp();
     }
     $form['filter']['updated'] = [
       '#type' => 'date',
-      '#title' => $this->t('Udated sunce'),
+      '#title' => $this->t('Updated since'),
       // '#default_value' => DrupalDateTime::createFromTimestamp($member->join_date),
       '#ajax' => [
         'wrapper' => 'memberform',
@@ -109,7 +109,7 @@ class BadgeNamesForm extends FormBase
       '#title' => $this->t('Export'),
     ];
 
-    $exportUrl = Url::fromRoute('conreg_badges_list_export', ['eid' => $eid, 'fields' => $exportFields, 'update' => $updated], ['absolute' => TRUE]);
+    $exportUrl = Url::fromRoute('conreg_badges_list_export', ['eid' => $eid, 'fields' => $exportFields, 'update' => $update], ['absolute' => TRUE]);
     $exportLink = Link::fromTextAndUrl($this->t('Export Badge Names'), $exportUrl);
 
     $form['export']['link'] = array(
@@ -133,7 +133,7 @@ class BadgeNamesForm extends FormBase
       '#suffix' => '</div>',
     ];
 
-    $badgeNameRows = $this->getBadgeNameRows($eid, $showMemberNo, $showMemberName, $showBadgeName, $showBadgeTypes, $showDays, $updated);
+    $badgeNameRows = $this->getBadgeNameRows($eid, $showMemberNo, $showMemberName, $showBadgeName, $showBadgeTypes, $showDays, $update);
 
     $headers = [];
     foreach ($badgeNameRows->headers as $field => $label) {
