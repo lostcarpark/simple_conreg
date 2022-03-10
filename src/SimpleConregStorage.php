@@ -9,7 +9,8 @@ namespace Drupal\simple_conreg;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\devel;
 
-class SimpleConregStorage {
+class SimpleConregStorage
+{
 
   /**
    * Save an entry in the database.
@@ -32,19 +33,20 @@ class SimpleConregStorage {
    *
    * @see $connection->insert()
    */
-  public static function insert($entry) {
+  public static function insert($entry)
+  {
     $connection = \Drupal::database();
     $return_value = NULL;
     try {
       $return_value = $connection->insert('conreg_members')
-          ->fields($entry)
-          ->execute();
+        ->fields($entry)
+        ->execute();
     }
     catch (\Exception $e) {
       \Drupal::messenger()->addMessage(t('$connection->insert failed. Message = %message, query= %query', array(
-            '%message' => $e->getMessage(),
-            '%query' => $e->query_string,
-          )), 'error');
+        '%message' => $e->getMessage(),
+        '%query' => $e->query_string,
+      )), 'error');
     }
     return $return_value;
   }
@@ -60,20 +62,21 @@ class SimpleConregStorage {
    *
    * @see $connection->update()
    */
-  public static function update($entry) {
+  public static function update($entry)
+  {
     $connection = \Drupal::database();
     try {
       // $connection->update()...->execute() returns the number of rows updated.
       $count = $connection->update('conreg_members')
-          ->fields($entry)
-          ->condition('mid', $entry['mid'])
-          ->execute();
+        ->fields($entry)
+        ->condition('mid', $entry['mid'])
+        ->execute();
     }
     catch (\Exception $e) {
       \Drupal::messenger()->addMessage(t('$connection->update failed. Message = %message, query= %query', array(
-            '%message' => $e->getMessage(),
-            '%query' => $e->query_string,
-          )), 'error');
+        '%message' => $e->getMessage(),
+        '%query' => $e->query_string,
+      )), 'error');
     }
     return $count;
   }
@@ -89,20 +92,21 @@ class SimpleConregStorage {
    *
    * @see $connection->update()
    */
-  public static function updateByLeadMid($entry) {
+  public static function updateByLeadMid($entry)
+  {
     $connection = \Drupal::database();
     try {
       // $connection->update()...->execute() returns the number of rows updated.
       $count = $connection->update('conreg_members')
-          ->fields($entry)
-          ->condition('lead_mid', $entry['lead_mid'])
-          ->execute();
+        ->fields($entry)
+        ->condition('lead_mid', $entry['lead_mid'])
+        ->execute();
     }
     catch (\Exception $e) {
       \Drupal::messenger()->addMessage(t('$connection->update failed. Message = %message, query= %query', array(
-            '%message' => $e->getMessage(),
-            '%query' => $e->query_string,
-          )), 'error');
+        '%message' => $e->getMessage(),
+        '%query' => $e->query_string,
+      )), 'error');
     }
     return $count;
   }
@@ -117,18 +121,20 @@ class SimpleConregStorage {
    *
    * @see $connection->delete()
    */
-  public static function delete($entry) {
+  public static function delete($entry)
+  {
     $connection = \Drupal::database();
     $connection->delete('conreg_members')
-        ->condition('mid', $entry['mid'])
-        ->execute();
+      ->condition('mid', $entry['mid'])
+      ->execute();
   }
 
   /**
    * Read from the database using a filter array.
    *
    */
-  public static function load($entry = array()) {
+  public static function load($entry = array())
+  {
     $connection = \Drupal::database();
     // Read all fields from the conreg_members table.
     $select = $connection->select('conreg_members', 'members');
@@ -150,7 +156,8 @@ class SimpleConregStorage {
    * Read from the database and return multiple rows using a filter array.
    *
    */
-  public static function loadAll($entry = array()) {
+  public static function loadAll($entry = array())
+  {
     $connection = \Drupal::database();
     // Read all fields from the conreg_members table.
     $select = $connection->select('conreg_members', 'members');
@@ -174,7 +181,8 @@ class SimpleConregStorage {
   /**
    * Check if valid mid and key combo.
    */
-  public static function checkMemberKey($mid, $key) {
+  public static function checkMemberKey($mid, $key)
+  {
     $connection = \Drupal::database();
     // Read all fields from the conreg_members table.
     $select = $connection->select('conreg_members', 'members');
@@ -190,7 +198,8 @@ class SimpleConregStorage {
       return FALSE;
   }
 
-  public static function adminPublicListLoad($eid) {
+  public static function adminPublicListLoad($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -213,7 +222,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  private static function adminMemberListCondition($eid, $select, $condition, $search) {
+  private static function adminMemberListCondition($eid, $select, $condition, $search)
+  {
     $connection = \Drupal::database();
     $select->condition('m.eid', $eid);
     switch ($condition) {
@@ -240,7 +250,7 @@ class SimpleConregStorage {
         foreach ($words as $word) {
           if ($word != '') {
             // Escape search word to prevent dangerous characters.
-            $esc_word = '%'.$connection->escapeLike($word).'%';
+            $esc_word = '%' . $connection->escapeLike($word) . '%';
             $likes = $select->orConditionGroup()
               ->condition('m.member_no', $esc_word, 'LIKE')
               ->condition('m.first_name', $esc_word, 'LIKE')
@@ -257,7 +267,8 @@ class SimpleConregStorage {
     return $select;
   }
 
-  public static function adminMemberListLoad($eid, $condition, $search, $page=1, $pageSize=10, $order='m.mid', $direction='ASC') {
+  public static function adminMemberListLoad($eid, $condition, $search, $page = 1, $pageSize = 10, $order = 'm.mid', $direction = 'ASC')
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -279,8 +290,8 @@ class SimpleConregStorage {
     $select->orderby($order, $direction = $direction);
     $select->orderby('m.mid', $direction = $direction);
     // Make sure we only get items 0-49, for scalability reasons.
-    $select->range(($page-1) * $pageSize, $pageSize);
-    
+    $select->range(($page - 1) * $pageSize, $pageSize);
+
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -296,14 +307,15 @@ class SimpleConregStorage {
   }
 
 
-  private static function adminMemberCheckInListCondition($eid, $select, $search) {
+  private static function adminMemberCheckInListCondition($eid, $select, $search)
+  {
     $connection = \Drupal::database();
     $select->condition('m.eid', $eid);
     $words = explode(' ', trim($search));
     foreach ($words as $word) {
       if ($word != '') {
         // Escape search word to prevent dangerous characters.
-        $esc_word = '%'.$connection->escapeLike($word).'%';
+        $esc_word = '%' . $connection->escapeLike($word) . '%';
         $likes = $select->orConditionGroup()
           ->condition('m.member_no', $esc_word, 'LIKE')
           ->condition('l.member_no', $esc_word, 'LIKE')
@@ -331,7 +343,8 @@ class SimpleConregStorage {
   /*
    * Get member list for check in listing.
    */
-  public static function adminMemberCheckInListLoad($eid, $search) {
+  public static function adminMemberCheckInListLoad($eid, $search)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -352,7 +365,7 @@ class SimpleConregStorage {
     // Add selection criteria.
     $select = SimpleConregStorage::adminMemberCheckInListCondition($eid, $select, $search);
     // Sort by specified field and direction.
-    $select->orderby('m.mid', 'ASC');    
+    $select->orderby('m.mid', 'ASC');
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -362,7 +375,8 @@ class SimpleConregStorage {
   /*
    * Get unpaid member list for bottom pane of check in listing.
    */
-  public static function adminMemberUnpaidListLoad($eid) {
+  public static function adminMemberUnpaidListLoad($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -387,17 +401,18 @@ class SimpleConregStorage {
     $select->condition('m.is_checked_in', 0);
     $select->condition("m.is_deleted", FALSE); //Only include members who aren't deleted.
     // Sort by specified field and direction.
-    $select->orderby('m.mid', 'ASC');    
+    $select->orderby('m.mid', 'ASC');
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
     return $entries;
   }
-  
+
   /*
    * Get member list for Member Portal listing.
    */
-  public static function adminMemberPortalListLoad($eid, $email, $is_paid = NULL) {
+  public static function adminMemberPortalListLoad($eid, $email, $is_paid = NULL)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -428,15 +443,16 @@ class SimpleConregStorage {
     }
     $select->condition("m.is_deleted", FALSE); //Only include members who aren't deleted.
     // Sort by specified field and direction.
-    $select->orderby('m.mid', 'ASC');    
+    $select->orderby('m.mid', 'ASC');
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
     return $entries;
   }
 
-  
-  public static function loadAllMemberNos($eid) {
+
+  public static function loadAllMemberNos($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -457,7 +473,8 @@ class SimpleConregStorage {
     return $members;
   }
 
-  public static function loadMaxMemberNo($eid) {
+  public static function loadMaxMemberNo($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -477,7 +494,8 @@ class SimpleConregStorage {
   }
 
 
-  public static function adminPaidMemberListLoad($eid, $direction = 'ASC', $order = 'm.member_no') {
+  public static function adminPaidMemberListLoad($eid, $direction = 'ASC', $order = 'm.member_no')
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -509,7 +527,7 @@ class SimpleConregStorage {
     $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
-    $select->orderby($order, $direction = $direction);
+    $select->orderby($order, $direction);
     // Make sure we only get items 0-49, for scalability reasons.
     //$select->range(0, 50);
 
@@ -518,7 +536,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberBadges($eid, $max_num_badges=0, $options=[]) {
+  public static function adminMemberBadges($eid, $max_num_badges = 0, $options = [])
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -539,6 +558,8 @@ class SimpleConregStorage {
       $select->condition('m.member_no', $options['member_no_from'], '>=');
     if (!empty($options['member_no_to']))
       $select->condition('m.member_no', $options['member_no_to'], '<=');
+    if (!empty($options['update_since']))
+      $select->condition('m.update_date', $options['update_since'], '>=');
     $select->orderby('m.member_no');
     // If maximum number of badges specified, select that range.
     if ($max_num_badges)
@@ -549,7 +570,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberSummaryLoad($eid) {
+  public static function adminMemberSummaryLoad($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -565,7 +587,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberBadgeSummaryLoad($eid) {
+  public static function adminMemberBadgeSummaryLoad($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -581,7 +604,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberDaysSummaryLoad($eid) {
+  public static function adminMemberDaysSummaryLoad($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -597,7 +621,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberPaymentMethodSummaryLoad($eid) {
+  public static function adminMemberPaymentMethodSummaryLoad($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -613,7 +638,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberAmountPaidSummaryLoad($eid) {
+  public static function adminMemberAmountPaidSummaryLoad($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -629,7 +655,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberAmountPaidByTypeSummaryLoad($eid) {
+  public static function adminMemberAmountPaidByTypeSummaryLoad($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -647,7 +674,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberByDateSummaryLoad($eid) {
+  public static function adminMemberByDateSummaryLoad($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -666,7 +694,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberCheckInSummaryLoad($eid) {
+  public static function adminMemberCheckInSummaryLoad($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -682,7 +711,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberAddOns($eid) {
+  public static function adminMemberAddOns($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -702,7 +732,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberChildMembers($eid) {
+  public static function adminMemberChildMembers($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -725,7 +756,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberCountrySummaryLoad($eid) {
+  public static function adminMemberCountrySummaryLoad($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -744,7 +776,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminZZ9MemberListLoad($eid, $condition) {
+  public static function adminZZ9MemberListLoad($eid, $condition)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -776,7 +809,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminProgrammeMemberListLoad($eid) {
+  public static function adminProgrammeMemberListLoad($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -797,7 +831,8 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminVolunteerMemberListLoad($eid) {
+  public static function adminVolunteerMemberListLoad($eid)
+  {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -821,7 +856,8 @@ class SimpleConregStorage {
   /*
    * Function to return a list of members and communications methods for integration with Simplenews module.
    */
-  public static function adminMailoutListLoad($eid, $methods) {
+  public static function adminMailoutListLoad($eid, $methods)
+  {
     $connection = \Drupal::database();
     // Run this query: select email, min(communication_method) from conreg_members where email is not null and email<>'' and communication_method is not null group by email;
     $select = $connection->select('conreg_members', 'm');
@@ -836,7 +872,7 @@ class SimpleConregStorage {
     $select->condition("is_paid", 1); //Only include paid members.
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->condition('m.communication_method', $methods, 'IN');
-    
+
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
     return $entries;
@@ -845,7 +881,8 @@ class SimpleConregStorage {
   /*
    * Function to return a list of members and communications methods for integration with Simplenews module.
    */
-  public static function adminSimplenewsSubscribeListLoad($eid) {
+  public static function adminSimplenewsSubscribeListLoad($eid)
+  {
     $connection = \Drupal::database();
     // Run this query: select email, min(communication_method) from conreg_members where email is not null and email<>'' and communication_method is not null group by email;
     $select = $connection->select('conreg_members', 'm');
@@ -857,11 +894,10 @@ class SimpleConregStorage {
     $select->condition('m.email', '', '<>');
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->isNotNull('m.communication_method');
-    
+
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
     return $entries;
   }
 
 }
-

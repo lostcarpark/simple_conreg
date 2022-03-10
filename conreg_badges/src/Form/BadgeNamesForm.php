@@ -14,6 +14,7 @@ use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\AlertCommand;
 use Drupal\Core\Ajax\CssCommand;
 use Drupal\Core\Ajax\HtmlCommand;
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Url;
 use Drupal\Core\Link;
 use Drupal\Component\Utility\SafeMarkup;
@@ -39,7 +40,7 @@ class BadgeNamesForm extends FormBase
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $export = false, $fields = null)
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $export = false, $fields = null, $update = null)
   {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
@@ -48,7 +49,7 @@ class BadgeNamesForm extends FormBase
     $form_values = $form_state->getValues();
 
     if ($export) {
-      return $this->exportBadges($eid, $fields);
+      return $this->exportBadges($eid, $fields, $update);
     }
 
     $form = [
@@ -59,75 +60,59 @@ class BadgeNamesForm extends FormBase
       '#suffix' => '</div>',
     ];
 
+    $form['fields'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Include fields'),
+    ];
+
     $showMemberNo = (isset($form_values['showMemberNo']) ? $form_values['showMemberNo'] : TRUE);
     $exportFields = $showMemberNo ? 'M' : '';
-    $form['showMemberNo'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Show member number'),
-      '#default_value' => TRUE,
-      '#ajax' => [
-        'wrapper' => 'memberform',
-        'callback' => array($this, 'updateDisplayCallback'),
-        'event' => 'change',
-      ],
-    ];
+    $form['fields']['showMemberNo'] = $this->checkBox($this->t('Show member number'), TRUE);
 
     $showMemberName = (isset($form_values['showMemberName']) ? $form_values['showMemberName'] : TRUE);
     $exportFields .= $showMemberName ? 'N' : '';
-    $form['showMemberName'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Show member name'),
-      '#default_value' => TRUE,
-      '#ajax' => [
-        'wrapper' => 'memberform',
-        'callback' => array($this, 'updateDisplayCallback'),
-        'event' => 'change',
-      ],
-    ];
+    $form['fields']['showMemberName'] = $this->checkBox($this->t('Show member name'), TRUE);
 
     $showBadgeName = (isset($form_values['showBadgeName']) ? $form_values['showBadgeName'] : TRUE);
     $exportFields .= $showBadgeName ? 'B' : '';
-    $form['showBadgeName'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Show badge name'),
-      '#default_value' => TRUE,
-      '#ajax' => [
-        'wrapper' => 'memberform',
-        'callback' => array($this, 'updateDisplayCallback'),
-        'event' => 'change',
-      ],
-    ];
+    $form['fields']['showBadgeName'] = $this->checkBox($this->t('Show badge name'), TRUE);
 
     $showBadgeTypes = (isset($form_values['showBadgeTypes']) ? $form_values['showBadgeTypes'] : TRUE);
     $exportFields .= $showBadgeTypes ? 'T' : '';
-    $form['showBadgeTypes'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Show badge types'),
-      '#default_value' => TRUE,
-      '#ajax' => [
-        'wrapper' => 'memberform',
-        'callback' => array($this, 'updateDisplayCallback'),
-        'event' => 'change',
-      ],
-    ];
+    $form['fields']['showBadgeTypes'] = $this->checkBox($this->t('Show badge types'), TRUE);
 
     $showDays = (isset($form_values['showDays']) ? $form_values['showDays'] : TRUE);
     $exportFields .= $showDays ? 'D' : '';
-    $form['showDays'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Show days'),
-      '#default_value' => TRUE,
+    $form['fields']['showDays'] = $this->checkBox($this->t('Show days'), TRUE);
+
+    $form['filter'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Filters'),
+    ];
+
+    if (isset($form_values['updated'])) {
+      $updated = (new DrupalDateTime($form_values['updated']))->getTimestamp();
+    }
+    $form['filter']['updated'] = [
+      '#type' => 'date',
+      '#title' => $this->t('Udated sunce'),
+      // '#default_value' => DrupalDateTime::createFromTimestamp($member->join_date),
       '#ajax' => [
         'wrapper' => 'memberform',
-        'callback' => array($this, 'updateDisplayCallback'),
+        'callback' => [$this, 'updateDisplayCallback'],
         'event' => 'change',
       ],
     ];
 
-    $exportUrl = Url::fromRoute('conreg_badges_list_export', ['eid' => $eid, 'fields' => $exportFields], ['absolute' => TRUE]);
+    $form['export'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Export'),
+    ];
+
+    $exportUrl = Url::fromRoute('conreg_badges_list_export', ['eid' => $eid, 'fields' => $exportFields, 'update' => $updated], ['absolute' => TRUE]);
     $exportLink = Link::fromTextAndUrl($this->t('Export Badge Names'), $exportUrl);
 
-    $form['simple_conreg_authenticate']['link'] = array(
+    $form['export']['link'] = array(
       '#type' => 'markup',
       '#prefix' => '<div>',
       '#suffix' => '</div>',
@@ -148,7 +133,7 @@ class BadgeNamesForm extends FormBase
       '#suffix' => '</div>',
     ];
 
-    $badgeNameRows = $this->getBadgeNameRows($eid, $showMemberNo, $showMemberName, $showBadgeName, $showBadgeTypes, $showDays);
+    $badgeNameRows = $this->getBadgeNameRows($eid, $showMemberNo, $showMemberName, $showBadgeName, $showBadgeTypes, $showDays, $updated);
 
     $headers = [];
     foreach ($badgeNameRows->headers as $field => $label) {
@@ -168,6 +153,20 @@ class BadgeNamesForm extends FormBase
     return $form;
   }
 
+  private function checkBox($title, $default)
+  {
+    return [
+      '#type' => 'checkbox',
+      '#title' => $title,
+      '#default_value' => $default,
+      '#ajax' => [
+        'wrapper' => 'memberform',
+        'callback' => [$this, 'updateDisplayCallback'],
+        'event' => 'change',
+      ],
+    ];
+  }
+
   private function csvField($value)
   {
     if (str_contains($value, '"'))
@@ -177,14 +176,16 @@ class BadgeNamesForm extends FormBase
     return $value;
   }
 
-  private function exportBadges($eid, $fields)
+  private function exportBadges($eid, $fields, $update)
   {
     $badgeNameRows = $this->getBadgeNameRows($eid,
       empty($fields) || str_contains($fields, 'M'), // 'M' for Member No.
       empty($fields) || str_contains($fields, 'N'), // 'N' for Name.
       empty($fields) || str_contains($fields, 'B'), // 'B' for Badge Name.
       empty($fields) || str_contains($fields, 'T'), // 'T' for Badge Type.
-      empty($fields) || str_contains($fields, 'D')); // 'D' for Days.
+      empty($fields) || str_contains($fields, 'D'), // 'D' for Days.
+      $update
+    );
     $output = '';
     $separator = '';
     foreach ($badgeNameRows->headers as $label) {
@@ -211,7 +212,7 @@ class BadgeNamesForm extends FormBase
   /*
    * Function to return two arrays, one containing the header labels, and the second containing the badge name rows.
    */
-  private function getBadgeNameRows($eid, $showMemberNo = TRUE, $showMemberName = TRUE, $showBadgeName = TRUE, $showBadgeTypes = TRUE, $showDays = TRUE)
+  private function getBadgeNameRows($eid, $showMemberNo = TRUE, $showMemberName = TRUE, $showBadgeName = TRUE, $showBadgeTypes = TRUE, $showDays = TRUE, $updated = null)
   {
     $config = SimpleConregConfig::getConfig($eid);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
@@ -237,7 +238,11 @@ class BadgeNamesForm extends FormBase
     }
 
     $rows = [];
-    foreach ($entries = SimpleConregStorage::adminMemberBadges($eid) as $entry) {
+    $options = [];
+    if (!is_null($updated)) {
+      $options['update_since'] = $updated;
+    }
+    foreach (SimpleConregStorage::adminMemberBadges($eid, 0, $options) as $entry) {
       $row = [];
       if ($showMemberNo) {
         $row['member_no'] =
