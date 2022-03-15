@@ -10,8 +10,9 @@ namespace Drupal\simple_conreg;
 /**
  * List options for Simple Convention Registration.
  */
-class SimpleConregOptions {
-  
+class SimpleConregOptions
+{
+
   // Function to get cache ID for member classes.
   public static function getMemberClassCID($eid)
   {
@@ -19,7 +20,7 @@ class SimpleConregOptions {
       ->getCurrentLanguage()
       ->getId();
   }
-  
+
   /**
    * Return list of membership classes (for customising field list a member type sees) from config.
    *
@@ -36,7 +37,7 @@ class SimpleConregOptions {
     if (is_null($config))
       $config = SimpleConregConfig::getConfig($eid);
 
-    $memberClasses = (object) [
+    $memberClasses = (object)[
       'classes' => [],
       'options' => [],
     ];
@@ -46,7 +47,7 @@ class SimpleConregOptions {
       // Member classes not stored, so check for legacy fieldset configurations.
       $memberClasses->classes['Default'] = self::convertFieldsetToMemberClass($config, 'Default');
       $memberClasses->options['Default'] = 'Default';
-      for ($cnt = 1; $cnt <=5; $cnt++) {
+      for ($cnt = 1; $cnt <= 5; $cnt++) {
         $fieldsetConfig = SimpleConregConfig::getFieldsetConfig($eid, $cnt);
         if (!empty($fieldsetConfig)) {
           $memberClasses->classes[$cnt] = self::convertFieldsetToMemberClass($fieldsetConfig, $cnt);
@@ -58,13 +59,13 @@ class SimpleConregOptions {
       // Build object variable from configuration array.
       foreach ($classArray as $classRef => $classVals) {
         $className = isset($classVals['name']) ? $classVals['name'] : $classRef;
-        $memberClasses->classes[$classRef] = (object) [
+        $memberClasses->classes[$classRef] = (object)[
           'name' => $className,
         ];
         $memberClasses->options[$classRef] = $className;
         foreach ($classVals as $category => $catVals) {
           if ($category != 'name') {
-            $memberClasses->classes[$classRef]->$category = (object) [];
+            $memberClasses->classes[$classRef]->$category = (object)[];
             foreach ($catVals as $entryName => $entryVal) {
               $memberClasses->classes[$classRef]->$category->$entryName = $entryVal;
             }
@@ -75,11 +76,11 @@ class SimpleConregOptions {
     \Drupal::cache()->set($cid, $memberClasses);
     return $memberClasses;
   }
-  
+
   // Function to save member classes to 
   public static function saveMemberClasses($eid, $memberClasses)
   {
-    $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.settings.'.$eid);
+    $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.settings.' . $eid);
     // Get existing classes and check they haven't been deleted.
     $classArray = $config->get('member.classes');
     foreach ($classArray as $classRef => $val) {
@@ -104,13 +105,14 @@ class SimpleConregOptions {
   }
 
   // Function used to convert legacy fieldsets into MemberClasses.
-  private static function convertFieldsetToMemberClass($config, $name) {
-    $class = (object) [
+  private static function convertFieldsetToMemberClass($config, $name)
+  {
+    $class = (object)[
       'name' => $name,
-      'fields' => (object) [],
-      'mandatory' => (object) [],
-      'max_length' => (object) [],
-      'extras' => (object) [],
+      'fields' => (object)[],
+      'mandatory' => (object)[],
+      'max_length' => (object)[],
+      'extras' => (object)[],
     ];
     foreach ($config->get('fields') as $key => $value) {
       if (preg_match('/(.*)_label$/', $key, $matches)) {
@@ -133,7 +135,7 @@ class SimpleConregOptions {
     foreach ($config->get('extras') as $key => $value) {
       $class->extras->$key = $value;
     }
-    
+
     return $class;
   }
 
@@ -150,7 +152,8 @@ class SimpleConregOptions {
    *
    * Parameters: Event ID, Optional config.
    */
-  public static function memberTypes($eid, &$config = NULL) {
+  public static function memberTypes($eid, &$config = NULL)
+  {
     $cid = self::getMemberTypeCID($eid);
     if ($cache = \Drupal::cache()->get($cid)) {
       return $cache->data;
@@ -178,9 +181,11 @@ class SimpleConregOptions {
         if ($key == 'days') {
           $type->days = [];
           $type->dayOptions = [];
-          foreach ($val as $dayCode => $dayVals) {
-            $type->days[$dayCode] = (object) ['name' => $days[$dayCode], 'description' => $dayVals['description'], 'price' => $dayVals['price']];
-            $type->dayOptions[$dayCode] = $dayVals['description'];
+          if (isset($val)) {
+            foreach ($val as $dayCode => $dayVals) {
+              $type->days[$dayCode] = (object)['name' => $days[$dayCode], 'description' => $dayVals['description'], 'price' => $dayVals['price']];
+              $type->dayOptions[$dayCode] = $dayVals['description'];
+            }
           }
         }
         elseif (!empty($key)) {
@@ -206,7 +211,8 @@ class SimpleConregOptions {
    *
    * Parameters: Event ID, config.
    */
-  public static function convertLegacyMemberTypes($eid, &$config) {
+  public static function convertLegacyMemberTypes($eid, &$config)
+  {
     $types = explode("\n", $config->get('member_types')); // One type per line.
     $typeVals = [];
     foreach ($types as $type) {
@@ -236,10 +242,10 @@ class SimpleConregOptions {
         if ($fieldCount > 9) {
           for ($fieldNo = 9; $fieldNo < $fieldCount; $fieldNo++) {
             list($dayCode, $dayDesc, $dayName, $dayPrice) = array_pad(explode('~', $typeFields[$fieldNo]), 4, '');
-              $days[$dayCode] = [
-                'description' => trim($dayDesc),
-                'price' => trim($dayPrice)
-              ];
+            $days[$dayCode] = [
+              'description' => trim($dayDesc),
+              'price' => trim($dayPrice)
+            ];
           }
         }
         $typeVals[$code] = (object)[
@@ -262,7 +268,7 @@ class SimpleConregOptions {
   // Function to save member types to configuration.
   public static function saveMemberTypes($eid, $memberTypes)
   {
-    $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.settings.'.$eid);
+    $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.settings.' . $eid);
     // Get existing types and check they haven't been deleted.
     $typeArray = $config->get('member.types');
     foreach ($typeArray as $typeRef => $val) {
@@ -274,17 +280,17 @@ class SimpleConregOptions {
     // Save all member types to configuration.
     foreach ($memberTypes->types as $typeRef => $typeVals) {
       foreach ($typeVals as $key => $val) {
-        if ($key == 'days') {
+        if ($key == 'days' && isset($val)) {
           foreach ($val as $dayCode => $dayVals) {
             $config->set("member.types.$typeRef.days.$dayCode.description", $dayVals->description);
             $config->set("member.types.$typeRef.days.$dayCode.price", $dayVals->price);
           }
         }
         elseif ($key == 'dayOptions') {
-          // Do nothing - dayoptions are generated.
+        // Do nothing - dayoptions are generated.
         }
         elseif ($key == '') {
-          // Don't save empty key.
+        // Don't save empty key.
         }
         else {
           $config->set("member.types.$typeRef.$key", $val);
@@ -312,7 +318,7 @@ class SimpleConregOptions {
     // If config not passed in, we need to load it.
     if (is_null($config))
       $config = SimpleConregConfig::getConfig($eid);
-    
+
     $types = self::memberTypes($eid, $config);
     $upgrades = explode("\n", $config->get('member_upgrades')); // One upgrades per line.
     $upgradeOptions = [];
@@ -336,7 +342,7 @@ class SimpleConregOptions {
           'price' => $price];
       }
     }
-    
+
     // Stash member upgrades in static variable in case needed again.
     $member_upgrades[$eid] = (object)['options' => $upgradeOptions, 'upgrades' => $upgradeVals];
     return $member_upgrades[$eid];
@@ -347,7 +353,8 @@ class SimpleConregOptions {
    *
    * Parameters: Optional config.
    */
-  public static function badgeTypes($eid, &$config = NULL) {
+  public static function badgeTypes($eid, &$config = NULL)
+  {
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
@@ -365,7 +372,8 @@ class SimpleConregOptions {
    *
    * Parameters: Optional config.
    */
-  public static function badgeNameOptions($eid, &$config = NULL) {
+  public static function badgeNameOptions($eid, &$config = NULL)
+  {
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
@@ -381,7 +389,8 @@ class SimpleConregOptions {
   /**
    * If member name has been entered, customise the badge name options.
    */
-  public static function badgeNameOptionsForName($eid, $firstName, $lastName, $maxLength, &$config = NULL) {
+  public static function badgeNameOptionsForName($eid, $firstName, $lastName, $maxLength, &$config = NULL)
+  {
     $badgeNameOptions = self::badgeNameOptions($eid, $config);
     if (!(empty($firstName) && empty($lastName))) {
       if (array_key_exists('F', $badgeNameOptions))
@@ -441,7 +450,8 @@ class SimpleConregOptions {
    *
    * Parameters: Optional config.
    */
-  public static function memberCountries($eid, &$config = NULL) {
+  public static function memberCountries($eid, &$config = NULL)
+  {
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
@@ -459,7 +469,8 @@ class SimpleConregOptions {
   /**
    * Return list of display options for membership list.
    */
-  public static function display($eid = 1, $config = NULL) {
+  public static function display($eid = 1, $config = NULL)
+  {
     // Get the config display options.
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
@@ -471,15 +482,16 @@ class SimpleConregOptions {
       $display_options[$code] = $description;
     }
     return $display_options;
-    /* return ['F' => t('Full name and badge name'),
-            'B' => t('Badge name only'),
-            'N' => t('Not at all')]; */
+  /* return ['F' => t('Full name and badge name'),
+   'B' => t('Badge name only'),
+   'N' => t('Not at all')]; */
   }
 
   /**
    * Return list of communications methods (from ).
    */
-  public static function communicationMethod($eid, $config = NULL, $publicOnly = TRUE) {
+  public static function communicationMethod($eid, $config = NULL, $publicOnly = TRUE)
+  {
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
@@ -491,30 +503,32 @@ class SimpleConregOptions {
         $methodOptions[$code] = $description;
     }
     return $methodOptions;
-    /* return ['E' => t('Electronic only'),
-            'P' => t('Paper only'),
-            'B' => t('Both electronic and paper')]; */
+  /* return ['E' => t('Electronic only'),
+   'P' => t('Paper only'),
+   'B' => t('Both electronic and paper')]; */
   }
 
   /**
    * Return list of payment methods.
    */
-  public static function paymentMethod() {
+  public static function paymentMethod()
+  {
     return ['Stripe' => t('Stripe'),
-            'Bank Transfer' => t('Bank Transfer'),
-            'Cash' => t('Cash'),
-            'Cheque' => t('Cheque'),
-            'Credit Card' => t('Credit Card'),
-            'Free' => t('Free'),
-            'Groats' => t('Groats'),
-            'PayPal' => t('PayPal'),
-           ];
+      'Bank Transfer' => t('Bank Transfer'),
+      'Cash' => t('Cash'),
+      'Cheque' => t('Cheque'),
+      'Credit Card' => t('Credit Card'),
+      'Free' => t('Free'),
+      'Groats' => t('Groats'),
+      'PayPal' => t('PayPal'),
+    ];
   }
 
   /**
    * Return yes and no.
    */
-  public static function yesNo() {
+  public static function yesNo()
+  {
     return [
       0 => t('No'),
       1 => t('Yes'),

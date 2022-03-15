@@ -16,18 +16,21 @@ use Drupal\simple_conreg\SimpleConregOptions;
 /**
  * Configure simple_conreg settings for this site.
  */
-class EventMemberTypesForm extends ConfigFormBase {
+class EventMemberTypesForm extends ConfigFormBase
+{
   /** 
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId()
+  {
     return 'simple_conreg_config_membertypes';
   }
 
   /** 
    * {@inheritdoc}
    */
-  protected function getEditableConfigNames() {
+  protected function getEditableConfigNames()
+  {
     return [
       'simple_conreg.membertypes',
     ];
@@ -36,18 +39,19 @@ class EventMemberTypesForm extends ConfigFormBase {
   /** 
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1) {
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1)
+  {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
 
     // Fetch event name from Event table.
     if (count($event = SimpleConregEventStorage::load(['eid' => $eid])) < 3) {
       // Event not in database. Display error.
-      $form['simple_conreg_event'] = array(
+      $form['simple_conreg_event'] = [
         '#markup' => $this->t('Event not found. Please contact site admin.'),
         '#prefix' => '<h3>',
         '#suffix' => '</h3>',
-      );
+      ];
       return parent::buildForm($form, $form_state);
     }
 
@@ -56,6 +60,7 @@ class EventMemberTypesForm extends ConfigFormBase {
       $memberTypes = SimpleConregOptions::memberTypes($eid);
       $form_state->set('member_types', $memberTypes);
     }
+    dpm($memberTypes);
 
     $cloneMemberTypeID = $form_state->get('clone_member_type_id');
     if (!empty($cloneMemberTypeID)) {
@@ -71,10 +76,10 @@ class EventMemberTypesForm extends ConfigFormBase {
     $memberClasses = SimpleConregOptions::memberClasses($eid);
     $days = SimpleConregOptions::days($eid);
 
-    $form['admin'] = array(
+    $form['admin'] = [
       '#type' => 'vertical_tabs',
       '#default_tab' => 'edit-simple_conreg_event',
-    );
+    ];
 
     foreach ($memberTypes->types as $typeRef => $type) {
       $typeName = isset($type->name) ? $type->name : $typeRef;
@@ -89,7 +94,7 @@ class EventMemberTypesForm extends ConfigFormBase {
         '#type' => 'fieldset',
         '#title' => $this->t('Member Type Details'),
       ];
-      
+
       $form[$typeRef]['type']['code'] = [
         '#type' => 'markup',
         '#prefix' => $this->t('<div><label>Type code</label>'),
@@ -145,22 +150,23 @@ class EventMemberTypesForm extends ConfigFormBase {
         '#default_value' => $type->defaultDays,
         '#required' => TRUE,
       ];
-    
-      $form[$typeRef]['days'] = $this->buildDaysTable($typeRef, $type->days, $days);
 
-      $form[$typeRef]['clone'] = array(
+      $typeDays = isset($type->days) ? $type->days : [];
+      $form[$typeRef]['days'] = $this->buildDaysTable($typeRef, $typeDays, $days);
+
+      $form[$typeRef]['clone'] = [
         '#type' => 'submit',
-        '#value' => t('Clone @name', ['@name' => $typeName]),
+        '#value' => $this->t('Clone @name', ['@name' => $typeName]),
         '#submit' => [[$this, 'cloneSubmit']],
-        '#attributes' => array('id' => "submitBtn"),
-      );
+        '#attributes' => ['id' => "submitBtn"],
+      ];
 
-      $form[$typeRef]['delete'] = array(
+      $form[$typeRef]['delete'] = [
         '#type' => 'submit',
-        '#value' => t('Delete @name', ['@name' => $typeName]),
+        '#value' => $this->t('Delete @name', ['@name' => $typeName]),
         '#submit' => [[$this, 'deleteSubmit']],
-        '#attributes' => array('id' => "submitBtn"),
-      );
+        '#attributes' => ['id' => "submitBtn"],
+      ];
     }
 
     return parent::buildForm($form, $form_state);
@@ -184,26 +190,26 @@ class EventMemberTypesForm extends ConfigFormBase {
       '#prefix' => '<div>',
       '#suffix' => '</div>',
     ];
-    $form['clone_to_code'] = array(
+    $form['clone_to_code'] = [
       '#type' => 'textfield',
       '#title' => $this->t('New type code'),
       '#required' => TRUE,
-    );
-    $form['clone_to_name'] = array(
+    ];
+    $form['clone_to_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('New type name'),
       '#required' => TRUE,
-    );
-    $form['confirm'] = array(
+    ];
+    $form['confirm'] = [
       '#type' => 'submit',
       '#value' => $this->t('Confirm Clone'),
       '#submit' => [[$this, 'confirmCloneSubmit']],
-    );  
-    $form['cancel'] = array(
+    ];
+    $form['cancel'] = [
       '#type' => 'submit',
       '#value' => $this->t('Cancel'),
       '#submit' => [[$this, 'cancelAction']],
-    );
+    ];
     return parent::buildForm($form, $form_state);
   }
 
@@ -225,74 +231,76 @@ class EventMemberTypesForm extends ConfigFormBase {
       '#prefix' => '<div>',
       '#suffix' => '</div>',
     ];
-    $form['confirm'] = array(
+    $form['confirm'] = [
       '#type' => 'submit',
       '#value' => $this->t('Confirm Delete'),
       '#submit' => [[$this, 'confirmDeleteSubmit']],
-    );  
-    $form['cancel'] = array(
+    ];
+    $form['cancel'] = [
       '#type' => 'submit',
       '#value' => $this->t('Cancel'),
       '#submit' => [[$this, 'cancelAction']],
-    );
+    ];
     return parent::buildForm($form, $form_state);
   }
 
   /** 
    * Build table for days table.
    */
-  public function buildDaysTable($typeRef, $typeDays, $days) {
+  public function buildDaysTable($typeRef, $typeDays, $days)
+  {
 
     $daysForm = [
       '#type' => 'fieldset',
       '#title' => $this->t('Days'),
     ];
 
-    $headers = array(
-      'day' => ['data' => t('Day')],
-      'enable' => ['data' => t('Enable')],
-      'description' => ['data' => t('Description')],
-      'price' => ['data' => t('Price')],
-    );
+    $headers = [
+      'day' => ['data' => $this->t('Day')],
+      'enable' => ['data' => $this->t('Enable')],
+      'description' => ['data' => $this->t('Description')],
+      'price' => ['data' => $this->t('Price')],
+    ];
 
-    $daysForm['daysTable']  = array(
+    $daysForm['daysTable'] = [
       '#type' => 'table',
       '#header' => $headers,
-      '#attributes' => array('id' => 'conreg-member-type-'.$type.'-days'),
-      '#empty' => t('No entries available.'),
+      '#attributes' => ['id' => 'conreg-member-type-' . $typeRef . '-days'],
+      '#empty' => $this->t('No entries available.'),
       '#sticky' => TRUE,
-    );
+    ];
 
     foreach ($days as $dayRef => $day) {
       $row = [];
-      $row['day'] = array(
+      $row['day'] = [
         '#markup' => Html::escape($day),
-      );
-      $row["enable"] = array(
+      ];
+      $row["enable"] = [
         '#type' => 'checkbox',
-        '#title' => t('Enable'),
+        '#title' => $this->t('Enable'),
         '#default_value' => isset($typeDays[$dayRef]) ? TRUE : FALSE,
-      );
-      $row["description"] = array(
+      ];
+      $row["description"] = [
         '#type' => 'textfield',
-        '#default_value' => $typeDays[$dayRef]->description,
+        '#default_value' => isset($typeDays[$dayRef]->description) ? $typeDays[$dayRef]->description : '',
         '#size' => 10,
-      );
-      $row["price"] = array(
+      ];
+      $row["price"] = [
         '#type' => 'number',
-        '#default_value' => $typeDays[$dayRef]->price,
-      );
+        '#default_value' => isset($typeDays[$dayRef]->price) ? $typeDays[$dayRef]->price : '',
+      ];
       $daysForm['daysTable'][$dayRef] = $row;
     }
-    
+
     return $daysForm;
   }
 
-  
+
   /** 
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state)
+  {
     $eid = $form_state->get('eid');
     $memberTypes = $form_state->get('member_types');
 
@@ -369,7 +377,7 @@ class EventMemberTypesForm extends ConfigFormBase {
     unset($memberTypes->types[$deleteMemberTypeID]);
     unset($memberTypes->options[$deleteMemberTypeID]);
     $form_state->set('member_types', $memberTypes);
-    
+
     // Deletion complete, so remove deletion flag from form state.
     $form_state->set('delete_member_type_id', NULL);
 
