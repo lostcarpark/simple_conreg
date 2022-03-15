@@ -281,6 +281,7 @@ class SimpleConregOptions
     foreach ($memberTypes->types as $typeRef => $typeVals) {
       foreach ($typeVals as $key => $val) {
         if ($key == 'days' && isset($val)) {
+          $config->clear("member.types.$typeRef.days");
           foreach ($val as $dayCode => $dayVals) {
             $config->set("member.types.$typeRef.days.$dayCode.description", $dayVals->description);
             $config->set("member.types.$typeRef.days.$dayCode.price", $dayVals->price);

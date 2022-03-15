@@ -12,6 +12,7 @@ use Drupal\devel;
 use Drupal\simple_conreg\SimpleConregEventStorage;
 use Drupal\simple_conreg\SimpleConregConfig;
 use Drupal\simple_conreg\SimpleConregOptions;
+use stdClass;
 
 /**
  * Configure simple_conreg settings for this site.
@@ -60,7 +61,6 @@ class EventMemberTypesForm extends ConfigFormBase
       $memberTypes = SimpleConregOptions::memberTypes($eid);
       $form_state->set('member_types', $memberTypes);
     }
-    dpm($memberTypes);
 
     $cloneMemberTypeID = $form_state->get('clone_member_type_id');
     if (!empty($cloneMemberTypeID)) {
@@ -400,6 +400,7 @@ class EventMemberTypesForm extends ConfigFormBase
       }
       foreach ($vals[$typeCode]['days']['daysTable'] as $dayRef => $dayVals) {
         if ($dayVals['enable']) {
+          $memberTypes->types[$typeCode]->days[$dayRef] = new stdClass();
           $memberTypes->types[$typeCode]->days[$dayRef]->description = $dayVals['description'];
           $memberTypes->types[$typeCode]->days[$dayRef]->price = $dayVals['price'];
           $memberTypes->types[$typeCode]->dayOptions[$dayRef] = $dayVals['description'];
