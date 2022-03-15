@@ -16,18 +16,21 @@ use Drupal\simple_conreg\SimpleConregOptions;
 /**
  * Configure simple_conreg settings for this site.
  */
-class EventMemberClassesForm extends ConfigFormBase {
+class EventMemberClassesForm extends ConfigFormBase
+{
   /** 
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId()
+  {
     return 'simple_conreg_config_memberclasses';
   }
 
   /** 
    * {@inheritdoc}
    */
-  protected function getEditableConfigNames() {
+  protected function getEditableConfigNames()
+  {
     return [
       'simple_conreg.memberclasses',
     ];
@@ -36,7 +39,8 @@ class EventMemberClassesForm extends ConfigFormBase {
   /** 
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1) {
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1)
+  {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
 
@@ -85,7 +89,7 @@ class EventMemberClassesForm extends ConfigFormBase {
         '#type' => 'fieldset',
         '#title' => $this->t('Member Class Details'),
       );
-      
+
       $form[$classRef]['class']['name'] = array(
         '#type' => 'textfield',
         '#title' => $this->t('Class name'),
@@ -99,35 +103,35 @@ class EventMemberClassesForm extends ConfigFormBase {
         '#type' => 'fieldset',
         '#title' => $this->t('Field Labels'),
       );
-      
+
       $fieldLabels = [
-        'first_name' => (object) ['label' => 'First name label (required)', 'type' => 'textfield', 'required' => TRUE],
-        'last_name' => (object) ['label' => 'Last name label (required)', 'type' => 'textfield', 'required' => TRUE],
-        'name_description' => (object) ['label' => 'Name description (discription to appear under both name fields)', 'type' => 'textarea', 'required' => FALSE],
-        'email' => (object) ['label' => 'Email address label (required)', 'type' => 'textfield', 'required' => TRUE],
-        'membership_type' => (object) ['label' => 'Type of membership label (required)', 'type' => 'textfield', 'required' => TRUE],
-        'membership_type_description' => (object) ['label' => 'Description for membership type field', 'type' => 'textarea', 'required' => FALSE],
-        'membership_days' => (object) ['label' => 'Membership days label (required)', 'type' => 'textfield', 'required' => TRUE],
-        'membership_days_description' => (object) ['label' => 'Membership days description', 'type' => 'textarea', 'required' => FALSE],
-        'badge_name_option' => (object) ['label' => 'Badge name option label (required)', 'type' => 'textfield', 'required' => TRUE],
-        'badge_name' => (object) ['label' => 'Badge name label (required)', 'type' => 'textfield', 'required' => TRUE],
-        'badge_name_description' => (object) ['label' => 'Badge name description', 'type' => 'textarea', 'required' => FALSE],
-        'display' => (object) ['label' => 'Display name on membership list label (leave blank if member type not to be displayed)', 'type' => 'textfield', 'required' => FALSE],
-        'display_description' => (object) ['label' => 'Display name on membership list description (description below display name field; if display name blank, this text will be displayed in place of the field)', 'type' => 'textarea', 'required' => FALSE],
-        'communication_method' => (object) ['label' => 'Communication method label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
-        'communication_method_description' => (object) ['label' => 'Communication method description (leave empty for no description)', 'type' => 'textarea', 'required' => FALSE],
-        'same_address' => (object) ['label' => 'Same address as member 1 label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
-        'street' => (object) ['label' => 'Street address label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
-        'street2' => (object) ['label' => 'Street address line 2 label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
-        'city' => (object) ['label' => 'Town/city label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
-        'county' => (object) ['label' => 'County/state label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
-        'postcode' => (object) ['label' => 'Postal code label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
-        'country' => (object) ['label' => 'Country label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
-        'phone' => (object) ['label' => 'Phone number label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
-        'birth_date' => (object) ['label' => 'Date of birth label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
-        'age' => (object) ['label' => 'Age label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
-        'age_min' => (object) ['label' => 'Minimum age', 'type' => 'number', 'required' => FALSE],
-        'age_max' => (object) ['label' => 'Maximum age', 'type' => 'number', 'required' => FALSE],
+        'first_name' => (object)['label' => 'First name label (required)', 'type' => 'textfield', 'required' => TRUE],
+        'last_name' => (object)['label' => 'Last name label (required)', 'type' => 'textfield', 'required' => TRUE],
+        'name_description' => (object)['label' => 'Name description (discription to appear under both name fields)', 'type' => 'textarea', 'required' => FALSE],
+        'email' => (object)['label' => 'Email address label (required)', 'type' => 'textfield', 'required' => TRUE],
+        'membership_type' => (object)['label' => 'Type of membership label (required)', 'type' => 'textfield', 'required' => TRUE],
+        'membership_type_description' => (object)['label' => 'Description for membership type field', 'type' => 'textarea', 'required' => FALSE],
+        'membership_days' => (object)['label' => 'Membership days label (required)', 'type' => 'textfield', 'required' => TRUE],
+        'membership_days_description' => (object)['label' => 'Membership days description', 'type' => 'textarea', 'required' => FALSE],
+        'badge_name_option' => (object)['label' => 'Badge name option label (required)', 'type' => 'textfield', 'required' => TRUE],
+        'badge_name' => (object)['label' => 'Badge name label (required)', 'type' => 'textfield', 'required' => TRUE],
+        'badge_name_description' => (object)['label' => 'Badge name description', 'type' => 'textarea', 'required' => FALSE],
+        'display' => (object)['label' => 'Display name on membership list label (leave blank if member type not to be displayed)', 'type' => 'textfield', 'required' => FALSE],
+        'display_description' => (object)['label' => 'Display name on membership list description (description below display name field; if display name blank, this text will be displayed in place of the field)', 'type' => 'textarea', 'required' => FALSE],
+        'communication_method' => (object)['label' => 'Communication method label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
+        'communication_method_description' => (object)['label' => 'Communication method description (leave empty for no description)', 'type' => 'textarea', 'required' => FALSE],
+        'same_address' => (object)['label' => 'Same address as member 1 label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
+        'street' => (object)['label' => 'Street address label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
+        'street2' => (object)['label' => 'Street address line 2 label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
+        'city' => (object)['label' => 'Town/city label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
+        'county' => (object)['label' => 'County/state label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
+        'postcode' => (object)['label' => 'Postal code label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
+        'country' => (object)['label' => 'Country label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
+        'phone' => (object)['label' => 'Phone number label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
+        'birth_date' => (object)['label' => 'Date of birth label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
+        'age' => (object)['label' => 'Age label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
+        'age_min' => (object)['label' => 'Minimum age', 'type' => 'number', 'required' => FALSE],
+        'age_max' => (object)['label' => 'Maximum age', 'type' => 'number', 'required' => FALSE],
       ];
 
       foreach ($fieldLabels as $fieldName => $field) {
@@ -138,7 +142,7 @@ class EventMemberClassesForm extends ConfigFormBase {
           '#required' => $field->required,
         );
       }
-      
+
 
       // Mandatory fields.
 
@@ -223,14 +227,14 @@ class EventMemberClassesForm extends ConfigFormBase {
 
       $form[$classRef]['clone'] = array(
         '#type' => 'submit',
-        '#value' => t('Clone @name', ['@name' => $className]),
+        '#value' => $this->t('Clone @name', ['@name' => $className]),
         '#submit' => [[$this, 'cloneSubmit']],
         '#attributes' => array('id' => "submitBtn"),
       );
 
       $form[$classRef]['delete'] = array(
         '#type' => 'submit',
-        '#value' => t('Delete @name', ['@name' => $className]),
+        '#value' => $this->t('Delete @name', ['@name' => $className]),
         '#submit' => [[$this, 'deleteSubmit']],
         '#attributes' => array('id' => "submitBtn"),
       );
@@ -267,7 +271,7 @@ class EventMemberClassesForm extends ConfigFormBase {
       '#type' => 'submit',
       '#value' => $this->t('Confirm Clone'),
       '#submit' => [[$this, 'confirmCloneSubmit']],
-    );  
+    );
     $form['cancel'] = array(
       '#type' => 'submit',
       '#value' => $this->t('Cancel'),
@@ -298,7 +302,7 @@ class EventMemberClassesForm extends ConfigFormBase {
       '#type' => 'submit',
       '#value' => $this->t('Confirm Delete'),
       '#submit' => [[$this, 'confirmDeleteSubmit']],
-    );  
+    );
     $form['cancel'] = array(
       '#type' => 'submit',
       '#value' => $this->t('Cancel'),
@@ -388,7 +392,7 @@ class EventMemberClassesForm extends ConfigFormBase {
     unset($memberClasses->classes[$deleteMemberClassID]);
     unset($memberClasses->options[$deleteMemberClassID]);
     $form_state->set('member_classes', $memberClasses);
-    
+
     // Deletion complete, so remove deletion flag from form state.
     $form_state->set('delete_member_class_id', NULL);
 
