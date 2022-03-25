@@ -106,7 +106,7 @@ class ZambiaUser
                 'poststate' => substr($member->county, 0, 25),
                 'postzip' => substr($member->postcode, 0, 10),
                 'postcountry' => substr($member->country, 0, 25),
-                'regtype' => $member->badgetype,
+                'regtype' => $member->badge_type,
                 ])
         ->key('badgeid')
         ->execute();  
