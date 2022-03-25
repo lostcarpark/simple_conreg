@@ -95,17 +95,18 @@ class ZambiaUser
     $return_value = $zambiaCon->upsert('CongoDump')
         ->fields([
                 'badgeid' => $this->badgeId,
-                'firstname' => $member->first_name,
-                'lastname' => $member->last_name,
-                'badgename' => $member->badge_name,
-                'phone' => $member->phone,
-                'email' => $member->email,
-                'postaddress1' => $member->street,
-                'postaddress2' => $member->street2,
-                'postcity' => $member->city,
-                'poststate' => $member->county,
-                'postzip' => $member->postcode,
-                'postcountry' => $member->country,
+                'firstname' => substr($member->first_name, 0, 30),
+                'lastname' => substr($member->last_name, 0, 40),
+                'badgename' => substr($member->badge_name, 0, 50),
+                'phone' => substr($member->phone, 0, 100),
+                'email' => substr($member->email, 0, 100),
+                'postaddress1' => substr($member->street, 0, 100),
+                'postaddress2' => substr($member->street2, 0, 100),
+                'postcity' => substr($member->city, 0, 50),
+                'poststate' => substr($member->county, 0, 25),
+                'postzip' => substr($member->postcode, 0, 10),
+                'postcountry' => substr($member->country, 0, 25),
+                'regtype' => $member->badge_type,
                 ])
         ->key('badgeid')
         ->execute();  
