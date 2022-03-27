@@ -7,105 +7,110 @@ simple_conreg.settings.*:
       mapping:
         system:
           type: label
-          label: "Payment system"
+          label: 'Payment system'
         mode:
-          type: text
+          type: string
         public_key:
-          type: text
+          type: string
         private_key:
-          type: text
+          type: string
         currency:
-          type: text
+          type: string
         symbol:
           type: label
-          label: "Currency symbol"
+          label: 'Currency symbol'
     member:
       type: mapping
-      label: "Member settings"
+      label: 'Member settings'
       mapping:
         classes:
-        type: sequence
-        sequence:
-          type: mapping
-          mapping:
-            fields:
-              type: mapping
-                first_name:
-                  type: label
-                  label: "Label for Given name"
-                last_name:
-                  type: label
-                  label: "Label for Family name"
-                name_description:
-                  type: label
-                  label: "Description label under name fields, normally stating that at least one name field is required"
-                email:
-                  type: label
-                  label: "Label for Email"
-                membership_type:
-                  type: label
-                  label: "Label for Membership type"
-                membership_type_description:
-                  type: label
-                  label: "Description label for Membership type"
-                membership_days:
-                  type: label
-                  label: "Label for Day selection"
-                membership_days_description:
-                  type: label
-                  label: "Description label for Day selection"
-                badge_name_option:
-                  type: label
-                  label: "Label for Badge name options"
-                badge_name:
-                  type: label
-                  label: "Label for Custom badge name"
-                badge_name_description:
-                  type: label
-                  label: "Description label for Badge name"
-                display:
-                  type: label
-                  label: "Label for whether member would like to be on public member list"
-                display_description:
-                  type: label
-                  label: "Description label for display on public member list option"
-                communication_method:
-                  type: label
-                  label: "Label for Communications method"
-                communication_method_description:
-                  type: label
-                  label: "Description label for Communications method"
-                same_address:
-                  type: label
-                  label: "Label for address same as member 1"
-                street:
-                  type: label
-                  label: "Label for Address line 1"
-                street2:
-                  type: label
-                  label: "Label for Address line 2"
-                city:
-                  type: label
-                  label: "Label for Town/City"
-                county:
-                  type: label
-                  label: "Label for County/State"
-                postcode:
-                  type: label
-                  label: "Label for Postal/Zip code"
-                country: Country
-                  type: label
-                  label: "Label for Country"
-                phone:
-                  type: label
-                  label: "Label for Phone"
-                birth_date:
-                  type: label
-                  label: "Label for Birth Date"
-                age:
-                  type: label
-                  label: "Label for Age"
-                age_min:
-                  type: integer
-                age_max:
-                  type: integer
+          type: sequence
+          label: 'Member class list'
+          sequence:
+            type: mapping
+            label: 'Settings for member class'
+            mapping:
+              fields:
+                type: mapping
+                mapping:
+                  first_name:
+                    type: label
+                    label: 'Label for Given name'
+                  last_name:
+                    type: label
+                    label: 'Label for Family name'
+                  name_description:
+                    type: label
+                    label: 'Description label under name fields, normally stating that at least one name field is required'
+                  email:
+                    type: label
+                    label: 'Label for Email'
+                  membership_type:
+                    type: label
+                    label: 'Label for Membership type'
+                  membership_type_description:
+                    type: label
+                    label: 'Description label for Membership type'
+                  membership_days:
+                    type: label
+                    label: 'Label for Day selection'
+                  membership_days_description:
+                    type: label
+                    label: 'Description label for Day selection'
+                  badge_name_option:
+                    type: label
+                    label: 'Label for Badge name options'
+                  badge_name:
+                    type: label
+                    label: 'Label for Custom badge name'
+                  badge_name_description:
+                    type: label
+                    label: 'Description label for Badge name'
+                  display:
+                    type: label
+                    label: 'Label for whether member would like to be on public member list'
+                  display_description:
+                    type: label
+                    label: 'Description label for display on public member list option'
+                  communication_method:
+                    type: label
+                    label: 'Label for Communications method'
+                  communication_method_description:
+                    type: label
+                    label: 'Description label for Communications method'
+                  same_address:
+                    type: label
+                    label: 'Label for address same as member 1'
+                  street:
+                    type: label
+                    label: 'Label for Address line 1'
+                  street2:
+                    type: label
+                    label: 'Label for Address line 2'
+                  city:
+                    type: label
+                    label: 'Label for Town/City'
+                  county:
+                    type: label
+                    label: 'Label for County/State'
+                  postcode:
+                    type: label
+                    label: 'Label for Postal/Zip code'
+                  country:
+                    type: label
+                    label: 'Label for Country'
+                  phone:
+                    type: label
+                    label: 'Label for Phone'
+                  birth_date:
+                    type: label
+                    label: 'Label for Birth Date'
+                  age:
+                    type: label
+                    label: 'Label for Age'
+                  age_min:
+                    type: integer
+                    label: 'Minimum age'
+                  age_max:
+                    type: integer
+                    label: 'Maximum age'
