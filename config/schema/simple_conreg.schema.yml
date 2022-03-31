@@ -19,6 +19,12 @@ simple_conreg.settings.*:
         symbol:
           type: label
           label: 'Currency symbol'
+        name:
+          type: boolean
+          label: 'Name on payment form'
+        postcode:
+          type: boolean
+          label: 'Postal code on payment form'
     member:
       type: mapping
       label: 'Member settings'
@@ -33,6 +39,8 @@ simple_conreg.settings.*:
               fields:
                 type: mapping
                 mapping:
+                  name:
+                    type: string
                   first_name:
                     type: label
                     label: 'Label for Given name'
