@@ -51,7 +51,7 @@ class EventConfigForm extends ConfigFormBase {
     }
 
     // Get config for event.
-    $config = SimpleConregConfig::getConfig($eid);
+    $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.settings.'.$eid);
 
     $form['admin'] = array(
       '#type' => 'vertical_tabs',
