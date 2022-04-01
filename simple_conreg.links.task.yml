@@ -1,3 +1,9 @@
+simple_conreg.event_list:
+  title: Event List
+  route_name: simple_conreg_event_list
+  base_route: simple_conreg_event_list
+  weight: 1
+
 simple_conreg.config:
   title: Event Configuration
   route_name: simple_conreg_config

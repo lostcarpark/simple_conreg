@@ -188,6 +188,14 @@ simple_conreg_portal_edit:
     eid: ^[0-9]+$
     mid: ^[0-9]+$
 
+simple_conreg_event_list:
+  path: 'admin/config/conreg/list'
+  defaults:
+    _title: 'Event List'
+    _form: '\Drupal\simple_conreg\Form\EventListForm'
+  requirements:
+    _permission: 'configure convention registration'
+
 simple_conreg_config:
   path: 'admin/config/conreg/{eid}'
   defaults:

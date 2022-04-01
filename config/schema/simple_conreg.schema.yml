@@ -6,7 +6,7 @@ simple_conreg.settings.*:
       type: mapping
       mapping:
         system:
-          type: label
+          type: string
           label: 'Payment system'
         mode:
           type: string
@@ -25,6 +25,25 @@ simple_conreg.settings.*:
         postcode:
           type: boolean
           label: 'Postal code on payment form'
+    badge_types:
+      type: text
+      label: 'List of badge types (note: you must keep the letter before | unchanged)'
+    badge_name_options:
+      type: text
+      label: 'List of options for choosing badge name'
+    badge_name_default:
+      type: string
+    days:
+      type: text
+      label: 'List of days to attend (note: you must keep code before | unchanged)'
+    member_no_digits:
+      type: string
+    registration_intro:
+      type: text
+      label: 'Introduction message for membership form'
+    payment_intro:
+      type: text
+      label: 'Introduction message for payment form'
     member:
       type: mapping
       label: 'Member settings'
@@ -48,7 +67,7 @@ simple_conreg.settings.*:
                     type: label
                     label: 'Label for Family name'
                   name_description:
-                    type: label
+                    type: text
                     label: 'Description label under name fields, normally stating that at least one name field is required'
                   email:
                     type: label
@@ -63,7 +82,7 @@ simple_conreg.settings.*:
                     type: label
                     label: 'Label for Day selection'
                   membership_days_description:
-                    type: label
+                    type: text
                     label: 'Description label for Day selection'
                   badge_name_option:
                     type: label
@@ -72,7 +91,7 @@ simple_conreg.settings.*:
                     type: label
                     label: 'Label for Custom badge name'
                   badge_name_description:
-                    type: label
+                    type: text
                     label: 'Description label for Badge name'
                   display:
                     type: label
@@ -84,7 +103,7 @@ simple_conreg.settings.*:
                     type: label
                     label: 'Label for Communications method'
                   communication_method_description:
-                    type: label
+                    type: text
                     label: 'Description label for Communications method'
                   same_address:
                     type: label

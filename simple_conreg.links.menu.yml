@@ -19,6 +19,11 @@ simple_conreg.portal:
   weight: 3
 
 
+simple_conreg.event_list:
+  title: Registration Events
+  route_name: simple_conreg_event_list
+  weight: 10
+
 simple_conreg.config:
   title: Registration Configuration
   route_name: simple_conreg_config
