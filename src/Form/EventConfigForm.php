@@ -589,7 +589,7 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('badge_name_options', $vals['simple_conreg_members']['badge_name_options']);
     $config->set('badge_name_default', $vals['simple_conreg_members']['badge_name_default']);
     $config->set('days', $vals['simple_conreg_members']['days']);
-    $config->set('member_no_digits', $vals['simple_conreg_members']['digits']);
+    $config->set('member_no_digits', intval($vals['simple_conreg_members']['digits']));
     $config->set('registration_intro', $vals['simple_conreg_intros']['registration_intro']);
     $config->set('payment_intro', $vals['simple_conreg_intros']['payment_intro']);
     $config->set('communications_method.options', $vals['simple_conreg_communication']['options']);
@@ -604,7 +604,7 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('add_on_info.description', $vals['simple_conreg_addon_info']['description']);
     $config->set('add_on_free.label', $vals['simple_conreg_addon_free']['label']);
     $config->set('add_on_free.description', $vals['simple_conreg_addon_free']['description']);
-    $config->set('display.page_size', $vals['simple_conreg_display']['page_size']);
+    $config->set('display.page_size', intval($vals['simple_conreg_display']['page_size']));
     $config->set('reference.default_country', $vals['simple_conreg_reference']['default_country']);
     $config->set('reference.countries', $vals['simple_conreg_reference']['countries']);
     $config->set('reference.geoplugin', $vals['simple_conreg_reference']['geoplugin']);
@@ -613,7 +613,7 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('thanks.thank_you_message', $vals['simple_conreg_thanks']['thank_you_message']['value']);
     $config->set('thanks.thank_you_format', $vals['simple_conreg_thanks']['thank_you_message']['format']);
     $config->set('discount.enable', $vals['simple_conreg_discount']['enable']);
-    $config->set('discount.free_every', $vals['simple_conreg_discount']['free_every']);
+    $config->set('discount.free_every', empty($vals['simple_conreg_discount']['free_every']) ? null : intval($vals['simple_conreg_discount']['free_every']));
     $config->set('checkin.display', $vals['simple_conreg_checkin']['display']);
     $config->set('checkin.communication_method', $vals['simple_conreg_checkin']['communication_method']);
     $config->set('confirmation.format_html', $vals['simple_conreg_confirmation']['format_html']);

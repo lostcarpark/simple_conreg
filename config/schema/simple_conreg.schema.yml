@@ -44,6 +44,23 @@ simple_conreg.settings.*:
     payment_intro:
       type: text
       label: 'Introduction message for payment form'
+    communications_method:
+      type: mapping
+      mapping:
+        options:
+          type: text
+          label: 'A list of communications options (note: do not translate codes before |)'
+    display_options:
+      type: mapping
+      mapping:
+        options:
+          type: text
+          label: 'A list of options for displaying member on public lists (note: do not translate codes before |)'
+    display:
+      type: mapping
+      mapping:
+        page_size:
+          type: integer
     member:
       type: mapping
       label: 'Member settings'
@@ -55,11 +72,11 @@ simple_conreg.settings.*:
             type: mapping
             label: 'Settings for member class'
             mapping:
+              name:
+                type: string
               fields:
                 type: mapping
                 mapping:
-                  name:
-                    type: string
                   first_name:
                     type: label
                     label: 'Label for Given name'
@@ -141,3 +158,45 @@ simple_conreg.settings.*:
                   age_max:
                     type: integer
                     label: 'Maximum age'
+              mandatory:
+                type: sequence
+                sequence:
+                  type: integer
+              max_length:
+                type: sequence
+                sequence:
+                  type: integer
+              extras:
+                type: mapping
+                mapping:
+                  flag1:
+                    type: label
+                    label: 'Optional additional flag on registration form'
+                  flag2:
+                    type: label
+                    label: 'Optional additional flag on registration form'
+        types:
+          type: sequence
+          label: 'Member types list'
+          sequence:
+            type: mapping
+            label: 'Settings for member type'
+            mapping:
+              name:
+                type: label
+                label: 'Name of member type'
+              description:
+                type: label
+                label: 'Description of member type - normally includes age requirement and price'
+              price:
+                type: string
+              badgeType:
+                type: string
+              memberClass:
+                type: string
+              allowFirst:
+                type: integer
+              active:
+                type: integer
+              defaultDays:
+                type: string
