@@ -412,13 +412,23 @@ class EventMemberClassesForm extends ConfigFormBase
     foreach ($memberClasses->classes as $classRef => $class) {
       $memberClasses->classes[$classRef]->name = $vals[$classRef]['class']['name'];
       foreach ($class->fields as $fieldName => $oldVal) {
-        $memberClasses->classes[$classRef]->fields->$fieldName = $vals[$classRef]['labels'][$fieldName];
+        $value = $vals[$classRef]['labels'][$fieldName];
+        if ($value == '')
+          $memberClasses->classes[$classRef]->fields->$fieldName = null;
+        else if ($fieldName == 'age_min' || $fieldName == 'age_max')
+          $memberClasses->classes[$classRef]->fields->$fieldName = intval($value);
+        else
+          $memberClasses->classes[$classRef]->fields->$fieldName = $value;
       }
       foreach ($class->mandatory as $fieldName => $oldVal) {
         $memberClasses->classes[$classRef]->mandatory->$fieldName = $vals[$classRef]['mandatory'][$fieldName];
       }
       foreach ($class->max_length as $fieldName => $oldVal) {
-        $memberClasses->classes[$classRef]->max_length->$fieldName = $vals[$classRef]['max_length'][$fieldName];
+        $max_len = $vals[$classRef]['max_length'][$fieldName];
+        if (empty($max_len)) 
+          $memberClasses->classes[$classRef]->max_length->$fieldName = null;
+        else
+          $memberClasses->classes[$classRef]->max_length->$fieldName = intval($max_len);
       }
       foreach ($class->extras as $fieldName => $oldVal) {
         $memberClasses->classes[$classRef]->extras->$fieldName = $vals[$classRef]['extras'][$fieldName];
