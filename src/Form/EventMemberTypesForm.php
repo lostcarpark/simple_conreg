@@ -117,6 +117,7 @@ class EventMemberTypesForm extends ConfigFormBase
         '#type' => 'number',
         '#title' => $this->t('Price'),
         '#default_value' => $type->price,
+        '#step' => '0.01',
         '#required' => TRUE,
       ];
       $form[$typeRef]['type']['badgeType'] = [
@@ -288,6 +289,7 @@ class EventMemberTypesForm extends ConfigFormBase
       $row["price"] = [
         '#type' => 'number',
         '#default_value' => isset($typeDays[$dayRef]->price) ? $typeDays[$dayRef]->price : '',
+        '#step' => '0.01',
       ];
       $daysForm['daysTable'][$dayRef] = $row;
     }
