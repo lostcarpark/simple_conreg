@@ -89,6 +89,13 @@ class EventConfigForm extends ConfigFormBase {
       '#title' => $this->t('Select payment system'),
       '#options' => array('Stripe'=>'Stripe', 'None'=>'None'),
       '#default_value' => $config->get('payments.system'),
+    );
+
+    $form['simple_conreg_payments']['types'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Payment Method Types'),
+      '#description' => $this->t('Available payment types, separated by |. Default to "card".'),
+      '#default_value' => empty($config->get('payments.types')) ? 'card' : $config->get('payments.types'),
     );  
 
     $form['simple_conreg_payments']['mode'] = array(
@@ -98,16 +105,16 @@ class EventConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('payments.mode'),
     );  
 
-    $form['simple_conreg_payments']['private_key'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Payment System Private (Secret) Key'),
-      '#default_value' => $config->get('payments.private_key'),
-    );  
-
     $form['simple_conreg_payments']['public_key'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Payment System Public (Publishable) Key'),
       '#default_value' => $config->get('payments.public_key'),
+    );  
+
+    $form['simple_conreg_payments']['private_key'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Payment System Private (Secret) Key'),
+      '#default_value' => $config->get('payments.private_key'),
     );  
 
     $form['simple_conreg_payments']['currency'] = array(
@@ -576,6 +583,7 @@ class EventConfigForm extends ConfigFormBase {
 
     $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.settings.'.$eid);
     $config->set('payments.system', $vals['simple_conreg_payments']['system']);
+    $config->set('payments.types', $vals['simple_conreg_payments']['types']);
     $config->set('payments.mode', $vals['simple_conreg_payments']['mode']);
     $config->set('payments.private_key', trim($vals['simple_conreg_payments']['private_key']));
     $config->set('payments.public_key', trim($vals['simple_conreg_payments']['public_key']));
