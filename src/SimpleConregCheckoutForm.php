@@ -142,9 +142,11 @@ class SimpleConregCheckoutForm extends FormBase {
       $success = Url::fromRoute("simple_conreg_checkout", ["payid" => $payment->payId,"key" => $payment->randomKey], ['absolute' => TRUE])->toString();
       $cancel = Url::fromRoute("simple_conreg_register", ["eid" => $eid], ['absolute' => TRUE])->toString();
 
+      $types = empty($config->get('payments.types')) ? ['card'] : explode('|', $config->get('payments.types'));
+
       // Set up Stripe Session.
       $session = \Stripe\Checkout\Session::create([
-        'payment_method_types' => ['card'],
+        'payment_method_types' => $types,
         'customer_email' => $email,
         'line_items' => $items,
         'success_url' => $success,
