@@ -1,7 +1,7 @@
 conreg_member_lookup:
   path: 'members/lookup/{eid}'
   defaults:
-    _title: 'ConReg Zambia Options'
+    _title: 'Member Lookup'
     _form: '\Drupal\conreg_lookup\Form\LookupMemberForm'
     eid: 1
   requirements:
