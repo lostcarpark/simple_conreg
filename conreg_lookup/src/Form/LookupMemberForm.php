@@ -96,6 +96,15 @@ class LookupMemberForm extends FormBase {
       ),
     );
 
+    if (strlen($search) < 3) {
+      $form['message'] = [
+        '#markup' => $this->t('Please enter at least 3 characters in search box.'),
+        '#prefix' => '<div id="memberform">',
+        '#suffix' => '</div>',
+      ];
+      return $form;
+    }
+
     $form['table'] = array(
       '#type' => 'table',
       '#header' => $headers,
