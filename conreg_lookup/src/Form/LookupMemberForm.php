@@ -217,7 +217,7 @@ class LookupMemberForm extends FormBase {
   {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
-    $select->leftJoin('conreg_members', 'l', 'l.mid = m.mid');
+    $select->leftJoin('conreg_members', 'l', 'l.mid = m.lead_mid');
     // Select these specific fields for the output.
     $select->addField('m', 'mid');
     $select->addField('m', 'first_name');
