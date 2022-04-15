@@ -1,0 +1,4 @@
+conreg_lookup.member_lookup:
+  title: Member Lookup
+  route_name: conreg_member_lookup
+  weight: 55
