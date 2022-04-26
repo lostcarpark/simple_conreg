@@ -199,7 +199,7 @@ class FieldOptions
   /**
    * Process field options from submitted member form.
    *
-   * Parameters: Event ID, Fieldset, Form vals for member, and reference to array to return option values.
+   * Parameters: Class Ref (not currently used - consider removing), Form vals for member, member ID, and reference to array to return option values.
    */
   public function procesOptionFields($classRef, &$memberVals, $mid, &$memberOptions)
   {
@@ -207,15 +207,52 @@ class FieldOptions
     foreach ($this->groups as $group) {
       // Check if fieldname exists in 
       if (!empty($memberVals) && array_key_exists($group->fieldName, $memberVals)) {
-        foreach ($memberVals[$group->fieldName]['options'] as $optid => $optionInfo) {
-          // We only want to store the option if it is already part of the member, or it has been set on the form.
-          if (isset($memberOptions[$optid]) || $optionInfo['option']) {
-            $memberOptions[$optid] = new MemberOption($mid, $optid, $optionInfo['option'], isset($optionInfo['detail']) ? $optionInfo['detail'] : '');
-          }
+        switch($group->fieldType) {
+          case 'checkboxes':
+            $this->processOptionCheckBoxes($memberVals[$group->fieldName], $mid, $memberOptions);
+            break;
+          case 'textfields':
+            $this->processOptionTextFields($memberVals[$group->fieldName], $mid, $memberOptions);
+            break;
+          case 'checkboxes':
+            $this->processOptionCheckBoxes($memberVals[$group->fieldName], $mid, $memberOptions);
         }
-        // If the option is attached to a regular field, put the field value back in its parent, so the values look like they would if options hadn't been added.
-        if (isset($memberVals[$group->fieldName][$group->fieldName]))
-          $memberVals[$group->fieldName] = $memberVals[$group->fieldName][$group->fieldName];
+      }
+      // If the option is attached to a regular field, put the field value back in its parent, so the values look like they would if options hadn't been added.
+      if (isset($memberVals[$group->fieldName][$group->fieldName]))
+      $memberVals[$group->fieldName] = $memberVals[$group->fieldName][$group->fieldName];
+    }
+  }
+
+  /**
+   * Process field options of type CheckBox from submitted member form.
+   *
+   * Parameters: Form vals for option group, member ID, and reference to array to return option values.
+   */
+  public function processOptionCheckBoxes(&$groupVals, $mid, &$memberOptions)
+  {
+    foreach ($groupVals['options'] as $optid => $optionInfo) {
+      // We only want to store the option if it is already part of the member, or it has been set on the form.
+      if (isset($memberOptions[$optid]) || $optionInfo['option']) {
+        $optionDetail = isset($optionInfo['detail']) ? $optionInfo['detail'] : '';
+        $memberOptions[$optid] = new MemberOption($mid, $optid, $optionInfo['option'], $optionDetail);
+      }
+    }
+  }
+
+  /**
+   * Process field options of type TextField from submitted member form.
+   *
+   * Parameters: Form vals for option group, member ID, and reference to array to return option values.
+   */
+  public function processOptionTextFields(&$groupVals, $mid, &$memberOptions)
+  {
+    foreach ($groupVals['options'] as $optid => $optionInfo) {
+      // We only want to store the option if it is already part of the member, or it has been set on the form.
+      if (isset($memberOptions[$optid]) || $optionInfo['detail']) {
+        $optionDetail = isset($optionInfo['detail']) ? $optionInfo['detail'] : '';
+        $optionVal = empty($optionDetail) ? false : true;
+        $memberOptions[$optid] = new MemberOption($mid, $optid, $optionVal, $optionDetail);
       }
     }
   }

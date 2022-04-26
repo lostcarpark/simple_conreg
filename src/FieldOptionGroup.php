@@ -62,6 +62,20 @@ class FieldOptionGroup {
         'class' => ['field-option-group'],
       ],
     ];
+    switch ($this->fieldType) {
+      case 'checkboxes':
+        return $this->groupCheckBoxes($options);
+        break;
+      case 'textfields':
+        return $this->groupTextFields($options);
+        break;
+      default:
+        return $this->groupCheckBoxes($options);
+    }
+  }
+
+  private function groupCheckBoxes($options)
+  {
     foreach ($this->options as $option) {
       // Create a div to contain the option.
       $options[$option->optionId] = [
@@ -102,6 +116,35 @@ class FieldOptionGroup {
         if (isset($member->options[$option->optionId]->optionDetail)) {
           $options[$option->optionId]['detail']['#default_value'] = $member->options[$option->optionId]->optionDetail;
         }
+      }
+    }
+    return $options;
+  }
+
+  private function groupTextFields($options)
+  {
+    foreach ($this->options as $option) {
+      // Create a div to contain the option.
+      $options[$option->optionId] = [
+        '#prefix' => '<div class="option_'.$option->optionId.'">',
+        '#suffix' => '</div>',
+      ];
+      // If option has detail, add the detail.
+      $options[$option->optionId]['detail'] = [
+        '#type' => 'textfield',
+        '#title' => $option->detailTitle,
+        '#weight' => $option->weight,
+        '#attributes' => [
+          'class' => ['field-option-detail'],
+        ],
+      ];
+      if ($option->detailRequired) {
+        //$options[$option->optionId]['detail']['#required'] = TRUE;
+        $options[$option->optionId]['detail']['#attributes']['class'][] = 'detail-required';
+      }
+      // If member data for option, add the values.
+      if (isset($member->options[$option->optionId]->optionDetail)) {
+        $options[$option->optionId]['detail']['#default_value'] = $member->options[$option->optionId]->optionDetail;
       }
     }
     return $options;
