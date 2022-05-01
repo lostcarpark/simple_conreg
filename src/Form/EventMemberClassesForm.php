@@ -133,6 +133,7 @@ class EventMemberClassesForm extends ConfigFormBase
         'age_min' => (object)['label' => 'Minimum age', 'type' => 'number', 'required' => FALSE],
         'age_max' => (object)['label' => 'Maximum age', 'type' => 'number', 'required' => FALSE],
       ];
+      $form_state->set('fieldLabels', $fieldLabels);
 
       foreach ($fieldLabels as $fieldName => $field) {
         $form[$classRef]['labels'][$fieldName] = array(
@@ -163,6 +164,7 @@ class EventMemberClassesForm extends ConfigFormBase
         'birth_date' => 'Date of birth mandatory',
         'age' => 'Age mandatory',
       ];
+      $form_state->set('mandatoryLabels', $mandatoryLabels);
 
       foreach ($mandatoryLabels as $fieldName => $label) {
         $form[$classRef]['mandatory'][$fieldName] = array(
@@ -195,6 +197,7 @@ class EventMemberClassesForm extends ConfigFormBase
         'county' => 'County/State maximum length',
         'postcode' => 'Postal code maximum length',
       ];
+      $form_state->set('maxLengthLabels', $maxLengthLabels);
 
       foreach ($maxLengthLabels as $fieldName => $label) {
         $form[$classRef]['max_length'][$fieldName] = array(
@@ -320,7 +323,7 @@ class EventMemberClassesForm extends ConfigFormBase
     $memberClasses = $form_state->get('member_classes');
 
     $vals = $form_state->getValues();
-    $this->updateMemberClasses($memberClasses, $vals);
+    $this->updateMemberClasses($memberClasses, $vals, $form_state);
     SimpleConregOptions::saveMemberClasses($eid, $memberClasses);
 
     parent::submitForm($form, $form_state);
@@ -336,7 +339,7 @@ class EventMemberClassesForm extends ConfigFormBase
 
     // Update the member classes stored in the form.
     $vals = $form_state->getValues();
-    $this->updateMemberClasses($memberClasses, $vals);
+    $this->updateMemberClasses($memberClasses, $vals, $form_state);
     $form_state->set('member_classes', $memberClasses);
 
     $form_state->setRebuild();
@@ -376,7 +379,7 @@ class EventMemberClassesForm extends ConfigFormBase
 
     // Update the member classes stored in the form.
     $vals = $form_state->getValues();
-    $this->updateMemberClasses($memberClasses, $vals);
+    $this->updateMemberClasses($memberClasses, $vals, $form_state);
     $form_state->set('member_classes', $memberClasses);
 
     $form_state->setRebuild();
@@ -407,11 +410,15 @@ class EventMemberClassesForm extends ConfigFormBase
     $form_state->setRebuild();
   }
 
-  private function updateMemberClasses(&$memberClasses, $vals)
+  private function updateMemberClasses(&$memberClasses, $vals, $form_state)
   {
+    $fieldLabels = $form_state->get('fieldLabels');
+    $mandatoryLabels = $form_state->get('mandatoryLabels');
+    $maxLengthLabels = $form_state->get('maxLengthLabels');
+    
     foreach ($memberClasses->classes as $classRef => $class) {
       $memberClasses->classes[$classRef]->name = $vals[$classRef]['class']['name'];
-      foreach ($class->fields as $fieldName => $oldVal) {
+      foreach ($fieldLabels as $fieldName => $field) {
         $value = $vals[$classRef]['labels'][$fieldName];
         if ($value == '')
           $memberClasses->classes[$classRef]->fields->$fieldName = null;
@@ -420,10 +427,10 @@ class EventMemberClassesForm extends ConfigFormBase
         else
           $memberClasses->classes[$classRef]->fields->$fieldName = $value;
       }
-      foreach ($class->mandatory as $fieldName => $oldVal) {
+      foreach ($mandatoryLabels as $fieldName => $label) {
         $memberClasses->classes[$classRef]->mandatory->$fieldName = $vals[$classRef]['mandatory'][$fieldName];
       }
-      foreach ($class->max_length as $fieldName => $oldVal) {
+      foreach ($maxLengthLabels as $fieldName => $label) {
         $max_len = $vals[$classRef]['max_length'][$fieldName];
         if (empty($max_len)) 
           $memberClasses->classes[$classRef]->max_length->$fieldName = null;
