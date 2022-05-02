@@ -66,7 +66,15 @@ conreg_admin:
   css:
     theme:
       css/simple_conreg_admin.css: {}
-  
+
+conreg_select_all:
+  version: 1.x
+  js:
+    js/conreg_select_all.js: {}
+  dependencies:
+    - core/drupal.form
+    - core/jquery
+
 conreg_disable_on_click:
   version: 1.x
   js:
