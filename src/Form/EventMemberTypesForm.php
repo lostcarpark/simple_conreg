@@ -166,6 +166,7 @@ class EventMemberTypesForm extends ConfigFormBase
         '#type' => 'submit',
         '#value' => $this->t('Delete @name', ['@name' => $typeName]),
         '#submit' => [[$this, 'deleteSubmit']],
+        '#limit_validation_errors' => [],
         '#attributes' => ['id' => "submitBtn"],
       ];
     }
@@ -209,6 +210,7 @@ class EventMemberTypesForm extends ConfigFormBase
     $form['cancel'] = [
       '#type' => 'submit',
       '#value' => $this->t('Cancel'),
+      '#limit_validation_errors' => [],
       '#submit' => [[$this, 'cancelAction']],
     ];
     return parent::buildForm($form, $form_state);
@@ -240,6 +242,7 @@ class EventMemberTypesForm extends ConfigFormBase
     $form['cancel'] = [
       '#type' => 'submit',
       '#value' => $this->t('Cancel'),
+      '#limit_validation_errors' => [],
       '#submit' => [[$this, 'cancelAction']],
     ];
     return parent::buildForm($form, $form_state);

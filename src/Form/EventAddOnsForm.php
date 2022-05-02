@@ -153,7 +153,7 @@ class EventAddOnsForm extends ConfigFormBase
       $form['addons'][$addOnId]['info']['label'] = array(
         '#type' => 'textfield',
         '#title' => $this->t('Label'),
-        '#description' => t('If you would like to capture optional information about the add-on, please provide label and description for the information field.'),
+        '#description' => $this->t('If you would like to capture optional information about the add-on, please provide label and description for the information field.'),
         '#default_value' => (isset($info['label']) ? $info['label'] : ''),
       );  
 

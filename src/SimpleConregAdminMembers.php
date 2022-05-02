@@ -16,24 +16,28 @@ use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Render\RendererInterface;
 use Drupal\devel;
 
 /**
  * Simple form to add an entry, with all the interesting fields.
  */
-class SimpleConregAdminMembers extends FormBase {
+class SimpleConregAdminMembers extends FormBase
+{
 
   /**
    * {@inheritdoc}
    */
-  public function getFormID() {
+  public function getFormID()
+  {
     return 'simple_conreg_admin_members';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $display = NULL, $page = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $display = NULL, $page = NULL)
+  {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
 
@@ -111,73 +115,82 @@ class SimpleConregAdminMembers extends FormBase {
       $search = $tempstore->get('search');
     $tempstore->set('search', $search);
 
-    $form = array(
+    $form = [
       '#attached' => [
-        'library' => ['simple_conreg/conreg_tables'],
+        'library' => [
+          'simple_conreg/conreg_select_all',
+          'simple_conreg/conreg_tables',
+        ],
       ],
       '#prefix' => '<div id="memberform">',
       '#suffix' => '</div>',
-    );
+    ];
 
     $form['add_link'] = Link::createFromRoute($this->t('Add new member'), 'simple_conreg_admin_members_add', ['eid' => $eid])->toRenderable();
     $form['add_link']['#attributes'] = ['class' => ['button', 'button-action', 'button--primary', 'button--small']];
 
-    $form['display'] = array(
+    $form['display'] = [
       '#type' => 'select',
       '#title' => $this->t('Select '),
       '#options' => $options,
       '#default_value' => $display,
       '#required' => TRUE,
-      '#ajax' => array(
+      '#ajax' => [
         'wrapper' => 'memberform',
-        'callback' => array($this, 'updateDisplayCallback'),
+        'callback' => [$this, 'updateDisplayCallback'],
         'event' => 'change',
-      ),
-    );
+      ],
+    ];
 
-    $headers = array(
-      'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
-      'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
-      'email' => ['data' => t('Email'), 'field' => 'm.email'],
-      'badge_name' => ['data' => t('Badge name'), 'field' => 'm.badge_name'],
-      'display' =>  ['data' => t('Display'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      'member_type' =>  ['data' => t('Member type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      'days' =>  ['data' => t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      'badge_type' =>  ['data' => t('Badge type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      t('Paid'),
-      t('Approved'),
-      'member_no' => ['data' => t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
-      t('Update'),
-    );
+    $headers = [
+      'first_name' => ['data' => $this->t('First name'), 'field' => 'm.first_name'],
+      'last_name' => ['data' => $this->t('Last name'), 'field' => 'm.last_name'],
+      'email' => ['data' => $this->t('Email'), 'field' => 'm.email'],
+      'badge_name' => ['data' => $this->t('Badge name'), 'field' => 'm.badge_name'],
+      'display' =>  ['data' => $this->t('Display')],
+      'member_type' =>  ['data' => $this->t('Member type')],
+      'days' =>  ['data' => $this->t('Days')],
+      'badge_type' =>  ['data' => $this->t('Badge type')],
+      $this->t('Paid'),
+      $this->t('Approved'),
+      'member_no' => ['data' => $this->t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
+      $this->t('Update'),
+    ];
 
     // If display 
     if ($display == 'custom') {
-      $form['search'] = array(
+      $form['search'] = [
         '#type' => 'textfield',
         '#title' => $this->t('Custom search term'),
         '#default_value' => trim($search),
-      );
+      ];
       
-      $form['search_button'] = array(
+      $form['search_button'] = [
         '#type' => 'button',
-        '#value' => t('Search'),
-        '#attributes' => array('id' => "searchBtn"),
-        '#validate' => array(),
-        '#submit' => array('::search'),
-        '#ajax' => array(
+        '#value' => $this->t('Search'),
+        '#attributes' => ['id' => "searchBtn"],
+        '#validate' => [],
+        '#submit' => ['::search'],
+        '#ajax' => [
           'wrapper' => 'memberform',
-          'callback' => array($this, 'updateDisplayCallback'),
-        ),
-      );
+          'callback' => [$this, 'updateDisplayCallback'],
+        ],
+      ];
     }
 
-    $form['table'] = array(
+    $form['select_all'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Select all'),
+      '#attributes' => ['class' => ['select-all']],
+    ];
+
+    $form['table'] = [
       '#type' => 'table',
       '#header' => $headers,
-      '#attributes' => array('id' => 'simple-conreg-admin-member-list'),
-      '#empty' => t('No entries available.'),
+      '#attributes' => ['id' => 'simple-conreg-admin-member-list'],
+      '#empty' => $this->t('No entries available.'),
       '#sticky' => TRUE,
-    );      
+    ];
 
     if ($display != 'custom')
       list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($eid, $display, NULL, $page, $pageSize, $order, $direction);
@@ -206,26 +219,26 @@ class SimpleConregAdminMembers extends FormBase {
       $mid = $entry['mid'];
       // Sanitize each entry.
       $is_paid = $entry['is_paid'];
-      $row = array();
-      $row['first_name'] = array(
+      $row = [];
+      $row['first_name'] = [
         '#markup' => Html::escape($entry['first_name']),
-      );
-      $row['last_name'] = array(
+      ];
+      $row['last_name'] = [
         '#markup' => Html::escape($entry['last_name']),
-      );
-      $row['email'] = array(
+      ];
+      $row['email'] = [
         '#markup' => Html::escape($entry['email']),
-      );
-      $row['badge_name'] = array(
+      ];
+      $row['badge_name'] = [
         '#markup' => Html::escape($entry['badge_name']),
-      );
-      $row['display'] = array(
+      ];
+      $row['display'] = [
         '#markup' => Html::escape(isset($displayOptions[$entry['display']]) ? $displayOptions[$entry['display']] : $entry['display']),
-      );
+      ];
       $memberType = trim($entry['member_type']);
-      $row['member_type'] = array(
+      $row['member_type'] = [
         '#markup' => Html::escape(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
-      );
+      ];
       if (!empty($entry['days'])) {
         $dayDescs = [];
         foreach(explode('|', $entry['days']) as $day) {
@@ -234,62 +247,64 @@ class SimpleConregAdminMembers extends FormBase {
         $memberDays = implode(', ', $dayDescs);
       } else
         $memberDays = '';
-      $row['days'] = array(
+      $row['days'] = [
         '#markup' => Html::escape($memberDays),
-      );
+      ];
       $badgeType = trim($entry['badge_type']);
-      $row['badge_type'] = array(
+      $row['badge_type'] = [
         '#markup' => Html::escape(isset($badgeTypes[$badgeType]) ? $badgeTypes[$badgeType] : $badgeType),
-      );
-      $row['is_paid'] = array(
+      ];
+      $row['is_paid'] = [
         '#markup' => $is_paid ? $this->t('Yes') : $this->t('No'),
-      );
-      $row["is_approved"] = array(
-        //'#attributes' => array('name' => 'is_approved_'.$mid, 'id' => 'edit_is_approved_'.$mid),
+      ];
+      $row["is_approved"] = [
+        //'#attributes' => ['name' => 'is_approved_'.$mid, 'id' => 'edit_is_approved_'.$mid),
         '#type' => 'checkbox',
-        '#title' => t('Is Approved'),
+        '#title' => $this->t('Is Approved'),
         '#title_display' => 'invisible',
         '#default_value' => $entry['is_approved'],
-      );
-      if (empty($entry["member_no"]))
+        '#attributes' => ['class' => ['checkbox-selectable']],
+      ];
+      if (empty($entry["member_no"])) {
         $entry["member_no"] = "";
-        $row["member_no"] = array(
-          '#type' => 'textfield',
-          '#title' => t('Member No'),
-          '#title_display' => 'invisible',
-          '#size' => 5,
-          '#default_value' => $entry['member_no'],
-      );
-      $row['link'] = array(
+      }
+      $row["member_no"] = [
+        '#type' => 'textfield',
+        '#title' => $this->t('Member No'),
+        '#title_display' => 'invisible',
+        '#size' => 5,
+        '#default_value' => $entry['member_no'],
+      ];
+      $row['link'] = [
         '#type' => 'dropbutton',
-        '#links' => array(
-          'edit_button' => array(
+        '#links' => [
+          'edit_button' => [
             'title' => $this->t('Edit'),
             'url' => Url::fromRoute('simple_conreg_admin_members_edit', ['eid' => $eid, 'mid' => $mid]),
-          ),
-          'delete_button' => array(
+          ],
+          'delete_button' => [
             'title' => $this->t('Delete'),
             'url' => Url::fromRoute('simple_conreg_admin_members_delete', ['eid' => $eid, 'mid' => $mid]),
-          ),
-          'transfer_button' => array(
+          ],
+          'transfer_button' => [
             'title' => $this->t('Transfer'),
             'url' => Url::fromRoute('simple_conreg_admin_members_transfer', ['eid' => $eid, 'mid' => $mid]),
-          ),
-          'email_button' => array(
+          ],
+          'email_button' => [
             'title' => $this->t('Send email'),
             'url' => Url::fromRoute('simple_conreg_admin_members_email', ['eid' => $eid, 'mid' => $mid]),
-          ),
-        ),
-      );
+          ],
+        ],
+      ];
 
       $form['table'][$mid] = $row;
     }
     
-    $form['pager'] = array(
+    $form['pager'] = [
       '#markup' => $this->t('Page:'),
       '#prefix' => '<div id="pager">',
       '#suffix' => '</div>',
-    );
+    ];
     for ($p = 1; $p <= $pages; $p++) {
       if ($p == $page)
         $form['pager']['page'.$p]['#markup'] = $p;
@@ -299,22 +314,23 @@ class SimpleConregAdminMembers extends FormBase {
       $form['pager']['page'.$p]['#suffix'] = '</span> ';
     }
 
-    $form['submit'] = array(
+    $form['submit'] = [
       '#type' => 'submit',
-      '#value' => t('Save Changes'),
-      '#attributes' => array('id' => "submitBtn"),
-    );
+      '#value' => $this->t('Save Changes'),
+      '#attributes' => ['id' => "submitBtn"],
+    ];
     return $form;
   }
 
   // Callback function for "member type" and "add-on" drop-downs. Replace price fields.
-  public function updateApprovedCallback(array $form, FormStateInterface $form_state) {
+  public function updateApprovedCallback(array $form, FormStateInterface $form_state)
+  {
     $triggering_element = $form_state->getTriggeringElement();
     $ajax_response = new AjaxResponse();
     if (preg_match("/table\[(\d+)\]\[is_approved\]/", $triggering_element['#name'], $matches)) {
       $mid = $matches[1];
       $form['table'][$mid]["member_div"]["member_no"]['#value'] = $triggering_element['#value'];
-      $ajax_response->addCommand(new HtmlCommand('#member_no_'.$mid, render($form['table'][$mid]["member_div"]["member_no"]['#value'])));
+      $ajax_response->addCommand(new HtmlCommand('#member_no_'.$mid, RendererInterface::render($form['table'][$mid]["member_div"]["member_no"]['#value'])));
       //$ajax_response->addCommand(new AlertCommand($row." = ".));
     }
     return $ajax_response;

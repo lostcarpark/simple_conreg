@@ -332,7 +332,7 @@ class SimpleConregAdminMemberEdit extends FormBase
     $form['member']['member_price'] = array(
       '#type' => 'number',
       '#title' => $this->t('Price'),
-      '#default_value' => (isset($member->member_price) ? $member->member_price : ''),
+      '#default_value' => (isset($member->member_price) ? $member->member_price : '0'),
       '#step' => '0.01',
     );
 
@@ -364,12 +364,13 @@ class SimpleConregAdminMemberEdit extends FormBase
 
     $form['payment']['submit'] = array(
       '#type' => 'submit',
-      '#value' => t('Save member'),
+      '#value' => $this->t('Save member'),
     );
 
     $form['cancel'] = array(
       '#type' => 'submit',
-      '#value' => t('Cancel'),
+      '#value' => $this->t('Cancel'),
+      '#limit_validation_errors' => [],
       '#submit' => [[$this, 'submitCancel']],
     );
 
@@ -380,10 +381,23 @@ class SimpleConregAdminMemberEdit extends FormBase
   }
 
   /*
+   * Validate form on submit.
+   */
+
+  public function validateForm(array &$form, FormStateInterface $form_state)
+  {
+    $form_values = $form_state->getValues();
+    if ($form_values['member']['member_price'] == '' || !is_numeric($form_values['member']['member_price'])) {
+      $form_state->setErrorByName('member][member_price', $this->t('Member price must be a number.'));
+    }
+  }
+
+  /*
    * Submit handler for cancel button.
    */
 
-  public function submitCancel(array &$form, FormStateInterface $form_state) {
+  public function submitCancel(array &$form, FormStateInterface $form_state)
+  {
     $eid = $form_state->get('eid');
     // Get session state to return to correct page.
     $tempstore = \Drupal::service('tempstore.private')->get('simple_conreg');
@@ -397,7 +411,8 @@ class SimpleConregAdminMemberEdit extends FormBase
    * Submit handler for member edit form.
    */
 
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state)
+  {
     $eid = $form_state->get('eid');
     $mid = $form_state->get('mid');
     $curMemberClassRef = $form_state->get('member_class');
@@ -512,17 +527,17 @@ class SimpleConregAdminMemberEdit extends FormBase
             // Get communications methods selected for newsletter.
             $communications_methods = $simplenews_options[$newsletter_id]['communications_methods'];
             // Check if member matches newsletter criteria.
-            if (isset($entry['email']) && $entry['email'] != '') {
-              if (isset($entry['communication_method']) &&
-                  isset($communications_methods[$entry['communication_method']]) &&
-                  $communications_methods[$entry['communication_method']]) {
+            if (isset($member->email) && $member->email != '') {
+              if (isset($member->communication_method) &&
+                  isset($communications_methods[$member->communication_method]) &&
+                  $communications_methods[$member->communication_method]) {
                 // Subscribe member if criteria met.
-                $subscription_manager->subscribe($entry['email'], $newsletter_id, FALSE, 'website');
-                \Drupal::messenger()->addMessage($this->t('Subscribed %email to %newsletter.', ['%email' => $entry['email'], '%newsletter' => $newsletter_id]));
+                $subscription_manager->subscribe($member->email, $newsletter_id, FALSE, 'website');
+                \Drupal::messenger()->addMessage($this->t('Subscribed %email to %newsletter.', ['%email' => $member->email, '%newsletter' => $newsletter_id]));
               } else {
                 // Unsubscribe member if criteria not met (their communications method may have changed).
-                $subscription_manager->unsubscribe($entry['email'], $newsletter_id, FALSE, 'website');
-                \Drupal::messenger()->addMessage($this->t('Unsubscribed %email from %newsletter.', ['%email' => $entry['email'], '%newsletter' => $newsletter_id]));
+                $subscription_manager->unsubscribe($member->email, $newsletter_id, FALSE, 'website');
+                \Drupal::messenger()->addMessage($this->t('Unsubscribed %email from %newsletter.', ['%email' => $member->email, '%newsletter' => $newsletter_id]));
               }
             }
           }
