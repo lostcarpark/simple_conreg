@@ -137,7 +137,11 @@ class SimpleConregRegistrationForm extends FormBase {
       '#prefix' => '<div id="regform">',
       '#suffix' => '</div>',
       '#attached' => [
-        'library' => ['simple_conreg/conreg_form', 'simple_conreg/conreg_fieldoptions'],
+        'library' => [
+          'simple_conreg/conreg_form',
+          'simple_conreg/conreg_fieldoptions',
+          'simple_conreg/conreg_disable_on_click'
+        ],
         'drupalSettings' => [],
       ],
     ];
@@ -570,7 +574,10 @@ class SimpleConregRegistrationForm extends FormBase {
     $form['payment']['submit'] = [
       '#type' => 'submit',
       '#value' => $submitLabel,
-      '#attributes' => ['id' => 'edit-payment-submit'],
+      '#attributes' => [
+        'id' => 'edit-payment-submit',
+        'class' => ['disable-on-click'],
+      ],
       '#prefix' => '<div id="Submit">',
       '#suffix' => '</div>',
     ];
