@@ -31,7 +31,7 @@ class FieldOption {
   }
 
   public function parseOption($optionLine) {
-    $optionFields = array_pad(explode('|', $optionLine), 8, '');
+    $optionFields = array_pad(explode('|', trim($optionLine)), 8, '');
     list($this->optionId, $this->groupId, $this->title, $this->detailTitle, $this->detailRequired, $this->weight, $belongsIn, $this->mustSelect) = $optionFields;
     $inMemberClasses = [];
     foreach (explode(',', trim($belongsIn)) as $inClass) {
