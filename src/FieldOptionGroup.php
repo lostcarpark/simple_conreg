@@ -64,17 +64,17 @@ class FieldOptionGroup {
     ];
     switch ($this->fieldType) {
       case 'checkboxes':
-        return $this->groupCheckBoxes($options);
+        return $this->groupCheckBoxes($options, $requireMandatory);
         break;
       case 'textfields':
-        return $this->groupTextFields($options);
+        return $this->groupTextFields($options, $requireMandatory);
         break;
       default:
-        return $this->groupCheckBoxes($options);
+        return $this->groupCheckBoxes($options, $requireMandatory);
     }
   }
 
-  private function groupCheckBoxes($options)
+  private function groupCheckBoxes($options, $requireMandatory)
   {
     foreach ($this->options as $option) {
       // Create a div to contain the option.
@@ -91,7 +91,7 @@ class FieldOptionGroup {
         ],
       ];
       if (isset($option->mustSelect) && $option->mustSelect == 1 && $requireMandatory) {
-        //$options[$option->optionId]['option']['#required'] = TRUE;
+        $options[$option->optionId]['option']['#required'] = TRUE;
         $options[$option->optionId]['option']['#attributes']['class'][] = 'must-select';
       }
       // If option has detail, add the detail.
@@ -139,7 +139,7 @@ class FieldOptionGroup {
         ],
       ];
       if ($option->detailRequired) {
-        //$options[$option->optionId]['detail']['#required'] = TRUE;
+        $options[$option->optionId]['detail']['#required'] = TRUE;
         $options[$option->optionId]['detail']['#attributes']['class'][] = 'detail-required';
       }
       // If member data for option, add the values.
