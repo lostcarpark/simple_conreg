@@ -57,7 +57,12 @@ class SimpleConregAddons
 
     $addons = ['#tree' => TRUE];
     $fs_addons = [];
-    
+
+    $addOnList = $config->get('add-ons');
+    if (!isset($addOnList)) {
+      return $addons;
+    }
+
     // If member ID passed in, read values from database.
     $saved = [];
     if (!is_null($mid)) {
@@ -67,7 +72,7 @@ class SimpleConregAddons
       }
     }
 
-    foreach ($config->get('add-ons') as $addOnId => $addOnVals) {
+    foreach ($addOnList as $addOnId => $addOnVals) {
       // Add add-on to form_state.
       $fs_addons[$addOnId] = $addOnId;
       // If add-on set, get values.
@@ -194,7 +199,12 @@ class SimpleConregAddons
       $addOnMembersMinusFree[$cnt] = 0;
     }
     
-    foreach ($config->get('add-ons') as $addOnId => $addOnVals) {
+    $addOns = $config->get('add-ons');
+    if (!isset($addOns)) {
+      return [$addOnTotal, $addOnGlobal, $addOnGlobalMinusFree, $addOnMembers, $addOnMembersMinusFree];
+    }
+
+    foreach ($addOns as $addOnId => $addOnVals) {
       // If add-on set, get values.
       $addon = (isset($addOnVals['addon']) ? $addOnVals['addon'] : []);          
       // Check add-on is enabled.

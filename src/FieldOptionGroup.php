@@ -30,7 +30,7 @@ class FieldOptionGroup {
 
   public function parseGroup($groupLine)
   {
-    list($this->groupId, $this->fieldType, $this->fieldName, $this->title, $this->global, $this->public) = array_pad(explode('|', $groupLine), 5, '');
+    list($this->groupId, $this->fieldType, $this->fieldName, $this->title, $this->global, $this->public) = array_pad(explode('|', $groupLine), 6, '');
   }
 
   /*

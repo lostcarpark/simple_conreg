@@ -381,8 +381,10 @@ class SimpleConregOptions
     $options = explode("\n", $config->get('badge_name_options')); // One type per line.
     $badgeNameOptions = [];
     foreach ($options as $option) {
-      list($code, $badgeOption) = explode('|', $option);
-      $badgeNameOptions[trim($code)] = trim($badgeOption);
+      if (!empty($option)) {
+        list($code, $badgeOption) = explode('|', $option);
+        $badgeNameOptions[trim($code)] = trim($badgeOption);
+      }
     }
     return $badgeNameOptions;
   }
