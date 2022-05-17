@@ -185,6 +185,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $selectedClasses = [];
     // Get the previous classes to compare.
     $prevSelectedClasses = $form_state->get('member_classes');
+    if (is_null($prevSelectedClasses)) $prevSelectedClasses = [];
     $selectedClassChanged = FALSE;
 
     for ($cnt=1; $cnt<=$memberQty; $cnt++) {
@@ -195,6 +196,7 @@ class SimpleConregRegistrationForm extends FormBase {
       $selectedClasses[$cnt] = $curMemberClassRef;
       $curMemberClass = $memberClasses->classes[$curMemberClassRef];
 
+      if (!isset($prevSelectedClasses[$cnt])) $prevSelectedClasses[$cnt] = '';
       if (isset($selectedClasses) && isset($selectedClasses[$cnt]) && $selectedClasses[$cnt] != $prevSelectedClasses[$cnt]) {
         $selectedClassChanged = TRUE;
       }
