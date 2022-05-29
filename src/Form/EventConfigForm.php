@@ -232,7 +232,14 @@ class EventConfigForm extends ConfigFormBase {
       '#title' => $this->t('Options'),
       '#description' => $this->t('Put each communications method on a line with single character code, description and 1/0 for public/private, separated by | character (e.g. "E|Electronic|1").'),
       '#default_value' => $config->get('communications_method.options'),
-    );  
+    );
+
+    $form['simple_conreg_communication']['default'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Communications method default option'),
+      '#description' => $this->t('Default communications method option. Leave blank for no default.'),
+      '#default_value' => $config->get('communications_method.default'),
+    );
 
     /*
      * Fields for display options.
@@ -601,6 +608,7 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('registration_intro', $vals['simple_conreg_intros']['registration_intro']);
     $config->set('payment_intro', $vals['simple_conreg_intros']['payment_intro']);
     $config->set('communications_method.options', $vals['simple_conreg_communication']['options']);
+    $config->set('communications_method.default', $vals['simple_conreg_communication']['default']);
     $config->set('display_options.options', $vals['simple_conreg_display_options']['options']);
     $config->set('simple_conreg_options.option_groups', $vals['simple_conreg_options']['option_groups']);
     $config->set('simple_conreg_options.options', $vals['simple_conreg_options']['options']);
