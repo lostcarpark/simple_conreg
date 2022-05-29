@@ -151,6 +151,13 @@ class EventConfigForm extends ConfigFormBase {
       '#group' => 'admin',
     );
 
+    $form['simple_conreg_members']['member_type_default'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Default Member Type'),
+      '#description' => $this->t('Default member type code. Leave blank to have no default member type selected.'),
+      '#default_value' => $config->get('member_type_default'),
+    );
+
     $form['simple_conreg_members']['upgrades'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Member upgrades'),
@@ -598,7 +605,7 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('payments.symbol', trim($vals['simple_conreg_payments']['symbol']));
     $config->set('payments.name', trim($vals['simple_conreg_payments']['show_name']));
     $config->set('payments.postcode', trim($vals['simple_conreg_payments']['show_postcode']));
-    $config->set('member_types', $vals['simple_conreg_members']['types']);
+    $config->set('member_type_default', $vals['simple_conreg_members']['member_type_default']);
     $config->set('member_upgrades', $vals['simple_conreg_members']['upgrades']);
     $config->set('badge_types', $vals['simple_conreg_members']['badge_types']);
     $config->set('badge_name_options', $vals['simple_conreg_members']['badge_name_options']);
