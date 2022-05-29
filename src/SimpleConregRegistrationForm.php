@@ -254,6 +254,7 @@ class SimpleConregRegistrationForm extends FormBase {
         '#title' => $curMemberClass->fields->membership_type,
         '#description' => $curMemberClass->fields->membership_type_description,
         '#options' => ($cnt == 1 ? $types->firstOptions : $types->publicOptions),
+        '#default_value' => $config->get('member_type_default'),
         '#required' => TRUE,
         '#attributes' => array('class' => array('edit-member-type')),
         '#ajax' => array(
