@@ -380,7 +380,7 @@ class SimpleConregRegistrationForm extends FormBase {
           '#title' => $curMemberClass->fields->communication_method,
           '#description' => $curMemberClass->fields->communication_method_description,
           '#options' => SimpleConregOptions::communicationMethod($eid, $config, TRUE),
-          '#default_value' => 'E',
+          '#default_value' => $config->get('communications_method.default'),
           '#required' => TRUE,
         );
       }
@@ -623,7 +623,7 @@ class SimpleConregRegistrationForm extends FormBase {
       foreach ($addons as $addOnId) {
         if (!empty($form['members']['member'.$cnt]['add_on'][$addOnId]['extra'])) {
           $id = '#member_addon_'.$addOnId.'_info_'.$cnt;
-          $ajax_response->addCommand(new HtmlCommand($id, render($form['members']['member'.$cnt]['add_on'][$addOnId]['extra']['info'])));
+          $ajax_response->addCommand(new HtmlCommand($id, \Drupal::service('renderer')->render($form['members']['member'.$cnt]['add_on'][$addOnId]['extra']['info'])));
         }
       }
       $ajax_response->addCommand(new HtmlCommand('#memberPrice'.$cnt, $form['members']['member'.$cnt]['price']['#markup']));
@@ -632,7 +632,7 @@ class SimpleConregRegistrationForm extends FormBase {
     foreach ($addons as $addOnId) {
       if (!empty($form['payment']['global_add_on'][$addOnId]['extra'])) {
         $id = '#global_addon_'.$addOnId.'_info';
-        $ajax_response->addCommand(new HtmlCommand($id, render($form['payment']['global_add_on'][$addOnId]['extra']['info'])));
+        $ajax_response->addCommand(new HtmlCommand($id, \Drupal::service('renderer')->render($form['payment']['global_add_on'][$addOnId]['extra']['info'])));
       }
     }
     $ajax_response->addCommand(new HtmlCommand('#Pricing', $form['payment']['price']));
@@ -648,7 +648,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $memberQty = $form_state->getValue(array('global', 'member_quantity'));
     for ($cnt=1; $cnt<=$memberQty; $cnt++) {
       if (isset($form['members']['member'.$cnt]['badge_name']))
-        $ajax_response->addCommand(new HtmlCommand('#memberBadgeName'.$cnt, render($form['members']['member'.$cnt]['badge_name'])));
+        $ajax_response->addCommand(new HtmlCommand('#memberBadgeName'.$cnt, \Drupal::service('renderer')->render($form['members']['member'.$cnt]['badge_name'])));
       else
         $ajax_response->addCommand(new HtmlCommand('#memberBadgeName'.$cnt, ""));
     }
@@ -663,7 +663,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $memberQty = $form_state->getValue(array('global', 'member_quantity'));
     // Only need to reshow from member 2 up.
     for ($cnt=2; $cnt<=$memberQty; $cnt++) {
-      $ajax_response->addCommand(new HtmlCommand('#memberAddress'.$cnt, render($form['members']['member'.$cnt]['address'])));
+      $ajax_response->addCommand(new HtmlCommand('#memberAddress'.$cnt, \Drupal::service('renderer')->render($form['members']['member'.$cnt]['address'])));
     }
 
     return $ajax_response;
@@ -897,8 +897,6 @@ class SimpleConregRegistrationForm extends FormBase {
         'birth_date' => $birth_date,
         'age' => isset($form_values['members']['member'.$cnt]['age']) ?
             $form_values['members']['member'.$cnt]['age'] : 0,
-        'add_on' => $addOn,
-        'add_on_info' => $addOnInfo,
         'extra_flag1' => isset($form_values['members']['member'.$cnt]['extra_flag1']) ?
             $form_values['members']['member'.$cnt]['extra_flag1'] : 0,
         'extra_flag2' => isset($form_values['members']['member'.$cnt]['extra_flag2']) ?
@@ -930,7 +928,7 @@ class SimpleConregRegistrationForm extends FormBase {
                                                  t("Member registration for @first_name @last_name", array('@first_name' => $entry['first_name'], '@last_name' => $entry['last_name'])),
                                                  $memberPrices[$cnt]->basePrice));
         // Add confirmation.
-        \Drupal::messenger()->addMessage(t('Thank you for registering @first_name @last_name.',
+        \Drupal::messenger()->addMessage($this->t('Thank you for registering @first_name @last_name.',
                                            array('@first_name' => $entry['first_name'],
                                                  '@last_name' => $entry['last_name'])));
       }
