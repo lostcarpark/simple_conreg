@@ -20,7 +20,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Simple form to add an entry, with all the interesting fields.
  */
-class SimpleConregCheckoutForm extends FormBase {
+class SimpleConregCheckoutForm extends FormBase
+{
 
   /**
    * The mail manager.
@@ -35,41 +36,46 @@ class SimpleConregCheckoutForm extends FormBase {
    * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
    *   The mail manager.
    */
-  public function __construct(MailManagerInterface $mail_manager) {
+  public function __construct(MailManagerInterface $mail_manager)
+  {
     $this->mailManager = $mail_manager;
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
-    return new static($container->get('plugin.manager.mail'));
+  public static function create(ContainerInterface $container)
+  {
+    return new static ($container->get('plugin.manager.mail'));
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getFormID() {
+  public function getFormID()
+  {
     return 'simple_conreg_payment';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $payid = NULL, $key = NULL, $return = '') {
+  public function buildForm(array $form, FormStateInterface $form_state, $payid = NULL, $key = NULL, $return = '')
+  {
 
     $form_state->set('return', $return);
 
     // Load payment details.
     if (is_numeric($payid) && is_numeric($key) && SimpleConregPaymentStorage::checkPaymentKey($payid, $key)) {
-      $payment = SimpleConregPayment::load($payid);      
-    } else {
+      $payment = SimpleConregPayment::load($payid);
+    }
+    else {
       $form['message'] = array(
         '#markup' => $this->t('Invalid payment credentials. Please return to <a href="@url">registration page</a> and complete membership details.', array("@url" => "/members/register"))
       );
       return $form;
     }
-    
+
     // Get event ID to fetch Stripe keys.
     // If payment has MID, get event from member. If not, assume event 1 (will come up with a better long term solution). 
     if (isset($payment) && isset($payment->paymentLines[0]) && !empty($payment->paymentLines[0]->mid)) {
@@ -89,7 +95,7 @@ class SimpleConregCheckoutForm extends FormBase {
       $eid = 1;
       $email = '';
     }
-    $config = $this->config('simple_conreg.settings.'.$eid);
+    $config = $this->config('simple_conreg.settings.' . $eid);
 
     $form_state->set('eid', $eid);
 
@@ -104,16 +110,7 @@ class SimpleConregCheckoutForm extends FormBase {
 
     // Check if payment date populated. If so, payment is complete, thank you message can be displayed.
     if ($payment->paidDate) {
-      $message = str_replace('[reference]',
-                             $payment->paymentRef,
-                             $config->get('thanks.thank_you_message'));
-      $format = $config->get('thanks.thank_you_format');
-
-      $form['#title'] = $this->t('Thank You');
-      $form['message'] = array(
-        '#markup' => check_markup($message, $format),
-      );
-      return $form;
+      return $this->showThankYouPage($form, $eid, $config, $payment);
     }
 
     // Set up payment lines on Stripe.
@@ -135,11 +132,11 @@ class SimpleConregCheckoutForm extends FormBase {
       }
       $total += $line->amount;
     }
-    
+
     // Only redirect to Stripe if something to pay for...
     if ($total > 0) {
       // Set up return URLs.
-      $success = Url::fromRoute("simple_conreg_checkout", ["payid" => $payment->payId,"key" => $payment->randomKey], ['absolute' => TRUE])->toString();
+      $success = Url::fromRoute("simple_conreg_checkout", ["payid" => $payment->payId, "key" => $payment->randomKey], ['absolute' => TRUE])->toString();
       $cancel = Url::fromRoute("simple_conreg_register", ["eid" => $eid], ['absolute' => TRUE])->toString();
 
       $types = empty($config->get('payments.types')) ? ['card'] : explode('|', $config->get('payments.types'));
@@ -152,7 +149,7 @@ class SimpleConregCheckoutForm extends FormBase {
         'success_url' => $success,
         'cancel_url' => $cancel,
       ]);
-      
+
       // Update the payment with the session ID.
       $payment->sessionId = $session->id;
       $payment->save();
@@ -176,23 +173,37 @@ class SimpleConregCheckoutForm extends FormBase {
       $payment->paymentMethod = "Free";
       $payment->paymentRef = "N/A";
       $payment->save();
-
-      $message = str_replace('[reference]',
-                             $payment->paymentRef,
-                             $config->get('thanks.thank_you_message'));
-      $format = $config->get('thanks.thank_you_format');
-
-      $form['#title'] = $this->t('Thank You');
-      $form['message'] = array(
-        '#markup' => check_markup($message, $format),
-      );
+      return $this->showThankYouPage($form, $eid, $config, $payment);
     }
 
     return $form;
   }
 
+  /**
+   * Display
+   */
+  function showThankYouPage($form, $eid, $config, $payment)
+  {
+    $event = SimpleConregEventStorage::load(['eid' => $eid]);
+    $find = ['[reference]', '[event_name]'];
+    $replace = [$payment->paymentRef, $event['event_name']];
+
+    $message = str_replace($find,
+      $replace,
+      $config->get('thanks.thank_you_message'));
+    $format = $config->get('thanks.thank_you_format');
+
+    $form['#title'] = $this->t('Thank You');
+    $form['message'] = array(
+      '#markup' => check_markup($message, $format),
+    );
+
+    return $form;
+  }
+
   // Function to process payments coming back from Stripe.
-  private function processStripeMessages($config) {
+  private function processStripeMessages($config)
+  {
     // Check events on Stripe.
     $events = \Stripe\Event::all([
       'type' => 'checkout.session.completed',
@@ -215,9 +226,9 @@ class SimpleConregCheckoutForm extends FormBase {
           $payment->paymentRef = $session->payment_intent;
           $payment->save();
         }
-        
+
         SimpleConregAddons::markPaid($payment->getId(), $session->payment_intent);
-        
+
         // Process the payment lines.
         foreach ($payment->paymentLines as $line) {
           $this->processPaymentLine($line, $session);
@@ -225,7 +236,7 @@ class SimpleConregCheckoutForm extends FormBase {
       }
     }
   }
-  
+
   private function processPaymentLine($line, $session)
   {
     switch ($line->type) {
@@ -255,7 +266,7 @@ class SimpleConregCheckoutForm extends FormBase {
         break;
     }
   }
-  
+
   private function processWithoutPayment($line)
   {
     switch ($line->type) {
@@ -278,7 +289,7 @@ class SimpleConregCheckoutForm extends FormBase {
 
   private function sendConfirmationEmail($member)
   {
-    $config = $this->config('simple_conreg.settings.'.$member['eid']);
+    $config = $this->config('simple_conreg.settings.' . $member['eid']);
 
     // Set up parameters for receipt email.
     $params = ['eid' => $member['eid'], 'mid' => $member['mid']];
@@ -343,5 +354,4 @@ class SimpleConregCheckoutForm extends FormBase {
         $form_state->setRedirect('simple_conreg_thanks', ['eid' => $eid]);
     }
   }
-}    
-
+}

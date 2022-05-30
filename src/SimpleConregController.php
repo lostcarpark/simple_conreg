@@ -897,7 +897,7 @@ class SimpleConregController extends ControllerBase {
     // Check member credentials valid.
     $member = SimpleConregStorage::load(['mid' => $mid, 'random_key' => $key, 'login_exp_date' => $expiry, 'is_deleted' => 0]);
     if (empty($member['mid'])) {
-      $content['markup'.$tableNo] = array(
+      $content['markup'] = array(
         '#markup' => '<p>Invalid credentials.</p>',
       );
       return $content;
@@ -905,7 +905,7 @@ class SimpleConregController extends ControllerBase {
 
     // Check if login has expired.
     if (empty($member['login_exp_date'] > \Drupal::time()->getRequestTime())) {
-      $content['markup'.$tableNo] = array(
+      $content['markup'] = array(
         '#markup' => '<p>Login has expired. Please use Member Check to generate a new login link.</p>',
       );
       return $content;
