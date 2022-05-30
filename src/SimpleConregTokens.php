@@ -77,7 +77,7 @@ class SimpleConregTokens {
 
       // If member is not group lead, we need to get payment URL and possibly email from leader.
       if ($this->vals['mid'] != $this->vals['lead_mid']) {
-        $leader = SimpleConregStorage::load(['eid' => $eid, 'mid' => $member['lead_mid'], 'is_deleted' => 0]);
+        $leader = SimpleConregStorage::load(['eid' => $eid, 'mid' => $this->vals['lead_mid'], 'is_deleted' => 0]);
       } else {
         $leader = $this->vals;
       }
@@ -200,7 +200,7 @@ class SimpleConregTokens {
   public function replaceMemberCodes(&$members) {
     // Labels for display option and communications method. Will add to config later.
     $types = SimpleConregOptions::memberTypes($this->eid, $this->config);
-    $memberClasses = SimpleConregOptions::memberClasses($eid, $config);
+    $memberClasses = SimpleConregOptions::memberClasses($this->eid, $config);
     $days = SimpleConregOptions::days($this->eid, $this->config);
     $this->typeVals = $types->types;
     $displayOptions = SimpleConregOptions::display();
