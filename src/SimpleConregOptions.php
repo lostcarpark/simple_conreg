@@ -458,8 +458,12 @@ class SimpleConregOptions
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
-    $countries = explode("\n", $config->get('reference.countries')); // One country per line.
-    $countryOptions = array();
+    $countries = explode("\n", trim($config->get('reference.countries'))); // One country per line.
+    $countryOptions = [];
+    $noCountryLabel = trim($config->get('reference.no_country_label'));
+    if (!empty($noCountryLabel)) {
+      $countryOptions[0] = $noCountryLabel;
+    }
     foreach ($countries as $country) {
       if (!empty($country)) {
         list($code, $name) = explode('|', $country);
