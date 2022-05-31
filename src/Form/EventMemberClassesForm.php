@@ -127,6 +127,7 @@ class EventMemberClassesForm extends ConfigFormBase
         'county' => (object)['label' => 'County/state label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
         'postcode' => (object)['label' => 'Postal code label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
         'country' => (object)['label' => 'Country label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
+        'country_description' => (object)['label' => 'Country description (displayed below country. If country optional, should explain how to deselect country)', 'type' => 'textarea', 'required' => FALSE],
         'phone' => (object)['label' => 'Phone number label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
         'birth_date' => (object)['label' => 'Date of birth label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],
         'age' => (object)['label' => 'Age label (leave empty to remove field)', 'type' => 'textfield', 'required' => FALSE],

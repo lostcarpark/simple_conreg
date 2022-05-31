@@ -326,12 +326,19 @@ class EventConfigForm extends ConfigFormBase {
       '#description' => $this->t('Put each country on a line with 2-letter country code and name separated by | character.'),
       '#default_value' => $config->get('reference.countries'),
     );  
-
+        
     $form['simple_conreg_reference']['default_country'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Default country code'),
       '#description' => $this->t('Enter 2 letter country code of country to default to. Leave blank to have no default.'),
       '#default_value' => $config->get('reference.default_country'),
+    );  
+   
+    $form['simple_conreg_reference']['no_country_label'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('No country label'),
+      '#description' => $this->t('If country not required, enter label for selecting no country.'),
+      '#default_value' => $config->get('reference.no_country_label'),
     );  
 
     $form['simple_conreg_reference']['geoplugin'] = array(
@@ -630,6 +637,7 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('display.page_size', intval($vals['simple_conreg_display']['page_size']));
     $config->set('reference.default_country', $vals['simple_conreg_reference']['default_country']);
     $config->set('reference.countries', $vals['simple_conreg_reference']['countries']);
+    $config->set('reference.no_country_label', $vals['simple_conreg_reference']['no_country_label']);
     $config->set('reference.geoplugin', $vals['simple_conreg_reference']['geoplugin']);
     $config->set('submit.payment', $vals['simple_conreg_submit']['submit_payment']);
     $config->set('submit.free', $vals['simple_conreg_submit']['submit_free']);
