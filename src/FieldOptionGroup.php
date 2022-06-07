@@ -64,17 +64,15 @@ class FieldOptionGroup {
     ];
     switch ($this->fieldType) {
       case 'checkboxes':
-        return $this->groupCheckBoxes($options, $requireMandatory);
-        break;
+        return $this->groupCheckBoxes($options, $member, $requireMandatory);
       case 'textfields':
-        return $this->groupTextFields($options, $requireMandatory);
-        break;
+        return $this->groupTextFields($options, $member);
       default:
-        return $this->groupCheckBoxes($options, $requireMandatory);
+        return $this->groupCheckBoxes($options, $member, $requireMandatory);
     }
   }
 
-  private function groupCheckBoxes($options, $requireMandatory)
+  private function groupCheckBoxes($options, &$member, $requireMandatory)
   {
     foreach ($this->options as $option) {
       // Create a div to contain the option.
@@ -121,7 +119,7 @@ class FieldOptionGroup {
     return $options;
   }
 
-  private function groupTextFields($options)
+  private function groupTextFields($options, &$member)
   {
     foreach ($this->options as $option) {
       // Create a div to contain the option.

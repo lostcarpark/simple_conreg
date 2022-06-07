@@ -65,15 +65,19 @@ class FieldOptions
     }
   }
 
-  /*
+  /**
    * Static function to get Field Options from cache if possible. If not in cache, process from settings.
+   * 
+   * @param int $eid The event ID
+   * @param bool $reset True to reset cached values.
+   * @return FieldOptions Object structure contatining available options.
    */
-  public static function getFieldOptions($eid)
+  public static function getFieldOptions($eid, $reset = false)
   {
     $cid = 'simple_conreg:fieldOptions_' . $eid;
 
     $fieldOptions = NULL;
-    if ($cache = \Drupal::cache()->get($cid)) {
+    if (!$reset && $cache = \Drupal::cache()->get($cid)) {
       $fieldOptions = $cache->data;
     }
     else {
@@ -86,7 +90,9 @@ class FieldOptions
   /**
    * Fetch field option titles from config.
    *
-   * Parameters: Event ID, Config.
+   * @param int $eid
+   * @param object $config
+   * @return array The array of option titles.
    */
   public static function getFieldOptionsTitles($eid, $config = NULL)
   {
@@ -107,7 +113,8 @@ class FieldOptions
   /**
    * Fetch field options selected by member.
    *
-   * Parameters: Event ID, Config, member ID.
+   * @param int @mid The member ID.
+   * @return array The list of options.
    */
   public function getMemberOptions($mid)
   {
@@ -136,7 +143,9 @@ class FieldOptions
   /**
    * Fetch field options selected by member.
    *
-   * Parameters: Event ID, Config, member ID.
+   * @param int $mid
+   * @param bool $selected
+   * @return array Array of member's options.
    */
   public static function getMemberOptionValues($mid, $selected = TRUE)
   {
@@ -147,15 +156,12 @@ class FieldOptions
   /**
    * Add field options to member form.
    *
-   * Parameters:
-   * $eid - Event ID
-   * $classRef - the member class for the member type (determines which options to show)
-   * $memberForm - Form to add to options to.
-   * $memberVals - Form values.
-   * $optionCallbacks - Array to be populated with callbacks.
-   * $callback- Name of callback function.
-   * $memberNo - >=1 only show member options. =0 only show Global options. =-1 show global and member options.
-   * $member - Member object containing saved member.
+   * @param string $classRef The member class for the member type (determines which options to show)
+   * @param array $memberForm Form to add to options to.
+   * @param Member $member Member object containing saved member.
+   * @param bool $showGlobal True to show global options.
+   * @param bool $showPrivate True to show private (admin only) options.
+   * @param bool $requireMandatory
    */
   public function addOptionFields($classRef, &$memberForm, Member $member = NULL, $showGlobal = NULL, $showPrivate = FALSE, $requireMandatory = TRUE)
   {
@@ -214,7 +220,7 @@ class FieldOptions
           case 'textfields':
             $this->processOptionTextFields($memberVals[$group->fieldName], $mid, $memberOptions);
             break;
-          case 'checkboxes':
+          default:
             $this->processOptionCheckBoxes($memberVals[$group->fieldName], $mid, $memberOptions);
         }
       }
@@ -260,7 +266,8 @@ class FieldOptions
   /**
    * Save field options from submitted member form.
    *
-   * Parameters: Member ID, array of option fields.
+   * @param int $mid Member ID
+   * @param array $options Array of option fields.
    */
   public static function insertOptionFields($mid, &$options)
   {
@@ -270,7 +277,8 @@ class FieldOptions
   /**
    * Save field options from previously saved member form.
    *
-   * Parameters: Member ID, array of option fields.
+   * @param int $mid Member ID
+   * @param array $options Array of option fields.
    */
   public static function updateOptionFields($mid, &$options)
   {
@@ -280,8 +288,7 @@ class FieldOptions
   /**
    * Get a list of all Options
    *
-   * @return array
-   *   Options array.
+   * @return array Options array.
    */
   public function getFieldOptionList()
   {
@@ -296,8 +303,7 @@ class FieldOptions
   /**
    * Get a list of all Options
    *
-   * @return array
-   *   Options array.
+   * @return array Options array.
    */
   public function getFieldOptionGroupedList()
   {

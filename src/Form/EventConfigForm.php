@@ -11,6 +11,7 @@ use Drupal\devel;
 use Drupal\simple_conreg\SimpleConregEventStorage;
 use Drupal\simple_conreg\SimpleConregConfig;
 use Drupal\simple_conreg\SimpleConregTokens;
+use Drupal\simple_conreg\FieldOptions;
 
 /**
  * Configure simple_conreg settings for this site.
@@ -271,7 +272,7 @@ class EventConfigForm extends ConfigFormBase {
      */
     $form['simple_conreg_options'] = array(
       '#type' => 'details',
-      '#title' => $this->t('Options'),
+      '#title' => $this->t('Membership Options'),
       '#tree' => TRUE,
       '#group' => 'admin',
     );
@@ -668,6 +669,8 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('member_edit.email_editable', $vals['simple_conreg_member_edit']['email']);
     $config->set('member_edit.badge_name_editable', $vals['simple_conreg_member_edit']['badge_name']);
     $config->save();
+
+    FieldOptions::getFieldOptions($eid, true);
 
     parent::submitForm($form, $form_state);
   }
