@@ -96,7 +96,7 @@ class EventConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Payment Method Types'),
       '#description' => $this->t('Available payment types, separated by |. Default to "card".'),
-      '#default_value' => empty($config->get('payments.types')) ? 'card' : $config->get('payments.types'),
+      '#default_value' => $config->get('payments.types') ?: 'card',
     );  
 
     $form['simple_conreg_payments']['mode'] = array(
@@ -627,14 +627,6 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('display_options.options', $vals['simple_conreg_display_options']['options']);
     $config->set('simple_conreg_options.option_groups', $vals['simple_conreg_options']['option_groups']);
     $config->set('simple_conreg_options.options', $vals['simple_conreg_options']['options']);
-    $config->set('add_ons.global', $vals['simple_conreg_addons']['global']);
-    $config->set('add_ons.label', $vals['simple_conreg_addons']['label']);
-    $config->set('add_ons.description', $vals['simple_conreg_addons']['description']);
-    $config->set('add_ons.options', $vals['simple_conreg_addons']['options']);
-    $config->set('add_on_info.label', $vals['simple_conreg_addon_info']['label']);
-    $config->set('add_on_info.description', $vals['simple_conreg_addon_info']['description']);
-    $config->set('add_on_free.label', $vals['simple_conreg_addon_free']['label']);
-    $config->set('add_on_free.description', $vals['simple_conreg_addon_free']['description']);
     $config->set('display.page_size', intval($vals['simple_conreg_display']['page_size']));
     $config->set('reference.default_country', $vals['simple_conreg_reference']['default_country']);
     $config->set('reference.countries', $vals['simple_conreg_reference']['countries']);
@@ -645,7 +637,7 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('thanks.thank_you_message', $vals['simple_conreg_thanks']['thank_you_message']['value']);
     $config->set('thanks.thank_you_format', $vals['simple_conreg_thanks']['thank_you_message']['format']);
     $config->set('discount.enable', $vals['simple_conreg_discount']['enable']);
-    $config->set('discount.free_every', empty($vals['simple_conreg_discount']['free_every']) ? null : intval($vals['simple_conreg_discount']['free_every']));
+    $config->set('discount.free_every', intval($vals['simple_conreg_discount']['free_every']) ?: null);
     $config->set('checkin.display', $vals['simple_conreg_checkin']['display']);
     $config->set('checkin.communication_method', $vals['simple_conreg_checkin']['communication_method']);
     $config->set('confirmation.format_html', $vals['simple_conreg_confirmation']['format_html']);
