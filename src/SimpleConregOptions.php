@@ -409,7 +409,8 @@ class SimpleConregOptions
   /**
    * Return list of days from config.
    *
-   * Parameters: Optional config.
+   * @param int @eid
+   * @param object $config
    */
   public static function days($eid, &$config = NULL)
   {
@@ -419,8 +420,10 @@ class SimpleConregOptions
     $dayLines = explode("\n", $config->get('days')); // One type per line.
     $days = [];
     foreach ($dayLines as $dayLine) {
-      list($dayCode, $dayName) = explode('|', $dayLine);
-      $days[trim($dayCode)] = trim($dayName);
+      if (trim($dayLine)) {
+        list($dayCode, $dayName) = explode('|', $dayLine);
+        $days[trim($dayCode)] = trim($dayName) ?? '';
+      }
     }
     return $days;
   }
@@ -435,7 +438,7 @@ class SimpleConregOptions
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
-    $addOns = explode("\n", $config->get('add_ons.options')); // One type per line.
+    $addOns = explode("\n", $config->get('add_ons.options') ?: ''); // One type per line.
     $addOnOptions = array();
     $addOnPrices = array();
     foreach ($addOns as $addOn) {

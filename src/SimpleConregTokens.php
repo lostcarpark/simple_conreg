@@ -196,7 +196,10 @@ class SimpleConregTokens {
   }
 
 
-
+  /**
+   * Assign token strings to each member.
+   * @param array $members
+   */
   public function replaceMemberCodes(&$members) {
     // Labels for display option and communications method. Will add to config later.
     $types = SimpleConregOptions::memberTypes($this->eid, $this->config);
@@ -213,9 +216,10 @@ class SimpleConregTokens {
     $payAmount = 0;
     foreach ($members as $index => $val) {
       // Get add ons and add up price.
-      $members[$index]['addons'] = SimpleConregAddons::getMemberAddons($this->config, $val['mid']);
+      $addons = SimpleConregAddons::getMemberAddons($this->config, $val['mid']);
+      $members[$index]['addons'] = $addons;
       $members[$index]['add_on_price'] = 0;
-      foreach ($members[$index]['addons'] as $addon) {
+      foreach ($addons as $addon) {
         $members[$index]['add_on_price'] += $addon->value;
       }
       $members[$index]['member_total'] = $val['member_price'] + $members[$index]['add_on_price'];
@@ -237,8 +241,9 @@ class SimpleConregTokens {
         }
         $members[$index]['days'] = implode(', ', $dayDescs);
       }
-      $members[$index]['is_approved'] = $yesNoOptions[$val['is_approved']];
-      $members[$index]['is_paid'] = $yesNoOptions[$val['is_paid']];
+      $members[$index]['is_approved'] = $yesNoOptions[$val['is_approved']]->render();
+      $members[$index]['is_paid'] = $yesNoOptions[$val['is_paid']]->render();
+      $members[$index]['is_deleted'] = $yesNoOptions[$val['is_deleted']]->render();
       $members[$index]['display'] = $displayOptions[$val['display']];
       $members[$index]['member_price'] = $this->symbol . $val['member_price'];
       $members[$index]['member_total'] = $this->symbol . $val['member_total'];
@@ -250,8 +255,8 @@ class SimpleConregTokens {
       if (!empty($val['communication_method']))
         $members[$index]['communication_method'] = $communicationOptions[$val['communication_method']];
       $members[$index]['country'] = $countryOptions[$val['country']];
-      $members[$index]['extra_flag1'] = $yesNoOptions[$val['extra_flag1']];
-      $members[$index]['extra_flag2'] = $yesNoOptions[$val['extra_flag2']];
+      $members[$index]['extra_flag1'] = $yesNoOptions[$val['extra_flag1']]->render();
+      $members[$index]['extra_flag2'] = $yesNoOptions[$val['extra_flag2']]->render();
     }
   }
 
@@ -405,8 +410,11 @@ class SimpleConregTokens {
     $this->html = array_merge($this->html, $extra);
   }
 
-  /***
+  /**
    * Apply the tokens to the message.
+   * @param string $message
+   * @param bool $use_plain
+   * @return string
    */
   public function applyTokens($message, $use_plain = FALSE) {
     // Select which set of tokens to use.
@@ -415,14 +423,9 @@ class SimpleConregTokens {
     else
       $apply = $this->html;
     if (is_array($apply)) {
-      // Split tokens into two arrays for find and replace.
-      $find = [];
-      $replace = [];
-      foreach($apply as $key => $val) {
-        $find[] = $key;
-        $replace[] = $val;
-      }
-      return str_replace($find, $replace, $message);
+      // Remove addons array before applying to message.
+      unset($apply['addons']);
+      return strtr($message, $apply);
     }
     else {
       return $message;

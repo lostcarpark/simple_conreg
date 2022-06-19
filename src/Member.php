@@ -22,6 +22,11 @@ class Member
   {
   }
 
+  /**
+   * Create a new member from an array of values.
+   * @param array $details
+   * @return Member
+   */
   public static function newMember($details)
   {
     $member = new Member();
@@ -31,6 +36,11 @@ class Member
     return $member;
   }
 
+  /**
+   * Load member by member ID and create member object.
+   * @param int $mid
+   * @return Member
+   */
   public static function loadMember($mid)
   {
     $member = self::newMember(SimpleConregStorage::load(['mid' => $mid]));
@@ -41,6 +51,12 @@ class Member
     return $member;
   }
 
+  /**
+   * Load a member using event and member number and create member object.
+   * @param int $eid
+   * @param int $memberNo
+   * @return Member
+   */
   public static function loadMemberByMemberNo($eid, $memberNo)
   {
     $member = self::newMember(SimpleConregStorage::load(['eid' => $eid, 'member_no' => $memberNo, 'is_deleted' => 0]));
@@ -51,6 +67,9 @@ class Member
     return $member;
   }
 
+  /**
+   * Save the member to the conreg_members table.
+   */
   public function saveMember()
   {
     // Transfer object members into array.
@@ -118,15 +137,20 @@ class Member
 
   public function setOptions($options)
   {
-    $this->updateOptionMids();
     $this->options = $options;
+    $this->updateOptionMids();
   }
 
+  /**
+   * If member has member ID, apply to all options.
+   */
   public function updateOptionMids()
   {
-    // First, set the member ID for all options.
-    foreach ($this->options as $optid => $option) {
-      $this->options[$optid]->mid = $this->mid;
+    if (isset($this->mid)) {
+      // First, set the member ID for all options.
+      foreach ($this->options as $optid => $option) {
+        $this->options[$optid]->mid = $this->mid;
+      }
     }
   }
 

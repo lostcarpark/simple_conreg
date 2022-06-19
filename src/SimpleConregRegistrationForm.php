@@ -131,7 +131,7 @@ class SimpleConregRegistrationForm extends FormBase
     $discountFreeEvery = $config->get('discount.free_every');
 
     // Get thenumber of members on the form.
-    $memberQty = isset($form_values['global']['member_quantity']) ? $form_values['global']['member_quantity'] : 1;
+    $memberQty = $form_values['global']['member_quantity'] ?? 1;
 
     // Calculate price for all members.
     list($fullPrice, $discountPrice, $totalPrice, $totalPriceMinusFree, $memberPrices) =
@@ -198,9 +198,9 @@ class SimpleConregRegistrationForm extends FormBase
 
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
       // Get the member class for the current member type, or if none defined, get the default member class.
-      $memberType = isset($form_values['members']['member' . $cnt]['type']) ? $form_values['members']['member' . $cnt]['type'] : $defaultType;
+      $memberType = $form_values['members']['member' . $cnt]['type'] ?? $defaultType;
       $curMemberTypes[$cnt] = $memberType;
-      $curMemberClassRef = (!empty($memberType) && isset($types->types[$memberType])) ? $types->types[$memberType]->memberClass : array_key_first($memberClasses->classes);
+      $curMemberClassRef = $types->types[$memberType]->memberClass ?? array_key_first($memberClasses->classes);
       $selectedClasses[$cnt] = $curMemberClassRef;
       $curMemberClass = $memberClasses->classes[$curMemberClassRef];
 
@@ -220,7 +220,7 @@ class SimpleConregRegistrationForm extends FormBase
         '#type' => 'textfield',
         '#title' => $curMemberClass->fields->first_name,
         '#size' => 29,
-        '#maxlength' => (empty($firstname_max_length) ? 128 : $firstname_max_length),
+        '#maxlength' => $firstname_max_length ?: 128,
         '#attributes' => [
           'id' => "edit-members-member$cnt-first-name",
           'class' => ['edit-members-first-name'],
@@ -233,7 +233,7 @@ class SimpleConregRegistrationForm extends FormBase
         '#type' => 'textfield',
         '#title' => $curMemberClass->fields->last_name,
         '#size' => 29,
-        '#maxlength' => (empty($lastname_max_length) ? 128 : $lastname_max_length),
+        '#maxlength' => $lastname_max_length ?: 128,
         '#attributes' => array(
           'id' => "edit-members-member$cnt-last-name",
           'class' => array('edit-members-last-name')
@@ -310,19 +310,19 @@ class SimpleConregRegistrationForm extends FormBase
           // Current member doesn't have days set.
           $curMemberDays[$cnt] = FALSE;
           // If current member type has no days, but previous one did, we need to refresh form.
-          if (isset($prevMemberDays) && $prevMemberDays[$cnt])
+          if ($prevMemberDays[$cnt] ?? false)
             $selectedClassChanged = TRUE;
         }
       }
 
       // Get member add-on details.
-      $addon = isset($form_values['members']['member' . $cnt]['add_on']) ? $form_values['members']['member' . $cnt]['add_on'] : '';
+      $addon = $form_values['members']['member' . $cnt]['add_on'] ?? '';
       $form['members']['member' . $cnt]['add_on'] = SimpleConregAddons::getAddon(
         $config,
         $addon,
         $addOnOptions,
         $cnt,
-      [$this, 'updateMemberPriceCallback'],
+        [$this, 'updateMemberPriceCallback'],
         $form_state
       );
 
@@ -348,8 +348,8 @@ class SimpleConregRegistrationForm extends FormBase
       }
       $form['#attached']['drupalSettings']['simple_conreg'] = ['badge_name_max' => $badgename_max_length];
 
-      $firstName = (isset($form_values['members']['member' . $cnt]['first_name']) ? $form_values['members']['member' . $cnt]['first_name'] : '');
-      $lastName = (isset($form_values['members']['member' . $cnt]['last_name']) ? $form_values['members']['member' . $cnt]['last_name'] : '');
+      $firstName = $form_values['members']['member' . $cnt]['first_name'] ?? '';
+      $lastName = $form_values['members']['member' . $cnt]['last_name'] ?? '';
       $form['members']['member' . $cnt]['badge_name_option'] = [
         '#type' => 'radios',
         '#title' => $curMemberClass->fields->badge_name_option,
@@ -555,7 +555,7 @@ class SimpleConregRegistrationForm extends FormBase
       (isset($form_values['payment']['global_add_on']) ? $form_values['payment']['global_add_on'] : NULL),
       $addOnOptions,
       0,
-    [$this, 'updateMemberPriceCallback'],
+      [$this, 'updateMemberPriceCallback'],
       $form_state
     );
 
@@ -653,7 +653,8 @@ class SimpleConregRegistrationForm extends FormBase
     $ajax_response = new AjaxResponse();
     // Calculate price for each member.
     $memberQty = $form_state->getValue(array('global', 'member_quantity'));
-    $addons = $form_state->get('addons');
+    $addons = $form_state->get('addons') ?? [];
+    
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
       foreach ($addons as $addOnId) {
         if (!empty($form['members']['member' . $cnt]['add_on'][$addOnId]['extra'])) {
@@ -820,7 +821,7 @@ class SimpleConregRegistrationForm extends FormBase
   {
     $eid = $form_state->get('eid');
     $return = $form_state->get('return');
-    $memberClasses = $form_state->get('member_classes');
+    $memberClasses = SimpleConregOptions::memberClasses($eid, $config);
 
     $form_values = $form_state->getValues();
 
@@ -875,7 +876,7 @@ class SimpleConregRegistrationForm extends FormBase
       else
         $badge_type = 'A'; // This shouldn't happen, but if no default badge type found, hard code to A.
 
-      $memberClass = (!empty($member_type) && isset($types->types[$member_type])) ? $types->types[$member_type]->memberClass : array_key_first($memberClasses->classes);
+      $memberClass = $types->types[$member_type]->memberClass ?? array_key_first($memberClasses->classes);
       $optionVals = [];
       // Process option fields to remove any modifications from form values.
       $fieldOptions->procesOptionFields($memberClass, $form_values['members']['member' . $cnt], 0, $optionVals);
@@ -927,32 +928,20 @@ class SimpleConregRegistrationForm extends FormBase
         'last_name' => $form_values['members']['member' . $cnt]['last_name'],
         'badge_name' => $badge_name,
         'badge_type' => $badge_type,
-        'display' => empty($form_values['members']['member' . $cnt]['display']) ? 
-        'N' : $form_values['members']['member' . $cnt]['display'],
-        'communication_method' => isset($form_values['members']['member' . $cnt]['communication_method']) ? 
-        $form_values['members']['member' . $cnt]['communication_method'] : '',
+        'display' => $form_values['members']['member' . $cnt]['display'] ?? 'N',
+        'communication_method' => $form_values['members']['member' . $cnt]['communication_method'] ?? '',
         'email' => $form_values['members']['member' . $cnt]['email'],
-        'street' => isset($form_values['members']['member' . $addressMember]['address']['street']) ? 
-        $form_values['members']['member' . $addressMember]['address']['street'] : '',
-        'street2' => isset($form_values['members']['member' . $addressMember]['address']['street2']) ? 
-        $form_values['members']['member' . $addressMember]['address']['street2'] : '',
-        'city' => isset($form_values['members']['member' . $addressMember]['address']['city']) ? 
-        $form_values['members']['member' . $addressMember]['address']['city'] : '',
-        'county' => isset($form_values['members']['member' . $addressMember]['address']['county']) ? 
-        $form_values['members']['member' . $addressMember]['address']['county'] : '',
-        'postcode' => isset($form_values['members']['member' . $addressMember]['address']['postcode']) ? 
-        $form_values['members']['member' . $addressMember]['address']['postcode'] : '',
-        'country' => !empty($form_values['members']['member' . $addressMember]['address']['country']) ? 
-        $form_values['members']['member' . $addressMember]['address']['country'] : '',
-        'phone' => isset($form_values['members']['member' . $cnt]['phone']) ? 
-        $form_values['members']['member' . $cnt]['phone'] : '',
+        'street' => $form_values['members']['member' . $addressMember]['address']['street'] ?? '',
+        'street2' => $form_values['members']['member' . $addressMember]['address']['street2'] ?? '',
+        'city' => $form_values['members']['member' . $addressMember]['address']['city'] ?? '',
+        'county' => $form_values['members']['member' . $addressMember]['address']['county'] ?? '',
+        'postcode' => $form_values['members']['member' . $addressMember]['address']['postcode'] ?? '',
+        'country' => $form_values['members']['member' . $addressMember]['address']['country'] ?? '',
+        'phone' => $form_values['members']['member' . $cnt]['phone'] ?? '',
         'birth_date' => $birth_date,
-        'age' => isset($form_values['members']['member' . $cnt]['age']) ? 
-        $form_values['members']['member' . $cnt]['age'] : 0,
-        'extra_flag1' => isset($form_values['members']['member' . $cnt]['extra_flag1']) ? 
-        $form_values['members']['member' . $cnt]['extra_flag1'] : 0,
-        'extra_flag2' => isset($form_values['members']['member' . $cnt]['extra_flag2']) ? 
-        $form_values['members']['member' . $cnt]['extra_flag2'] : 0,
+        'age' => $form_values['members']['member' . $cnt]['age'] ?? 0,
+        'extra_flag1' => $form_values['members']['member' . $cnt]['extra_flag1'] ?? 0,
+        'extra_flag2' => $form_values['members']['member' . $cnt]['extra_flag2'] ?? 0,
         'member_price' => $memberPrices[$cnt]->basePrice,
         'member_total' => $memberPrices[$cnt]->price,
         'add_on_price' => $memberPrices[$cnt]->addOnPrice,
@@ -1032,7 +1021,7 @@ class SimpleConregRegistrationForm extends FormBase
     switch ($return) {
       case 'fantable':
         // If member add initiated from fan table screen, return there.
-        $form_state->setRedirect('simple_conreg_admin_fantable', ['eid' => $eid, 'lead_mid' => $mid]);
+        $form_state->setRedirect('simple_conreg_admin_fantable', ['eid' => $eid, 'lead_mid' => $lead_mid]);
         break;
       case 'portal':
         // If member add initiated from member portal screen, return there.
@@ -1118,7 +1107,7 @@ class SimpleConregRegistrationForm extends FormBase
           else
             $memberPrices[$curPrice->memberNo]->priceMessage = $this->t('Free member! Price for add-on: @symbol<span id="@id">@price</span>', array(
               '@symbol' => $symbol,
-              '@id' => "member$memberNo-value",
+              '@id' => "member" . $curPrice->memberNo . "-value",
               '@price' => number_format($memberPrices[$curPrice->memberNo]->price, 2)
             ));
         }
