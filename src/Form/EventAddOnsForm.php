@@ -187,6 +187,18 @@ class EventAddOnsForm extends ConfigFormBase
     return parent::buildForm($form, $form_state);
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state)
+  {
+    $vals = $form_state->getValues();
+    // If new add-on populated, create an empty array.
+    if (str_contains($vals['new_addon']['addon_name'] ?: '', ' ')) {
+      $form_state->setErrorByName('new_addon][addon_name', $this->t('Add-on name must not contain spaces'));
+    }
+  }
+
   /** 
    * {@inheritdoc}
    */
