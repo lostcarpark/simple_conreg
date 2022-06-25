@@ -264,7 +264,6 @@ class SimpleConregMemberPortal extends FormBase {
   {
     $mgr = new SimpleConregUpgradeManager($eid);
 
-    dpm($form_values);
     $lead_mid = $this->getUserLeadMid($eid); // Get lead MID from .
 
     $upgrades = $form_values["table"];
