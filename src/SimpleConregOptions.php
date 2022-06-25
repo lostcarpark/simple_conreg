@@ -362,8 +362,10 @@ class SimpleConregOptions
     $types = explode("\n", $config->get('badge_types')); // One type per line.
     $badgeTypes = [];
     foreach ($types as $type) {
-      list($code, $badgeType) = explode('|', $type);
-      $badgeTypes[trim($code)] = trim($badgeType);
+      if (strlen(trim($type))) {
+        list($code, $badgeType) = explode('|', $type);
+        $badgeTypes[trim($code)] = trim($badgeType);
+      }
     }
     return $badgeTypes;
   }

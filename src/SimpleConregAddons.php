@@ -52,14 +52,14 @@ class SimpleConregAddons
    *
    * @param object $config
    * @param array $addonVals
-   * @param array addOnOptions
-   * @param Member $member
+   * @param array $addOnOptions
+   * @param int $memberPos
    * @param callable $callback
    * @param FormStateInterface $form_state
    * @param int $mid
    * @return array
    */
-  public static function getAddon($config, $addonVals, $addOnOptions, $member, $callback, FormStateInterface $form_state, $mid = NULL)
+  public static function getAddon($config, $addonVals, $addOnOptions, $memberPos, $callback, FormStateInterface $form_state, $mid = NULL)
   {
 
     $addons = ['#tree' => TRUE];
@@ -89,13 +89,11 @@ class SimpleConregAddons
         // Get add options...
         list($addOnOptions, $addOnPrices) = self::memberAddons($addon['options']);
         // If global is set, only display if there's a member number.
-        if ((!empty($member) && !$addon['global']) || (empty($member) && $addon['global']) || $member == -1) {
-          if ($member == -1) // Single member on edit form.
+        if ((!empty($memberPos) && !$addon['global']) || (empty($memberPos) && $addon['global']) || $memberPos == -1) {
+          if ($memberPos == -1 || empty($memberPos)) // Single member on edit form, or global add-ons.
             $id = 'member_addon_'.$addOnId.'_info';
-          elseif (!empty($member)) // Numbered member of Reg form.
-            $id = 'member_addon_'.$addOnId.'_info_'.$member;
-          else // Global add-ons on Reg form.
-            $id = 'global_addon_'.$addOnId.'_info';
+          else // Numbered member of Reg form.
+            $id = 'member_addon_'.$addOnId.'_info_'.$memberPos;
       
           $addons[$addOnId] = [];
 
