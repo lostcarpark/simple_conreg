@@ -85,7 +85,7 @@ class EventAddOnsForm extends ConfigFormBase
      * Loop through each add-on and add to form.
      */
 
-    foreach ($config->get('add-ons') as $addOnId => $addOnVals) {
+    foreach ($config->get('add-ons') ?? [] as $addOnId => $addOnVals) {
       
       /*
        * Fields for add on choices and options.
@@ -187,6 +187,18 @@ class EventAddOnsForm extends ConfigFormBase
     return parent::buildForm($form, $form_state);
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state)
+  {
+    $vals = $form_state->getValues();
+    // If new add-on populated, create an empty array.
+    if (str_contains($vals['new_addon']['addon_name'] ?: '', ' ')) {
+      $form_state->setErrorByName('new_addon][addon_name', $this->t('Add-on name must not contain spaces'));
+    }
+  }
+
   /** 
    * {@inheritdoc}
    */
@@ -201,7 +213,7 @@ class EventAddOnsForm extends ConfigFormBase
       $config->set('add-ons.'.$vals['new_addon']['addon_name'], []);
     }
     // Loop through add-ons and save to config.
-    foreach ($vals['addons'] as $addOnId => $addOnVals) {
+    foreach ($vals['addons'] ?? [] as $addOnId => $addOnVals) {
       $config->set('add-ons.'.$addOnId.'.addon.active', $addOnVals['addon']['active']);
       $config->set('add-ons.'.$addOnId.'.addon.global', $addOnVals['addon']['global']);
       $config->set('add-ons.'.$addOnId.'.addon.label', $addOnVals['addon']['label']);

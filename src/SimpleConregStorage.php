@@ -131,7 +131,9 @@ class SimpleConregStorage
 
   /**
    * Read from the database using a filter array.
-   *
+   * @param array $entry
+   *   Array of fields to filter on.
+   * @return array
    */
   public static function load($entry = array())
   {
@@ -154,7 +156,9 @@ class SimpleConregStorage
 
   /**
    * Read from the database and return multiple rows using a filter array.
-   *
+   * @param array $entry
+   *   Array of fields to filter on.
+   * @return array
    */
   public static function loadAll($entry = array())
   {
@@ -180,6 +184,8 @@ class SimpleConregStorage
 
   /**
    * Check if valid mid and key combo.
+   * @param int $mid
+   * @param int $key
    */
   public static function checkMemberKey($mid, $key)
   {
@@ -198,6 +204,11 @@ class SimpleConregStorage
       return FALSE;
   }
 
+  /**
+   * Load the public members list.
+   * @param int $eid
+   *   The event ID.
+   */
   public static function adminPublicListLoad($eid)
   {
     $connection = \Drupal::database();
@@ -222,6 +233,17 @@ class SimpleConregStorage
     return $entries;
   }
 
+  /**
+   * Add conditions to select for Admin page.
+   * @param int $eid
+   * @param \Drupal\Core\Database\Query\SelectInterface @select
+   *   The select object to add the conditions to.
+   * @param string $condition
+   *   Text to select the condition to add.
+   * @param string $search
+   *   Entry for text searches.
+   * @return \Drupal\Core\Database\Query\SelectInterface
+   */
   private static function adminMemberListCondition($eid, $select, $condition, $search)
   {
     $connection = \Drupal::database();
@@ -267,6 +289,20 @@ class SimpleConregStorage
     return $select;
   }
 
+  /**
+   * Load the member list for the admin page.
+   * @param int $eid
+   * @param string $condition
+   * @param string $search
+   * @param int $page
+   * @param int pageSize
+   * @param string $order
+   *   Field to order by.
+   * @param string $direction
+   *   Whether sort is ascending or descending.
+   * @return array
+   *   Associative array of members.
+   */
   public static function adminMemberListLoad($eid, $condition, $search, $page = 1, $pageSize = 10, $order = 'm.mid', $direction = 'ASC')
   {
     $connection = \Drupal::database();
@@ -288,11 +324,10 @@ class SimpleConregStorage
     // Add selection criteria.
     $select = SimpleConregStorage::adminMemberListCondition($eid, $select, $condition, $search);
     // Sort by specified field and direction.
-    $select->orderby($order, $direction = $direction);
-    $select->orderby('m.mid', $direction = $direction);
+    $select->orderby($order, $direction);
+    $select->orderby('m.mid', $direction);
     // Make sure we only get items 0-49, for scalability reasons.
     $select->range(($page - 1) * $pageSize, $pageSize);
-
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -307,6 +342,16 @@ class SimpleConregStorage
     return [$pages, $entries];
   }
 
+  /**
+   * Apply conditions to select for check-in page.
+   * @param int $eid
+   *   Event ID
+   * @param \Drupal\Core\Database\Query\SelectInterface @select
+   *   The select object to add the conditions to.
+   * @param int $search
+   *   Text to search for.
+   * @return \Drupal\Core\Database\Query\SelectInterface
+   */
   private static function adminMemberCheckInListCondition($eid, $select, $search)
   {
     $connection = \Drupal::database();
@@ -340,8 +385,14 @@ class SimpleConregStorage
     return $select;
   }
 
-  /*
+  /**
    * Get member list for check in listing.
+   * @param int $eid
+   *   The event ID.
+   * @param string $search
+   *   The text to search for.
+   * @return array
+   *   Associative array of members.
    */
   public static function adminMemberCheckInListLoad($eid, $search)
   {

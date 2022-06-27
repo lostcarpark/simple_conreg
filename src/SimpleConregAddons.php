@@ -50,9 +50,16 @@ class SimpleConregAddons
   /**
    * get addons from event config.
    *
-   * Parameters: Event ID.
+   * @param object $config
+   * @param array $addonVals
+   * @param array $addOnOptions
+   * @param int $memberPos
+   * @param callable $callback
+   * @param FormStateInterface $form_state
+   * @param int $mid
+   * @return array
    */
-  public static function getAddon($config, $addonVals, $addOnOptions, $member, $callback, FormStateInterface $form_state, $mid = NULL)
+  public static function getAddon($config, $addonVals, $addOnOptions, $memberPos, $callback, FormStateInterface $form_state, $mid = NULL)
   {
 
     $addons = ['#tree' => TRUE];
@@ -82,13 +89,11 @@ class SimpleConregAddons
         // Get add options...
         list($addOnOptions, $addOnPrices) = self::memberAddons($addon['options']);
         // If global is set, only display if there's a member number.
-        if ((!empty($member) && !$addon['global']) || (empty($member) && $addon['global']) || $member == -1) {
-          if ($member == -1) // Single member on edit form.
+        if ((!empty($memberPos) && !$addon['global']) || (empty($memberPos) && $addon['global']) || $memberPos == -1) {
+          if ($memberPos == -1 || empty($memberPos)) // Single member on edit form, or global add-ons.
             $id = 'member_addon_'.$addOnId.'_info';
-          elseif (!empty($member)) // Numbered member of Reg form.
-            $id = 'member_addon_'.$addOnId.'_info_'.$member;
-          else // Global add-ons on Reg form.
-            $id = 'global_addon_'.$addOnId.'_info';
+          else // Numbered member of Reg form.
+            $id = 'member_addon_'.$addOnId.'_info_'.$memberPos;
       
           $addons[$addOnId] = [];
 
@@ -310,14 +315,21 @@ class SimpleConregAddons
     }
   }
 
-  //
-  // Save the add-ons from for each member.
-  //
-  
+  /**
+   * Save the add-ons from for each member.
+   * @param object $config
+   * @param array $form_values
+   * @param array $memberIDs
+   * @param SimpleConregPayment $payment
+   */
   public static function saveAddons($config, $form_values, $memberIDs, SimpleConregPayment $payment = NULL)
   {
     $payId = $payment->getId();
-    foreach ($config->get('add-ons') as $addOnName => $addOnVals) {
+    $addOns = $config->get('add-ons');
+    if (!isset($addOns)) {
+      return;
+    }
+    foreach ($addOns as $addOnName => $addOnVals) {
       // If add-on set, get values.
       $addon = (isset($addOnVals['addon']) ? $addOnVals['addon'] : []);          
       // Check add-on is enabled.
@@ -326,8 +338,8 @@ class SimpleConregAddons
         list($addOnOptions, $addOnPrices) = self::memberAddons($addon['options']);
         // If global is set, only display if there's a member number.
         if ($addon['global']) {
-          $id = "global_addon_'.$addOnName.'_info";
-          $mid = $memberIDs[1]; // Global options get saved to first member.
+          // Global options get saved to first member.
+          $mid = $memberIDs[1];
           $price = 0;
           $insert = ['mid' => $mid,
                     'addon_name' => $addOnName,
@@ -361,7 +373,6 @@ class SimpleConregAddons
           foreach ($form_values['members'] as $memberKey => $memberVals) {
             $member = substr($memberKey, 6); // memberKey should be in the form "member1". We want the 1.
 
-            $id = 'member_addon_'.$addOnName.'_info_'.$member;
             $mid = $memberIDs[$member];
             $first_name = $memberVals['first_name'];
             $last_name = $memberVals['last_name'];

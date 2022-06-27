@@ -92,7 +92,7 @@ class SimpleConregMemberPortal extends FormBase {
         $is_paid = $entry['is_paid'];
         $row = array();
         $row['mid'] = array(
-          '#markup' => Html::escape($entry['member_no']),
+          '#markup' => Html::escape($entry['member_no'] ?: ""),
         );
         $row['first_name'] = array(
           '#markup' => Html::escape($entry['first_name']),
@@ -117,14 +117,14 @@ class SimpleConregMemberPortal extends FormBase {
           );
         else
           $row['member_type'] = array(
-            '#markup' => Html::escape(isset($types->types[$memberType]->name) ? $types->types[$memberType]->name : $memberType),
+            '#markup' => Html::escape($types->types[$memberType]->name ?: $memberType),
           );
 
 
         if (!empty($entry['days'])) {
           $dayDescs = [];
           foreach(explode('|', $entry['days']) as $day) {
-            $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
+            $dayDescs[] = $days[$day] ?? $day;
           }
           $memberDays = implode(', ', $dayDescs);
         } else
@@ -180,7 +180,7 @@ class SimpleConregMemberPortal extends FormBase {
         $row['type'] = ['#markup' => t('Member')];
         $row['name'] = ['#markup' => Html::escape($entry['first_name'] . ' ' . $entry['last_name'])];
         $row['email'] = ['#markup' => Html::escape($entry['email'])];
-        $memberType = isset($types->types[trim($entry['member_type'])]->name) ? $types->types[trim($entry['member_type'])]->name : trim($entry['member_type']);
+        $memberType = $types->types[trim($entry['member_type'])]->name ?? trim($entry['member_type']);
         $row['member_type'] = ['#markup' => Html::escape($memberType)];
         $row['price'] = ['#markup' => Html::escape($entry['member_price'])];
         $unpaid[$mid] = $row;
@@ -265,16 +265,20 @@ class SimpleConregMemberPortal extends FormBase {
     $mgr = new SimpleConregUpgradeManager($eid);
 
     $lead_mid = $this->getUserLeadMid($eid); // Get lead MID from .
-    foreach ($form_values["table"] as $mid => $memberRow) {
-      $upgrade = new SimpleConregUpgrade($eid, $mid, $memberRow["member_type"], $lead_mid);
-      // Only save upgrade if price is not null.
-      if (isset($upgrade->upgradePrice)) {
-        $mgr->Add($upgrade);
-        $member = SimpleConregStorage::load(['mid' => $mid]);
-        $payment->add(new SimpleConregPaymentLine($mid,
-                                                  'upgrade',
-                                                  t("Upgrade for @first_name @last_name", array('@first_name' => $member['first_name'], '@last_name' => $member['last_name'])),
-                                                  $upgrade->upgradePrice));
+
+    $upgrades = $form_values["table"];
+    if (isset($upgrades) && is_array($upgrades)) {
+      foreach ($upgrades as $mid => $memberRow) {
+        $upgrade = new SimpleConregUpgrade($eid, $mid, $memberRow["member_type"], $lead_mid);
+        // Only save upgrade if price is not null.
+        if (isset($upgrade->upgradePrice)) {
+          $mgr->Add($upgrade);
+          $member = SimpleConregStorage::load(['mid' => $mid]);
+          $payment->add(new SimpleConregPaymentLine($mid,
+                                                    'upgrade',
+                                                    t("Upgrade for @first_name @last_name", array('@first_name' => $member['first_name'], '@last_name' => $member['last_name'])),
+                                                    $upgrade->upgradePrice));
+        }
       }
     }
     $upgrade_price = $mgr->getTotalPrice();
@@ -299,7 +303,7 @@ class SimpleConregMemberPortal extends FormBase {
 
     $payment_amount = 0;
     // Loop through selected members to get lead and total price.
-    foreach ($form_values['unpaid'] as $mid => $member) {
+    foreach ($form_values['unpaid'] ?? [] as $mid => $member) {
       if (isset($member['is_selected']) && $member['is_selected']) {
         if ($member = SimpleConregStorage::load(['mid' => $mid])) {
           // Make first member lead member.
