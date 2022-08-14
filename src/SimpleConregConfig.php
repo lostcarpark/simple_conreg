@@ -7,6 +7,8 @@
 
 namespace Drupal\simple_conreg;
 
+use Drupal\Core\Config\ImmutableConfig;
+
 /**
  * List options for Simple Convention Registration.
  */
@@ -15,9 +17,10 @@ class SimpleConregConfig {
   /**
    * Cet current event config.
    *
-   * Parameters: Event ID.
+   * @param int $eid Event ID.
+   * @return ImmutableConfig
    */
-  public static function getConfig($eid) {
+  public static function getConfig($eid): ImmutableConfig {
 
     // Get event configuration from config.
     $config = \Drupal::config('simple_conreg.settings.'.$eid);
