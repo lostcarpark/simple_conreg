@@ -25,6 +25,8 @@ simple_conreg.settings.*:
         postcode:
           type: boolean
           label: 'Postal code on payment form'
+        types:
+          type: string
     badge_types:
       type: text
       label: 'List of badge types (note: you must keep the letter before | unchanged)'
@@ -143,6 +145,9 @@ simple_conreg.settings.*:
                   country:
                     type: label
                     label: 'Label for Country'
+                  country_description:
+                    type: label
+                    label: 'Description label for Country'
                   phone:
                     type: label
                     label: 'Label for Phone'
@@ -200,3 +205,166 @@ simple_conreg.settings.*:
                 type: integer
               defaultDays:
                 type: string
+              fieldset:
+                type: string
+              days:
+                type: sequence
+                label: 'Settings for days for each member type'
+                sequence:
+                  type: mapping
+                  label: 'Day settings'
+                  mapping:
+                    description:
+                      type: label
+                      label: 'Description of the day for the member (should include price)'
+                    price:
+                      type: string
+                      label: 'Price for the member for day'
+    submit:
+      type: mapping
+      label: 'Labels for submit buttons'
+      mapping:
+        payment:
+          type: label
+          label: 'Submit button when amount to be paid'
+        free:
+          type: label
+          label: 'Submit button if all members are free'
+    confirmation:
+      type: mapping
+      label: 'Labels for confirmation email'
+      mapping:
+        copy_us:
+          type: integer
+        from_name:
+          type: label
+          label: 'Subject for emails'
+        from_email:
+          type: string
+        copy_email_to:
+          type: string
+        format_html:
+          type: integer
+        template_subject:
+          type: label
+          label: 'The subject of the confirmation email'
+        template_body:
+          type: text
+          label: 'The body of the confirmation email'
+        template_format:
+          type: string
+        notification_subject:
+          type: label
+          label: 'The subject of the notification sent to admin'
+    member_editable:
+      type: mapping
+      label: 'Indicate which fields may be edited by member'
+      mapping:
+        first_name:
+          type: integer
+        last_name:
+          type: integer
+        badge_name:
+          type: integer
+        street:
+          type: integer
+        street2:
+          type: integer
+        city:
+          type: integer
+        county:
+          type: integer
+        postcode:
+          type: integer
+        country:
+          type: integer
+        age:
+          type: integer
+        display:
+          type: integer
+        communication_method:
+          type: integer
+        phone:
+          type: integer
+        birth_date:
+          type: integer
+        extra_flag1:
+          type: integer
+        extra_flag2:
+          type: integer
+    checkin:
+      type: mapping
+      label: 'Defaults for check-in page'
+      mapping:
+        display:
+          type: string
+        communication_method:
+          type: string
+    thanks:
+      type: mapping
+      label: 'Settings for Thank You page'
+      mapping:
+        thank_you_message:
+          type: text
+          label: 'Message to display on Thank You page'
+        thank_you_format:
+          type: string
+    member_check:
+      type: mapping
+      label: 'Settings for the Check Membership page'
+      mapping:
+        title:
+          type: label
+          label: 'The title of the check membership page'
+        intro:
+          type: text
+          label: 'Intro text for check membership page'
+        confirm_subject:
+          type: label
+          label: 'The subject of the member check email'
+        confirm_body:
+          type: text
+          label: 'The body of the check member email'
+        confirm_format:
+          type: string
+        unknown_body:
+          type: text
+          label: 'The body of the email send if not a member'
+        unknown_format:
+          type: string
+    member_edit:
+      type: mapping
+      label: 'Settings for self service member editing'
+      mapping:
+        intro_text:
+          type: text
+          label: 'Intro to member edit page'
+        intro_format:
+          type: string
+        email_editable:
+          type: integer
+        badge_name_editable:
+          type: integer
+    reference:
+      type: mapping
+      label: 'Reference values to use'
+      mapping:
+        default_country:
+          type: string
+        countries:
+          type: string
+        geoplugin:
+          type: integer
+        no_country_label:
+          type: label
+          label: 'Option to select for users who don''t want to specify a country'
+    simple_conreg_options:
+      type: mapping
+      label: 'Settings for membership options'
+      mapping:
+        option_groups:
+          type: text
+          label: 'The groupings of membership options'
+        options:
+          type: text
+          label: 'The options withing an option group'
