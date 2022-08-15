@@ -200,7 +200,7 @@ class Member
 
       case 'country':
         $countryOptions = SimpleConregOptions::memberCountries($this->eid, $config);
-        return isset($countryOptions[$this->country]) ? $countryOptions[$this->country] : $this->country;
+        return $countryOptions[$this->country] ?: $this->country;
 
       case 'join_date':
         return date('Y-m-d H:i:s', $this->join_date);
