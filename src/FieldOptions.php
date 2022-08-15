@@ -74,16 +74,18 @@ class FieldOptions
    */
   public static function getFieldOptions($eid, $reset = false)
   {
-    $cid = 'simple_conreg:fieldOptions_' . $eid;
+    $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+    $cid = 'simple_conreg:fieldOptions_' . $eid . '_' . $language;
 
-    $fieldOptions = NULL;
+    // Check if field options previously cached.
     if (!$reset && $cache = \Drupal::cache()->get($cid)) {
-      $fieldOptions = $cache->data;
+      return $cache->data;
     }
-    else {
-      $fieldOptions = new FieldOptions($eid);
-      \Drupal::cache()->set($cid, $fieldOptions);
-    }
+
+    // Not cached, so create new field options, and cache that.
+    $fieldOptions = new FieldOptions($eid);
+    \Drupal::cache()->set($cid, $fieldOptions);
+
     return $fieldOptions;
   }
 
