@@ -655,7 +655,12 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('member_edit.badge_name_editable', $vals['simple_conreg_member_edit']['badge_name']);
     $config->save();
 
-    FieldOptions::getFieldOptions($eid, true);
+    $langcodes = \Drupal::languageManager()->getLanguages();
+    foreach ($langcodes as $language) {
+      $langCode = $language->getId();
+      \Drupal::cache()->delete('simple_conreg:countryList_' . $eid . '_' . $langCode);
+      \Drupal::cache()->delete('simple_conreg:fieldOptions_' . $eid . '_' . $langCode);
+    }
 
     parent::submitForm($form, $form_state);
   }
