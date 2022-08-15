@@ -211,9 +211,9 @@ class SimpleConregAddons
 
     foreach ($addOns as $addOnId => $addOnVals) {
       // If add-on set, get values.
-      $addon = (isset($addOnVals['addon']) ? $addOnVals['addon'] : []);          
+      $addon = ($addOnVals['addon'] ?? []);          
       // Check add-on is enabled.
-      if ($addon['active'] == 1) {
+      if (($addon['active'] ?? 0) == 1) {
         // Get add options...
         list($addOnOptions, $addOnPrices) = self::memberAddons($addon['options']);
         // If global is set, only display if there's a member number.
