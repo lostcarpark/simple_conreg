@@ -779,3 +779,11 @@ function simple_conreg_schema() {
 
   return $schema;
 }
+
+function simple_conreg_update_9001() {
+  foreach (\Drupal::configFactory()->listAll('simple_conreg.settings') as $key) {
+    $config = \Drupal::configFactory()->getEditable($key);
+    $config->clear("reference.countries");
+    $config->save();
+  }
+}

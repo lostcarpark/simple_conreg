@@ -311,7 +311,8 @@ class EventConfigForm extends ConfigFormBase {
     );  
 
     /*
-     * Fields for reference data - countries list.
+     * Fields for reference data.
+     * Used to contain countries list, but now using standard Drupal list.
      */
 
     $form['simple_conreg_reference'] = array(
@@ -320,14 +321,7 @@ class EventConfigForm extends ConfigFormBase {
       '#tree' => TRUE,
       '#group' => 'admin',
     );
-
-    $form['simple_conreg_reference']['countries'] = array(
-      '#type' => 'textarea',
-      '#title' => $this->t('Country list'),
-      '#description' => $this->t('Put each country on a line with 2-letter country code and name separated by | character.'),
-      '#default_value' => $config->get('reference.countries'),
-    );  
-        
+  
     $form['simple_conreg_reference']['default_country'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Default country code'),
@@ -629,7 +623,6 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('simple_conreg_options.options', $vals['simple_conreg_options']['options']);
     $config->set('display.page_size', intval($vals['simple_conreg_display']['page_size']));
     $config->set('reference.default_country', $vals['simple_conreg_reference']['default_country']);
-    $config->set('reference.countries', $vals['simple_conreg_reference']['countries']);
     $config->set('reference.no_country_label', $vals['simple_conreg_reference']['no_country_label']);
     $config->set('reference.geoplugin', $vals['simple_conreg_reference']['geoplugin']);
     $config->set('submit.payment', $vals['simple_conreg_submit']['submit_payment']);

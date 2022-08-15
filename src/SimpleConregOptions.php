@@ -7,12 +7,13 @@
 
 namespace Drupal\simple_conreg;
 
+use Drupal\Core\Locale\CountryManager;
+
 /**
  * List options for Simple Convention Registration.
  */
 class SimpleConregOptions
 {
-
   // Function to get cache ID for member classes.
   public static function getMemberClassCID($eid)
   {
@@ -460,21 +461,26 @@ class SimpleConregOptions
    */
   public static function memberCountries($eid, &$config = NULL)
   {
+    static $countryLists = [];
+    
+    // Check if previously used country list available.
+    if (array_key_exists($eid, $countryLists)) {
+      return $countryLists[$eid];
+    }
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
-    $countries = explode("\n", trim($config->get('reference.countries'))); // One country per line.
-    $countryOptions = [];
+    // Get country list from country manager.
+    $manager = new CountryManager(\Drupal::moduleHandler());
+    $countries = $manager->getList();
+
+    // Get no country label, if set.
     $noCountryLabel = trim($config->get('reference.no_country_label'));
-    if (!empty($noCountryLabel)) {
-      $countryOptions[0] = $noCountryLabel;
-    }
-    foreach ($countries as $country) {
-      if (!empty($country)) {
-        list($code, $name) = explode('|', $country);
-        $countryOptions[$code] = $name;
-      }
-    }
+    // Combine no country label with country list.
+    $countryOptions = empty($noCountryLabel) ? $countries : [0 => $noCountryLabel, ...$countries];
+
+    // Cache for future use.
+    $countryLists[$eid] = $countryOptions;
     return $countryOptions;
   }
 
