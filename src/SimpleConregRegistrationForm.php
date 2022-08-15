@@ -116,7 +116,6 @@ class SimpleConregRegistrationForm extends FormBase
     $memberClasses = SimpleConregOptions::memberClasses($eid, $config);
     $symbol = $config->get('payments.symbol');
     $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
-    $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
     $defaultCountry = $config->get('reference.default_country');
     // If geoPlugin enabled in configuration, lookup country.
     if ($config->get('reference.geoplugin')) {
