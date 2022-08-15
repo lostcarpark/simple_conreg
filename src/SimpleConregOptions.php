@@ -459,13 +459,13 @@ class SimpleConregOptions
    *
    * Parameters: Optional config.
    */
-  public static function memberCountries($eid, &$config = NULL)
+  public static function memberCountries($eid, &$config = NULL, $reset = FALSE)
   {
-    static $countryLists = [];
-    
+    $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+    $cid = 'simple_conreg:countryList_' . $eid . '_' . $language;
     // Check if previously used country list available.
-    if (array_key_exists($eid, $countryLists)) {
-      return $countryLists[$eid];
+    if (!$reset && $cache = \Drupal::cache()->get($cid)) {
+      return $cache->data;
     }
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
@@ -480,7 +480,7 @@ class SimpleConregOptions
     $countryOptions = empty($noCountryLabel) ? $countries : [0 => $noCountryLabel, ...$countries];
 
     // Cache for future use.
-    $countryLists[$eid] = $countryOptions;
+    \Drupal::cache()->set($cid, $countryOptions);
     return $countryOptions;
   }
 
