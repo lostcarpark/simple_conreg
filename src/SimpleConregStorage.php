@@ -907,7 +907,7 @@ class SimpleConregStorage
   /*
    * Function to return a list of members and communications methods for integration with Simplenews module.
    */
-  public static function adminMailoutListLoad($eid, $methods)
+  public static function adminMailoutListLoad($eid, $methods, $languages)
   {
     $connection = \Drupal::database();
     // Run this query: select email, min(communication_method) from conreg_members where email is not null and email<>'' and communication_method is not null group by email;
@@ -917,12 +917,14 @@ class SimpleConregStorage
     $select->addField('m', 'last_name');
     $select->addField('m', 'email');
     $select->addField('m', 'communication_method)');
+    $select->addField('m', 'language)');
     $select->condition('m.eid', $eid);
     $select->isNotNull('m.email');
     $select->condition('m.email', '', '<>');
     $select->condition("is_paid", 1); //Only include paid members.
     $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
     $select->condition('m.communication_method', $methods, 'IN');
+    $select->condition('m.language', $languages, 'IN');
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
