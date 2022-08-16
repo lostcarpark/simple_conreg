@@ -51,7 +51,6 @@ class SimpleConregAdminMailoutEmails extends FormBase {
       '#type' => 'checkboxes',
       '#title' => $this->t('Communications method'),
       '#options' => $options,
-      '#required' => TRUE,
       '#ajax' => [
         'wrapper' => 'memberform',
         'callback' => array($this, 'updateDisplayCallback'),
@@ -59,9 +58,15 @@ class SimpleConregAdminMailoutEmails extends FormBase {
       ],
     );
 
-    $form['show_name'] = array(
-      '#type' => 'checkbox',
-      '#title' => $this->t('Show name'),
+    $languages = \Drupal::languageManager()->getLanguages();
+    $langOptions = [];
+    foreach ($languages as $language) {
+      $langOptions[$language->getId()] = $language->getName();
+    }
+    $form['language'] = array(
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Preferred languages'),
+      '#options' => $langOptions,
       '#ajax' => [
         'wrapper' => 'memberform',
         'callback' => array($this, 'updateDisplayCallback'),
@@ -69,9 +74,15 @@ class SimpleConregAdminMailoutEmails extends FormBase {
       ],
     );
 
-    $form['show_method'] = array(
-      '#type' => 'checkbox',
-      '#title' => $this->t('Show communications method'),
+    $fieldOptions = [
+      'name' => 'Show name',
+      'method' => 'Communications method',
+      'language' => 'Language',
+    ];
+    $form['fields'] = array(
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Show additional fields'),
+      '#options' => $fieldOptions,
       '#ajax' => [
         'wrapper' => 'memberform',
         'callback' => array($this, 'updateDisplayCallback'),
@@ -83,12 +94,16 @@ class SimpleConregAdminMailoutEmails extends FormBase {
     $form_values = $form_state->getValues();
     if (count($form_values)) {
 
-      $showName = $form_values['show_name'];
-      $showMethod = $form_values['show_method'];
+      $showName = $form_values['fields']['name'];
+      $showMethod = $form_values['fields']['method'];
+      $showLanguage = $form_values['fields']['language'];
 
       $methods = [];
       foreach ($form_values['communication_method'] as $key=>$val) if ($val) $methods[] = $key;
-      
+
+      $languages = [];
+      foreach ($form_values['language'] as $key=>$val) if ($val) $languages[] = $key;
+
       $headers = [];
       if ($showName) {
         $headers['first_name'] = ['data' => t('First name'), 'field' => 'm.first_name'];
@@ -97,6 +112,9 @@ class SimpleConregAdminMailoutEmails extends FormBase {
       $headers['email'] = ['data' => t('Email'), 'field' => 'm.email'];
       if ($showMethod) {
         $headers['communication_method'] = ['data' => t('Communication method'), 'field' => 'm.communication_method'];
+      }
+      if ($showLanguage) {
+        $headers['language'] = ['data' => t('Language'), 'field' => 'm.language'];
       }
 
       $form['table'] = array(
@@ -107,9 +125,9 @@ class SimpleConregAdminMailoutEmails extends FormBase {
         '#sticky' => TRUE,
       );      
 
-      if (!empty($methods)) {
+      if (!empty($methods) && !empty($languages)) {
         // Fetch all entries for selected option or group.
-        $mailoutMembers = SimpleConregStorage::adminMailoutListLoad($eid, $methods);
+        $mailoutMembers = SimpleConregStorage::adminMailoutListLoad($eid, $methods, $languages);
         
         // Now loop through the combined results.
         foreach ($mailoutMembers as $entry) {
@@ -128,6 +146,11 @@ class SimpleConregAdminMailoutEmails extends FormBase {
           if ($showMethod) {
             $row['communication_method'] = array(
               '#markup' => Html::escape($entry['communication_method']),
+            );
+          }
+          if ($showLanguage) {
+            $row['language'] = array(
+              '#markup' => Html::escape($langOptions[$entry['language']]),
             );
           }
           $form['table'][] = $row;

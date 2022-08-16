@@ -5,6 +5,8 @@
  * Install, update and uninstall functions for the simple_conreg module.
  */
 
+use Drupal\Core\Database\Database;
+
 /**
  * Implements hook_requirements().
  */
@@ -113,6 +115,12 @@ function simple_conreg_schema() {
         'not null' => FALSE,
         'default' => 0,
         'description' => "Member number - assigned once approved.",
+      ),
+      'language' =>  array(
+        'type' => 'varchar',
+        'description' => "Member language",
+        'length' => 2,
+        'not null' => TRUE,
       ),
       // alter table conreg_members modify column member_type varchar(16);
       'member_type' => array(
@@ -786,4 +794,16 @@ function simple_conreg_update_9001() {
     $config->clear("reference.countries");
     $config->save();
   }
+}
+
+function simple_conreg_update_9002() {
+  $spec = array(
+    'type' => 'varchar',
+    'description' => "Member language",
+    'length' => 2,
+    'not null' => TRUE,
+    'initial' => 'en',
+  ); 
+  $schema = Database::getConnection()->schema();
+  $schema->addField('conreg_members', 'language', $spec);
 }
