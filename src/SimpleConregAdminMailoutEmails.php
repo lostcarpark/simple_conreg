@@ -75,9 +75,9 @@ class SimpleConregAdminMailoutEmails extends FormBase {
     );
 
     $fieldOptions = [
-      'name' => 'Show name',
-      'method' => 'Communications method',
-      'language' => 'Language',
+      'name' => $this->t('Name'),
+      'method' => $this->t('Communications method'),
+      'language' => $this->t('Language'),
     ];
     $form['fields'] = array(
       '#type' => 'checkboxes',
