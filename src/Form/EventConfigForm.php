@@ -380,6 +380,12 @@ class EventConfigForm extends ConfigFormBase {
       '#group' => 'admin',
     );
 
+    $form['simple_conreg_thanks']['title'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Title for Thank You page'),
+      '#default_value' => $config->get('thanks.title'),
+    );  
+
     $form['simple_conreg_thanks']['thank_you_message'] = array(
       '#type' => 'text_format',
       '#title' => $this->t('Thank You Message'),
@@ -627,6 +633,7 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('reference.geoplugin', $vals['simple_conreg_reference']['geoplugin']);
     $config->set('submit.payment', $vals['simple_conreg_submit']['submit_payment']);
     $config->set('submit.free', $vals['simple_conreg_submit']['submit_free']);
+    $config->set('thanks.title', $vals['simple_conreg_thanks']['title']);
     $config->set('thanks.thank_you_message', $vals['simple_conreg_thanks']['thank_you_message']['value']);
     $config->set('thanks.thank_you_format', $vals['simple_conreg_thanks']['thank_you_message']['format']);
     $config->set('discount.enable', $vals['simple_conreg_discount']['enable']);

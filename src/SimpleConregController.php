@@ -26,13 +26,14 @@ class SimpleConregController extends ControllerBase {
    */
   public function registrationThanks($eid = 1) {
     $config = $this->config('simple_conreg.settings.'.$eid);
-    $countryOptions = $this->getMemberCountries($config);
 
-    $content = array();
+    $content = [
+      '#title' => $config->get('thanks.title'),
+    ];
 
-    $content['message'] = array(
+    $content['message'] = [
       '#markup' => $config->get('thanks.thank_you_message'),
-    );
+    ];
   
     return $content;
   }
