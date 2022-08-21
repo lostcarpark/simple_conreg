@@ -43,7 +43,7 @@ class SimpleConregController extends ControllerBase {
    */
   public function memberList($eid = 1) {
     $config = $this->config('simple_conreg.settings.'.$eid);
-    $countryOptions = $this->getMemberCountries($config);
+    $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
     $types = SimpleConregOptions::badgeTypes($eid, $config);
     $digits = $config->get('member_no_digits');
 
@@ -483,7 +483,7 @@ class SimpleConregController extends ControllerBase {
   public function memberAdminMemberList($eid)
   {
     $config = SimpleConregConfig::getConfig($eid);
-    $countryOptions = $this->getMemberCountries($config);
+    $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
     $types = SimpleConregOptions::memberTypes($eid, $config);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
     $days = SimpleConregOptions::days($eid, $config);
@@ -875,18 +875,6 @@ class SimpleConregController extends ControllerBase {
     $content['#cache']['max-age'] = 0;
 
     return $content;
-  }
-
-  public function getMemberCountries(&$config) {
-    $countries = explode("\n", $config->get('reference.countries')); // One country per line.
-    $countryOptions = array();
-    foreach ($countries as $country) {
-      if (!empty($country)) {
-        list($code, $name) = explode('|', $country);
-        $countryOptions[$code] = $name;
-      }
-    }
-    return $countryOptions;
   }
 
   /**
