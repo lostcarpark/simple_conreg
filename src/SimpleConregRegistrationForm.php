@@ -918,9 +918,6 @@ class SimpleConregRegistrationForm extends FormBase
         $birth_date = NULL;
       }
 
-      // Get the active language, and save as member's preferred language.
-      $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
-
       // Save the submitted entry.
       $entry = [
         'eid' => $eid,
@@ -949,7 +946,6 @@ class SimpleConregRegistrationForm extends FormBase
         'member_total' => $memberPrices[$cnt]->price,
         'add_on_price' => $memberPrices[$cnt]->addOnPrice,
         'payment_amount' => $totalPrice,
-        'language' => $language,
         'join_date' => time(),
         'update_date' => time(),
       ];

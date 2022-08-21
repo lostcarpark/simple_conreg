@@ -304,6 +304,9 @@ simple_conreg.settings.*:
       type: mapping
       label: 'Settings for Thank You page'
       mapping:
+        title:
+          type: label
+          label: 'Title of Thank You page'
         thank_you_message:
           type: text
           label: 'Message to display on Thank You page'

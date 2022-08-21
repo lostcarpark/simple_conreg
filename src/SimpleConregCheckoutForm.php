@@ -193,7 +193,7 @@ class SimpleConregCheckoutForm extends FormBase
       $config->get('thanks.thank_you_message'));
     $format = $config->get('thanks.thank_you_format');
 
-    $form['#title'] = $this->t('Thank You');
+    $form['#title'] = $config->get('thanks.title');
     $form['message'] = array(
       '#markup' => check_markup($message, $format),
     );

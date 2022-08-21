@@ -72,6 +72,10 @@ class Member
    */
   public function saveMember()
   {
+    // Check if language set, and get current active language if not.
+    if (empty($this->language)) {
+      $this->language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+    }
     // Transfer object members into array.
     $entry = [];
     foreach ($this as $field => $value) {
