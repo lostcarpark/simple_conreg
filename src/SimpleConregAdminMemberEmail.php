@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\simple_conreg\SimpleConregAdminMemberDelete
+ * Contains \Drupal\simple_conreg\SimpleConregAdminMemberEmail
  */
 
 namespace Drupal\simple_conreg;
