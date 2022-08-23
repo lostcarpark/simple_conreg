@@ -7,14 +7,11 @@
 
 namespace Drupal\simple_conreg;
 
+use Symfony\Component\HttpFoundation\Response;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\AlertCommand;
-use Drupal\Core\Ajax\CssCommand;
-use Drupal\Core\Ajax\HtmlCommand;
+use Drupal\Core\Url;
 use Drupal\Core\Link;
-use Drupal\Core\URL;
 use Drupal\Component\Utility\Html;
 use Drupal\devel;
 
@@ -34,10 +31,14 @@ class SimpleConregAdminMailoutEmails extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1)
+  public function buildForm(array $form, FormStateInterface $form_state, int $eid = 1, $export = false, $methods = null, $languages = null, $fields = null): Response|array
   {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
+
+    if ($export) {
+      return $this->exportMemberEmail($eid, $methods, $languages, $fields);
+    }
 
     $config = $this->config('simple_conreg.settings.'.$eid);
 
@@ -46,11 +47,11 @@ class SimpleConregAdminMailoutEmails extends FormBase {
       '#suffix' => '</div>',
     );
 
-    $options = SimpleConregOptions::communicationMethod($eid, $config, TRUE);
+    $methodOptions = SimpleConregOptions::communicationMethod($eid, $config, TRUE);
     $form['communication_method'] = array(
       '#type' => 'checkboxes',
       '#title' => $this->t('Communications method'),
-      '#options' => $options,
+      '#options' => $methodOptions,
       '#ajax' => [
         'wrapper' => 'memberform',
         'callback' => array($this, 'updateDisplayCallback'),
@@ -58,11 +59,7 @@ class SimpleConregAdminMailoutEmails extends FormBase {
       ],
     );
 
-    $languages = \Drupal::languageManager()->getLanguages();
-    $langOptions = [];
-    foreach ($languages as $language) {
-      $langOptions[$language->getId()] = $language->getName();
-    }
+    $langOptions = $this->getLanguageOptions();
     $form['language'] = array(
       '#type' => 'checkboxes',
       '#title' => $this->t('Preferred languages'),
@@ -92,6 +89,31 @@ class SimpleConregAdminMailoutEmails extends FormBase {
 
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
+
+    // Prepare export link.
+    $exportMethods = implode('', array_filter($form_values['communication_method'] ?? []));
+
+    $exportLanguages = implode('~', array_filter($form_values['language'] ?? []));
+
+    $exportFields = (!empty($form_values['fields']['name']) ? 'N' : '')
+      . (!empty($form_values['fields']['method']) ? 'M' : '')
+      . (!empty($form_values['fields']['language']) ? 'L' : '');
+
+    $exportUrl = Url::fromRoute('simple_conreg_admin_mailout_emails_export',
+                                ['eid' => $eid,
+                                 'methods' => $exportMethods ?: '_', 
+                                 'languages' => $exportLanguages ?: '_', 
+                                 'fields' => $exportFields],
+                                ['absolute' => TRUE]);
+    $exportLink = Link::fromTextAndUrl($this->t('Export Member Emails'), $exportUrl);
+
+    $form['export']['link'] = array(
+      '#type' => 'markup',
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
+      '#markup' => $exportLink->toString(),
+    );
+
     if (count($form_values)) {
 
       $showName = $form_values['fields']['name'];
@@ -106,15 +128,15 @@ class SimpleConregAdminMailoutEmails extends FormBase {
 
       $headers = [];
       if ($showName) {
-        $headers['first_name'] = ['data' => t('First name'), 'field' => 'm.first_name'];
-        $headers['last_name'] = ['data' => t('Last name'), 'field' => 'm.last_name'];
+        $headers['first_name'] = ['data' => $this->t('First name'), 'field' => 'm.first_name'];
+        $headers['last_name'] = ['data' => $this->t('Last name'), 'field' => 'm.last_name'];
       }
-      $headers['email'] = ['data' => t('Email'), 'field' => 'm.email'];
+      $headers['email'] = ['data' => $this->t('Email'), 'field' => 'm.email'];
       if ($showMethod) {
         $headers['communication_method'] = ['data' => t('Communication method'), 'field' => 'm.communication_method'];
       }
       if ($showLanguage) {
-        $headers['language'] = ['data' => t('Language'), 'field' => 'm.language'];
+        $headers['language'] = ['data' => $this->t('Language'), 'field' => 'm.language'];
       }
 
       $form['table'] = array(
@@ -131,7 +153,7 @@ class SimpleConregAdminMailoutEmails extends FormBase {
         
         // Now loop through the combined results.
         foreach ($mailoutMembers as $entry) {
-          $row = array();
+          $row = [];
           if ($showName) {
             $row['first_name'] = array(
               '#markup' => Html::escape($entry['first_name']),
@@ -145,7 +167,7 @@ class SimpleConregAdminMailoutEmails extends FormBase {
           );
           if ($showMethod) {
             $row['communication_method'] = array(
-              '#markup' => Html::escape($entry['communication_method']),
+              '#markup' => Html::escape($methodOptions[$entry['communication_method']]),
             );
           }
           if ($showLanguage) {
@@ -156,8 +178,8 @@ class SimpleConregAdminMailoutEmails extends FormBase {
           $form['table'][] = $row;
         }
       }
-    
     }
+
     return $form;
   }
 
@@ -172,5 +194,99 @@ class SimpleConregAdminMailoutEmails extends FormBase {
   {
   }
 
+  /**
+   * Convert quotes to double quotes, and wrap values containing quotes or commas in quotes for CSV output.
+   * @param string $value
+   * @return string
+   */
+  private function csvField(string $value): string
+  {
+    if (str_contains($value, '"'))
+      $value = str_replace('"', '""', $value);
+    if (str_contains($value, '"') || str_contains($value, ','))
+      $value = '"' . $value . '"';
+    return $value;
+  }
+
+  /**
+   * Export a file containing member emails.
+   * @param int $eid Event ID
+   * @param string $methods
+   * @param string $languages
+   * @param string $fields
+   * @return Response
+   */
+  private function exportMemberEmail(int $eid, string $methods, string $languages, string $fields): Response
+  {
+    // Split out parameters.
+    $methods = str_split($methods);
+    $languages = explode("~", $languages);
+    $showName = str_contains($fields, "N");
+    $showMethod = str_contains($fields, "M");
+    $showLanguage = str_contains($fields, "L");
+
+    $headerRow = '';
+    if ($showName) {
+      $headerRow .= $this->t('First name') . ',' . $this->t('Last name') . ',';
+    }
+    $headerRow .= $this->t('Email');
+    if ($showMethod) {
+      $headerRow .= ',' . t('Communication method');
+    }
+    if ($showLanguage) {
+      $headerRow .= ',' . t('Language');
+    }
+
+    // Fetch all entries for selected option or group.
+    $mailoutMembers = SimpleConregStorage::adminMailoutListLoad($eid, $methods, $languages);
+
+    $config = $this->config('simple_conreg.settings.'.$eid);
+    $methodOptions = SimpleConregOptions::communicationMethod($eid, $config, TRUE);
+    $langOptions = $this->getLanguageOptions();
+
+    $output = $headerRow . "\n";
+
+    if (!empty($methods) && !empty($languages)) {
+      // Fetch all entries for selected option or group.
+      $mailoutMembers = SimpleConregStorage::adminMailoutListLoad($eid, $methods, $languages);
+      
+      // Now loop through the combined results.
+      foreach ($mailoutMembers as $entry) {
+        $expRow = [];
+        if ($showName) {
+          $expRow[] = $this->csvField($entry['first_name']);
+          $expRow[] = $this->csvField($entry['last_name']);
+        }
+        $expRow[] = $this->csvField($entry['email']);
+        if ($showMethod) {
+          $expRow[] = $this->csvField($methodOptions[$entry['communication_method']]);
+        }
+        if ($showLanguage) {
+          $expRow[] = $this->csvField($langOptions[$entry['language']]);
+        }
+        $output .= implode(',', $expRow) . "\n";
+      }
+    }
+
+    $response = new Response($output);
+    $response->headers->set('Content-Type', 'text/csv');
+    $response->headers->set('Content-Disposition', 'attachment; filename=member_emails.csv');
+    $response->headers->set('Pragma', 'no-cache');
+    $response->headers->set('Expires', '0');
+    return $response;
+  }
+
+  /**
+   * Get an array of language names indexed by language code for active languages in Drupal.
+   * @return Array
+   */
+  function getLanguageOptions(): Array {
+    $languages = \Drupal::languageManager()->getLanguages();
+    $langOptions = [];
+    foreach ($languages as $language) {
+      $langOptions[$language->getId()] = $language->getName();
+    }
+    return $langOptions;
+  }
 }    
 

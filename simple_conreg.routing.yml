@@ -304,6 +304,22 @@ simple_conreg_admin_mailout_emails:
     _form: '\Drupal\simple_conreg\SimpleConregAdminMailoutEmails'
     eid: 1
     option: 0
+    export: FALSE
+  requirements:
+    _permission: 'manage mailout lists'
+    eid: ^[0-9]+$
+
+simple_conreg_admin_mailout_emails_export:
+  path: "admin/members/mailout_export/{eid}/{methods}/{languages}/{fields}"
+  defaults:
+    _title: "Exporting Member Mailout Emails"
+    _form: '\Drupal\simple_conreg\SimpleConregAdminMailoutEmails'
+    eid: 1
+    option: 0
+    export: TRUE
+    methods: null
+    languages: null
+    fields: null
   requirements:
     _permission: 'manage mailout lists'
     eid: ^[0-9]+$
