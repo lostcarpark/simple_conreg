@@ -10,14 +10,9 @@ namespace Drupal\conreg_badges\Form;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\AlertCommand;
-use Drupal\Core\Ajax\CssCommand;
-use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Url;
 use Drupal\Core\Link;
-use Drupal\Component\Utility\SafeMarkup;
 use Drupal\devel;
 use Drupal\simple_conreg\SimpleConregConfig;
 use Drupal\simple_conreg\SimpleConregOptions;
@@ -40,7 +35,12 @@ class BadgeNamesForm extends FormBase
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $export = false, $fields = null, $update = null)
+  public function buildForm(array $form,
+                            FormStateInterface $form_state,
+                            int $eid = 1,
+                            bool $export = false,
+                            string $fields = null,
+                            string $update = null): Response | Array
   {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
@@ -119,14 +119,6 @@ class BadgeNamesForm extends FormBase
       '#markup' => $exportLink->toString(),
     );
 
-    // Export button - currently export is a link, but may use button in future.
-    // $form['exportButton'] = array(
-    //   '#type' => 'submit',
-    //   '#value' => $this->t('Export Badge Names'),
-    //   '#submit' => array([$this, 'exportButtonSubmit']),
-    // );
-
-
     $form['message'] = [
       '#markup' => $this->t('Here is a list of all paid convention members...'),
       '#prefix' => '<div id="Heading">',
@@ -153,7 +145,7 @@ class BadgeNamesForm extends FormBase
     return $form;
   }
 
-  private function checkBox($title, $default)
+  private function checkBox(string $title, bool $default): array
   {
     return [
       '#type' => 'checkbox',
@@ -167,7 +159,7 @@ class BadgeNamesForm extends FormBase
     ];
   }
 
-  private function csvField($value)
+  private function csvField(string $value): string
   {
     if (str_contains($value, '"'))
       $value = str_replace('"', '""', $value);
@@ -176,7 +168,9 @@ class BadgeNamesForm extends FormBase
     return $value;
   }
 
-  private function exportBadges($eid, $fields, $update)
+  private function exportBadges(int $eid,
+                                string $fields,
+                                string $update): Response
   {
     $badgeNameRows = $this->getBadgeNameRows($eid,
       empty($fields) || str_contains($fields, 'M'), // 'M' for Member No.
@@ -209,10 +203,24 @@ class BadgeNamesForm extends FormBase
     return $response;
   }
 
-  /*
+  /**
    * Function to return two arrays, one containing the header labels, and the second containing the badge name rows.
+   * @param int $eid             The event ID.
+   * @param bool $showMemberNo   Show member no field if true.
+   * @param bool $showMemberName Show member name field if true.
+   * @param bool $showBadgeName  Show badge name field if true.
+   * @param bool $showBadgeTypes Show badge type field if true.
+   * @param bool $showDays       Show days member joined for field if true.
+   * @param string $updated      Date to get updates since.
+   * @return object              Object containing header and rows arrays.
    */
-  private function getBadgeNameRows($eid, $showMemberNo = TRUE, $showMemberName = TRUE, $showBadgeName = TRUE, $showBadgeTypes = TRUE, $showDays = TRUE, $updated = null)
+  private function getBadgeNameRows(int $eid, 
+                                    bool $showMemberNo = TRUE,
+                                    bool $showMemberName = TRUE,
+                                    bool $showBadgeName = TRUE,
+                                    bool $showBadgeTypes = TRUE,
+                                    bool $showDays = TRUE,
+                                    string $updated = null): object
   {
     $config = SimpleConregConfig::getConfig($eid);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
@@ -284,21 +292,6 @@ class BadgeNamesForm extends FormBase
 
   public function submitForm(array &$form, FormStateInterface $form_state)
   {
-  }
-
-  public function exportButtonSubmit(array &$form, FormStateInterface $form_state)
-  {
-    $content = "Hello World.";
-    $file_size = strlen($content);
-    header('Content-Description: File Transfer');
-    header('Content-Type: text/plain'); //Im assuming it is audio file you can have your own logic to assign content type dynamically for your file types
-    header('Content-Disposition: attachment; filename="badge_names.csv"'); //Im assuming it is audio mp3 file you can have your own logic to  assign file extension dynamically for your files 
-    header('Expires: 0');
-    header('Cache-Control: must-revalidate');
-    header('Pragma: public');
-    header('Content-Length: ' . $file_size);
-    flush();
-    echo($content);
   }
 
 }
