@@ -135,7 +135,11 @@ class SimpleConregController extends ControllerBase {
       '#empty' => t('No entries available.'),
     );
 
-    $content['summary_heading'] = ['#markup' => $this->t('<h2>Country Breakdown</h2>')];
+    $content['summary_heading'] = [
+      '#markup' => $this->t('Country Breakdown'),
+      '#prefix' => '<h2>',
+      '#suffix' => '</h2>',
+    ];
 
     $rows = array();
     $headers = array(
