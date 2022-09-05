@@ -31,7 +31,7 @@ simple_conreg_portal_register:
     _permission: 'member portal'
     eid: ^[0-9]+$
   options:
-    no_cache: 'TRUE'
+    no_cache: true
 
 simple_conreg_payment:
   path: 'members/payment/{mid}/{key}/{name}/{postcode}'
@@ -96,7 +96,7 @@ simple_conreg_checkout:
     payid: ^[0-9]+$
     key: ^[0-9]+$
   options:
-    no_cache: 'TRUE'
+    no_cache: true
 
 simple_conreg_fantable_checkout:
   path: 'members/fantable/checkout/{payid}/{key}'
@@ -109,7 +109,7 @@ simple_conreg_fantable_checkout:
     payid: ^[0-9]+$
     key: ^[0-9]+$
   options:
-    no_cache: 'TRUE'
+    no_cache: true
 
 simple_conreg_portal_checkout:
   path: 'members/portal/checkout/{payid}/{key}'
@@ -122,7 +122,7 @@ simple_conreg_portal_checkout:
     payid: ^[0-9]+$
     key: ^[0-9]+$
   options:
-    no_cache: 'TRUE'
+    no_cache: true
 
 simple_conreg_thanks:
   path: 'members/thanks/{eid}'
@@ -165,7 +165,7 @@ simple_conreg_login:
     key: ^[0-9]+$
     expiry: ^[0-9]+$
   options:
-    no_cache: 'TRUE'
+    no_cache: true
 
 simple_conreg_portal:
   path: 'members/portal/{eid}'
