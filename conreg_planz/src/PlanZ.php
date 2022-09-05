@@ -12,7 +12,6 @@ use Drupal\Core\Database\DatabaseException;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Config\ImmutableConfig;
-use Drupal\simple_conreg\SimpleConregConfig;
 use Drupal\simple_conreg\Member;
 use Drupal\simple_conreg\SimpleConregTokens;
 
@@ -49,10 +48,10 @@ class PlanZ
     $this->roles = $config->get('roles') ?: [];
     $this->interested_default = $config->get('interested_default') ?: false;
     $this->planZUrl = $config->get('url') ?: '';
-    $this->optionFields = $config->get('option_fields' ?: []);
+    $this->optionFields = $config->get('option_fields') ?? [];
     $this->autoEnabled = $config->get('auto.enabled') ?: false;
     $this->autoWhenConfirmed = $config->get('auto.when_confirmed') ?: false;
-    $this->emailTemplateSubject = $config->get('email.template_subject' ?: '');
+    $this->emailTemplateSubject = $config->get('email.template_subject') ?: '';
     $this->emailTemplateBody = $config->get('email.template_body') ?: '';
     $this->emailTemplateFormat = $config->get('email.template_format') ?: '';
   }
