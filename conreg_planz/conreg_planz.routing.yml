@@ -1,0 +1,19 @@
+conreg_config_planz_options:
+  path: 'admin/config/conreg/planz/options/{eid}'
+  defaults:
+    _title: 'ConReg PlanZ Options'
+    _form: '\Drupal\conreg_planz\Form\ConfigPlanZForm'
+    eid: 1
+  requirements:
+    _permission: 'configure PlanZ integration'
+    eid: ^[0-9]+$
+
+conreg_config_planz_admin:
+  path: 'admin/conreg/planz/{eid}'
+  defaults:
+    _title: 'ConReg PlanZ Admin'
+    _form: '\Drupal\conreg_planz\Form\PlanZAdminForm'
+    eid: 1
+  requirements:
+    _permission: 'PlanZ admin'
+    eid: ^[0-9]+$

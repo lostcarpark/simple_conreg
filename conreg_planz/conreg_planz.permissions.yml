@@ -1,0 +1,7 @@
+'configure PlanZ integration':
+  title: Configure ConReg integration with PlanZ
+  description: Set up PlanZ integration.
+
+'PlanZ admin':
+  title: Administer ConReg integration with PlanZ
+  description: Manage PlanZ users and send email invites.

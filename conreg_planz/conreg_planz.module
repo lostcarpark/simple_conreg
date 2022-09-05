@@ -1,0 +1,77 @@
+<?php
+
+use Drupal\simple_conreg\Member;
+use Drupal\conreg_planz\PlanZ;
+use Drupal\conreg_planz\PlanZUser;
+use Drupal\conreg_planz\BadgeIdSource;
+
+/**
+ * Implement hook_convention_member_inserted to add PlanZ for member.
+ */
+function conreg_planz_convention_member_inserted(Member $member): void
+{
+  conreg_planz_check_user($member);
+}
+/*
+ * Implement hook_convention_member_updated to add PlanZ for member.
+ */
+
+function conreg_planz_convention_member_updated(Member $member): void
+{
+  conreg_planz_check_user($member);
+}
+
+/**
+ * Called from insert and update.
+ * Check if member on PlanZ. If so, push update to PlanZ member record.
+ * If not, check if relevant options checked, and if create PlanZ invite.
+ */
+function conreg_planz_check_user(Member $member): void
+{
+  // First, make sure member is paid and approved, and not deleted.
+  if (!$member->is_paid || $member->is_deleted) {
+    return;
+  }
+
+  // Get PlanZ object.
+  $planz = new PlanZ(\Drupal::config('simple_conreg.settings.'.$member->eid.'.planz'));
+
+  // Once confirmed, we'll see if user is already on PlanZ.
+  $user = new PlanZUser($planz);
+  if ($user->load($member->mid)) {
+    // Member is already on PlanZ, so we want to update their details, even if they've changed their preferences.
+    $user->save($member, false);
+    return;
+  }
+
+  // Only continue if auto updating enabled.
+  if (!$planz->autoEnabled) {
+    return;
+  }
+  // If automatic invite when confirmed enabled, make sure member approved.
+  if ($planz->autoWhenConfirmed && !$member->is_approved) {
+    return;
+  }
+  // If badge using member number, make sure member approved.
+  if ($planz->badgeIdSource == BadgeIdSource::MemberNumber && !$member->is_approved) {
+    return;
+  }
+
+  // Next, check at least one of the expected member options has been selected by the member.
+  $match = FALSE;
+  foreach ($planz->optionFields as $optId => $optVal) {
+    if ($optVal) {
+      if (isset($member->options[$optId]) && $member->options[$optId]->isSelected) {
+        $match = TRUE;
+      }
+    }
+  }
+  // If option match found, proceed to update or add member.
+  if ($match) {
+    // Save new user.
+    $user->save($member, false);
+    // Send email to user.
+    $planz->sendInviteEmail($user);
+  }
+
+}

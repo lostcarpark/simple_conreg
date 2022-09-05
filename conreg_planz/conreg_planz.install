@@ -2,13 +2,13 @@
 
 /**
  * @file
- * Install, update and uninstall functions for the conreg_zambia module.
+ * Install, update and uninstall functions for the conreg_planz module.
  */
 
 /**
  * Implements hook_requirements().
  */
-function conreg_zambia_requirements($phase)
+function conreg_planz_requirements($phase)
 {
   $requirements = [];
   return $requirements;
@@ -20,9 +20,9 @@ function conreg_zambia_requirements($phase)
  * Creates some default entries on this module custom table.
  *
  * @see hook_install()
- * @ingroup conreg_zambia
+ * @ingroup conreg_planz
  */
-function conreg_zambia_install()
+function conreg_planz_install()
 {
 }
 
@@ -32,12 +32,12 @@ function conreg_zambia_install()
  * Defines the database tables used by this module.
  *
  * @see hook_schema()
- * @ingroup conreg_zambia
+ * @ingroup conreg_planz
  */
-function conreg_zambia_schema()
+function conreg_planz_schema()
 {
-  // create table conreg_zambia (mid int primary key, zambia_user_id varchar(255) not null, update_date int not null);
-  $schema['conreg_zambia'] = array(
+  // create table conreg_planz (mid int primary key, planz_user_id varchar(255) not null, update_date int not null);
+  $schema['conreg_planz'] = array(
     'description' => 'Stores events on the registration system.',
     'fields' => array(
       'mid' => array(
