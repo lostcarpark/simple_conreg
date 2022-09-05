@@ -1,0 +1,4 @@
+conreg_planz.admin:
+  title: PlanZ admim
+  route_name: conreg_config_planz_admin
+  weight: 75

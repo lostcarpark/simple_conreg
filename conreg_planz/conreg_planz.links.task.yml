@@ -1,0 +1,6 @@
+conreg_clickup.config_planz_options:
+  title: PlanZ Options
+  route_name: conreg_config_planz_options
+  base_route: simple_conreg_config
+  weight: 38
+
