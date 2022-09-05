@@ -230,7 +230,7 @@ class ConfigPlanZForm extends ConfigFormBase
       $form['option_fields'][$option->optionId] = array(
         '#type' => 'checkbox',
         '#title' => $this->t('Invite members who select "@option"', ['@option' => $option->title]),
-        '#default_value' => $config->get('option_fields.'.$option->optionId),
+        '#default_value' => $this->planz->optionFields[$option->optionId],
       );
     }
 
