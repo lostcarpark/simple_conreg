@@ -46,7 +46,7 @@ class PlanZ
     $this->digits = $config->get('digits') ?: 4;
     $this->generatePassword = $config->get('generate_password') ?: false;
     $this->roles = $config->get('roles') ?: [];
-    $this->interested_default = $config->get('interested_default') ?: false;
+    $this->interestedDefault = $config->get('interested_default') ?: false;
     $this->planZUrl = $config->get('url') ?: '';
     $this->optionFields = $config->get('option_fields') ?? [];
     $this->autoEnabled = $config->get('auto.enabled') ?: false;

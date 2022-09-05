@@ -154,27 +154,27 @@ class ConfigPlanZForm extends ConfigFormBase
       '#type' => 'select',
       '#title' => $this->t('Source for badge ID'),
       '#options' => $badgeIdOptions,
-      '#default_value' => $config->get('badge_id_source')
+      '#default_value' => $this->planz->badgeIdSource->value,
     ];
 
     $form['members']['prefix'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('PlanZ badgeid prefix',),
       '#description' => $this->t('Specify a letter to prefix the member number.'),
-      '#default_value' => $config->get('prefix'),
+      '#default_value' => $this->planz->prefix,
     );
     
     $form['members']['digits'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('PlanZ digits in badgeid',),
       '#description' => $this->t('Specify number of digits to pad member number.'),
-      '#default_value' => $config->get('digits'),
+      '#default_value' => $this->planz->digits,
     );
     
     $form['members']['generate_password'] = array(
       '#type' => 'checkbox',
       '#title' => $this->t('Generate password when adding to PlanZ.'),
-      '#default_value' => $config->get('generate_password'),
+      '#default_value' => $this->planz->generatePassword,
     );
 
     // Put checkboxes on roles.
@@ -189,7 +189,7 @@ class ConfigPlanZForm extends ConfigFormBase
         $form['members']['roles'][$role['permroleid']] = array(
           '#type' => 'checkbox',
           '#title' => $role['permrolename'],
-          '#default_value' => $config->get('roles.'.$role['permroleid']),
+          '#default_value' => $this->planz->roles[$role['permroleid']],
         );
       }
     }
@@ -197,14 +197,14 @@ class ConfigPlanZForm extends ConfigFormBase
     $form['members']['interested_default'] = array(
       '#type' => 'checkbox',
       '#title' => $this->t('Default "Interested" to true when adding new members.'),
-      '#default_value' => $config->get('interested_default'),
+      '#default_value' => $this->planz->interestedDefault,
     );
 
     $form['members']['url'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('PlanZ URL',),
       '#description' => $this->t('The base URL of the PlanZ site (to include in invitation email). Should start with http:// or https://'),
-      '#default_value' => $config->get('url'),
+      '#default_value' => $this->planz->planZUrl,
     );
 
     /**
@@ -256,13 +256,13 @@ class ConfigPlanZForm extends ConfigFormBase
     $form['auto']['enabled'] = array(
       '#type' => 'checkbox',
       '#title' => $this->t('Enable automatic invites'),
-      '#default_value' => $config->get('auto.enabled'),
+      '#default_value' => $this->planz->autoEnabled,
     );
 
     $form['auto']['when_confirmed'] = array(
       '#type' => 'checkbox',
       '#title' => $this->t('Only send invitation when member confirmed (if using member ID for badge ID, members will be invited immediately after joining if this is not checked)'),
-      '#default_value' => $config->get('auto.when_confirmed'),
+      '#default_value' => $this->planz->autoWhenConfirmed,
     );
 
     /**
@@ -280,15 +280,15 @@ class ConfigPlanZForm extends ConfigFormBase
     $form['email']['template_subject'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Invite email subject'),
-      '#default_value' => $config->get('email.template_subject'),
+      '#default_value' => $this->planz->emailTemplateSubject,
     );
 
     $form['email']['template_body'] = array(
       '#type' => 'text_format',
       '#title' => $this->t('InviteBulk email body'),
       '#description' => $this->t('Text for the email body. you may use the following tokens: @tokens.', ['@tokens' => SimpleConregTokens::tokenHelp(['planz_user', 'planz_password', 'planz_url'])]),
-      '#default_value' => $config->get('email.template_body'),
-      '#format' => $config->get('email.template_format'),
+      '#default_value' => $this->planz->emailTemplateBody,
+      '#format' => $this->planz->emailTemplateFormat,
     );
 
     return parent::buildForm($form, $form_state);

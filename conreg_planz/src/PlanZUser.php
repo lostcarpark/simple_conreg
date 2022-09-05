@@ -197,7 +197,7 @@ class PlanZUser
       'badgeid' => $this->badgeId,
       'share_email' => 1,
       'data_retention' => 0,
-      'interested' => $this->planz->interested_default,
+      'interested' => $this->planz->interestedDefault ? 1 : 0,
     ];
     if (!empty($this->hashedPassword)) {
       $fields['password'] = $this->hashedPassword;
