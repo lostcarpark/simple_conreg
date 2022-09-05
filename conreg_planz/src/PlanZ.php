@@ -41,23 +41,20 @@ class PlanZ
   public function __construct(ImmutableConfig $config = NULL)
   {
     $this->config = $config;
-    $this->target = $config->get('target');
-    if (empty($this->target)) {
-      $this->target = 'default';
-    }
-    $this->badgeIdSource = BadgeIdSource::from($config->get('badge_id_source'));
-    $this->prefix = $config->get('prefix');
-    $this->digits = $config->get('digits');
-    $this->generatePassword = $config->get('generate_password');
-    $this->roles = $config->get('roles');
-    $this->interested_default = $config->get('interested_default');
-    $this->planZUrl = $config->get('url');
-    $this->optionFields = $config->get('option_fields');
-    $this->autoEnabled = $config->get('auto.enabled');
-    $this->autoWhenConfirmed = $config->get('auto.when_confirmed');
-    $this->emailTemplateSubject = $config->get('email.template_subject');
-    $this->emailTemplateBody = $config->get('email.template_body');
-    $this->emailTemplateFormat = $config->get('email.template_format');
+    $this->target = $config->get('target') ?: 'default';
+    $this->badgeIdSource = BadgeIdSource::from($config->get('badge_id_source') ?: 'mno');
+    $this->prefix = $config->get('prefix') ?: '';
+    $this->digits = $config->get('digits') ?: 4;
+    $this->generatePassword = $config->get('generate_password') ?: false;
+    $this->roles = $config->get('roles') ?: [];
+    $this->interested_default = $config->get('interested_default') ?: false;
+    $this->planZUrl = $config->get('url') ?: '';
+    $this->optionFields = $config->get('option_fields' ?: []);
+    $this->autoEnabled = $config->get('auto.enabled') ?: false;
+    $this->autoWhenConfirmed = $config->get('auto.when_confirmed') ?: false;
+    $this->emailTemplateSubject = $config->get('email.template_subject' ?: '');
+    $this->emailTemplateBody = $config->get('email.template_body') ?: '';
+    $this->emailTemplateFormat = $config->get('email.template_format') ?: '';
   }
 
   /** 
