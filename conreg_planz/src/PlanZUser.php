@@ -9,12 +9,13 @@ namespace Drupal\conreg_planz;
 
 use Drupal\Core\Database\Connection;
 use Drupal\simple_conreg\Member;
+use Drupal\devel;
 
 class PlanZUser
 {
   private PlanZ $planz;
-  public readonly int $mid;
-  public readonly string $badgeId;
+  public int $mid;
+  public string $badgeId;
   public ?string $password;
   public ?string $hashedPassword;
 
@@ -42,18 +43,30 @@ class PlanZUser
     $select->condition('z.mid', $mid);
     $badgeId = $select->execute()->fetchField();
     if (empty($badgeId)) {
-      return FALSE;
+      // If no linked PlanZ user, check for matching email address on PlanZ users.
+      return $this->checkExistingUser($mid);
     }
 
-    $this->id = $mid;
+    $this->mid = $mid;
     $this->badgeId = $badgeId;
     
     // Get the PlanZ connection to get the Participant table.
     $planZCon = $this->planz->getPlanZConnection();
     $select = $planZCon->select('Participants', 'P');
+    $select->addField('P', 'pubsname');
+    $select->addField('P', 'sortedpubsname');
     $select->addField('P', 'password');
     $select->condition('P.badgeid', $this->badgeId);
-    $this->hashedPassword = $select->execute()->fetchField();
+    $record = $select->execute()->fetchObject();
+    if ($record) {
+      $this->existingParticipant = TRUE;
+      $this->pubsname = $record?->pubsname;
+      $this->sortedpubsname = $record?->sortedpubsname;
+      $this->hashedPassword = $record->password;
+    }
+    else {
+      $this->existingParticipant = FALSE;
+    }
     return TRUE;
   }
 
@@ -64,15 +77,18 @@ class PlanZUser
    */
   private function checkExistingUser(int $mid): bool
   {
+    // Get member details.
+    $member = Member::loadMember($mid);
+
     // Get the PlanZ connection to get the Participant table.
     $planZCon = $this->planz->getPlanZConnection();
     $select = $planZCon->select('CongoDump', 'C');
     $select->addField('C', 'badgeid');
-    $select->condition('C.badgeid', $mid);
+    $select->condition('C.email', $member->email);
     $badgeId = $select->execute()->fetchField();
 
-    // If null returned, member is not PlanZ user.
-    if (is_null($badgeId)) {
+    // If false returned, member is not PlanZ user.
+    if (!$badgeId) {
       return false;
     }
 
@@ -85,17 +101,18 @@ class PlanZUser
     $foundMid = $select->execute()->fetchField();
 
     // If member found, user already belongs to another member.
-    if (!is_null($foundMid)) {
+    if ($foundMid) {
       return false;
     }
 
     // We've found a PlanZ user, and confirmed it's not assigned to another ConReg member, so update member badge ID and save to conreg_planz.
+    $this->mid = $mid;
     $this->badgeId = $badgeId;
     $this->saveConregPlanZ();
     // Member is linked to a PlanZ user so return true.
     return true;
   }
-  
+
   /**
    * Save ConReg member to PlanZ.
    * @param Member $member The member object to save
@@ -194,20 +211,27 @@ class PlanZUser
     }
 
     $fields = [
-      'badgeid' => $this->badgeId,
-      'share_email' => 1,
-      'data_retention' => 0,
-      'interested' => $this->planz->interestedDefault ? 1 : 0,
+      'badgeid' => $this->badgeId
     ];
+
+    if (empty($this->existingParticipant)) {
+      // Member not on participant table, so set default values.
+      $fields['share_email'] = 1;
+      $fields['data_retention'] = 0;
+      $fields['interested'] = $this->planz->interestedDefault ? 1 : 0;
+    }
+
+    // Only update password if empty.
     if (!empty($this->hashedPassword)) {
       $fields['password'] = $this->hashedPassword;
     }
     
-    if (!empty($publicationName)) {
+    // Only update publication name if none already set.
+    if (empty($this->pubsname) && !empty($publicationName)) {
       $fields['pubsname'] = $publicationName;
     }
 
-    if (!empty($sortingName)) {
+    if (empty($this->sortedpubsname) && !empty($sortingName)) {
       $fields['sortedpubsname'] = $sortingName;
     }
      
