@@ -1114,8 +1114,8 @@ class SimpleConregRegistrationForm extends FormBase
       }
     }
     // Calculate total price with discounts.
-    $totalPrice = $fullPrice + $discountPrice;
-    $totalPriceMinusFree = $fullMinusFree + $discountPrice;
+    $totalPrice = $fullPrice - $discountPrice;
+    $totalPriceMinusFree = $fullMinusFree - $discountPrice;
 
     return [$fullPrice, $discountPrice, $totalPrice, $totalPriceMinusFree, $memberPrices];
   }
