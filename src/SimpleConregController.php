@@ -903,6 +903,7 @@ class SimpleConregController extends ControllerBase {
       );
       return $content;
     }
+    $config = SimpleConregConfig::getConfig($member['eid']);
 
     // Check if user already exists.
     $user = user_load_by_mail($member['email']);
@@ -923,6 +924,18 @@ class SimpleConregController extends ControllerBase {
       $user->set('timezone', !empty($config_data_default_timezone) ? $config_data_default_timezone : @date_default_timezone_get());
       $user->activate();// NOTE: login will fail silently if not activated!
       $user->save();
+    }
+
+    // Check if role needs to be added.
+    $addRole = $config->get('member_portal.add_role');
+    dpm ($addRole, "Role to add:");
+    if ($addRole) {
+      // Check if user has role already.
+      if (!$user->hasRole($addRole)) {
+        // They don't, so we need to add it.
+        $user->addRole($addRole);
+        $user->save();
+      }
     }
     
     // Login user.
