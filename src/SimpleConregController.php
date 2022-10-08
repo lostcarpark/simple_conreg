@@ -903,7 +903,6 @@ class SimpleConregController extends ControllerBase {
       );
       return $content;
     }
-    $config = SimpleConregConfig::getConfig($member['eid']);
 
     // Check if user already exists.
     $user = user_load_by_mail($member['email']);
@@ -919,16 +918,16 @@ class SimpleConregController extends ControllerBase {
       $user->set("preferred_langcode", $language);
       $user->set("preferred_admin_langcode", $language);
       // Set the user timezone to the site default timezone.
-      $config = \Drupal::config('system.date');
-      $config_data_default_timezone = $config->get('timezone.default');
-      $user->set('timezone', !empty($config_data_default_timezone) ? $config_data_default_timezone : @date_default_timezone_get());
+      $dateConfig = \Drupal::config('system.date');
+      $config_data_default_timezone = $dateConfig->get('timezone.default');
+      $user->set('timezone', $config_data_default_timezone ?: @date_default_timezone_get());
       $user->activate();// NOTE: login will fail silently if not activated!
       $user->save();
     }
 
     // Check if role needs to be added.
+    $config = SimpleConregConfig::getConfig($member['eid']);
     $addRole = $config->get('member_portal.add_role');
-    dpm ($addRole, "Role to add:");
     if ($addRole) {
       // Check if user has role already.
       if (!$user->hasRole($addRole)) {
