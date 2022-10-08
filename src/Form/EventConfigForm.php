@@ -12,6 +12,7 @@ use Drupal\simple_conreg\SimpleConregEventStorage;
 use Drupal\simple_conreg\SimpleConregConfig;
 use Drupal\simple_conreg\SimpleConregTokens;
 use Drupal\simple_conreg\FieldOptions;
+use Drupal\user\Entity\Role;
 
 /**
  * Configure simple_conreg settings for this site.
@@ -287,7 +288,7 @@ class EventConfigForm extends ConfigFormBase {
     $form['simple_conreg_options']['options'] = array(
       '#type' => 'textarea',
       '#title' => $this->t('Options'),
-      '#description' => $this->t('Put each option on a line with option ID, group ID, option title, detail title, detail required (1/0), weight (bigger number goes to bottom), comma separated list of member classes to include it, and must be checked, separated by | character (e.g. "1|1|Help with pre-con tasks|Please provide details of areas you\'d like to help|0|1|0,1|0").'),
+      '#description' => $this->t('Put each option on a line with option ID, group ID, option title, detail title, detail required (1/0), weight (bigger number goes to bottom), comma separated list of member classes to include it, must be checked (0/1), private (0/1), email to inform (optional), separated by | character (e.g. "1|1|Help with pre-con tasks|Please provide details of areas you\'d like to help|0|1|0,1|0|0|volunteer@somewhere.org").'),
       '#default_value' => $config->get('simple_conreg_options.options'),
     );  
 
@@ -565,6 +566,19 @@ class EventConfigForm extends ConfigFormBase {
       '#group' => 'admin',
     );
 
+    // Get all roles...
+    $roles = Role::loadMultiple();
+    $roleOptions = [0 => '<None>'];
+    foreach ($roles as $id => $role) {
+      $roleOptions[$id] = $role->label();
+    }
+    $form['simple_conreg_member_edit']['add_role'] = array(
+      '#type' => 'select',
+      '#title' => $this->t('Optional role to add to user when logging into member portal'),
+      '#options' => $roleOptions,
+      '#default_value' => $config->get('member_portal.add_role'),
+    );
+
     $form['simple_conreg_member_edit']['member_edit_intro'] = array(
       '#type' => 'text_format',
       '#title' => $this->t('Member self service edit intro'),
@@ -656,6 +670,7 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('member_check.confirm_format', $vals['simple_conreg_member_check']['confirm_body']['format']);
     $config->set('member_check.unknown_body', $vals['simple_conreg_member_check']['unknown_body']['value']);
     $config->set('member_check.unknown_format', $vals['simple_conreg_member_check']['unknown_body']['format']);
+    $config->set('member_portal.add_role', $vals['simple_conreg_member_edit']['add_role']);
     $config->set('member_edit.intro_text', $vals['simple_conreg_member_edit']['member_edit_intro']['value']);
     $config->set('member_edit.intro_format', $vals['simple_conreg_member_edit']['member_edit_intro']['format']);
     $config->set('member_edit.email_editable', $vals['simple_conreg_member_edit']['email']);
