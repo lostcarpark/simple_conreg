@@ -559,14 +559,6 @@ function simple_conreg_schema() {
         'default' => 0,
         'description' => 'Unix timestamp for the date and time member was upgraded.',
       ),
-      // alter table conreg_payments add session_id varchar(255) after created_date;
-      'session_id' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => FALSE,
-        'default' => '',
-        'description' => 'Stripe Session ID.',
-      ),
       'paid_date' => array(
         'type' => 'int',
         'not null' => TRUE,
@@ -598,6 +590,36 @@ function simple_conreg_schema() {
     ),
     'primary key' => array('payid'),
   );
+
+  // Payment Sessions table, used to store Stripe session keys.
+  $schema['conreg_payment_sessions'] = [
+    'description' => 'Stores member upgrades.',
+    'fields' => [
+      'paysessionid' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique payment session ID.',
+      ],
+      'payid' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => "Payment ID that the session belongs to.",
+      ],
+      'session_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Stripe Session ID.',
+      ],
+    ],
+    'primary key' => ['paysessionid'],
+    'indexes' => [
+      'idx_conreg_payment_sessions_payid' => ['payid'],
+      'idx_conreg_payment_sessions_session_id' => ['session_id'],
+    ]
+  ];
 
   // create table conreg_payment_lines (lineid int auto_increment primary key, payid int not null, mid int not null, payment_type varchar(255) not null, line_desc varchar(255) not null, amount numeric(10,2) not null);
   $schema['conreg_payment_lines'] = array(
@@ -806,4 +828,82 @@ function simple_conreg_update_9002() {
   ); 
   $schema = Database::getConnection()->schema();
   $schema->addField('conreg_members', 'language', $spec);
+}
+
+/**
+ * Add payment sessions table.
+ * Move Stripe session ID from payments table to payment sessions.
+ * Drop session ID from payments table.
+ */
+function simple_conreg_update_9003()
+{
+  $conreg_payment_sessions = array(
+    'description' => 'Stores member upgrades.',
+    'fields' => array(
+      'paysessionid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique payment session ID.',
+      ),
+      'payid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => "Payment ID that the session belongs to.",
+      ),
+      'session_id' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Stripe Session ID.',
+      ),
+    ),
+    'primary key' => array('paysessionid'),
+  );
+  $db = Database::getConnection();
+  $schema = $db->schema();
+  $schema->createTable('conreg_payment_sessions', $conreg_payment_sessions);
+  $db->query('INSERT INTO {conreg_payment_sessions} (payid, session_id) SELECT payid, session_id FROM {conreg_payments}');
+  $schema->dropField('conreg_payments', 'session_id');
+}
+
+/**
+ * Add indexes to payment sessions table.
+ */
+function simple_conreg_update_9004()
+{
+  $conreg_payment_sessions = [
+    'description' => 'Stores member upgrades.',
+    'fields' => [
+      'paysessionid' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique payment session ID.',
+      ],
+      'payid' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => "Payment ID that the session belongs to.",
+      ],
+      'session_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => 'Stripe Session ID.',
+      ],
+    ],
+    'primary key' => ['paysessionid'],
+    'indexes' => [
+      'idx_conreg_payment_sessions_payid' => ['payid'],
+      'idx_conreg_payment_sessions_session_id' => ['session_id'],
+    ]
+  ];
+
+  $db = Database::getConnection();
+  $schema = $db->schema();
+  $schema->addIndex('conreg_payment_sessions', 'idx_conreg_payment_sessions_payid', ['payid'], $conreg_payment_sessions);
+  $schema->addIndex('conreg_payment_sessions', 'idx_conreg_payment_sessions_session_id', ['session_id'], $conreg_payment_sessions);
 }

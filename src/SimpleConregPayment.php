@@ -58,7 +58,6 @@ class SimpleConregPayment
     if (empty($this->createdDate))
       $this->createdDate = time();
     $pay = ['random_key' => $this->randomKey, 'created_date' => $this->createdDate];
-    if (isset($this->sessionId)) $pay['session_id'] = $this->sessionId;
     if (isset($this->paidDate)) $pay['paid_date'] = $this->paidDate;
     if (isset($this->paymentMethod)) $pay['payment_method'] = $this->paymentMethod;
     if (isset($this->paymentAmount)) $pay['payment_amount'] = $this->paymentAmount;
@@ -72,17 +71,33 @@ class SimpleConregPayment
     else {
       $this->payId = SimpleConregPaymentStorage::insert($pay);
     }
+    // Save Stripe session ID to payment_sessions table.
+    if (!(empty($this->payId) || empty($this->sessionId))) $this->saveSession();
     return $this->payId;
   }
 
-  public static function load($payId)
+/**
+ * Save the session ID to the payment sessions table.
+ */
+private function saveSession() {
+  $connection = \Drupal::database();
+  $select = $connection->select('conreg_payment_sessions', 'S');
+  $select->addField('S', 'paysessionid');
+  $select->condition('S.payid', $this->payId);
+  $select->condition('S.session_id', $this->sessionId);
+  // We only want to save if not already on table.
+  if (empty($select->execute()->fetchField())) {
+    $connection->insert('conreg_payment_sessions')->fields(['payid' => $this->payId, 'session_id' => $this->sessionId])->execute();
+  }
+}
+
+  public static function load(int $payId): SimpleConregPayment|null
   {
     if ($payEntry = SimpleConregPaymentStorage::load(['payid' => $payId])) {
       $payment = new SimpleConregPayment();
       $payment->payId = $payId;
       $payment->randomKey = $payEntry['random_key'];
       $payment->createdDate = $payEntry['created_date'];
-      $payment->sessionId = $payEntry['session_id'];
       $payment->paidDate = $payEntry['paid_date'];
       $payment->paymentMethod = $payEntry['payment_method'];
       $payment->paymentAmount = $payEntry['payment_amount'];
@@ -92,27 +107,25 @@ class SimpleConregPayment
       return $payment;
     }
     else
-      return NULL;
+      return null;
   }
 
-  public static function loadBySessionId($sessionId)
+  /**
+   * Look up the payment from the session ID.
+   */
+  public static function loadBySessionId(string $sessionId): SimpleConregPayment|null
   {
-    if ($payEntry = SimpleConregPaymentStorage::load(['session_id' => $sessionId])) {
-      $payment = new SimpleConregPayment();
-      $payment->payId = $payEntry['payid'];
-      $payment->randomKey = $payEntry['random_key'];
-      $payment->createdDate = $payEntry['created_date'];
-      $payment->sessionId = $payEntry['session_id'];
-      $payment->paidDate = $payEntry['paid_date'];
-      $payment->paymentMethod = $payEntry['payment_method'];
-      $payment->paymentAmount = $payEntry['payment_amount'];
-      $payment->paymentRef = $payEntry['payment_ref'];
-      $payment->paymentLines = SimpleConregPaymentLine::loadLines($payment->payId);
-      
-      return $payment;
+    $connection = \Drupal::database();
+    $select = $connection->select('conreg_payment_sessions', 'S');
+    $select->addField('S', 'payid');
+    $select->condition('S.session_id', $sessionId);
+    $payId = $select->execute()->fetchField();
+    // Found the payment ID, so load the payment and return it.
+    if (!empty($payId)) {
+      return self::load($payId);
     }
-    else
-      return NULL;
+    // Session ID not found so return null.
+    return null;
   }
 }
 

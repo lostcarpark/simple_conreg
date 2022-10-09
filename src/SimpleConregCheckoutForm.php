@@ -214,11 +214,11 @@ class SimpleConregCheckoutForm extends FormBase
     ]);
 
     // Loop through received events and mark payments complete.
-    foreach ($events->autoPagingIterator() as $event) {
-      $session = $event->data->object;
+    foreach ($events->data as $event) {
+      $session = ((object)$event)->data->object;
       // Update the payment record.
       $payment = SimpleConregPayment::loadBySessionId($session->id);
-      if (isset($payment)) {
+      if (!is_null($payment)) {
         // Only update payment if not already paid.
         if (empty($payment->paidDate)) {
           $payment->paidDate = time();
@@ -296,6 +296,7 @@ class SimpleConregCheckoutForm extends FormBase
     $params['subject'] = $config->get('confirmation.template_subject');
     $params['body'] = $config->get('confirmation.template_body');
     $params['body_format'] = $config->get('confirmation.template_format');
+    $params['include_private'] = true;
     $module = "simple_conreg";
     $key = "template";
     $to = $member["email"];
@@ -308,6 +309,7 @@ class SimpleConregCheckoutForm extends FormBase
     // If copy_us checkbox checked, send a copy to us.
     if ($config->get('confirmation.copy_us')) {
       $params['subject'] = $config->get('confirmation.notification_subject');
+      $params['include_private'] = false;
       $to = $config->get('confirmation.from_email');
       $result = $this->mailManager->mail($module, $key, $to, $language_code, $params);
     }
@@ -315,6 +317,7 @@ class SimpleConregCheckoutForm extends FormBase
     // If copy email to field provided, send an extra copy to us.
     if (!empty($config->get('confirmation.copy_email_to'))) {
       $params['subject'] = $config->get('confirmation.notification_subject');
+      $params['include_private'] = false;
       $to = $config->get('confirmation.copy_email_to');
       $result = $this->mailManager->mail($module, $key, $to, $language_code, $params);
     }
