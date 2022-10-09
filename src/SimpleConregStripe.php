@@ -20,7 +20,7 @@ class SimpleConregStripe
 
         // Loop through received events and mark payments complete.
         foreach ($events->autoPagingIterator() as $event) {
-            $session = $event->data->object;
+            $session = ((object)$event)->data->object;
             // Update the payment record.
             $payment = SimpleConregPayment::loadBySessionId($session->id);
             if (isset($payment)) {
