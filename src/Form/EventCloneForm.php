@@ -7,12 +7,8 @@ namespace Drupal\simple_conreg\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Component\Utility\Html;
-use Drupal\Core\Url;
 use Drupal\devel;
 use Drupal\simple_conreg\SimpleConregEventStorage;
-use Drupal\simple_conreg\SimpleConregConfig;
-use Drupal\simple_conreg\SimpleConregTokens;
 
 /**
  * Clone a simple_conreg event.

@@ -11,8 +11,6 @@ use Drupal\Component\Utility\Html;
 use Drupal\Core\Url;
 use Drupal\devel;
 use Drupal\simple_conreg\SimpleConregEventStorage;
-use Drupal\simple_conreg\SimpleConregConfig;
-use Drupal\simple_conreg\SimpleConregTokens;
 
 /**
  * Configure simple_conreg settings for this site.
