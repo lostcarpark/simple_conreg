@@ -196,6 +196,16 @@ simple_conreg_event_list:
   requirements:
     _permission: 'configure convention registration'
 
+simple_conreg_event_clone:
+  path: 'admin/config/conreg/clone/{eid}'
+  defaults:
+    _title: 'Clone Event'
+    _form: '\Drupal\simple_conreg\Form\EventCloneForm'
+    eid: 1
+  requirements:
+    _permission: 'configure convention registration'
+    eid: ^[0-9]+$
+
 simple_conreg_config:
   path: 'admin/config/conreg/{eid}'
   defaults:
