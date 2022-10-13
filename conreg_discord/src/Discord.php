@@ -56,7 +56,7 @@ class Discord
       $response = $e->getResponse();
       $response_info = Json::decode($response->getBody()->getContents());
       $this->message = t('Failed to get channel information with error: @error (@code).', ['@error' => $response_info['channel_id'][0], '@code' => $response->getStatusCode()]);
-      watchdog_exception('Remote API Connection', $e, $message);
+      watchdog_exception('Remote API Connection', $e, $this->message);
       return FALSE;
     }
 
@@ -90,7 +90,7 @@ class Discord
       $response = $e->getResponse();
       $response_info = Json::decode($response->getBody()->getContents());
       $this->message = t('Failed to create invite code with error: @error (@code).', ['@error' => $response_info['channel_id'][0], '@code' => $response->getStatusCode()]);
-      watchdog_exception('Remote API Connection', $e, $message);
+      watchdog_exception('Remote API Connection', $e, $this->message);
       return FALSE;
     }
 

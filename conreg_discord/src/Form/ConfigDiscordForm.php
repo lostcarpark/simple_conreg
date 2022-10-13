@@ -374,7 +374,7 @@ class ConfigDiscordForm extends ConfigFormBase
       list($min, $max) = array_pad(explode('-', $range), 2, '');
       If (empty($max)) {
         // If no max set, range is single number in min.
-        $invite = $this->inviteToDiscord($eid, $min, $vals['discord_invites']['override'], $vals['discord_invites']['resend'], $vals['discord_invites']['regenerate'], $vals['discord_invites']['dont_email'], $vals['option_fields']);
+        $invite = $this->inviteToDiscord($eid, $min, $vals['discord_invites']['override'], $vals['discord_invites']['resend'], $vals['discord_invites']['regenerate'], $vals['discord_invites']['dont_email']);
         if (!empty($invite)) {
           $output[] = $invite;
           $count++;
@@ -385,7 +385,7 @@ class ConfigDiscordForm extends ConfigFormBase
       }
       else {
         for ($num = $min; $num <= $max; $num++) {
-          $invite = $this->inviteToDiscord($eid, $num, $vals['discord_invites']['override'], $vals['discord_invites']['resend'], $vals['discord_invites']['regenerate'], $vals['discord_invites']['dont_email'], $vals['option_fields']);
+          $invite = $this->inviteToDiscord($eid, $num, $vals['discord_invites']['override'], $vals['discord_invites']['resend'], $vals['discord_invites']['regenerate'], $vals['discord_invites']['dont_email']);
           if (!empty($invite)) {
             $output[] = $invite;
             $count++;
@@ -405,7 +405,7 @@ class ConfigDiscordForm extends ConfigFormBase
   /**
    * Handle generate and send an invitation.
    */
-  private function inviteToDiscord($eid, $memberNo, $override, $resend, $regenerate, $dontEmail, $optionFields)
+  private function inviteToDiscord($eid, $memberNo, $override, $resend, $regenerate, $dontEmail)
   {
     $connection = \Drupal::database();
 
@@ -430,11 +430,13 @@ class ConfigDiscordForm extends ConfigFormBase
     $query->addField('d', 'invite_code');
     $query->condition('d.mid', $member->mid);
     $inviteCode = $query->execute()->fetchField();
+    $newCode = false;
 
     // Decide whether we need to generate an invite.
     if (empty($inviteCode) || $regenerate) {
       if ($this->discord->getChannelInvite()) {
         $inviteCode = $this->discord->inviteCode;
+        $newCode = true;
         if (!empty($inviteCode)) {
           $connection->upsert('conreg_discord')
             ->fields([
@@ -451,7 +453,7 @@ class ConfigDiscordForm extends ConfigFormBase
     }
 
     //return "<p>Invite member no $memberNo; member ".$member->mid."; type ".$member->member_type."; match $match; invite code $inviteCode; new code $newCode</p>";
-    if (!empty($newCode) || $resend) {
+    if ($newCode || $resend) {
       $inviteUrl = Discord::INVITE_URL . $inviteCode;
       if (!$dontEmail) {
         // Send email to user.
