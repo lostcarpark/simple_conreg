@@ -820,6 +820,7 @@ class SimpleConregRegistrationForm extends FormBase
   public function submitForm(array &$form, FormStateInterface $form_state)
   {
     $eid = $form_state->get('eid');
+    $event = SimpleConregEventStorage::load(['eid' => $eid]);
     $return = $form_state->get('return');
     $memberClasses = SimpleConregOptions::memberClasses($eid, $config);
 
@@ -967,7 +968,12 @@ class SimpleConregRegistrationForm extends FormBase
         $payment->add(new SimpleConregPaymentLine(
           $result,
           'member',
-          t("Member registration for @first_name @last_name", array('@first_name' => $entry['first_name'], '@last_name' => $entry['last_name'])),
+          t("Member registration to @event_name for @first_name @last_name", 
+            [
+              '@event_name' => $event['event_name'],
+              '@first_name' => $entry['first_name'],
+              '@last_name' => $entry['last_name']
+            ]),
           $memberPrices[$cnt]->basePrice
           ));
         // Add confirmation.
