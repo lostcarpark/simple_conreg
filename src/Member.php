@@ -1,34 +1,41 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\simple_conreg\SimpleConregRegistrationForm
- */
-
 namespace Drupal\simple_conreg;
 
 /**
  * Store a member's details.
  */
-class Member
-{
+class Member extends \stdClass {
+  /**
+   * Member ID.
+   *
+   * @var int
+   */
+  public $mid;
 
+  /**
+   * Member options.
+   *
+   * @var array
+   */
   public $options;
 
   /**
    * Constructs a new Member object.
    */
-  public function __construct()
-  {
+  public function __construct() {
   }
 
   /**
    * Create a new member from an array of values.
+   *
    * @param array $details
+   *   Database array containing member details.
+   *
    * @return Member
+   *   The newly created member.
    */
-  public static function newMember($details)
-  {
+  public static function newMember(array $details): Member {
     $member = new Member();
     foreach ($details as $key => $value) {
       $member->$key = $value;
@@ -38,11 +45,14 @@ class Member
 
   /**
    * Load member by member ID and create member object.
+   *
    * @param int $mid
+   *   Member ID to load.
+   *
    * @return Member
+   *   Loaded member object.
    */
-  public static function loadMember($mid)
-  {
+  public static function loadMember(int $mid): Member {
     $member = self::newMember(SimpleConregStorage::load(['mid' => $mid]));
 
     // Add member options to member object.
@@ -53,13 +63,21 @@ class Member
 
   /**
    * Load a member using event and member number and create member object.
+   *
    * @param int $eid
+   *   Event ID.
    * @param int $memberNo
+   *   Member number within event.
+   *
    * @return Member
+   *   Loaded member object.
    */
-  public static function loadMemberByMemberNo($eid, $memberNo)
-  {
-    $member = self::newMember(SimpleConregStorage::load(['eid' => $eid, 'member_no' => $memberNo, 'is_deleted' => 0]));
+  public static function loadMemberByMemberNo(int $eid, int $memberNo): Member {
+    $member = self::newMember(SimpleConregStorage::load([
+      'eid' => $eid,
+      'member_no' => $memberNo,
+      'is_deleted' => 0,
+    ]));
 
     // Add member options to member object.
     $member->options = MemberOption::loadAllMemberOptions($member->mid);
@@ -69,9 +87,11 @@ class Member
 
   /**
    * Save the member to the conreg_members table.
+   *
+   * @return int
+   *   Member ID of saved member.
    */
-  public function saveMember()
-  {
+  public function saveMember(): int {
     // Check if language set, and get current active language if not.
     if (empty($this->language)) {
       $this->language = \Drupal::languageManager()->getCurrentLanguage()->getId();
@@ -79,23 +99,24 @@ class Member
     // Transfer object members into array.
     $entry = [];
     foreach ($this as $field => $value) {
-      if (!is_array($value) && !is_object($value))
+      if (!is_array($value) && !is_object($value)) {
         $entry[$field] = $value;
+      }
     }
     $entry['update_date'] = time();
     // If no mid set, inserting new member.
     if (empty($this->mid)) {
-      $return = SimpleConregStorage::insert($entry);
-      if (isset($return)) {
-        $this->mid = $return;
+      $new_mid = SimpleConregStorage::insert($entry);
+      if (isset($new_mid)) {
+        $this->mid = $new_mid;
         $this->updateOptionMids();
       }
       if (empty($this->lead_mid)) {
-        // For lead_mid not passed in, must be first member, so update lead_mid to mid.
-        $this->lead_mid = $return;
+        // For lead_mid not passed in, must be first member.
+        $this->lead_mid = $new_mid;
         // Update first member with own member ID as lead member ID.
-        $update = array('mid' => $this->mid, 'lead_mid' => $this->lead_mid);
-        $result = SimpleConregStorage::update($update);
+        $update = ['mid' => $this->mid, 'lead_mid' => $this->lead_mid];
+        SimpleConregStorage::update($update);
       }
       // Update member options.
       $this->saveMemberOptions();
@@ -104,43 +125,51 @@ class Member
     }
     else {
       // Updating an existing member.
-      $return = SimpleConregStorage::update($entry);
+      SimpleConregStorage::update($entry);
       // Update member options.
       $this->saveMemberOptions();
       // Invoke member updated hook.
       \Drupal::moduleHandler()->invokeAll('convention_member_updated', ['member' => $this]);
     }
 
-    return $return;
+    return $this->mid;
   }
 
-  public function saveMemberOptions()
-  {
+  /**
+   * Save member options.
+   */
+  public function saveMemberOptions(): void {
     // Update member field options.
     if (is_array($this->options)) {
       foreach ($this->options as $option) {
         $option->mid = $this->mid;
         $option->saveMemberOption();
       }
-    //FieldOptions::updateOptionFields($this->mid, $this->options);
     }
   }
 
-  public function deleteMember()
-  {
-    $entry = array(
+  /**
+   * Delete the member by setting is_deleted to 1.
+   */
+  public function deleteMember() {
+    $entry = [
       'is_deleted' => 1,
       'mid' => $this->mid,
-    );
+    ];
     // Update the member record.
-    if ($return = SimpleConregStorage::update($entry)) {
+    if (SimpleConregStorage::update($entry)) {
       // Invoke member deleted hook.
       \Drupal::moduleHandler()->invokeAll('convention_member_deleted', ['member' => $this]);
     }
   }
 
-  public function setOptions($options)
-  {
+  /**
+   * Set the members selected options.
+   *
+   * @param array $options
+   *   Array of member options.
+   */
+  public function setOptions(array $options): void {
     $this->options = $options;
     $this->updateOptionMids();
   }
@@ -148,8 +177,7 @@ class Member
   /**
    * If member has member ID, apply to all options.
    */
-  public function updateOptionMids()
-  {
+  public function updateOptionMids(): void {
     if (isset($this->mid)) {
       // First, set the member ID for all options.
       foreach ($this->options as $optid => $option) {
@@ -158,19 +186,33 @@ class Member
     }
   }
 
-  public function getOptions()
-  {
+  /**
+   * Get the member's options.
+   *
+   * @return array
+   *   Array of member options.
+   */
+  public function getOptions(): array {
     return $this->options;
   }
 
-  public function fieldDisplay($field)
-  {
+  /**
+   * Format a field correctly.
+   *
+   * @param string $field
+   *   The name of the field to be formatted.
+   *
+   * @return string
+   *   The formatted field value.
+   */
+  public function fieldDisplay(string $field): string {
     $config = SimpleConregConfig::getConfig($this->eid);
 
     switch ($field) {
       case 'member_no':
-        if (empty($this->member_no))
+        if (empty($this->member_no)) {
           return "";
+        }
 
         $digits = $config->get('member_no_digits');
         return $this->badge_type . sprintf("%0" . $digits . "d", $this->member_no);
@@ -184,7 +226,7 @@ class Member
         if (!empty($this->days)) {
           $dayDescs = [];
           foreach (explode('|', $this->days) as $day) {
-            $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
+            $dayDescs[] = $days[$day] ?: $day;
           }
           return implode(', ', $dayDescs);
         }
@@ -192,15 +234,15 @@ class Member
 
       case 'badge_type':
         $badgeTypes = SimpleConregOptions::badgeTypes($this->eid, $config);
-        return isset($badgeTypes[$this->badge_type]) ? $badgeTypes[$this->badge_type] : $this->badge_type;
+        return $badgeTypes[$this->badge_type] ?: $this->badge_type;
 
       case 'communication_method':
         $communicationsOptions = SimpleConregOptions::communicationMethod($this->eid, $config);
-        return isset($communicationsOptions[$this->communication_method]) ? $communicationsOptions[$this->communication_method] : $this->communication_method;
+        return $communicationsOptions[$this->communication_method] ?: $this->communication_method;
 
       case 'display':
         $displayOptions = SimpleConregOptions::display();
-        return isset($displayOptions[$this->display]) ? $displayOptions[$this->display] : $this->display;
+        return $displayOptions[$this->display] ?: $this->display;
 
       case 'country':
         $countryOptions = SimpleConregOptions::memberCountries($this->eid, $config);

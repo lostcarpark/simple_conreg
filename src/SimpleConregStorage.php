@@ -1,16 +1,18 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\simple_conreg\SimpleConregStorage
- */
 namespace Drupal\simple_conreg;
 
-use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\devel;
+use Drupal\Core\Database\Query\SelectInterface;
 
-class SimpleConregStorage
-{
+/**
+ * @file
+ * Contains \Drupal\simple_conreg\SimpleConregStorage.
+ */
+
+/**
+ * Storage class for conreg_members.
+ */
+class SimpleConregStorage {
 
   /**
    * Save an entry in the database.
@@ -33,8 +35,7 @@ class SimpleConregStorage
    *
    * @see $connection->insert()
    */
-  public static function insert($entry)
-  {
+  public static function insert(array $entry): int|NULL {
     $connection = \Drupal::database();
     $return_value = NULL;
     try {
@@ -43,10 +44,10 @@ class SimpleConregStorage
         ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('$connection->insert failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->insert failed. Message = %message, query= %query', [
         '%message' => $e->getMessage(),
         '%query' => $e->query_string,
-      )), 'error');
+      ]), 'error');
     }
     return $return_value;
   }
@@ -62,8 +63,7 @@ class SimpleConregStorage
    *
    * @see $connection->update()
    */
-  public static function update($entry)
-  {
+  public static function update(array $entry): int|NULL {
     $connection = \Drupal::database();
     try {
       // $connection->update()...->execute() returns the number of rows updated.
@@ -92,8 +92,7 @@ class SimpleConregStorage
    *
    * @see $connection->update()
    */
-  public static function updateByLeadMid($entry)
-  {
+  public static function updateByLeadMid(array $entry): int|NULL {
     $connection = \Drupal::database();
     try {
       // $connection->update()...->execute() returns the number of rows updated.
@@ -111,7 +110,6 @@ class SimpleConregStorage
     return $count;
   }
 
-
   /**
    * Delete an entry from the database.
    *
@@ -121,8 +119,7 @@ class SimpleConregStorage
    *
    * @see $connection->delete()
    */
-  public static function delete($entry)
-  {
+  public static function delete(array $entry): void {
     $connection = \Drupal::database();
     $connection->delete('conreg_members')
       ->condition('mid', $entry['mid'])
@@ -131,12 +128,14 @@ class SimpleConregStorage
 
   /**
    * Read from the database using a filter array.
+   *
    * @param array $entry
    *   Array of fields to filter on.
+   *
    * @return array
+   *   Values read from conreg_members.
    */
-  public static function load($entry = array())
-  {
+  public static function load(array $entry = []):array {
     $connection = \Drupal::database();
     // Read all fields from the conreg_members table.
     $select = $connection->select('conreg_members', 'members');
@@ -146,7 +145,7 @@ class SimpleConregStorage
     foreach ($entry as $field => $value) {
       $select->condition($field, $value);
     }
-    // Unless mid specified, only fetch members who don't have deleted flag spefied.
+    // Unless mid specified, exclude deleted members.
     if (!array_key_exists("mid", $entry)) {
       $select->condition("is_deleted", FALSE);
     }
@@ -156,12 +155,14 @@ class SimpleConregStorage
 
   /**
    * Read from the database and return multiple rows using a filter array.
+   *
    * @param array $entry
    *   Array of fields to filter on.
+   *
    * @return array
+   *   Associative array of fields.
    */
-  public static function loadAll($entry = array())
-  {
+  public static function loadAll(array $entry = []): array {
     $connection = \Drupal::database();
     // Read all fields from the conreg_members table.
     $select = $connection->select('conreg_members', 'members');
@@ -171,7 +172,7 @@ class SimpleConregStorage
     foreach ($entry as $field => $value) {
       $select->condition($field, $value);
     }
-    // Unless mid specified, only fetch members who don't have deleted flag spefied.
+    // Unless mid specified, only fetch members who don't have deleted flag set.
     if (!array_key_exists("mid", $entry)) {
       $select->condition("is_deleted", FALSE);
     }
@@ -181,36 +182,44 @@ class SimpleConregStorage
     return $entries;
   }
 
-
   /**
    * Check if valid mid and key combo.
+   *
    * @param int $mid
+   *   Member ID.
    * @param int $key
+   *   Key value.
+   *
+   * @return bool
+   *   TRUE if key checks out.
    */
-  public static function checkMemberKey($mid, $key)
-  {
+  public static function checkMemberKey(int $mid, int $key): bool {
     $connection = \Drupal::database();
     // Read all fields from the conreg_members table.
     $select = $connection->select('conreg_members', 'members');
     $select->fields('members');
     $select->condition("mid", $mid);
     $select->condition("random_key", $key);
-    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+    // Only include members who aren't deleted.
+    $select->condition("is_deleted", FALSE);
 
     // Return the result in object format.
-    if ($select->countQuery()->execute()->fetchField() > 0)
+    if ($select->countQuery()->execute()->fetchField() > 0) {
       return TRUE;
-    else
-      return FALSE;
+    }
+    return FALSE;
   }
 
   /**
    * Load the public members list.
+   *
    * @param int $eid
    *   The event ID.
+   *
+   * @return array
+   *   Array of members.
    */
-  public static function adminPublicListLoad($eid)
-  {
+  public static function adminPublicListLoad($eid) {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -223,10 +232,9 @@ class SimpleConregStorage
     $select->addField('m', 'country');
     $select->condition('m.eid', $eid);
     $select->condition('m.is_approved', 1);
-    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+    // Only include members who aren't deleted.
+    $select->condition("is_deleted", FALSE);
     $select->orderBy('m.member_no');
-    // Make sure we only get items 0-49, for scalability reasons.
-    //$select->range(0, 50);
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -235,38 +243,45 @@ class SimpleConregStorage
 
   /**
    * Add conditions to select for Admin page.
+   *
    * @param int $eid
-   * @param \Drupal\Core\Database\Query\SelectInterface @select
+   *   The event ID.
+   * @param \Drupal\Core\Database\Query\SelectInterface $select
    *   The select object to add the conditions to.
    * @param string $condition
    *   Text to select the condition to add.
-   * @param string $search
+   * @param string|null $search
    *   Entry for text searches.
+   *
    * @return \Drupal\Core\Database\Query\SelectInterface
+   *   Modified selection criteris.
    */
-  private static function adminMemberListCondition($eid, $select, $condition, $search)
-  {
+  private static function adminMemberListCondition(int $eid, SelectInterface $select, string $condition, string|NULL $search): SelectInterface {
     $connection = \Drupal::database();
     $select->condition('m.eid', $eid);
     switch ($condition) {
       case 'approval':
         $select->condition('m.is_paid', 1);
         $select->condition('m.is_approved', 0);
-        $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+        $select->condition("is_deleted", FALSE);
         break;
+
       case 'approved':
         $select->condition('m.is_paid', 1);
         $select->condition('m.is_approved', 1);
-        $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+        $select->condition("is_deleted", FALSE);
         break;
+
       case 'unpaid':
         $select->condition('m.is_paid', 0);
-        $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+        $select->condition("is_deleted", FALSE);
         break;
+
       case 'all':
         // All members.
-        $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+        $select->condition("is_deleted", FALSE);
         break;
+
       case 'custom':
         $words = explode(' ', trim($search));
         foreach ($words as $word) {
@@ -284,27 +299,41 @@ class SimpleConregStorage
             $select->condition($likes);
           }
         }
-        $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
+        // Only include members who aren't deleted.
+        $select->condition("is_deleted", FALSE);
     }
     return $select;
   }
 
   /**
    * Load the member list for the admin page.
+   *
    * @param int $eid
+   *   Event ID.
    * @param string $condition
-   * @param string $search
+   *   Type of list from drop-down list.
+   * @param string|null $search
+   *   Search string for custom search.
    * @param int $page
-   * @param int pageSize
+   *   Page number.
+   * @param int $pageSize
+   *   Rows per page.
    * @param string $order
    *   Field to order by.
    * @param string $direction
    *   Whether sort is ascending or descending.
+   *
    * @return array
    *   Associative array of members.
    */
-  public static function adminMemberListLoad($eid, $condition, $search, $page = 1, $pageSize = 10, $order = 'm.mid', $direction = 'ASC')
-  {
+  public static function adminMemberListLoad(int $eid,
+    string $condition,
+    string|NULL $search,
+    int $page = 1,
+    int $pageSize = 10,
+    string $order = 'm.mid',
+    string $direction = 'ASC'): array {
+
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -337,23 +366,25 @@ class SimpleConregStorage
     $select->condition('m.eid', $eid);
     $select = SimpleConregStorage::adminMemberListCondition($eid, $select, $condition, $search);
     $count = $select->countQuery()->execute()->fetchField();
-    $pages = (int)(($count - 1) / $pageSize) + 1;
+    $pages = (int) (($count - 1) / $pageSize) + 1;
 
     return [$pages, $entries];
   }
 
   /**
    * Apply conditions to select for check-in page.
+   *
    * @param int $eid
-   *   Event ID
-   * @param \Drupal\Core\Database\Query\SelectInterface @select
+   *   Event ID.
+   * @param \Drupal\Core\Database\Query\SelectInterface $select
    *   The select object to add the conditions to.
-   * @param int $search
+   * @param string $search
    *   Text to search for.
+   *
    * @return \Drupal\Core\Database\Query\SelectInterface
+   *   Modified selection criteria.
    */
-  private static function adminMemberCheckInListCondition($eid, $select, $search)
-  {
+  private static function adminMemberCheckInListCondition(int $eid, SelectInterface $select, string $search): SelectInterface {
     $connection = \Drupal::database();
     $select->condition('m.eid', $eid);
     $words = explode(' ', trim($search));
@@ -380,22 +411,23 @@ class SimpleConregStorage
       }
     }
     $select->condition('m.is_paid', 1);
-    $select->condition("m.is_deleted", FALSE); //Only include members who aren't deleted.
+    $select->condition("m.is_deleted", FALSE);
 
     return $select;
   }
 
   /**
    * Get member list for check in listing.
+   *
    * @param int $eid
    *   The event ID.
    * @param string $search
    *   The text to search for.
+   *
    * @return array
    *   Associative array of members.
    */
-  public static function adminMemberCheckInListLoad($eid, $search)
-  {
+  public static function adminMemberCheckInListLoad(int $eid, string $search): array {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
