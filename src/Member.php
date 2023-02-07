@@ -86,6 +86,35 @@ class Member extends \stdClass {
   }
 
   /**
+   * Load a member by their email address.
+   *
+   * @param int $eid
+   *   Event ID.
+   * @param string $email
+   *   Email of member.
+   *
+   * @return Member|null
+   *   The member object.
+   */
+  public static function loadMemberByEmail(int $eid, string $email): Member|NULL {
+    $row = SimpleConregStorage::load([
+      'eid' => $eid,
+      'email' => $email,
+      'is_deleted' => 0,
+    ]);
+    if (empty($row)) {
+      return NULL;
+    }
+
+    $member = self::newMember($row);
+
+    // Add member options to member object.
+    $member->options = MemberOption::loadAllMemberOptions($member->mid);
+
+    return $member;
+  }
+
+  /**
    * Save the member to the conreg_members table.
    *
    * @return int

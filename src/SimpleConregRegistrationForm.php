@@ -107,6 +107,17 @@ class SimpleConregRegistrationForm extends FormBase {
       }
     }
 
+    // Check if user logged in and should be first member.
+    $user = \Drupal::currentUser();
+    $email = $user->getEmail();
+    if (empty($email)) {
+      $lead_member = NULL;
+    }
+    else {
+      $lead_member = Member::loadMemberByEmail($eid, $email);
+    }
+    $lead_mid = $lead_member?->mid;
+
     [$addOnOptions, $addOnPrices] = SimpleConregOptions::memberAddons($eid, $config);
     // Check if discounts enabled.
     $discountEnabled = $config->get('discount.enable');
@@ -256,11 +267,15 @@ class SimpleConregRegistrationForm extends FormBase {
         $form['members']['member' . $cnt]['email']['#description'] = $this->t('If you don not provide an email, you will have to get convention updates from the first member.');
       }
 
+      // Member type:
+      // If not returning to fan table/reg desk,
+      // and not logged in with existing membership,
+      // then first member must be an adult.
       $form['members']['member' . $cnt]['type'] = [
         '#type' => 'select',
         '#title' => $curMemberClass->fields->membership_type,
         '#description' => $curMemberClass->fields->membership_type_description,
-        '#options' => ($cnt == 1 ? $types->firstOptions : $types->publicOptions),
+        '#options' => ((empty($return) && empty($lead_mid) && $cnt == 1) ? $types->firstOptions : $types->publicOptions),
         '#required' => TRUE,
         '#attributes' => ['class' => ['edit-member-type']],
         '#ajax' => [
@@ -927,8 +942,16 @@ class SimpleConregRegistrationForm extends FormBase {
       $discountEnabled,
       $discountFreeEvery);
 
-    // Gather the current user so the new record has ownership.
-    $lead_mid = 0;
+    $lead_mid = NULL;
+    if (empty($return)) {
+      // Check if user logged in and should be first member.
+      $user = \Drupal::currentUser();
+      $email = $user->getEmail();
+      if (!empty($email)) {
+        $lead_member = Member::loadMemberByEmail($eid, $email);
+        $lead_mid = $lead_member?->mid;
+      }
+    }
     $memberIDs = [];
 
     // Set up parameters for confirmation email.
@@ -1040,7 +1063,7 @@ class SimpleConregRegistrationForm extends FormBase {
         'join_date' => time(),
         'update_date' => time(),
       ];
-      if ($cnt > 1) {
+      if (!empty($lead_mid)) {
         $entry['lead_mid'] = $lead_mid;
       }
       // Add member details to parameters for email.
@@ -1075,7 +1098,7 @@ class SimpleConregRegistrationForm extends FormBase {
           ]
         ));
       }
-      if ($cnt == 1) {
+      if (empty($lead_mid)) {
         // For first member, make lead member.
         $lead_mid = $member->mid;
       }
