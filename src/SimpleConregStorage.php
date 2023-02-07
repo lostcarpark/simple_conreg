@@ -73,10 +73,10 @@ class SimpleConregStorage {
         ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('$connection->update failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->update failed. Message = %message, query= %query', [
         '%message' => $e->getMessage(),
         '%query' => $e->query_string,
-      )), 'error');
+      ]), 'error');
     }
     return $count;
   }
@@ -102,10 +102,10 @@ class SimpleConregStorage {
         ->execute();
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addMessage(t('$connection->update failed. Message = %message, query= %query', array(
+      \Drupal::messenger()->addMessage(t('$connection->update failed. Message = %message, query= %query', [
         '%message' => $e->getMessage(),
         '%query' => $e->query_string,
-      )), 'error');
+      ]), 'error');
     }
     return $count;
   }
@@ -132,10 +132,10 @@ class SimpleConregStorage {
    * @param array $entry
    *   Array of fields to filter on.
    *
-   * @return array
-   *   Values read from conreg_members.
+   * @return array|bool
+   *   Values read from conreg_members or false if no result.
    */
-  public static function load(array $entry = []):array {
+  public static function load(array $entry = []):array|bool {
     $connection = \Drupal::database();
     // Read all fields from the conreg_members table.
     $select = $connection->select('conreg_members', 'members');
