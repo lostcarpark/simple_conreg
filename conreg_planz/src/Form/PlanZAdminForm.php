@@ -258,6 +258,9 @@ class PlanZAdminForm extends FormBase
   private function addMemberToPlanZ(int $eid, int $memberNo, bool $override, bool $reset, bool $dontEmail, array $optionFields): string
   {
     $member = Member::loadMemberByMemberNo($eid, $memberNo);
+    if (is_null($member)) {
+      return "<p>Member: $memberNo does not exist.</p>";
+    }
     $match = FALSE;
     foreach ($optionFields as $optId => $optVal) {
       if ($optId) {

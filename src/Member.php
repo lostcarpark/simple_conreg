@@ -29,13 +29,16 @@ class Member extends \stdClass {
   /**
    * Create a new member from an array of values.
    *
-   * @param array $details
+   * @param array|false $details
    *   Database array containing member details.
    *
-   * @return Member
+   * @return Member|null
    *   The newly created member.
    */
-  public static function newMember(array $details): Member {
+  public static function newMember(array|FALSE $details): Member|NULL {
+    if (!is_array($details)) {
+      return NULL;
+    }
     $member = new Member();
     foreach ($details as $key => $value) {
       $member->$key = $value;
@@ -69,10 +72,10 @@ class Member extends \stdClass {
    * @param int $memberNo
    *   Member number within event.
    *
-   * @return Member
+   * @return Member|null
    *   Loaded member object.
    */
-  public static function loadMemberByMemberNo(int $eid, int $memberNo): Member {
+  public static function loadMemberByMemberNo(int $eid, int $memberNo): Member|null {
     $member = self::newMember(SimpleConregStorage::load([
       'eid' => $eid,
       'member_no' => $memberNo,
@@ -80,7 +83,9 @@ class Member extends \stdClass {
     ]));
 
     // Add member options to member object.
-    $member->options = MemberOption::loadAllMemberOptions($member->mid);
+    if (!empty($member)) {
+      $member->options = MemberOption::loadAllMemberOptions($member->mid);
+    }
 
     return $member;
   }
