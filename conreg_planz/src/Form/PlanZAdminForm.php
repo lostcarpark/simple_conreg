@@ -21,7 +21,7 @@ class PlanZAdminForm extends FormBase
 {
   private PlanZ $planz;
 
-  /** 
+  /**
    * {@inheritdoc}
    */
   public function getFormId()
@@ -29,7 +29,7 @@ class PlanZAdminForm extends FormBase
     return 'conreg_planz_admin';
   }
 
-  /** 
+  /**
    * {@inheritdoc}
    */
   protected function getEditableConfigNames()
@@ -39,7 +39,7 @@ class PlanZAdminForm extends FormBase
     ];
   }
 
-  /** 
+  /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $eid = 1)
@@ -123,7 +123,7 @@ class PlanZAdminForm extends FormBase
   }
 
 
-  /** 
+  /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
@@ -188,7 +188,7 @@ class PlanZAdminForm extends FormBase
       // Sanitize each entry.
       $rows[] = array_map('Drupal\Component\Utility\Html::escape', (array) $entry);
     }
-    
+
     $form['search_results']['table'] = array(
       '#type' => 'table',
       '#header' => $headers,
@@ -199,7 +199,7 @@ class PlanZAdminForm extends FormBase
 
     return $form['search_results'];
   }
-  
+
   /**
    * Callback for manual add button. Add specified members to PlanZ/PlanZ.
    * @param array $form
@@ -224,13 +224,13 @@ class PlanZAdminForm extends FormBase
       foreach (explode(',', $vals['member_range']) as $range) {
         $output[] = "<p>$range</p>";
         list($min, $max) = array_pad(explode('-', $range), 2, '');
-        If (empty($max)) {
+        if (empty($max)) {
           // If no max set, range is single number in min.
           $output[] = $this->addMemberToPlanZ($eid, $min, $vals['override'], $vals['reset'], $vals['dont_email'], $optionFields);
         }
         else {
           for ($num = $min; $num <= $max; $num++) {
-            // $output[] = $this->addMemberToPlanZ($eid, $num, $vals['override'], $vals['reset'], $vals['dont_email'], $optionFields);
+            $output[] = $this->addMemberToPlanZ($eid, $num, $vals['override'], $vals['reset'], $vals['dont_email'], $optionFields);
           }
         }
       // Log an event to show a member check occurred.
@@ -271,19 +271,19 @@ class PlanZAdminForm extends FormBase
       $user = new PlanZUser($this->planz);
       $user->load($member->mid);
       $user->save($member, $reset);
-      
+
       if (!$dontEmail) {
         // Send email to user.
         $this->planz->sendInviteEmail($user);
       }
-      
+
       return $this->t('<p>Member: @first_name @last_name<br />'.
                       'Badge id: @badgeid.<br />'.
                       'Password: @password<br />'.
                       'URL: @url</p>',
-                      ['@first_name' => $member->first_name, 
-                       '@last_name' => $member->last_name, 
-                       '@badgeid' => $user->badgeId, 
+                      ['@first_name' => $member->first_name,
+                       '@last_name' => $member->last_name,
+                       '@badgeid' => $user->badgeId,
                        '@password' => $user->password ?? '',
                        '@url' => $this->planz->planZUrl]);
     }
