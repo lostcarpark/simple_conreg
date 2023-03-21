@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\conreg_badges\Form\BadgeNamesForm
- */
-
 namespace Drupal\conreg_badges\Form;
 
 use Symfony\Component\HttpFoundation\Response;
@@ -13,7 +8,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Url;
 use Drupal\Core\Link;
-use Drupal\devel;
 use Drupal\simple_conreg\SimpleConregConfig;
 use Drupal\simple_conreg\SimpleConregOptions;
 use Drupal\simple_conreg\SimpleConregStorage;
@@ -21,15 +15,13 @@ use Drupal\simple_conreg\SimpleConregStorage;
 /**
  * Simple form to add an entry, with all the interesting fields.
  */
-class BadgeNamesForm extends FormBase
-{
+class BadgeNamesForm extends FormBase {
 
   /**
    * {@inheritdoc}
    */
-  public function getFormID()
-  {
-    return 'simple_conreg_badge_names';
+  public function getFormId() {
+    return 'conreg_badge_names';
   }
 
   /**
@@ -38,14 +30,13 @@ class BadgeNamesForm extends FormBase
   public function buildForm(array $form,
                             FormStateInterface $form_state,
                             int $eid = 1,
-                            bool $export = false,
-                            string $fields = null,
-                            string $update = null): Response | Array
-  {
+                            bool $export = FALSE,
+                            string $fields = NULL,
+                            string $update = NULL): Response | Array {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
 
-    //Get any existing form values for use in AJAX validation.
+    // Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
 
     if ($export) {
@@ -65,23 +56,23 @@ class BadgeNamesForm extends FormBase
       '#title' => $this->t('Include fields'),
     ];
 
-    $showMemberNo = (isset($form_values['showMemberNo']) ? $form_values['showMemberNo'] : TRUE);
+    $showMemberNo = ($form_values['showMemberNo'] ?? TRUE);
     $exportFields = $showMemberNo ? 'M' : '';
     $form['fields']['showMemberNo'] = $this->checkBox($this->t('Show member number'), TRUE);
 
-    $showMemberName = (isset($form_values['showMemberName']) ? $form_values['showMemberName'] : TRUE);
+    $showMemberName = ($form_values['showMemberName'] ?? TRUE);
     $exportFields .= $showMemberName ? 'N' : '';
     $form['fields']['showMemberName'] = $this->checkBox($this->t('Show member name'), TRUE);
 
-    $showBadgeName = (isset($form_values['showBadgeName']) ? $form_values['showBadgeName'] : TRUE);
+    $showBadgeName = ($form_values['showBadgeName'] ?? TRUE);
     $exportFields .= $showBadgeName ? 'B' : '';
     $form['fields']['showBadgeName'] = $this->checkBox($this->t('Show badge name'), TRUE);
 
-    $showBadgeTypes = (isset($form_values['showBadgeTypes']) ? $form_values['showBadgeTypes'] : TRUE);
+    $showBadgeTypes = ($form_values['showBadgeTypes'] ?? TRUE);
     $exportFields .= $showBadgeTypes ? 'T' : '';
     $form['fields']['showBadgeTypes'] = $this->checkBox($this->t('Show badge types'), TRUE);
 
-    $showDays = (isset($form_values['showDays']) ? $form_values['showDays'] : TRUE);
+    $showDays = ($form_values['showDays'] ?? TRUE);
     $exportFields .= $showDays ? 'D' : '';
     $form['fields']['showDays'] = $this->checkBox($this->t('Show days'), TRUE);
 
@@ -96,7 +87,6 @@ class BadgeNamesForm extends FormBase
     $form['filter']['updated'] = [
       '#type' => 'date',
       '#title' => $this->t('Updated since'),
-      // '#default_value' => DrupalDateTime::createFromTimestamp($member->join_date),
       '#ajax' => [
         'wrapper' => 'memberform',
         'callback' => [$this, 'updateDisplayCallback'],
@@ -109,15 +99,23 @@ class BadgeNamesForm extends FormBase
       '#title' => $this->t('Export'),
     ];
 
-    $exportUrl = Url::fromRoute('conreg_badges_list_export', ['eid' => $eid, 'fields' => $exportFields, 'update' => $update], ['absolute' => TRUE]);
+    $exportUrl = Url::fromRoute(
+      'conreg_badges_list_export',
+      [
+        'eid' => $eid,
+        'fields' => $exportFields,
+        'update' => $update,
+      ],
+      ['absolute' => TRUE]
+    );
     $exportLink = Link::fromTextAndUrl($this->t('Export Badge Names'), $exportUrl);
 
-    $form['export']['link'] = array(
+    $form['export']['link'] = [
       '#type' => 'markup',
       '#prefix' => '<div>',
       '#suffix' => '</div>',
       '#markup' => $exportLink->toString(),
-    );
+    ];
 
     $form['message'] = [
       '#markup' => $this->t('Here is a list of all paid convention members...'),
@@ -145,8 +143,18 @@ class BadgeNamesForm extends FormBase
     return $form;
   }
 
-  private function checkBox(string $title, bool $default): array
-  {
+  /**
+   * Return a Drupal form checkbox element.
+   *
+   * @param string $title
+   *   The title of the checkbox.
+   * @param bool $default
+   *   The default value.
+   *
+   * @return array
+   *   The form field array.
+   */
+  private function checkBox(string $title, bool $default): array {
     return [
       '#type' => 'checkbox',
       '#title' => $title,
@@ -159,25 +167,52 @@ class BadgeNamesForm extends FormBase
     ];
   }
 
-  private function csvField(string $value): string
-  {
-    if (str_contains($value, '"'))
+  /**
+   * Format a value for a CSV export file.
+   *
+   * @param string $value
+   *   The value to format for a CSV export.
+   *
+   * @return string
+   *   The formatted value.
+   */
+  private function csvField(string $value): string {
+    if (str_contains($value, '"')) {
       $value = str_replace('"', '""', $value);
-    if (str_contains($value, '"') || str_contains($value, ','))
+    }
+    if (str_contains($value, '"') || str_contains($value, ',')) {
       $value = '"' . $value . '"';
+    }
     return $value;
   }
 
+  /**
+   * Export the badge list as a CSV file.
+   *
+   * @param int $eid
+   *   The event ID.
+   * @param string $fields
+   *   String containing letters indicating the fields to include.
+   * @param string $update
+   *   The date to list badges since.
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
+   *   HTTP response containing headers and file output.
+   */
   private function exportBadges(int $eid,
                                 string $fields,
-                                string $update): Response
-  {
+                                string $update): Response {
     $badgeNameRows = $this->getBadgeNameRows($eid,
-      empty($fields) || str_contains($fields, 'M'), // 'M' for Member No.
-      empty($fields) || str_contains($fields, 'N'), // 'N' for Name.
-      empty($fields) || str_contains($fields, 'B'), // 'B' for Badge Name.
-      empty($fields) || str_contains($fields, 'T'), // 'T' for Badge Type.
-      empty($fields) || str_contains($fields, 'D'), // 'D' for Days.
+    // 'M' for Member No.
+      empty($fields) || str_contains($fields, 'M'),
+    // 'N' for Name.
+      empty($fields) || str_contains($fields, 'N'),
+    // 'B' for Badge Name.
+      empty($fields) || str_contains($fields, 'B'),
+    // 'T' for Badge Type.
+      empty($fields) || str_contains($fields, 'T'),
+    // 'D' for Days.
+      empty($fields) || str_contains($fields, 'D'),
       $update
     );
     $output = '';
@@ -204,24 +239,33 @@ class BadgeNamesForm extends FormBase
   }
 
   /**
-   * Function to return two arrays, one containing the header labels, and the second containing the badge name rows.
-   * @param int $eid             The event ID.
-   * @param bool $showMemberNo   Show member no field if true.
-   * @param bool $showMemberName Show member name field if true.
-   * @param bool $showBadgeName  Show badge name field if true.
-   * @param bool $showBadgeTypes Show badge type field if true.
-   * @param bool $showDays       Show days member joined for field if true.
-   * @param string $updated      Date to get updates since.
-   * @return object              Object containing header and rows arrays.
+   * Function to return header row and badge name rows.
+   *
+   * @param int $eid
+   *   The event ID.
+   * @param bool $showMemberNo
+   *   Show member no field if true.
+   * @param bool $showMemberName
+   *   Show member name field if true.
+   * @param bool $showBadgeName
+   *   Show badge name field if true.
+   * @param bool $showBadgeTypes
+   *   Show badge type field if true.
+   * @param bool $showDays
+   *   Show days member joined for field if true.
+   * @param string $updated
+   *   Date to get updates since.
+   *
+   * @return object
+   *   Object containing header and rows arrays.
    */
-  private function getBadgeNameRows(int $eid, 
+  private function getBadgeNameRows(int $eid,
                                     bool $showMemberNo = TRUE,
                                     bool $showMemberName = TRUE,
                                     bool $showBadgeName = TRUE,
                                     bool $showBadgeTypes = TRUE,
                                     bool $showDays = TRUE,
-                                    string $updated = null): object
-  {
+                                    string $updated = NULL): object {
     $config = SimpleConregConfig::getConfig($eid);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
     $days = SimpleConregOptions::days($eid, $config);
@@ -254,7 +298,7 @@ class BadgeNamesForm extends FormBase
       $row = [];
       if ($showMemberNo) {
         $row['member_no'] =
-          empty($entry['member_no']) ? 
+          empty($entry['member_no']) ?
           "" :
           $entry['badge_type'] . sprintf("%0" . $digits . "d", $entry['member_no']);
       }
@@ -266,13 +310,13 @@ class BadgeNamesForm extends FormBase
         $row['badge_name'] = $entry['badge_name'];
       }
       if ($showBadgeTypes) {
-        $row['badge_type'] = isset($badgeTypes[$entry['badge_type']]) ? $badgeTypes[$entry['badge_type']] : $entry['badge_type'];
+        $row['badge_type'] = $badgeTypes[$entry['badge_type']] ?? $entry['badge_type'];
       }
       if ($showDays) {
         $dayDescs = [];
         if (!empty($entry['days'])) {
           foreach (explode('|', $entry['days']) as $day) {
-            $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
+            $dayDescs[] = $days[$day] ?? $day;
           }
         }
         $row['days'] = implode(', ', $dayDescs);
@@ -280,18 +324,22 @@ class BadgeNamesForm extends FormBase
       $rows[] = $row;
     }
 
-    return (object)['headers' => $headers, 'rows' => $rows];
+    return (object) ['headers' => $headers, 'rows' => $rows];
   }
 
-  // Callback function for "display" drop down.
-  public function updateDisplayCallback(array $form, FormStateInterface $form_state)
-  {
-    // Form rebuilt with required number of members before callback. Return new form.
+  /**
+   * Callback function for "display" drop down.
+   */
+  public function updateDisplayCallback(array $form, FormStateInterface $form_state) {
+    // Form rebuilt with required number of members before callback. Return new
+    // form.
     return $form;
   }
 
-  public function submitForm(array &$form, FormStateInterface $form_state)
-  {
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
   }
 
 }
