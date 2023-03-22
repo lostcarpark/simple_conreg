@@ -2,10 +2,15 @@
 
 namespace Drupal\simple_conreg;
 
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+
 /**
  * Store a member's details.
  */
 class Member extends \stdClass {
+
+  use StringTranslationTrait;
+
   /**
    * Member ID.
    *
@@ -286,13 +291,13 @@ class Member extends \stdClass {
         return date('Y-m-d H:i:s', $this->join_date);
 
       case 'is_approved':
-        return empty($this->is_approved) ? t('No') : t('Yes');
+        return empty($this->is_approved) ? $this->t('No') : $this->t('Yes');
 
       case 'is_paid':
-        return empty($this->is_paid) ? t('No') : t('Yes');
+        return empty($this->is_paid) ? $this->t('No') : $this->t('Yes');
 
       case 'is_deleted':
-        return empty($this->is_deleted) ? t('No') : t('Yes');
+        return empty($this->is_deleted) ? $this->t('No') : $this->t('Yes');
 
       default:
         return $this->$field;
