@@ -454,13 +454,11 @@ simple_conreg_admin_bulk_email:
     eid: ^[0-9]+$
 
 simple_conreg_admin_bulk_email_send:
-  path: 'admin/members/bulksend/{eid}/{mid}'
+  path: 'admin/members/bulksend/{mid}'
   defaults:
     _controller: '\Drupal\simple_conreg\SimpleConregController::bulksend'
-    eid: 1
   requirements:
     _permission: 'bulk email sending'
-    eid: ^[0-9]+$
     mid: ^[0-9]+$
 
 simple_conreg_admin_checkin:
@@ -486,4 +484,3 @@ simple_conreg_admin_fantable:
     _permission: 'fan table registration'
     eid: ^[0-9]+$
     lead_mid: ^[0-9]+$
-

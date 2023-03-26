@@ -4,7 +4,7 @@ Drupal.behaviors.bulkemail = {
   attach: function (context) {
     //jQuery("#sending").hide();
     jQuery("#edit-do-sending").click(function() {
-      //jQuery("#sending").show();
+      jQuery("#sending").show();
       delay = jQuery('#edit-options-delay').val();
       // Start a timer running every 1s to upload the badges.
       bulkTimer = setInterval(sendTick, delay);
@@ -18,26 +18,20 @@ Drupal.behaviors.bulkemail = {
  */
 function sendTick() {
   // Get the list of IDs.
-  var ids = jQuery('#edit-sending-ids').val();
+  const idString = jQuery('#edit-sending-ids').val();
   // If no more IDs, stop timer.
-  if (ids.length <= 1) {
+  if (idString.length <= 0) {
     clearInterval(bulkTimer);
-    //jQuery("#sending").hide();
+    jQuery("#sending").hide();
     return;
   }
+  const ids = idString.split(' ');
   // Get the first ID from the list.
-  var index = ids.indexOf("\n");
-  var first = ids.substring(0,index);
-  var rest = ids.substring(index+1);
-  // If no newlines, only one entry left.
-  if (index === -1) {
-    first = ids;
-    rest = "";
-  }
-  // Upload the next badge.
+  const first = ids.shift();
+  // Upload the next email.
   sendMessage(first);
   // Update the list of IDs in the textarea.
-  jQuery('#edit-sending-ids').val(rest);
+  jQuery('#edit-sending-ids').val(ids.join(' '));
 }
 
 /*
@@ -45,5 +39,5 @@ function sendTick() {
  */
 function sendMessage(mid) {
   // Make Ajax call to send email.
-  jQuery.get('/admin/members/bulksend/1/'+mid, function(data, status){});
+  jQuery.get('/admin/members/bulksend/'+mid, function(data, status){});
 }

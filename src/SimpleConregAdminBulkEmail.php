@@ -1,26 +1,11 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\simple_conreg\SimpleConregAdminMemberDelete
- */
-
 namespace Drupal\simple_conreg;
 
-use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\ChangedCommand;
-use Drupal\Core\Ajax\CssCommand;
-use Drupal\Core\Ajax\HtmlCommand;
-use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Utility\Token;
-use Drupal\Core\Mail\MailManagerInterface;
-use Drupal\Component\Utility\SafeMarkup;
-use Drupal\node\NodeInterface;
-use Drupal\devel;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-
 
 /**
  * Simple form to add an entry, with all the interesting fields.
@@ -30,10 +15,28 @@ class SimpleConregAdminBulkEmail extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function getFormID() {
+  public function getFormId() {
     return 'simple_conreg_admin_member_email';
   }
 
+  /**
+   * Construct the form.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The configuration factory.
+   */
+  public function __construct(ConfigFactoryInterface $config_factory) {
+    $this->configFactory = $config_factory;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('config.factory')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -41,18 +44,98 @@ class SimpleConregAdminBulkEmail extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state, $eid = 1) {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
-    
-    $config = $this->config('simple_conreg.settings.'.$eid);
 
-    $form = array(
+    $config = $this->config('simple_conreg.settings.' . $eid);
+
+    $form = [
       '#tree' => TRUE,
       '#prefix' => '<div id="bulkmailform">',
       '#suffix' => '</div>',
-      '#attached' => array(
-        'library' => array('simple_conreg/conreg_bulkemail')
-      ),
-    );
+      '#attached' => [
+        'library' => ['simple_conreg/conreg_bulkemail'],
+      ],
+    ];
 
+    // Fields for writing email message.
+    $form['bulkemail'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Email message'),
+      '#prefix' => '<div id="message">',
+      '#suffix' => '</div>',
+    ];
+
+    $form['bulkemail']['from_name'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('From email name'),
+      '#description' => $this->t('Name that confirmation email is sent from.'),
+      '#default_value' => $config->get('bulkemail.from_name'),
+    ];
+
+    $form['bulkemail']['from_email'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('From email address'),
+      '#description' => $this->t('Email address that confirmation email is sent from (if you check the above box, a copy will also be sent to this address).'),
+      '#default_value' => $config->get('bulkemail.from_email'),
+    ];
+
+    $form['bulkemail']['template_subject'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Bulk email subject'),
+      '#default_value' => $config->get('bulkemail.template_subject'),
+    ];
+
+    $form['bulkemail']['template_body'] = [
+      '#type' => 'text_format',
+      '#title' => $this->t('Bulk email body'),
+      '#description' => $this->t('Text for the email body. you may use the following tokens: @tokens.', ['@tokens' => SimpleConregTokens::tokenHelp()]),
+      '#default_value' => $config->get('bulkemail.template_body'),
+      '#format' => $config->get('bulkemail.template_format'),
+    ];
+
+    $form['submit'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Save Template'),
+    ];
+
+    $form['options'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Sending Options'),
+    ];
+    $memberTypes = SimpleConregOptions::memberTypes($eid, $config);
+    $form['options']['member_types'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Member types'),
+      '#options' => $memberTypes->privateOptions,
+    ];
+    $form['options']['member_no_from'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Member number from'),
+    ];
+    $form['options']['member_no_to'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Member number to'),
+    ];
+    $form['options']['delay'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Delay (in miliseconds)'),
+      '#default_value' => '1000',
+    ];
+
+    $form['do_prepare'] = [
+      '#type' => 'button',
+      '#value' => $this->t('Prepare'),
+      '#ajax' => [
+        'wrapper' => 'upload',
+        'callback' => [$this, 'prepareBulkSend'],
+        'event' => 'click',
+      ],
+    ];
+
+    $form['do_sending'] = [
+      '#type' => 'button',
+      '#value' => $this->t('Send bulk emails'),
+      '#attributes' => ['onclick' => 'return (false);'],
+    ];
 
     $form['sending'] = [
       '#prefix' => '<div id="upload">',
@@ -64,93 +147,16 @@ class SimpleConregAdminBulkEmail extends FormBase {
       '#title' => $this->t('IDs to upload'),
     ];
 
-    // Fields for writing email message.
-    $form['bulkemail'] = array(
-      '#type' => 'fieldset',
-      '#title' => $this->t('Email message'),
-      '#prefix' => '<div id="message">',
-      '#suffix' => '</div>',
-    );
-
-    $form['bulkemail']['from_name'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('From email name'),
-      '#description' => $this->t('Name that confirmation email is sent from.'),
-      '#default_value' => $config->get('bulkemail.from_name'),
-    );  
-
-    $form['bulkemail']['from_email'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('From email address'),
-      '#description' => $this->t('Email address that confirmation email is sent from (if you check the above box, a copy will also be sent to this address).'),
-      '#default_value' => $config->get('bulkemail.from_email'),
-    );  
-
-    $form['bulkemail']['template_subject'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Bulk email subject'),
-      '#default_value' => $config->get('bulkemail.template_subject'),
-    );
-
-    $form['bulkemail']['template_body'] = array(
-      '#type' => 'text_format',
-      '#title' => $this->t('Bulk email body'),
-      '#description' => $this->t('Text for the email body. you may use the following tokens: @tokens.', ['@tokens' => SimpleConregTokens::tokenHelp()]),
-      '#default_value' => $config->get('bulkemail.template_body'),
-      '#format' => $config->get('bulkemail.template_format'),
-    );  
-
-    $form['submit'] = array(
-      '#type' => 'submit',
-      '#value' => t('Save Template'),
-    );
-
-    $form['options'] = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('Sending Options'),
-    ];
-    $form['options']['member_no_from'] = [
-      '#type' => 'number',
-      '#title' => $this->t('From'),
-    ];
-    $form['options']['member_no_to'] = [
-      '#type' => 'number',
-      '#title' => $this->t('To'),
-    ];
-    $form['options']['delay'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Delay (in miliseconds)'),
-      '#default_value' => '10000',
-    ];
-
-    $form['do_prepare'] = [
-      '#type' => 'button',
-      '#value' => $this->t('Prepare'),
-      '#ajax' => array(
-        'wrapper' => 'upload',
-        'callback' => array($this, 'prepareBulkSend'),
-        'event' => 'click',
-      ),
-    ];
-    
-    $form['do_sending'] = [
-      '#type' => 'button',
-      '#value' => $this->t('Send bulk emails'),
-      '#attributes' => ['onclick' => 'return (false);'],
-    ];
-    
     return $form;
   }
 
-  /*
+  /**
    * Submit handler for member email form.
    */
-
-  public function submitForm(array &$form, FormStateInterface $form_state)
-  {
+  public function submitForm(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
     $vals = $form_state->getValues();
-    $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.settings.'.$eid);
+    $config = $this->configFactory->getEditable('simple_conreg.settings.' . $eid);
     $config->set('bulkemail.from_name', $vals['bulkemail']['from_name']);
     $config->set('bulkemail.from_email', $vals['bulkemail']['from_email']);
     $config->set('bulkemail.template_subject', $vals['bulkemail']['template_subject']);
@@ -159,19 +165,25 @@ class SimpleConregAdminBulkEmail extends FormBase {
     $config->save();
   }
 
-  // Callback function preparing send.
-  public function prepareBulkSend(array $form, FormStateInterface $form_state)
-  {
+  /**
+   * Callback function preparing send.
+   */
+  public function prepareBulkSend(array $form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
     $vals = $form_state->getValues();
-    $ids = '';
+    // Get list of member types, and remove keys for any that aren't selected.
+    $memberTypes = array_filter($vals['options']['member_types'] ?? [], fn($item) => !empty($item));
+    $ids = [];
     $options = [];
-    $options['member_no_from'] = (isset($vals['options']['member_no_from']) ? $vals['options']['member_no_from'] : 0);
-    $options['member_no_to'] = (isset($vals['options']['member_no_to']) ? $vals['options']['member_no_to'] : 0);
-    foreach(SimpleConregStorage::adminMemberBadges($eid, FALSE, $options) as $member) {
-      $ids .= $member['mid'] . "\n";
+    $options['member_no_from'] = ($vals['options']['member_no_from'] ?? 0);
+    $options['member_no_to'] = ($vals['options']['member_no_to'] ?? 0);
+    // For all members in range, if type in selection, add to list.
+    foreach (SimpleConregStorage::adminMemberBadges($eid, FALSE, $options) as $member) {
+      if (array_key_exists($member['member_type'], $memberTypes)) {
+        $ids[] = $member['mid'];
+      }
     }
-    $form['sending']['ids']['#value'] = $ids;
+    $form['sending']['ids']['#value'] = implode(" ", $ids);
     return $form['sending'];
   }
 
