@@ -138,7 +138,7 @@ class Member extends \stdClass {
     // Transfer object members into array.
     $entry = [];
     foreach ($this as $field => $value) {
-      if (!is_array($value) && !is_object($value)) {
+      if (!is_array($value) && !is_object($value) && $field != 'stringTranslation') {
         $entry[$field] = $value;
       }
     }
