@@ -34,7 +34,7 @@ class SimpleConregController extends ControllerBase {
     $content['message'] = [
       '#markup' => $config->get('thanks.thank_you_message'),
     ];
-  
+
     return $content;
   }
 
@@ -120,13 +120,13 @@ class SimpleConregController extends ControllerBase {
       }
       $total++;
     }
-    
+
     // Sort array by key.
     if ($direction == 'DESC')
       krsort($rows);
     else
       ksort($rows);
-    
+
     $content['table'] = array(
       '#type' => 'table',
       '#header' => $headers,
@@ -143,7 +143,7 @@ class SimpleConregController extends ControllerBase {
 
     $rows = array();
     $headers = array(
-      t('Country'), 
+      t('Country'),
       t('Number of members'),
     );
     $total = 0;
@@ -176,7 +176,7 @@ class SimpleConregController extends ControllerBase {
   {
     $types = SimpleConregOptions::memberTypes($eid);
     $headers = array(
-      t('Member Type'), 
+      t('Member Type'),
       t('Number of members'),
     );
     $content['summary'] = array(
@@ -237,7 +237,7 @@ class SimpleConregController extends ControllerBase {
   {
     $types = SimpleConregOptions::badgeTypes($eid);
     $headers = array(
-      t('Badge Type'), 
+      t('Badge Type'),
       t('Number of members'),
     );
     $content['badge_summary'] = array(
@@ -347,8 +347,8 @@ class SimpleConregController extends ControllerBase {
   public function memberAdminMemberListAmountPaidSummary($eid, &$content)
   {
     $headers = [
-      t('Amount Paid'), 
-      t('Number of members'), 
+      t('Amount Paid'),
+      t('Number of members'),
       t('Total Paid'),
     ];
     $rows = [
@@ -388,9 +388,9 @@ class SimpleConregController extends ControllerBase {
   {
     $types = SimpleConregOptions::memberTypes($eid);
     $headers = [
-      t('Member Type'), 
-      t('Amount Paid'), 
-      t('Number of members'), 
+      t('Member Type'),
+      t('Amount Paid'),
+      t('Number of members'),
       t('Total Paid'),
     ];
     $rows = [
@@ -430,7 +430,7 @@ class SimpleConregController extends ControllerBase {
 
     return $content;
   }
-  
+
   /**
    * Add a summary by date joined to render array.
    */
@@ -438,11 +438,11 @@ class SimpleConregController extends ControllerBase {
   {
     $months = DateHelper::monthNames();
     $headers = [
-      t('Year'), 
-      t('Month'), 
-      t('Number of members'), 
+      t('Year'),
+      t('Month'),
+      t('Number of members'),
       t('Total Paid'),
-      t('Cumulative members'), 
+      t('Cumulative members'),
       t('Cumulative Total Paid'),
     ];
     $rows = [
@@ -636,7 +636,7 @@ class SimpleConregController extends ControllerBase {
       '#suffix' => '</h3>',
     );
     $this->memberAdminMemberListDaysSummary($eid, $content);
-    
+
     $content['message_payment_method'] = array(
       '#markup' => $this->t('Summary by payment method'),
       '#prefix' => '<h3>',
@@ -748,9 +748,9 @@ class SimpleConregController extends ControllerBase {
       // Sanitize each entry.
       $rows[] = $entry;
     }
-    
+
     $rows[] = [t('Total'), '', '', '', '', number_format($total, 2)];
-    
+
     $content['table'] = array(
       '#type' => 'table',
       '#header' => $headers,
@@ -791,7 +791,7 @@ class SimpleConregController extends ControllerBase {
       // Sanitize each entry.
       $rows[] = $entry;
     }
-    
+
     $content['table'] = array(
       '#type' => 'table',
       '#header' => $headers,
@@ -817,7 +817,7 @@ class SimpleConregController extends ControllerBase {
 
     $rows = array();
     $headers = array(
-      t('Type'), 
+      t('Type'),
       t('Member No'),
       t('First Name'),
       t('Last Name'),
@@ -855,7 +855,7 @@ class SimpleConregController extends ControllerBase {
 
     $rows = array();
     $headers = array(
-      t('Type'), 
+      t('Type'),
       t('Member No'),
       t('First Name'),
       t('Last Name'),
@@ -906,7 +906,7 @@ class SimpleConregController extends ControllerBase {
 
     // Check if user already exists.
     $user = user_load_by_mail($member['email']);
-    
+
     // If user doesn't exist, create new user.
     if (!$user) {
       $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
@@ -936,10 +936,10 @@ class SimpleConregController extends ControllerBase {
         $user->save();
       }
     }
-    
+
     // Login user.
     user_login_finalize($user);
-    
+
     // Redirect to member portal.
     return new RedirectResponse(\Drupal\Core\Url::fromRoute('simple_conreg_portal', ['eid' => $member['eid']])->setAbsolute()->toString());
   }
@@ -968,13 +968,21 @@ class SimpleConregController extends ControllerBase {
 
   /**
    * Function used for badge uploading.
+   *
+   * @param int $mid
+   *   The member id.
+   *
+   * @return array
+   *   Content array containing send status.
    */
-  public function bulksend($eid, $mid)
-  {
-   $config = SimpleConregConfig::getConfig($eid);
-   // Look up email address for member.
-    $members = SimpleConregStorage::loadAll(['eid' => $eid, 'mid' => $mid, 'is_deleted' => 0]);
-    $member = $members[0];
+  public function bulksend(int $mid): array {
+    // Look up email address for member.
+    $member = SimpleConregStorage::load([
+      'mid' => $mid,
+      'is_deleted' => 0,
+    ]);
+
+    $config = SimpleConregConfig::getConfig($member['eid']);
 
     // Set up parameters for receipt email.
     $params = ['eid' => $member['eid'], 'mid' => $member['mid']];
@@ -985,14 +993,15 @@ class SimpleConregController extends ControllerBase {
     $key = "template";
     $to = $member["email"];
     $language_code = \Drupal::languageManager()->getDefaultLanguage()->getId();
-    $send_now = TRUE;
-    // Send confirmation email to member.
-    if (!empty($member["email"]))
-      $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $language_code, $params);
 
-    $content['markup'] = array(
+    // Send confirmation email to member.
+    if (!empty($member["email"])) {
+      \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $language_code, $params);
+    }
+
+    $content['markup'] = [
       '#markup' => '<p>Bulk send.</p>',
-    );
+    ];
     return $content;
   }
 
