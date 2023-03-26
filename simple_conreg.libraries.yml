@@ -57,9 +57,10 @@ conreg_badges:
 conreg_bulkemail:
   version: 1.x
   js:
-    js/jquery.bulkemail.js: {}
+    js/conreg_bulkemail.js: {}
   dependencies:
-    - core/jquery
+    - core/drupal
+    - core/once
 
 conreg_admin:
   version: 1.x
