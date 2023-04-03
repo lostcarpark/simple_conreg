@@ -107,6 +107,9 @@ class BadgeNamesForm extends FormBase {
       $exportFields .= $showMemberTypes ? 'Y' : '';
       $form['fields']['showMemberTypes'] = $this->checkBox($this->t('Show member types'), TRUE);
     }
+    else {
+      $showMemberTypes = FALSE;
+    }
 
     $showDays = ($form_values['showDays'] ?? TRUE);
     $exportFields .= $showDays ? 'D' : '';
