@@ -2,3 +2,6 @@
   title: View membership badge names
   description: Allow users to view lists of member badge names (minimal private data)
 
+'view membership badges member type':
+  title: View membership badge member types
+  description: Allow users to see the member type field on the member badge names list.

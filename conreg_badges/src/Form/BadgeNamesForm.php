@@ -2,20 +2,50 @@
 
 namespace Drupal\conreg_badges\Form;
 
-use Symfony\Component\HttpFoundation\Response;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Url;
 use Drupal\Core\Link;
 use Drupal\simple_conreg\SimpleConregConfig;
 use Drupal\simple_conreg\SimpleConregOptions;
 use Drupal\simple_conreg\SimpleConregStorage;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Simple form to add an entry, with all the interesting fields.
  */
 class BadgeNamesForm extends FormBase {
+
+  /**
+   * The current user account.
+   *
+   * @var \Drupal\Core\Session\AccountInterface
+   */
+  protected $account;
+
+  /**
+   * Construct the badge names form.
+   *
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The current user account.
+   */
+  public function __construct(AccountInterface $account) {
+    $this->account = $account;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    // Instantiates this form class.
+    return new static(
+      // Load the service required to construct this class.
+      $container->get('current_user')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -72,6 +102,12 @@ class BadgeNamesForm extends FormBase {
     $exportFields .= $showBadgeTypes ? 'T' : '';
     $form['fields']['showBadgeTypes'] = $this->checkBox($this->t('Show badge types'), TRUE);
 
+    if ($this->account->hasPermission('view membership badges member type')) {
+      $showMemberTypes = ($form_values['showMemberTypes'] ?? TRUE);
+      $exportFields .= $showMemberTypes ? 'Y' : '';
+      $form['fields']['showMemberTypes'] = $this->checkBox($this->t('Show member types'), TRUE);
+    }
+
     $showDays = ($form_values['showDays'] ?? TRUE);
     $exportFields .= $showDays ? 'D' : '';
     $form['fields']['showDays'] = $this->checkBox($this->t('Show days'), TRUE);
@@ -123,7 +159,7 @@ class BadgeNamesForm extends FormBase {
       '#suffix' => '</div>',
     ];
 
-    $badgeNameRows = $this->getBadgeNameRows($eid, $showMemberNo, $showMemberName, $showBadgeName, $showBadgeTypes, $showDays, $update);
+    $badgeNameRows = $this->getBadgeNameRows($eid, $showMemberNo, $showMemberName, $showBadgeName, $showBadgeTypes, $showMemberTypes, $showDays, $update);
 
     $headers = [];
     foreach ($badgeNameRows->headers as $field => $label) {
@@ -251,6 +287,8 @@ class BadgeNamesForm extends FormBase {
    *   Show badge name field if true.
    * @param bool $showBadgeTypes
    *   Show badge type field if true.
+   * @param bool $showMemberTypes
+   *   Show member type field if true.
    * @param bool $showDays
    *   Show days member joined for field if true.
    * @param string $updated
@@ -264,10 +302,12 @@ class BadgeNamesForm extends FormBase {
                                     bool $showMemberName = TRUE,
                                     bool $showBadgeName = TRUE,
                                     bool $showBadgeTypes = TRUE,
+                                    bool $showMemberTypes = FALSE,
                                     bool $showDays = TRUE,
                                     string $updated = NULL): object {
     $config = SimpleConregConfig::getConfig($eid);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
+    $memberTypes = SimpleConregOptions::memberTypes($eid, $config);
     $days = SimpleConregOptions::days($eid, $config);
     $digits = $config->get('member_no_digits');
 
@@ -284,6 +324,9 @@ class BadgeNamesForm extends FormBase {
     }
     if ($showBadgeTypes) {
       $headers['badge_type'] = $this->t('Badge type');
+    }
+    if ($showMemberTypes && $this->account->hasPermission('view membership badges member type')) {
+      $headers['member_type'] = $this->t('Member type');
     }
     if ($showDays) {
       $headers['days'] = $this->t('Days');
@@ -311,6 +354,9 @@ class BadgeNamesForm extends FormBase {
       }
       if ($showBadgeTypes) {
         $row['badge_type'] = $badgeTypes[$entry['badge_type']] ?? $entry['badge_type'];
+      }
+      if ($showMemberTypes && $this->account->hasPermission('view membership badges member type')) {
+        $row['member_type'] = $memberTypes->types[$entry['member_type']]->name ?? $entry['member_type'];
       }
       if ($showDays) {
         $dayDescs = [];
