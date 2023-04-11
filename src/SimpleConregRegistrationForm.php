@@ -71,18 +71,20 @@ class SimpleConregRegistrationForm extends FormBase {
       return $form;
     }
 
+    // Get config for event.
+    $config = SimpleConregConfig::getConfig($eid);
+
     if ($event['is_open'] == 0) {
       // Event not configured. Display error.
+      $message = $config->get('closed_message_text');
       $form['simple_conreg_event'] = [
-        '#markup' => $this->t('Sorry. This event is not currently open for registration.'),
+        '#markup' => $message,
         '#prefix' => '<h3>',
         '#suffix' => '</h3>',
       ];
       return $form;
     }
 
-    // Get config for event.
-    $config = SimpleConregConfig::getConfig($eid);
     if (empty($config->get('payments.system'))) {
       // Event not configured. Display error.
       $form['simple_conreg_event'] = [
