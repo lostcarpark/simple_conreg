@@ -79,8 +79,8 @@ class SimpleConregRegistrationForm extends FormBase {
       $message = $config->get('closed_message_text');
       $form['simple_conreg_event'] = [
         '#markup' => $message,
-        '#prefix' => '<h3>',
-        '#suffix' => '</h3>',
+        '#prefix' => '<div class="closed-message">',
+        '#suffix' => '</div>',
       ];
       return $form;
     }
