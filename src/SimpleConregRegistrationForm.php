@@ -575,7 +575,7 @@ class SimpleConregRegistrationForm extends FormBase {
     // Get global add-on details.
     $form['payment']['global_add_on'] = SimpleConregAddons::getAddon(
       $config,
-      $form_values['payment']['global_add_on'] ?: NULL,
+      $form_values['payment']['global_add_on'] ?? NULL,
       $addOnOptions,
       0,
       [$this, 'updateMemberPriceCallback'],
@@ -1211,7 +1211,7 @@ class SimpleConregRegistrationForm extends FormBase {
       $memberPrices[$cnt] = $this->getMemberPrice($form_values, $cnt, $types, $addOnMembers[$cnt], $addOnMembersMinusFree[$cnt], $symbol, $defaultType);
       if ($memberPrices[$cnt]->basePrice > 0) {
         $prices[] = (object) [
-          'memberNo' => $memberPrices[$cnt]->memberNo + ($addOnMembers[$cnt] ?: 0),
+          'memberNo' => $memberPrices[$cnt]->memberNo + ($addOnMembers[$cnt] ?? 0),
           'basePrice' => $memberPrices[$cnt]->basePrice,
         ];
       }
@@ -1263,7 +1263,7 @@ class SimpleConregRegistrationForm extends FormBase {
   public function getMemberPrice(array $form_values, $memberNo, $types, $addOnPrice, $addOnMinusFree, $symbol, $defaultType) {
     $price = 0;
     // If type selected, look up value.
-    $memberType = $form_values['members']['member' . $memberNo]['type'] ?: $defaultType;
+    $memberType = $form_values['members']['member' . $memberNo]['type'] ?? $defaultType;
     if (!empty($memberType)) {
       $price = $types[$memberType]->price;
     }
