@@ -265,7 +265,7 @@ class Member extends \stdClass {
         if (!empty($this->days)) {
           $dayDescs = [];
           foreach (explode('|', $this->days) as $day) {
-            $dayDescs[] = $days[$day] ?: $day;
+            $dayDescs[] = $days[$day] ?? $day;
           }
           return implode(', ', $dayDescs);
         }
@@ -273,19 +273,19 @@ class Member extends \stdClass {
 
       case 'badge_type':
         $badgeTypes = SimpleConregOptions::badgeTypes($this->eid, $config);
-        return $badgeTypes[$this->badge_type] ?: $this->badge_type;
+        return $badgeTypes[$this->badge_type] ?? $this->badge_type;
 
       case 'communication_method':
         $communicationsOptions = SimpleConregOptions::communicationMethod($this->eid, $config);
-        return $communicationsOptions[$this->communication_method] ?: $this->communication_method;
+        return $communicationsOptions[$this->communication_method] ?? $this->communication_method;
 
       case 'display':
         $displayOptions = SimpleConregOptions::display();
-        return $displayOptions[$this->display] ?: $this->display;
+        return $displayOptions[$this->display] ?? $this->display;
 
       case 'country':
         $countryOptions = SimpleConregOptions::memberCountries($this->eid, $config);
-        return $countryOptions[$this->country] ?: $this->country;
+        return $countryOptions[$this->country] ?? $this->country;
 
       case 'join_date':
         return date('Y-m-d H:i:s', $this->join_date);

@@ -1,17 +1,11 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\simple_conreg\FieldOptions.
- */
-
 namespace Drupal\simple_conreg;
 
 /**
  * List options for Simple Convention Registration.
  */
-class FieldOptions
-{
+class FieldOptions {
 
   public $groups;
   public $options;
@@ -22,8 +16,7 @@ class FieldOptions
    *
    * Parameters: Event ID, Config, Fieldset.
    */
-  public function __construct($eid, $config = NULL)
-  {
+  public function __construct($eid, $config = NULL) {
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
@@ -66,14 +59,19 @@ class FieldOptions
   }
 
   /**
-   * Static function to get Field Options from cache if possible. If not in cache, process from settings.
-   * 
-   * @param int $eid The event ID
-   * @param bool $reset True to reset cached values.
-   * @return FieldOptions Object structure contatining available options.
+   * Static function to get Field Options.
+   *
+   * Get from cache if possible. If not in cache, process from settings.
+   *
+   * @param int $eid
+   *   The event ID.
+   * @param bool $reset
+   *   True to reset cached values.
+   *
+   * @return FieldOptions
+   *   Object structure contatining available options.
    */
-  public static function getFieldOptions($eid, $reset = false)
-  {
+  public static function getFieldOptions($eid, $reset = FALSE) {
     $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
     $cid = 'simple_conreg:fieldOptions_' . $eid . '_' . $language;
 
@@ -94,10 +92,10 @@ class FieldOptions
    *
    * @param int $eid
    * @param object $config
+   *
    * @return array The array of option titles.
    */
-  public static function getFieldOptionsTitles($eid, $config = NULL)
-  {
+  public static function getFieldOptionsTitles($eid, $config = NULL) {
     // If event config not passed in, load it.
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
@@ -106,7 +104,7 @@ class FieldOptions
     // Get the list of options, and put titles in an array.
     $optionTitles = [];
     foreach (explode("\n", $config->get('simple_conreg_options.options')) as $optionLine) {
-      list($optid, $grpid, $optionTitle) = explode('|', $optionLine);
+      [$optid, $grpid, $optionTitle] = explode('|', $optionLine);
       $optionTitles[$optid] = $optionTitle;
     }
     return $optionTitles;
@@ -116,25 +114,30 @@ class FieldOptions
    * Fetch field options selected by member.
    *
    * @param int @mid The member ID.
+   *
    * @return array The list of options.
    */
-  public function getMemberOptions($mid)
-  {
+  public function getMemberOptions($mid) {
     // Get member's options from database.
     $entries = FieldOptionStorage::getMemberOptions($mid);
 
-    $memberOptions = []; // Initialise return array.
+    // Initialise return array.
+    $memberOptions = [];
     // Loop through option groups.
     foreach ($this->groups as $optionGroup) {
       // Loop through options within group.
       foreach ($optionGroup->options as $optid => $option) {
         // Check if option selected by member.
         if (array_key_exists($optid, $entries)) {
-          $fieldName = $optionGroup->fieldName; // Get field to attach option to.
-          $memberOptions[$fieldName]['title'] = $optionGroup->title; // Get title from option group.
-          $memberOptions[$fieldName]['options'][$optid]['option_title'] = $option->title; // Get option title.
+          // Get field to attach option to.
+          $fieldName = $optionGroup->fieldName;
+          // Get title from option group.
+          $memberOptions[$fieldName]['title'] = $optionGroup->title;
+          // Get option title.
+          $memberOptions[$fieldName]['options'][$optid]['option_title'] = $option->title;
           $memberOptions[$fieldName]['options'][$optid]['detail_title'] = $option->detailTitle;
-          $memberOptions[$fieldName]['options'][$optid]['option_detail'] = $entries[$optid]['option_detail']; // Get member's detail from database result.
+          // Get member's detail from database result.
+          $memberOptions[$fieldName]['options'][$optid]['option_detail'] = $entries[$optid]['option_detail'];
         }
       }
     }
@@ -147,10 +150,10 @@ class FieldOptions
    *
    * @param int $mid
    * @param bool $selected
+   *
    * @return array Array of member's options.
    */
-  public static function getMemberOptionValues($mid, $selected = TRUE)
-  {
+  public static function getMemberOptionValues($mid, $selected = TRUE) {
     // Get member's options from database.
     return FieldOptionStorage::getMemberOptions($mid, $selected);
   }
@@ -158,15 +161,19 @@ class FieldOptions
   /**
    * Add field options to member form.
    *
-   * @param string $classRef The member class for the member type (determines which options to show)
-   * @param array $memberForm Form to add to options to.
-   * @param Member $member Member object containing saved member.
-   * @param bool $showGlobal True to show global options.
-   * @param bool $showPrivate True to show private (admin only) options.
+   * @param string $classRef
+   *   The member class for the member type (determines which options to show)
+   * @param array $memberForm
+   *   Form to add to options to.
+   * @param Member $member
+   *   Member object containing saved member.
+   * @param bool $showGlobal
+   *   True to show global options.
+   * @param bool $showPrivate
+   *   True to show private (admin only) options.
    * @param bool $requireMandatory
    */
-  public function addOptionFields($classRef, &$memberForm, Member $member = NULL, $showGlobal = NULL, $showPrivate = FALSE, $requireMandatory = TRUE)
-  {
+  public function addOptionFields($classRef, &$memberForm, Member $member = NULL, $showGlobal = NULL, $showPrivate = FALSE, $requireMandatory = TRUE) {
     // Loop through each field option.
     foreach ($this->memberClasses[$classRef] as $group) {
       // Check if field should be displayed -- IF $global is null (meaning display both global and member options) or $global matches the group value AND $public is false (meaning show public and private) or the group is public.
@@ -176,7 +183,8 @@ class FieldOptions
           $field = $memberForm[$group->fieldName];
         }
         else {
-          unset($field); // Make sure there isn't a stored value from a previous field.
+          // Make sure there isn't a stored value from a previous field.
+          unset($field);
         }
         // Create a Div for our option field. Avoid having unique ID to simplify JavaScript.
         $memberForm[$group->fieldName] = [
@@ -199,36 +207,46 @@ class FieldOptions
    *
    * Parameters: Event ID, Fieldset, Form vals for member, and reference to array to return option values.
    */
-  public function validateOptionFields(&$memberVals, &$optionVals)
-  {
-  // To do: add checks for mandatory options.
+  public function validateOptionFields(&$memberVals, &$optionVals) {
+    // To do: add checks for mandatory options.
   }
 
   /**
    * Process field options from submitted member form.
    *
-   * Parameters: Class Ref (not currently used - consider removing), Form vals for member, member ID, and reference to array to return option values.
+   * @param string $classRef
+   *   Not currently used - consider removing.
+   * @param array &$memberVals
+   *   Array of form values for member.
+   * @param int $mid
+   *   The member ID.
+   * @param array &$memberOptions
+   *   An array of member options to be saved.
    */
-  public function procesOptionFields($classRef, &$memberVals, $mid, &$memberOptions)
-  {
+  public function procesOptionFields($classRef, array &$memberVals, $mid, array &$memberOptions) {
     // Loop through each field on the member form.
     foreach ($this->groups as $group) {
-      // Check if fieldname exists in 
+      // Check if fieldname exists in submitted values.
       if (!empty($memberVals) && array_key_exists($group->fieldName, $memberVals)) {
-        switch($group->fieldType) {
+        switch ($group->fieldType) {
           case 'checkboxes':
             $this->processOptionCheckBoxes($memberVals[$group->fieldName], $mid, $memberOptions);
             break;
+
           case 'textfields':
             $this->processOptionTextFields($memberVals[$group->fieldName], $mid, $memberOptions);
             break;
+
           default:
             $this->processOptionCheckBoxes($memberVals[$group->fieldName], $mid, $memberOptions);
         }
       }
-      // If the option is attached to a regular field, put the field value back in its parent, so the values look like they would if options hadn't been added.
-      if (isset($memberVals[$group->fieldName][$group->fieldName]))
-      $memberVals[$group->fieldName] = $memberVals[$group->fieldName][$group->fieldName];
+      // If the option is attached to a regular field, put the field value back
+      // in its parent, so the values look like they would if options hadn't
+      // been added.
+      if (isset($memberVals[$group->fieldName][$group->fieldName])) {
+        $memberVals[$group->fieldName] = $memberVals[$group->fieldName][$group->fieldName];
+      }
     }
   }
 
@@ -237,12 +255,11 @@ class FieldOptions
    *
    * Parameters: Form vals for option group, member ID, and reference to array to return option values.
    */
-  public function processOptionCheckBoxes(&$groupVals, $mid, &$memberOptions)
-  {
+  public function processOptionCheckBoxes(&$groupVals, $mid, &$memberOptions) {
     foreach ($groupVals['options'] as $optid => $optionInfo) {
       // We only want to store the option if it is already part of the member, or it has been set on the form.
       if (isset($memberOptions[$optid]) || $optionInfo['option']) {
-        $optionDetail = isset($optionInfo['detail']) ? $optionInfo['detail'] : '';
+        $optionDetail = $optionInfo['detail'] ?? '';
         $memberOptions[$optid] = new MemberOption($mid, $optid, $optionInfo['option'], $optionDetail);
       }
     }
@@ -253,13 +270,12 @@ class FieldOptions
    *
    * Parameters: Form vals for option group, member ID, and reference to array to return option values.
    */
-  public function processOptionTextFields(&$groupVals, $mid, &$memberOptions)
-  {
+  public function processOptionTextFields(&$groupVals, $mid, &$memberOptions) {
     foreach ($groupVals['options'] as $optid => $optionInfo) {
       // We only want to store the option if it is already part of the member, or it has been set on the form.
       if (isset($memberOptions[$optid]) || $optionInfo['detail']) {
-        $optionDetail = isset($optionInfo['detail']) ? $optionInfo['detail'] : '';
-        $optionVal = empty($optionDetail) ? false : true;
+        $optionDetail = $optionInfo['detail'] ?? '';
+        $optionVal = empty($optionDetail) ? FALSE : TRUE;
         $memberOptions[$optid] = new MemberOption($mid, $optid, $optionVal, $optionDetail);
       }
     }
@@ -268,32 +284,34 @@ class FieldOptions
   /**
    * Save field options from submitted member form.
    *
-   * @param int $mid Member ID
-   * @param array $options Array of option fields.
+   * @param int $mid
+   *   Member ID.
+   * @param array $options
+   *   Array of option fields.
    */
-  public static function insertOptionFields($mid, &$options)
-  {
+  public static function insertOptionFields($mid, array &$options) {
     FieldOptionStorage::insertMemberOptions($mid, $options);
   }
 
   /**
    * Save field options from previously saved member form.
    *
-   * @param int $mid Member ID
-   * @param array $options Array of option fields.
+   * @param int $mid
+   *   Member ID.
+   * @param array $options
+   *   Array of option fields.
    */
-  public static function updateOptionFields($mid, &$options)
-  {
+  public static function updateOptionFields($mid, array &$options) {
     FieldOptionStorage::updateMemberOptions($mid, $options);
   }
 
   /**
-   * Get a list of all Options
+   * Get a list of all Options.
    *
-   * @return array Options array.
+   * @return array
+   *   Options array.
    */
-  public function getFieldOptionList()
-  {
+  public function getFieldOptionList(): array {
     // Initialise results array.
     $fieldOptions = [];
     foreach ($this->options as $optid => $option) {
@@ -303,22 +321,25 @@ class FieldOptions
   }
 
   /**
-   * Get a list of all Options
+   * Get a list of all Options.
    *
-   * @return array Options array.
+   * @return array
+   *   Options array.
    */
-  public function getFieldOptionGroupedList()
-  {
+  public function getFieldOptionGroupedList(): array {
     // Initialise results array.
     $fieldOptions = [];
     foreach ($this->groups as $grpid => $group) {
       $fieldOptions[] = ['grpid' => $grpid, 'group_title' => $group->title];
       foreach ($group->options as $optid => $option) {
-        $fieldOptions[] = ['grpid' => $grpid, 'optid' => $optid, 'option_title' => $option->title];
+        $fieldOptions[] = [
+          'grpid' => $grpid,
+          'optid' => $optid,
+          'option_title' => $option->title,
+        ];
       }
     }
     return $fieldOptions;
   }
-
 
 }
