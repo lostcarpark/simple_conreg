@@ -292,14 +292,13 @@ class SimpleConregMemberEdit extends FormBase
       );
     }
 
-
     // Get member add-on details.
-    $addon = $form_values['member']['add_on'] ?? '';
+    $addon = $form_values['member']['add_on'] ?? [];
     $form['member']['add_on'] = SimpleConregAddons::getAddon(
       $config,
       $addon,
-      $addOnOptions, 
-      -1, 
+      $addOnOptions,
+      -1,
       [$this, 'updateMemberPriceCallback'],
       $form_state,
       $mid);
