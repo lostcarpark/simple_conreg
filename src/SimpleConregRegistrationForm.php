@@ -332,7 +332,7 @@ class SimpleConregRegistrationForm extends FormBase {
       }
 
       // Get member add-on details.
-      $addon = $form_values['members']['member' . $cnt]['add_on'] ?? '';
+      $addon = $form_values['members']['member' . $cnt]['add_on'] ?? [];
       $form['members']['member' . $cnt]['add_on'] = SimpleConregAddons::getAddon(
         $config,
         $addon,
@@ -575,7 +575,7 @@ class SimpleConregRegistrationForm extends FormBase {
     // Get global add-on details.
     $form['payment']['global_add_on'] = SimpleConregAddons::getAddon(
       $config,
-      $form_values['payment']['global_add_on'] ?? NULL,
+      $form_values['payment']['global_add_on'] ?? [],
       $addOnOptions,
       0,
       [$this, 'updateMemberPriceCallback'],
@@ -921,21 +921,12 @@ class SimpleConregRegistrationForm extends FormBase {
     $types = SimpleConregOptions::memberTypes($eid, $config);
     [, $addOnPrices] = SimpleConregOptions::memberAddons($eid, $config);
 
-    // Check if global add-on.
-    $global = $config->get('add_ons.global');
-
     // Find out number of members.
     $memberQty = $form_values['global']['member_quantity'];
-    $members = $form_state->get('members');
 
     // Can't rely on price sent back from form, so recalculate.
-    [
-      $fullPrice,
-      $discountPrice,
-      $totalPrice,
-      $totalPriceMinusFree,
-      $memberPrices,
-    ] = $this->getAllMemberPrices($config,
+    [,, $totalPrice,, $memberPrices] = $this->getAllMemberPrices(
+      $config,
       $form_values,
       $memberQty,
       $types->types,
@@ -992,7 +983,9 @@ class SimpleConregRegistrationForm extends FormBase {
       $fieldOptions->procesOptionFields($memberClass, $form_values['members']['member' . $cnt], 0, $optionVals);
 
       // Also process global options for each member.
-      $fieldOptions->procesOptionFields($memberClass, $form_values['global_options'], 0, $optionVals);
+      if (array_key_exists('global_options', $form_values)) {
+        $fieldOptions->procesOptionFields($memberClass, $form_values['global_options'], 0, $optionVals);
+      }
 
       $badgename_max_length = $memberClasses->classes[$memberClass]->max_length->badge_name;
       if (empty($badgename_max_length)) {
