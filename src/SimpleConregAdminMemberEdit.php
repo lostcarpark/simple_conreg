@@ -2,10 +2,13 @@
 
 namespace Drupal\simple_conreg;
 
+use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Datetime\DrupalDateTime;
-use Drupal\user\Entity\User;
+use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\TempStore\PrivateTempStore;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 // If PHP<7.3, add array_key_first function.
 if (!function_exists('array_key_first')) {
@@ -34,6 +37,33 @@ if (!function_exists('array_key_first')) {
 class SimpleConregAdminMemberEdit extends FormBase {
 
   /**
+   * Constructor for admin member edit form.
+   *
+   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
+   *   The current user.
+   * @param \Drupal\Core\TempStore\PrivateTempStore $tempStore
+   *   Temporary store for user session data.
+   * @param \Drupal\Component\Datetime\TimeInterface $time
+   *   The time interface.
+   */
+  public function __construct(
+    protected AccountProxyInterface $currentUser,
+    protected PrivateTempStore $tempStore,
+    protected TimeInterface $time
+  ) {}
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container): self {
+    return new static(
+      $container->get('current_user'),
+      $container->get('tempstore.private')->get('simple_conreg'),
+      $container->get('datetime.time')
+    );
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -47,10 +77,6 @@ class SimpleConregAdminMemberEdit extends FormBase {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
 
-    // Get any existing form values for use in AJAX validation.
-    $form_values = $form_state->getValues();
-    $memberPrices = [];
-
     // Get event configuration from config.
     $config = $this->config('simple_conreg.settings.' . $eid);
 
@@ -58,8 +84,6 @@ class SimpleConregAdminMemberEdit extends FormBase {
     $memberClasses = SimpleConregOptions::memberClasses($eid, $config);
     $badgeTypeOptions = SimpleConregOptions::badgeTypes($eid, $config);
     $days = SimpleConregOptions::days($eid, $config);
-    [$addOnOptions, $addOnPrices] = SimpleConregOptions::memberAddons($eid, $config);
-    $symbol = $config->get('payments.symbol');
     $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
     $defaultCountry = $config->get('reference.default_country');
 
@@ -79,7 +103,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
     }
     else {
       $member = new Member();
-      $member->join_date = \Drupal::time()->getCurrentTime();
+      $member->join_date = $this->time->getCurrentTime();
       $member->member_type = array_key_first($types->publicOptions);
     }
 
@@ -310,7 +334,8 @@ class SimpleConregAdminMemberEdit extends FormBase {
     if (is_null($fieldOptions)) {
       $fieldOptions = FieldOptions::getFieldOptions($eid);
     }
-    // Add the field options to the form. Display both global and member fields. Display public and private fields.
+    // Add the field options to the form. Display both global and member fields.
+    // Display public and private fields.
     $fieldOptions->addOptionFields($curMemberClassRef, $form['member'], $member, NULL, TRUE, FALSE);
 
     $form['member']['is_paid'] = [
@@ -394,9 +419,8 @@ class SimpleConregAdminMemberEdit extends FormBase {
   public function submitCancel(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
     // Get session state to return to correct page.
-    $tempstore = \Drupal::service('tempstore.private')->get('simple_conreg');
-    $display = $tempstore->get('display');
-    $page = $tempstore->get('page');
+    $display = $this->tempStore->get('display');
+    $page = $this->tempStore->get('page');
     // Redirect to member list.
     $form_state->setRedirect('simple_conreg_admin_members', [
       'eid' => $eid,
@@ -410,14 +434,13 @@ class SimpleConregAdminMemberEdit extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
-    $mid = $form_state->get('mid');
+    $mid = $form_state->get('mid') ?? 0;
     $curMemberClassRef = $form_state->get('member_class');
     $member = $form_state->get('member');
-    $optionVals = $member->options;
+    $optionVals = $member->options ?? [];
     // Remove options form member object so it doesn't save it.
     unset($member->options);
 
-    $config = $this->config('simple_conreg.settings.' . $eid);
     $form_values = $form_state->getValues();
     $memberDays = [];
     foreach ($form_values['member']['days'] as $key => $val) {
@@ -462,6 +485,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
     $fieldOptions->procesOptionFields($curMemberClassRef, $form_values['member'], $mid, $optionVals);
 
     // Save the submitted entry.
+    $member->eid = $eid;
     $member->is_approved = $form_values['member']['is_approved'];
     $member->member_no = $member_no;
     $member->member_type = $form_values['member']['type'];
@@ -509,7 +533,7 @@ class SimpleConregAdminMemberEdit extends FormBase {
       $member->phone = trim($form_values['member']['phone']);
     }
     if (isset($form_values['member']['birth_date'])) {
-      $member->birth_date = $form_values['member']['birth_date'];
+      $member->birth_date = $birth_date;
     }
     if (isset($form_values['member']['age'])) {
       $member->age = $form_values['member']['age'];
@@ -536,9 +560,9 @@ class SimpleConregAdminMemberEdit extends FormBase {
     $member->is_checked_in = $form_values['member']['is_checked_in'];
 
     if (!empty($form_values["member"]["is_checked_in"])) {
-      $user = User::load(\Drupal::currentUser()->id());
+      $uid = $this->currentUser->id();
       $member->check_in_date = time();
-      $member->check_in_by = $user->get('uid')->value;
+      $member->check_in_by = $uid;
     }
 
     $join_date = $form_values['member']['join_date']->getTimestamp();
@@ -565,45 +589,9 @@ class SimpleConregAdminMemberEdit extends FormBase {
 
     if ($return) {
 
-      // Check Simplenews module loaded.
-      if (\Drupal::moduleHandler()->moduleExists('simplenews')) {
-        // Get Drupal SimpleNews subscription manager.
-        $subscription_manager = \Drupal::service('simplenews.subscription_manager');
-        // Simplenews is active, so check for mailing lists member should be subscribed to.
-        $simplenews_options = $config->get('simplenews.options');
-        foreach ($simplenews_options as $newsletter_id => $optionVals) {
-          if ($optionVals['active']) {
-            // Get communications methods selected for newsletter.
-            $communications_methods = $simplenews_options[$newsletter_id]['communications_methods'];
-            // Check if member matches newsletter criteria.
-            if (isset($member->email) && $member->email != '') {
-              if (isset($member->communication_method) &&
-                  isset($communications_methods[$member->communication_method]) &&
-                  $communications_methods[$member->communication_method]) {
-                // Subscribe member if criteria met.
-                $subscription_manager->subscribe($member->email, $newsletter_id, FALSE, 'website');
-                \Drupal::messenger()->addMessage($this->t('Subscribed %email to %newsletter.', [
-                  '%email' => $member->email,
-                  '%newsletter' => $newsletter_id,
-                ]));
-              }
-              else {
-                // Unsubscribe member if criteria not met (their communications method may have changed).
-                $subscription_manager->unsubscribe($member->email, $newsletter_id, FALSE, 'website');
-                \Drupal::messenger()->addMessage($this->t('Unsubscribed %email from %newsletter.', [
-                  '%email' => $member->email,
-                  '%newsletter' => $newsletter_id,
-                ]));
-              }
-            }
-          }
-        }
-      }
-
       // Get session state to return to correct page.
-      $tempstore = \Drupal::service('tempstore.private')->get('simple_conreg');
-      $display = $tempstore->get('display');
-      $page = $tempstore->get('page');
+      $display = $this->tempStore->get('display');
+      $page = $this->tempStore->get('page');
 
       // Redirect to member list.
       $form_state->setRedirect('simple_conreg_admin_members', [
