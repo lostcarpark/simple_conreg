@@ -4,12 +4,15 @@ namespace Drupal\simple_conreg;
 
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Url;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Class for replacing tokens in email messages.
  */
 class SimpleConregTokens {
+
+  use StringTranslationTrait;
 
   /**
    * The event ID.
@@ -149,7 +152,8 @@ class SimpleConregTokens {
       )->toString();
       $this->html['[login_url]'] = $login_url;
 
-      // If member is not group lead, we need to get payment URL and possibly email from leader.
+      // If member is not group lead, we need to get payment URL and possibly
+      // email from leader.
       if ($this->vals['mid'] != $this->vals['lead_mid']) {
         $leader = SimpleConregStorage::load([
           'eid' => $eid,
@@ -199,7 +203,7 @@ class SimpleConregTokens {
       $member_seq = 0;
       $this->getMemberDetailsToken($members, $member_seq);
 
-      // Loop through any additional members registered and add them to the member details.
+      // Loop through any additional members registered.
       if (isset($extra_mids)) {
         foreach ($extra_mids as $mid) {
           $members = $this->loadMemberGroup($eid, $mid);
@@ -400,7 +404,7 @@ class SimpleConregTokens {
       'extra_flag2' => 'extras.flag2',
     ];
 
-    $reg_date = t('Registered on @date', ['@date' => \Drupal::service('date.formatter')->format($members[0]['join_date'])]);
+    $reg_date = $this->t('Registered on @date', ['@date' => \Drupal::service('date.formatter')->format($members[0]['join_date'])]);
     $this->display .= '<h3>' . $reg_date . '</h3>';
     $this->plainDisplay .= "\n$reg_date\n";
     $this->display .= '<table>';
@@ -417,11 +421,11 @@ class SimpleConregTokens {
       $memberOptions = $fieldOptions->getMemberOptions($cur_member['mid']);
       // Look up labels for fields to email.
       $member_seq++;
-      $member_heading = t('Member @seq', ['@seq' => $member_seq]);
+      $member_heading = $this->t('Member @seq', ['@seq' => $member_seq]);
       $this->display .= '<tr><th colspan="2">' . $member_heading . '</th></tr>';
       $this->plainDisplay .= "\n$member_heading\n";
       if (!empty($cur_member['member_no'])) {
-        $label = t('Member Number');
+        $label = $this->t('Member Number');
         $this->display .= '<tr><td>' . $label . '</td><td>' . $cur_member['member_no'] . '</td></tr>';
         $this->plainDisplay .= $label . ":\t" . $cur_member['member_no'] . "\n";
       }
@@ -430,7 +434,7 @@ class SimpleConregTokens {
         if (!empty($curMemberClass->$section->$entry)) {
           // Override name for badge name field, as we don't want it to say "Custom badge name".
           if ($key == 'badge_name') {
-            $label = t('Name on badge');
+            $label = $this->t('Name on badge');
           }
           else {
             $label = $curMemberClass->$section->$entry;
@@ -442,8 +446,8 @@ class SimpleConregTokens {
             $this->display .= '<tr><td colspan="2">' . $memberOptions[$key]['title'] . '</td></tr>';
             $this->plainDisplay .= $memberOptions[$key]['title'] . "\n";
             foreach ($memberOptions[$key]['options'] as $option) {
-              $this->display .= '<tr><td>' . $option['option_title'] . '</td><td>' . t('Yes') . '</td></tr>';
-              $this->plainDisplay .= $option['option_title'] . ":\t" . t('Yes') . "\n";
+              $this->display .= '<tr><td>' . $option['option_title'] . '</td><td>' . $this->t('Yes') . '</td></tr>';
+              $this->plainDisplay .= $option['option_title'] . ":\t" . $this->t('Yes') . "\n";
               if (isset($option['option_detail'])) {
                 $this->display .= '<tr><td>' . $option['detail_title'] . '</td><td>' . $option['option_detail'] . '</td></tr>';
                 $this->plainDisplay .= $option['detail_title'] . ":\t" . $option['option_detail'] . "\n";
@@ -459,8 +463,8 @@ class SimpleConregTokens {
         $this->display .= '<tr><td colspan="2">' . $memberOption['title'] . '</td></tr>';
         $this->plainDisplay .= $memberOption['title'] . "\n";
         foreach ($memberOption['options'] as $option) {
-          $this->display .= '<tr><td>' . $option['option_title'] . '</td><td>' . t('Yes') . '</td></tr>';
-          $this->plainDisplay .= $option['option_title'] . ":\t" . t('Yes') . "\n";
+          $this->display .= '<tr><td>' . $option['option_title'] . '</td><td>' . $this->t('Yes') . '</td></tr>';
+          $this->plainDisplay .= $option['option_title'] . ":\t" . $this->t('Yes') . "\n";
           if (isset($option['option_detail'])) {
             $this->display .= '<tr><td>' . $option['detail_title'] . '</td><td>' . $option['option_detail'] . '</td></tr>';
             $this->plainDisplay .= $option['detail_title'] . ":\t" . $option['option_detail'] . "\n";
@@ -469,7 +473,7 @@ class SimpleConregTokens {
       }
 
       // Add price with static label.
-      $label = t('Price for member');
+      $label = $this->t('Price for member');
       $this->display .= '<tr><td>' . $label . '</td><td>' . $cur_member['member_price'] . '</td></tr>';
       $this->plainDisplay .= $label . ":\t" . $cur_member['member_price'] . "\n";
 
@@ -477,8 +481,8 @@ class SimpleConregTokens {
       foreach ($cur_member['addons'] as $addon) {
         if (!empty($addon->label) && !empty($addon->option)) {
           $addOnName = $addon->label;
-          $this->display .= '<tr><td>' . t("Add-on: @addon", ['@addon' => $addOnName]) . '</td><td>' . $addon->option . '</td></tr>';
-          $this->plainDisplay .= t("Add-on: @addon", ['@addon' => $addOnName]) . ":\t" . $addon->option . "\n";
+          $this->display .= '<tr><td>' . $this->t("Add-on: @addon", ['@addon' => $addOnName]) . '</td><td>' . $addon->option . '</td></tr>';
+          $this->plainDisplay .= $this->t("Add-on: @addon", ['@addon' => $addOnName]) . ":\t" . $addon->option . "\n";
         }
         if (!empty($addon->info) && !empty($addon->info)) {
           $this->display .= '<tr><td>' . $addon->info . '</td><td>' . $addon->info . '</td></tr>';
@@ -486,28 +490,28 @@ class SimpleConregTokens {
         }
         if (!empty($addon->free) && !empty($addon->amount)) {
           $addOnName = $addon->free;
-          $this->display .= '<tr><td>' . t("Add-on: @addon", ['@addon' => $addOnName]) . '</td><td>' . $addon->amount . '</td></tr>';
-          $this->plainDisplay .= t("Add-on: @addon", ['@addon' => $addOnName]) . ":\t" . $addon->amount . "\n";
+          $this->display .= '<tr><td>' . $this->t("Add-on: @addon", ['@addon' => $addOnName]) . '</td><td>' . $addon->amount . '</td></tr>';
+          $this->plainDisplay .= $this->t("Add-on: @addon", ['@addon' => $addOnName]) . ":\t" . $addon->amount . "\n";
         }
         if (!empty($addon->amount)) {
-          $this->display .= '<tr><td>' . t("@addon price", ['@addon' => $addOnName]) . '</td><td>' . $addon->amount . '</td></tr>';
-          $this->plainDisplay .= t("@addon price", ['@addon' => $addOnName]) . ":\t" . $addon->amount . "\n";
+          $this->display .= '<tr><td>' . $this->t("@addon price", ['@addon' => $addOnName]) . '</td><td>' . $addon->amount . '</td></tr>';
+          $this->plainDisplay .= $this->t("@addon price", ['@addon' => $addOnName]) . ":\t" . $addon->amount . "\n";
         }
       }
       if (!empty($cur_member['add_on_price'])) {
-        $label = t('Add-on Total for member');
+        $label = $this->t('Add-on Total for member');
         $this->display .= '<tr><td>' . $label . '</td><td>' . $cur_member['add_on_price'] . '</td></tr>';
         $this->plainDisplay .= $label . ":\t" . $cur_member['add_on_price'] . "\n";
       }
-      $label = t('Member Total');
+      $label = $this->t('Member Total');
       $this->display .= '<tr><td>' . $label . '</td><td>' . $cur_member['member_total'] . '</td></tr>';
       $this->plainDisplay .= $label . ":\t" . $cur_member['member_total'] . "\n";
       $payment_amount = $cur_member['payment_amount'];
     }
-    $label = t('Total');
+    $label = $this->t('Total');
     $this->display .= '<tr><th colspan="2">' . $label . '</th></tr>';
     $this->plainDisplay .= "\n$label\n";
-    $label = t('Total amount paid');
+    $label = $this->t('Total amount paid');
     $this->display .= '<tr><td>' . $label . '</td><td>' . $payment_amount . '</td></tr>';
     $this->plainDisplay .= $label . ":\t" . $payment_amount . "\n";
     $this->display .= '</table>';
