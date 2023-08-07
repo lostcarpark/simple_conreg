@@ -7,13 +7,12 @@
 
 namespace Drupal\simple_conreg;
 
-use Drupal\devel;
-
+use Drupal\Core\Url;
 
 class SimpleConregTokens {
 
-  var $eid;
-  var $mid;
+  public int $eid;
+  public int $mid;
   var $html;
   var $plain;
   var $event;
@@ -22,6 +21,8 @@ class SimpleConregTokens {
   var $typevals;
   var $display;
   var $plain_display;
+  public array $typeVals;
+  public array $vals;
 
 
   public function __construct($eid = 1, $mid = null)
@@ -36,7 +37,7 @@ class SimpleConregTokens {
 
     $types = SimpleConregOptions::memberTypes($this->eid, $this->config);
     $this->typeVals = $types->types;
-	
+
     $this->html['[site_name]'] = \Drupal::config('system.site')->get('name');
     $this->html['[event_name]'] = $this->event['event_name'];
     $this->html['[event_email]'] = $this->config->get('confirmation.from_email');
@@ -47,12 +48,21 @@ class SimpleConregTokens {
         $extra_mids = array_slice($mid, 1); // Store any extra member IDs for later.
         $mid = $mid[0];
       }
+      $members = SimpleConregStorage::loadAll([
+        'eid' => $eid,
+        'mid' => $mid,
+        'is_deleted' => 0,
+      ]);
       // Get all members registered by subject member.
-      $members = SimpleConregStorage::loadAll(['eid' => $eid, 'lead_mid' => $mid, 'is_deleted' => 0]);
-      // If no records returned, member is not group leader, so get member details.
-      if (count($members) == 0) {
-        $members = SimpleConregStorage::loadAll(['eid' => $eid, 'mid' => $mid, 'is_deleted' => 0]);
-      }
+      $groupMembers = SimpleConregStorage::loadAll([
+        'eid' => $eid,
+        'lead_mid' => $mid,
+        'is_deleted' => 0,
+      ]);
+      // Remove the lead member from the group so they aren't duplicated.
+      $groupMembers = array_filter($groupMembers, fn($member) => $member['mid'] != $mid);
+      // Combine the lead member and the group, ensuring lead member is first.
+      $members = array_merge($members, $groupMembers);
 
       // Replace codes with values in member data.
       $this->replaceMemberCodes($members);
@@ -61,15 +71,18 @@ class SimpleConregTokens {
       // Check if random_key set. If not set, generate it.
       if (empty($this->vals['random_key'])) {
         $rand_key = mt_rand();
-        SimpleConregStorage::update(['mid'=>$this->vals['mid'], 'random_key'=>$rand_key]);
+        SimpleConregStorage::update([
+          'mid' => $this->vals['mid'],
+          'random_key' => $rand_key,
+        ]);
         $this->vals['random_key'] = $rand_key;
       }
-      
+
       // Get login expiry time.
       $expiryDate = self::updateLoginExpiryDate($mid);
       $this->html['[login_expiry]'] = $expiryDate;
       $this->html['[login_expiry_medium]'] = \Drupal::service('date.formatter')->format($expiryDate, 'medium');
-      $login_url = \Drupal\Core\Url::fromRoute('simple_conreg_login',
+      $login_url = Url::fromRoute('simple_conreg_login',
         ['mid' => $this->vals['mid'], 'key' => $this->vals['random_key'], 'expiry' => $expiryDate],
         ['absolute' => TRUE]
       )->toString();
@@ -122,10 +135,10 @@ class SimpleConregTokens {
           if (count($members) == 0) {
             $members = SimpleConregStorage::loadAll(['eid' => $eid, 'mid' => $mid, 'is_deleted' => 0]);
           }
-          
+
           // Replace codes with values in member data.
           $this->replaceMemberCodes($members);
-          // Add member 
+          // Add member
           $this->getMemberDetailsToken($members, $member_seq);
         }
       }
@@ -152,7 +165,7 @@ class SimpleConregTokens {
       // Plenty of time left on previous key, just return it.
       return $expiryTime;
     }
-    
+
     // Set expiry time to a week in the future.
     // Add a random number of seconds so logins generated in bulk won't have the same expiry.
     $expiryTime = $timeNow + 604800 + rand(0, 3600); //7*24*3600 - seconds in a week.
@@ -162,7 +175,7 @@ class SimpleConregTokens {
 
   // Function to return help text containing allowed tokens.
   public static function tokenHelp($extra = null) {
-    $tokens = 
+    $tokens =
       ['[site_name]',
        '[event_name]',
        '[event_email]',
@@ -335,7 +348,7 @@ class SimpleConregTokens {
               if (isset($option['option_detail'])) {
                 $this->display .= '<tr><td>'.$option['detail_title'].'</td><td>'.$option['option_detail'].'</td></tr>';
                 $this->plain_display .= $option['detail_title'].":\t".$option['option_detail']."\n";
-              }            
+              }
             }
             unset($memberOptions[$key]);
           }
@@ -352,9 +365,9 @@ class SimpleConregTokens {
           if (isset($option['option_detail'])) {
             $this->display .= '<tr><td>'.$option['detail_title'].'</td><td>'.$option['option_detail'].'</td></tr>';
             $this->plain_display .= $option['detail_title'].":\t".$option['option_detail']."\n";
-          }            
+          }
         }
-      }      
+      }
 
       // Add price with static label.
       $label = t('Price for member');
@@ -400,7 +413,7 @@ class SimpleConregTokens {
     $this->plain_display .= $label.":\t".$payment_amount."\n";
     $this->display .= '</table>';
   }
-  
+
   /***
    * Can be called if extra tokens are needed.
    * To do: strip out any HTML from the plain text version.
