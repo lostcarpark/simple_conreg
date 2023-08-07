@@ -7,6 +7,7 @@
 
 namespace Drupal\simple_conreg;
 
+use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Locale\CountryManager;
 
 /**
@@ -78,7 +79,7 @@ class SimpleConregOptions
     return $memberClasses;
   }
 
-  // Function to save member classes to 
+  // Function to save member classes to
   public static function saveMemberClasses($eid, $memberClasses)
   {
     $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.settings.' . $eid);
@@ -332,7 +333,7 @@ class SimpleConregOptions
         if (!isset($upgradeOptions[$fromtype][$fromdays])) {
           $upgradeOptions[$fromtype][$fromdays][0] = $types->types[$fromtype]->name;
         }
-        // Store 
+        // Store
         $upgradeOptions[$fromtype][$fromdays][$upid] = $desc;
         $upgradeVals[$upid] = (object)[
           'fromType' => $fromtype,
@@ -457,10 +458,14 @@ class SimpleConregOptions
   /**
    * Return list of membership add-ons from config.
    *
-   * Parameters: Optional config.
+   * @param int $eid
+   *   The event ID.
+   * @param \Drupal\Core\Config\ImmutableConfig $config
+   *   The configuration object.
+   * @param bool $reset
+   *   If true reset cached version.
    */
-  public static function memberCountries($eid, &$config = NULL, $reset = FALSE)
-  {
+  public static function memberCountries(int $eid, ImmutableConfig &$config = NULL, bool $reset = FALSE) {
     $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
     $cid = 'simple_conreg:countryList_' . $eid . '_' . $language;
     // Check if previously used country list available.
@@ -474,10 +479,12 @@ class SimpleConregOptions
     $manager = new CountryManager(\Drupal::moduleHandler());
     $countries = $manager->getList();
 
-    // Get no country label, if set.
+    // Get no country label, if set.
     $noCountryLabel = trim($config->get('reference.no_country_label'));
     // Combine no country label with country list.
-    $countryOptions = empty($noCountryLabel) ? $countries : [0 => $noCountryLabel, ...$countries];
+    $countryOptions = empty($noCountryLabel)
+      ? $countries
+      : array_merge([0 => $noCountryLabel], $countries);
 
     // Cache for future use.
     \Drupal::cache()->set($cid, $countryOptions);
