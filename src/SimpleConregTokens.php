@@ -26,7 +26,7 @@ class SimpleConregTokens {
    *
    * @var int
    */
-  protected int $mid;
+  protected array|int|null $mid;
 
   /**
    * Array of HTML values.
@@ -89,7 +89,7 @@ class SimpleConregTokens {
    *
    * @var array
    */
-  public array $vals;
+  public array|null $vals = NULL;
 
   /**
    * Constructor for token class.
@@ -99,7 +99,7 @@ class SimpleConregTokens {
    * @param int|null $mid
    *   The member ID.
    */
-  public function __construct(int $eid = 1, int|null $mid = NULL) {
+  public function __construct(int $eid = 1, array|int|null $mid = NULL) {
     $this->eid = $eid;
     $this->mid = $mid;
 
