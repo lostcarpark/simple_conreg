@@ -432,7 +432,8 @@ class SimpleConregTokens {
       foreach ($confirms as $key => $val) {
         [$section, $entry] = explode('.', $val);
         if (!empty($curMemberClass->$section->$entry)) {
-          // Override name for badge name field, as we don't want it to say "Custom badge name".
+          // Override name for badge name field, as we don't want it to say
+          // "Custom badge name".
           if ($key == 'badge_name') {
             $label = $this->t('Name on badge');
           }
