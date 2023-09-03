@@ -107,13 +107,22 @@ class SimpleConregAdminBulkEmail extends FormBase {
       '#title' => $this->t('Member types'),
       '#options' => $memberTypes->privateOptions,
     ];
-    $form['options']['member_no_from'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Member number from'),
+    $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
+    $form['options']['badge_types'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Badge types'),
+      '#options' => $badgeTypes,
     ];
-    $form['options']['member_no_to'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Member number to'),
+    $fieldOptions = FieldOptions::getFieldOptionsTitles($eid);
+    $form['options']['field_options'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Options'),
+      '#options' => $fieldOptions,
+    ];
+    $form['options']['member_range'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Member Number range to email'),
+      '#description' => $this->t('Enter Member Nos to send emails to. Use commas (,) to separate ranges and hyphens (-) to separate range limits, e.g. "1,3,5-7".'),
     ];
     $form['options']['delay'] = [
       '#type' => 'number',
@@ -172,16 +181,15 @@ class SimpleConregAdminBulkEmail extends FormBase {
     $eid = $form_state->get('eid');
     $vals = $form_state->getValues();
     // Get list of member types, and remove keys for any that aren't selected.
-    $memberTypes = array_filter($vals['options']['member_types'] ?? [], fn($item) => !empty($item));
     $ids = [];
     $options = [];
-    $options['member_no_from'] = ($vals['options']['member_no_from'] ?? 0);
-    $options['member_no_to'] = ($vals['options']['member_no_to'] ?? 0);
+    $options['member_types'] = array_filter($vals['options']['member_types'] ?? [], fn($item) => !empty($item));
+    $options['badge_types'] = array_filter($vals['options']['badge_types'] ?? [], fn($item) => !empty($item));
+    $options['field_options'] = array_filter($vals['options']['field_options'] ?? [], fn($item) => !empty($item));
+    $options['member_range'] = ($vals['options']['member_range'] ?? 0);
     // For all members in range, if type in selection, add to list.
     foreach (SimpleConregStorage::adminMemberBadges($eid, FALSE, $options) as $member) {
-      if (array_key_exists($member['member_type'], $memberTypes)) {
-        $ids[] = $member['mid'];
-      }
+      $ids[] = $member['mid'];
     }
     $form['sending']['ids']['#value'] = implode(" ", $ids);
     return $form['sending'];

@@ -619,8 +619,20 @@ class SimpleConregStorage {
     return $entries;
   }
 
-  public static function adminMemberBadges($eid, $max_num_badges = 0, $options = [])
-  {
+  /**
+   * Return a list of member details for badge printing.
+   *
+   * @param int $eid
+   *   The event identifier.
+   * @param int $max_num_badges
+   *   Maximum number of badges to return.
+   * @param array $options
+   *   Array of selection options.
+   *
+   * @return array
+   *   List of member members.
+   */
+  public static function adminMemberBadges(int $eid, int $max_num_badges = 0, array $options = []): array {
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
@@ -636,17 +648,60 @@ class SimpleConregStorage {
     $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
     $select->condition('m.is_approved', 1);
-    $select->condition("is_deleted", FALSE); //Only include members who aren't deleted.
-    if (!empty($options['member_no_from']))
+    // Only include members who aren't deleted.
+    $select->condition("is_deleted", FALSE);
+    if (!empty($options['member_no_from'])) {
       $select->condition('m.member_no', $options['member_no_from'], '>=');
-    if (!empty($options['member_no_to']))
+    }
+    if (!empty($options['member_no_to'])) {
       $select->condition('m.member_no', $options['member_no_to'], '<=');
-    if (!empty($options['update_since']))
+    }
+    if (!empty($options['member_range'])) {
+      $orGroup = $select->orConditionGroup();
+      foreach (explode(',', $options['member_range']) as $range) {
+        $output[] = "<p>$range</p>";
+        [$min, $max] = array_pad(explode('-', $range), 2, '');
+        if (empty($max)) {
+          // If no max set, range is single number in min.
+          $orGroup->condition('member_no', $min);
+        }
+        else {
+          $orGroup->condition('member_no', [$min, $max], 'BETWEEN');
+        }
+      }
+      $select->condition($orGroup);
+    }
+    if (!empty($options['member_types'])) {
+      $orGroup = $select->orConditionGroup();
+      foreach ($options['member_types'] as $typeCode => $type) {
+        $orGroup->condition('member_type', $typeCode);
+      }
+      $select->condition($orGroup);
+    }
+    if (!empty($options['badge_types'])) {
+      $orGroup = $select->orConditionGroup();
+      foreach ($options['badge_types'] as $badgeCode => $badge) {
+        $orGroup->condition('badge_type', $badgeCode);
+      }
+      $select->condition($orGroup);
+    }
+    if (!empty($options['field_options'])) {
+      $select->join('conreg_member_options', 'o', 'm.mid = o.mid');
+      $select->condition('o.is_selected', 1);
+      $orGroup = $select->orConditionGroup();
+      foreach ($options['field_options'] as $optionCode => $option) {
+        $orGroup->condition('o.optid', $optionCode);
+      }
+      $select->condition($orGroup);
+    }
+    if (!empty($options['update_since'])) {
       $select->condition('m.update_date', $options['update_since'], '>=');
+    }
     $select->orderby('m.member_no');
     // If maximum number of badges specified, select that range.
-    if ($max_num_badges)
+    if ($max_num_badges) {
       $select->range(0, $max_num_badges);
+    }
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
