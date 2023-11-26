@@ -2,10 +2,10 @@
 
 namespace Drupal\simple_conreg\Plugin\Mail;
 
-use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Mail\MailFormatHelper;
 use Drupal\Core\Mail\MailInterface;
 use Drupal\Core\Site\Settings;
+use Symfony\Component\Mime\Header\UnstructuredHeader;
 
 /**
  * Defines the default Drupal mail backend, using PHP's native mail() function.
@@ -31,8 +31,6 @@ class SimpleConregPhpMail implements MailInterface {
     // Join the body array into one string.
     $message['body'] = implode("\n\n", $message['body']);
 
-    // Convert any HTML to plain-text.
-    //$message['body'] = MailFormatHelper::htmlToText($message['body']);
     // Wrap the mail body for sending.
     $message['body'] = MailFormatHelper::wrapMail($message['body']);
 
@@ -61,13 +59,13 @@ class SimpleConregPhpMail implements MailInterface {
         unset($message['headers']['Return-Path']);
       }
     }
-    $mimeheaders = array();
+    $mimeheaders = [];
     foreach ($message['headers'] as $name => $value) {
-      $mimeheaders[] = $name . ': ' . Unicode::mimeHeaderEncode($value);
+      $mimeheaders[] = $name . ': ' . (new UnstructuredHeader('subject', $value))->getBodyAsString();
     }
     $line_endings = Settings::get('mail_line_endings', PHP_EOL);
     // Prepare mail commands.
-    $mail_subject = Unicode::mimeHeaderEncode($message['subject']);
+    $mail_subject = (new UnstructuredHeader('subject', $message['subject']))->getBodyAsString();
     // Note: email uses CRLF for line-endings. PHP's API requires LF
     // on Unix and CRLF on Windows. Drupal automatically guesses the
     // line-ending format appropriate for your system. If you need to
@@ -75,7 +73,7 @@ class SimpleConregPhpMail implements MailInterface {
     $mail_body = preg_replace('@\r?\n@', $line_endings, $message['body']);
     // For headers, PHP's API suggests that we use CRLF normally,
     // but some MTAs incorrectly replace LF with CRLF. See #234403.
-    $mail_headers = join("\n", $mimeheaders);
+    $mail_headers = implode("\n", $mimeheaders);
 
     $request = \Drupal::request();
 

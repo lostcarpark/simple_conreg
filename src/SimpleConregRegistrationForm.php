@@ -4,6 +4,7 @@ namespace Drupal\simple_conreg;
 
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\HtmlCommand;
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\MailManagerInterface;
@@ -49,8 +50,10 @@ class SimpleConregRegistrationForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $return = '') {
-    // Prevent registration form from caching.
-    \Drupal::service('page_cache_kill_switch')->trigger();
+    $form['#cache'] = [
+      'tags' => ['event:' . $eid . ':registration'],
+      'max-age' => Cache::PERMANENT,
+    ];
 
     // Store Event ID in form state.
     $form_state->set('eid', $eid);

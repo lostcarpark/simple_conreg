@@ -588,7 +588,6 @@ class SimpleConregAdminMemberEdit extends FormBase {
     $return = $member->saveMember();
 
     if ($return) {
-
       // Get session state to return to correct page.
       $display = $this->tempStore->get('display');
       $page = $this->tempStore->get('page');

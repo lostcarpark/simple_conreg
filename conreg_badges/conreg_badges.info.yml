@@ -1,5 +1,4 @@
 name: ConReg Badges
 type: module
 description: 'Badge making functions for ConReg.'
-core_version_requirement: ^8.8 || ^9
-
+core_version_requirement: ^9.3 || ^10.0

@@ -46,7 +46,7 @@ class FieldOptions {
     $this->memberClasses = [];
 
     // Get option groups and split into lines.
-    foreach (explode("\n", $config->get('simple_conreg_options.option_groups')) as $group) {
+    foreach (explode("\n", $config->get('simple_conreg_options.option_groups') ?? '') as $group) {
       $optionGroup = FieldOptionGroup::newGroup($group);
       if ($optionGroup) {
         $this->groups[$optionGroup->groupId] = $optionGroup;
@@ -54,7 +54,7 @@ class FieldOptions {
     }
 
     // Get options and split into lines.
-    foreach (explode("\n", $config->get('simple_conreg_options.options')) as $option) {
+    foreach (explode("\n", $config->get('simple_conreg_options.options') ?? '') as $option) {
       $fieldOption = FieldOption::newOption($option);
       if ($fieldOption) {
         $this->options[$fieldOption->optionId] = $fieldOption;

@@ -1,5 +1,4 @@
 name: ConReg PlanZ/Zambia
 type: module
 description: 'Add PlanZ or Zambia integration to ConReg.'
-core_version_requirement: ^8.8 || ^9
-
+core_version_requirement: ^9.3 || ^10.0
