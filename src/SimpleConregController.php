@@ -1,20 +1,12 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\simple_conreg\SimpleConregController.
- */
-
 namespace Drupal\simple_conreg;
 
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Component\Utility\Html;
-use Drupal\user\Entity\User;
 use Drupal\Core\Datetime\DateHelper;
-use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\Mail\MailManagerInterface;
-use Symfony\Component\HttpFoundation\RedirectResponse;
-
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Controller for Simple Convention Registration.
@@ -22,10 +14,38 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 class SimpleConregController extends ControllerBase {
 
   /**
+   * Storage for private data.
+   *
+   * @var \Drupal\Core\TempStore\PrivateTempStoreFactory
+   */
+  protected PrivateTempStoreFactory $privateTempStoreFactory;
+
+  /**
+   * Constructor for member lookup form.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The HTTP request.
+   */
+  public function __construct(Request $request) {
+    $this->request = $request;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    // Instantiates this form class.
+    return new static(
+      // Load the service required to construct this class.
+      $container->get('request_stack')->getCurrentRequest()
+    );
+  }
+
+  /**
    * Display simple thank you page.
    */
   public function registrationThanks($eid = 1) {
-    $config = $this->config('simple_conreg.settings.'.$eid);
+    $config = $this->config('simple_conreg.settings.' . $eid);
 
     $content = [
       '#title' => $config->get('thanks.title'),
@@ -42,79 +62,109 @@ class SimpleConregController extends ControllerBase {
    * Render a list of entries in the database.
    */
   public function memberList($eid = 1) {
-    $config = $this->config('simple_conreg.settings.'.$eid);
+    $config = $this->config('simple_conreg.settings.' . $eid);
     $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
     $types = SimpleConregOptions::badgeTypes($eid, $config);
     $digits = $config->get('member_no_digits');
 
-    switch(isset($_GET['sort']) ? $_GET['sort'] : '') {
+    switch ($this->request->query->get('sort') ?? '') {
       case 'desc':
         $direction = 'DESC';
         break;
+
       default:
         $direction = 'ASC';
         break;
     }
-    switch(isset($_GET['order']) ? $_GET['order'] : '') {
+    switch ($this->request->query->get('order') ?? '') {
       case 'Name':
         $order = 'name';
         break;
+
       case 'Country':
         $order = 'country';
         break;
+
       case 'Type':
         $order = 'badge_type';
         break;
+
       default:
         $order = 'member_no';
         break;
     }
 
-    $content = array();
+    $content = [
+      '#cache' => [
+        'tags' => ['event:' . $eid . ':members'],
+        'contexts' => ['url.query_args:sort', 'url.query_args:order'],
+        'max-age' => Cache::PERMANENT,
+      ],
+    ];
 
-    //$content['#markup'] = $this->t('Unpaid Members');
-
-    $content['message'] = array(
+    // $content['#markup'] = $this->t('Unpaid Members');
+    $content['message'] = [
       '#cache' => ['tags' => ['simple-conreg-member-list'], '#max-age' => 600],
-      '#markup' => $this->t('Members\' public details are listed below.'),
-    );
+      '#markup' => $this->t("Members' public details are listed below."),
+    ];
 
     $rows = [];
     $headers = [
-      'member_no' => ['data' => t('Member No'), 'field' => 'm.member_no', 'sort' => 'asc'],
-      'member_name' =>  ['data' => t('Name'), 'field' => 'name'],
-      'badge_type' =>  ['data' => t('Type'), 'field' => 'm.badge_type', 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      'member_country' =>  ['data' => t('Country'), 'field' => 'm.country', 'class' => [RESPONSIVE_PRIORITY_MEDIUM]],
+      'member_no' => [
+        'data' => $this->t('Member No'),
+        'field' => 'm.member_no',
+        'sort' => 'asc',
+      ],
+      'member_name' => [
+        'data' => $this->t('Name'),
+        'field' => 'name',
+      ],
+      'badge_type' => [
+        'data' => $this->t('Type'),
+        'field' => 'm.badge_type',
+        'class' => [RESPONSIVE_PRIORITY_LOW],
+      ],
+      'member_country' => [
+        'data' => $this->t('Country'),
+        'field' => 'm.country',
+        'class' => [RESPONSIVE_PRIORITY_MEDIUM],
+      ],
     ];
     $total = 0;
 
-    foreach ($entries = SimpleConregStorage::adminPublicListLoad($eid) as $entry) {
+    foreach (SimpleConregStorage::adminPublicListLoad($eid) as $entry) {
       // Sanitize each entry.
       $badge_type = trim($entry['badge_type']);
-      $member_no = sprintf("%0".$digits."d", $entry['member_no']);
+      $member_no = sprintf("%0" . $digits . "d", $entry['member_no']);
       $member = ['member_no' => $badge_type . $member_no];
       switch ($entry['display']) {
         case 'F':
           $fullname = trim(trim($entry['first_name']) . ' ' . trim($entry['last_name']));
-          if ($fullname != trim($entry['badge_name']))
+          if ($fullname != trim($entry['badge_name'])) {
             $fullname .= ' (' . trim($entry['badge_name']) . ')';
+          }
           $member['name'] = $fullname;
           break;
+
         case 'B':
           $member['name'] = trim($entry['badge_name']);
           break;
+
         case 'N':
-          $member['name'] = t('Name withheld');
+          $member['name'] = $this->t('Name withheld');
           break;
       }
-      $member['badge_type'] = trim(isset($types[$badge_type]) ? $types[$badge_type] : $badge_type);
-      $member['country'] = trim(isset($countryOptions[$entry['country']]) ? $countryOptions[$entry['country']] : $entry['country']);
+      $member['badge_type'] = trim($types[$badge_type] ?? $badge_type);
+      $member['country'] = trim($countryOptions[$entry['country']] ?? $entry['country']);
 
       // Set key to field to be sorted by.
-      if ($order == 'member_no')
+      if ($order == 'member_no') {
         $key = $member_no;
-      else
-        $key = $member[$order] . $member_no;  // Append member number to ensure uniqueness.
+      }
+      // Append member number to ensure uniqueness.
+      else {
+        $key = $member[$order] . $member_no;
+      }
       if (!empty($entry['display']) && $entry['display'] != 'N' && !empty($entry['country'])) {
         $rows[$key] = $member;
       }
@@ -122,18 +172,20 @@ class SimpleConregController extends ControllerBase {
     }
 
     // Sort array by key.
-    if ($direction == 'DESC')
+    if ($direction == 'DESC') {
       krsort($rows);
-    else
+    }
+    else {
       ksort($rows);
+    }
 
-    $content['table'] = array(
+    $content['table'] = [
       '#type' => 'table',
       '#header' => $headers,
-      //'#footer' => array(t("Total")),
+      // '#footer' => array(t("Total")),
       '#rows' => $rows,
-      '#empty' => t('No entries available.'),
-    );
+      '#empty' => $this->t('No entries available.'),
+    ];
 
     $content['summary_heading'] = [
       '#markup' => $this->t('Country Breakdown'),
@@ -141,13 +193,13 @@ class SimpleConregController extends ControllerBase {
       '#suffix' => '</h2>',
     ];
 
-    $rows = array();
-    $headers = array(
-      t('Country'),
-      t('Number of members'),
-    );
+    $rows = [];
+    $headers = [
+      $this->t('Country'),
+      $this->t('Number of members'),
+    ];
     $total = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberCountrySummaryLoad($eid) as $entry) {
+    foreach (SimpleConregStorage::adminMemberCountrySummaryLoad($eid) as $entry) {
       if (!empty($entry['country'])) {
         // Sanitize each entry.
         $entry['country'] = trim($countryOptions[$entry['country']]);
@@ -155,37 +207,35 @@ class SimpleConregController extends ControllerBase {
         $total += $entry['num'];
       }
     }
-    //Add a row for the total.
-    $rows[] = array(t("Total"), $total);
-    $content['summary'] = array(
+    // Add a row for the total.
+    $rows[] = [$this->t("Total"), $total];
+    $content['summary'] = [
       '#type' => 'table',
       '#header' => $headers,
       '#rows' => $rows,
-      '#empty' => t('No entries available.'),
-    );
+      '#empty' => $this->t('No entries available.'),
+    ];
     // Don't cache this page.
-    //$content['#cache']['max-age'] = 0;
-
+    // $content['#cache']['max-age'] = 0;.
     return $content;
   }
 
   /**
    * Add a summary by member type to render array.
    */
-  public function memberAdminMemberListSummary($eid, &$content)
-  {
+  public function memberAdminMemberListSummary($eid, &$content) {
     $types = SimpleConregOptions::memberTypes($eid);
-    $headers = array(
-      t('Member Type'),
-      t('Number of members'),
-    );
-    $content['summary'] = array(
+    $headers = [
+      $this->t('Member Type'),
+      $this->t('Number of members'),
+    ];
+    $content['summary'] = [
       '#type' => 'table',
       '#header' => $headers,
-      '#empty' => t('No entries available.'),
-    );
+      '#empty' => $this->t('No entries available.'),
+    ];
     $total = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
+    foreach (SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
       // Replace type code with description.
       $content['summary'][] = [
         ['#markup' => isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type']],
@@ -193,10 +243,16 @@ class SimpleConregController extends ControllerBase {
       ];
       $total += $entry['num'];
     }
-    //Add a row for the total.
+    // Add a row for the total.
     $content['summary']['total'] = [
-      ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
-      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      [
+        '#markup' => $this->t("Total"),
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
+      [
+        '#markup' => $total,
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
     ];
 
     return $content;
@@ -205,26 +261,25 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by member type to render array.
    */
-  public function memberAdminMemberListSummaryHorizontal($eid, &$content)
-  {
+  public function memberAdminMemberListSummaryHorizontal($eid, &$content) {
     $types = SimpleConregOptions::memberTypes($eid);
     $headers = [];
-    $row = [];
+    $rows = [];
     $total = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
+    foreach (SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
       // Replace type code with description.
       $headers[] = isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'];
-      $row[] = ['#markup' => $entry['num']];
+      $rows[] = ['#markup' => $entry['num']];
       $total += $entry['num'];
     }
-    //Add a row for the total.
-    $headers[] = t("Total");
-    $row[] = ['#markup' => $total];
+    // Add a row for the total.
+    $headers[] = $this->t("Total");
+    $rows[] = ['#markup' => $total];
     $content['summary'] = [
       '#type' => 'table',
       '#header' => $headers,
-      '#empty' => t('No entries available.'),
-      $row,
+      '#empty' => $this->t('No entries available.'),
+      'rows' => $rows,
     ];
 
     return $content;
@@ -233,31 +288,36 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by payment method to render array.
    */
-  public function memberAdminMemberListBadgeSummary($eid, &$content)
-  {
+  public function memberAdminMemberListBadgeSummary($eid, &$content) {
     $types = SimpleConregOptions::badgeTypes($eid);
-    $headers = array(
-      t('Badge Type'),
-      t('Number of members'),
-    );
-    $content['badge_summary'] = array(
+    $headers = [
+      $this->t('Badge Type'),
+      $this->t('Number of members'),
+    ];
+    $content['badge_summary'] = [
       '#type' => 'table',
       '#header' => $headers,
-      '#empty' => t('No entries available.'),
-    );
+      '#empty' => $this->t('No entries available.'),
+    ];
     $total = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberBadgeSummaryLoad($eid) as $entry) {
+    foreach (SimpleConregStorage::adminMemberBadgeSummaryLoad($eid) as $entry) {
       // Replace type code with description.
       $content['badge_summary'][] = [
-        ['#markup' => isset($types[trim($entry['badge_type'])]) ? $types[trim($entry['badge_type'])] : $entry['badge_type']],
+        ['#markup' => $types[trim($entry['badge_type'])] ?? $entry['badge_type']],
         ['#markup' => $entry['num']],
       ];
       $total += $entry['num'];
     }
-    //Add a row for the total.
+    // Add a row for the total.
     $content['badge_summary']['total'] = [
-      ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
-      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      [
+        '#markup' => $this->t("Total"),
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
+      [
+        '#markup' => $total,
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
     ];
 
     return $content;
@@ -266,42 +326,48 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by payment method to render array.
    */
-  public function memberAdminMemberListDaysSummary($eid, &$content)
-  {
+  public function memberAdminMemberListDaysSummary($eid, &$content) {
     $days = SimpleConregOptions::days($eid);
 
     $dayTotals = [];
-    foreach($days as $key=>$val) {
+    foreach ($days as $key => $val) {
       $dayTotals[$key] = 0;
     }
     $total = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberDaysSummaryLoad($eid) as $entry) {
+    foreach (SimpleConregStorage::adminMemberDaysSummaryLoad($eid) as $entry) {
       // Sanitize each entry.
-      foreach (explode('|', $entry['days']) as $day)
+      foreach (explode('|', $entry['days']) as $day) {
         $dayTotals[$day] += $entry['num'];
+      }
       $total += $entry['num'];
     }
 
-    $headers = array(
-      t('Days'),
-      t('Number of members'),
-    );
-    $content['days_summary'] = array(
+    $headers = [
+      $this->t('Days'),
+      $this->t('Number of members'),
+    ];
+    $content['days_summary'] = [
       '#type' => 'table',
       '#header' => $headers,
-      '#empty' => t('No entries available.'),
-    );
-    foreach ($dayTotals as $key=>$val) {
+      '#empty' => $this->t('No entries available.'),
+    ];
+    foreach ($dayTotals as $key => $val) {
       // Sanitize each entry.
       $content['days_summary'][] = [
-        ['#markup' => isset($days[$key]) ? $days[$key] : $key],
+        ['#markup' => $days[$key] ?? $key],
         ['#markup' => $val],
       ];
     }
-    //Add a row for the total.
+    // Add a row for the total.
     $content['days_summary']['total'] = [
-      ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
-      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      [
+        '#markup' => $this->t("Total"),
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
+      [
+        '#markup' => $total,
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
     ];
 
     return $content;
@@ -310,20 +376,19 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by badge type to render array.
    */
-  public function memberAdminMemberListPaymentMethodSummary($eid, &$content)
-  {
+  public function memberAdminMemberListPaymentMethodSummary($eid, &$content) {
     $headers = [
-      t('Payment Method'),
-      t('Number of members'),
+      $this->t('Payment Method'),
+      $this->t('Number of members'),
     ];
     // Set up table.
     $rows = [
       '#type' => 'table',
       '#header' => $headers,
-      '#empty' => t('No entries available.'),
+      '#empty' => $this->t('No entries available.'),
     ];
     $total = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberPaymentMethodSummaryLoad($eid) as $entry) {
+    foreach (SimpleConregStorage::adminMemberPaymentMethodSummaryLoad($eid) as $entry) {
       // Sanitize each entry.
       $rows[] = [
         ['#markup' => $entry['payment_method']],
@@ -331,10 +396,16 @@ class SimpleConregController extends ControllerBase {
       ];
       $total += $entry['num'];
     }
-    //Add a row for the total.
+    // Add a row for the total.
     $rows['total'] = [
-      ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
-      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
+      [
+        '#markup' => $this->t("Total"),
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
+      [
+        '#markup' => $total,
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
     ];
     $content['payment_method_summary'] = $rows;
 
@@ -344,21 +415,20 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by badge type to render array.
    */
-  public function memberAdminMemberListAmountPaidSummary($eid, &$content)
-  {
+  public function memberAdminMemberListAmountPaidSummary($eid, &$content) {
     $headers = [
-      t('Amount Paid'),
-      t('Number of members'),
-      t('Total Paid'),
+      $this->t('Amount Paid'),
+      $this->t('Number of members'),
+      $this->t('Total Paid'),
     ];
     $rows = [
       '#type' => 'table',
       '#header' => $headers,
-      '#empty' => t('No entries available.'),
+      '#empty' => $this->t('No entries available.'),
     ];
     $total = 0;
     $total_amount = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberAmountPaidSummaryLoad($eid) as $entry) {
+    foreach (SimpleConregStorage::adminMemberAmountPaidSummaryLoad($eid) as $entry) {
       // Calculate total received at that rate.
       $total_paid = $entry['member_price'] * $entry['num'];
       // Sanitize each entry.
@@ -370,11 +440,20 @@ class SimpleConregController extends ControllerBase {
       $total += $entry['num'];
       $total_amount += $total_paid;
     }
-    //Add a row for the total.
+    // Add a row for the total.
     $rows['total'] = [
-      ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
-      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
-      ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
+      [
+        '#markup' => $this->t("Total"),
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
+      [
+        '#markup' => $total,
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
+      [
+        '#markup' => number_format($total_amount, 2),
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
     ];
     $content['amount_paid_summary'] = $rows;
 
@@ -384,26 +463,26 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by member type and amount paid to render array.
    */
-  public function memberAdminMemberListAmountPaidByTypeSummary($eid, &$content)
-  {
+  public function memberAdminMemberListAmountPaidByTypeSummary($eid, &$content) {
     $types = SimpleConregOptions::memberTypes($eid);
     $headers = [
-      t('Member Type'),
-      t('Amount Paid'),
-      t('Number of members'),
-      t('Total Paid'),
+      $this->t('Member Type'),
+      $this->t('Amount Paid'),
+      $this->t('Number of members'),
+      $this->t('Total Paid'),
     ];
     $rows = [
       '#type' => 'table',
       '#header' => $headers,
-      '#empty' => t('No entries available.'),
+      '#empty' => $this->t('No entries available.'),
     ];
     $total = 0;
     $total_amount = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberAmountPaidByTypeSummaryLoad($eid) as $entry) {
+    foreach (SimpleConregStorage::adminMemberAmountPaidByTypeSummaryLoad($eid) as $entry) {
       // Replace type code with description.
-      if (isset($types->types[$entry['member_type']]))
+      if (isset($types->types[$entry['member_type']])) {
         $entry['member_type'] = (isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type']);
+      }
       // Calculate total received at that rate.
       $total_paid = $entry['member_price'] * $entry['num'];
       $entry['total_paid'] = number_format($total_paid, 2);
@@ -419,12 +498,24 @@ class SimpleConregController extends ControllerBase {
       $total += $entry['num'];
       $total_amount += $total_paid;
     }
-    //Add a row for the total.
+    // Add a row for the total.
     $rows['total'] = [
-      ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
-      ['#markup' => '', '#wrapper_attributes' => ['class' => ['table-total']]],
-      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
-      ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
+      [
+        '#markup' => $this->t("Total"),
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
+      [
+        '#markup' => '',
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
+      [
+        '#markup' => $total,
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
+      [
+        '#markup' => number_format($total_amount, 2),
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
     ];
     $content['type_amount_paid_summary'] = $rows;
 
@@ -434,25 +525,24 @@ class SimpleConregController extends ControllerBase {
   /**
    * Add a summary by date joined to render array.
    */
-  public function memberAdminMemberListByDateSummary($eid, &$content)
-  {
+  public function memberAdminMemberListByDateSummary($eid, &$content) {
     $months = DateHelper::monthNames();
     $headers = [
-      t('Year'),
-      t('Month'),
-      t('Number of members'),
-      t('Total Paid'),
-      t('Cumulative members'),
-      t('Cumulative Total Paid'),
+      $this->t('Year'),
+      $this->t('Month'),
+      $this->t('Number of members'),
+      $this->t('Total Paid'),
+      $this->t('Cumulative members'),
+      $this->t('Cumulative Total Paid'),
     ];
     $rows = [
       '#type' => 'table',
       '#header' => $headers,
-      '#empty' => t('No entries available.'),
+      '#empty' => $this->t('No entries available.'),
     ];
     $total = 0;
     $total_amount = 0;
-    foreach ($entries = SimpleConregStorage::adminMemberByDateSummaryLoad($eid) as $entry) {
+    foreach (SimpleConregStorage::adminMemberByDateSummaryLoad($eid) as $entry) {
       // Convert month to name.
       $entry['month'] = $months[$entry['month']];
       $total += $entry['num'];
@@ -467,14 +557,32 @@ class SimpleConregController extends ControllerBase {
         ['#markup' => number_format($total_amount, 2)],
       ];
     }
-    //Add a row for the total.
+    // Add a row for the total.
     $rows['total'] = [
-      ['#markup' => t("Total"), '#wrapper_attributes' => ['class' => ['table-total']]],
-      ['#markup' => '', '#wrapper_attributes' => ['class' => ['table-total']]],
-      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
-      ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
-      ['#markup' => $total, '#wrapper_attributes' => ['class' => ['table-total']]],
-      ['#markup' => number_format($total_amount, 2), '#wrapper_attributes' => ['class' => ['table-total']]],
+      [
+        '#markup' => $this->t("Total"),
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
+      [
+        '#markup' => '',
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
+      [
+        '#markup' => $total,
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
+      [
+        '#markup' => number_format($total_amount, 2),
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
+      [
+        '#markup' => $total,
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
+      [
+        '#markup' => number_format($total_amount, 2),
+        '#wrapper_attributes' => ['class' => ['table-total']],
+      ],
     ];
     $content['by_date_summary'] = $rows;
 
@@ -484,8 +592,7 @@ class SimpleConregController extends ControllerBase {
   /**
    * Render a list of paid convention members in the database.
    */
-  public function memberAdminMemberList($eid)
-  {
+  public function memberAdminMemberList($eid) {
     $config = SimpleConregConfig::getConfig($eid);
     $countryOptions = SimpleConregOptions::memberCountries($eid, $config);
     $types = SimpleConregOptions::memberTypes($eid, $config);
@@ -497,109 +604,153 @@ class SimpleConregController extends ControllerBase {
     $digits = $config->get('member_no_digits');
 
     $content = [
+      '#cache' => [
+        'tags' => ['event:' . $eid . ':members'],
+        'contexts' => ['url.query_args:sort', 'url.query_args:order'],
+        'max-age' => Cache::PERMANENT,
+      ],
       '#attached' => [
         'library' => ['simple_conreg/conreg_tables'],
-      ]
+      ],
     ];
 
     $pageOptions = [];
-    switch(isset($_GET['sort']) ? $_GET['sort'] : '') {
+    switch ($this->request->query->get('sort') ?? '') {
       case 'desc':
         $direction = 'DESC';
         $pageOptions['sort'] = 'desc';
         break;
+
       default:
         $direction = 'ASC';
         break;
     }
-    switch(isset($_GET['order']) ? $_GET['order'] : '') {
+    switch ($this->request->query->get('order') ?? '') {
       case 'MID':
         $order = 'm.mid';
         $pageOptions['order'] = 'MID';
         break;
+
       case 'First name':
         $order = 'm.first_name';
         $pageOptions['order'] = 'First name';
         break;
+
       case 'Last name':
         $order = 'm.last_name';
         $pageOptions['order'] = 'Last name';
         break;
+
       case 'Badge name':
         $order = 'm.badge_name';
         $pageOptions['order'] = 'Badge name';
         break;
+
       case 'Email':
         $order = 'm.email';
         $pageOptions['order'] = 'Email';
         break;
+
       default:
         $order = 'member_no';
         break;
     }
 
-    $content['message'] = array(
+    $content['message'] = [
       '#markup' => $this->t('Here is a list of all paid convention members.'),
-    );
+    ];
 
     $this->memberAdminMemberListSummary($eid, $content);
 
-    $rows = array();
-    $headers = array(
-      'member_type' =>  ['data' => t('Member type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      'days' =>  ['data' => t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      'member_no' => ['data' => t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
-      'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
-      'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
-      'email' => ['data' => t('Email'), 'field' => 'm.email'],
-      'badge_name' => ['data' => t('Badge name'), 'field' => 'm.badge_name'],
-      'badge_type' =>  ['data' => t('Badge type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      t('Street'),
-      t('Street line 2'),
-      t('City'),
-      t('County'),
-      t('Postcode'),
-      t('Country'),
-      t('Phone'),
-      t('Birth Date'),
-      t('Age'),
-      'display' =>  ['data' => t('Display'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      t('Communication Method'),
-      t('Paid'),
-      t('Price'),
-      t('Comments'),
-      t('Approved'),
-      'mid' => ['data' => t('Internal ID'), 'field' => 'm.mid', 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      t('Date joined'),
-    );
+    $rows = [];
+    $headers = [
+      'member_type' => [
+        'data' => $this->t('Member type'),
+        'class' => [RESPONSIVE_PRIORITY_LOW],
+      ],
+      'days' => [
+        'data' => $this->t('Days'),
+        'class' => [RESPONSIVE_PRIORITY_LOW],
+      ],
+      'member_no' => [
+        'data' => $this->t('Member no'),
+        'field' => 'm.member_no',
+        'sort' => 'asc',
+      ],
+      'first_name' => [
+        'data' => $this->t('First name'),
+        'field' => 'm.first_name',
+      ],
+      'last_name' => [
+        'data' => $this->t('Last name'),
+        'field' => 'm.last_name',
+      ],
+      'email' => [
+        'data' => $this->t('Email'),
+        'field' => 'm.email',
+      ],
+      'badge_name' => [
+        'data' => $this->t('Badge name'),
+        'field' => 'm.badge_name',
+      ],
+      'badge_type' => [
+        'data' => $this->t('Badge type'),
+        'class' => [RESPONSIVE_PRIORITY_LOW],
+      ],
+      'street' => $this->t('Street'),
+      'street2' => $this->t('Street line 2'),
+      'city' => $this->t('City'),
+      'county' => $this->t('County'),
+      'postcode' => $this->t('Postcode'),
+      'country' => $this->t('Country'),
+      'phone' => $this->t('Phone'),
+      'dob' => $this->t('Birth Date'),
+      'age' => $this->t('Age'),
+      'display' => [
+        'data' => $this->t('Display'),
+        'class' => [RESPONSIVE_PRIORITY_LOW],
+      ],
+      'comm_method' => $this->t('Communication Method'),
+      'paid' => $this->t('Paid'),
+      'price' => $this->t('Price'),
+      'comments' => $this->t('Comments'),
+      'approved' => $this->t('Approved'),
+      'mid' => [
+        'data' => $this->t('Internal ID'),
+        'field' => 'm.mid',
+        'class' => [RESPONSIVE_PRIORITY_LOW],
+      ],
+      'joined' => $this->t('Date joined'),
+    ];
 
-    foreach ($entries = SimpleConregStorage::adminPaidMemberListLoad($eid, $direction, $order) as $entry) {
-      if (!empty($entry['member_no']))
-        $entry['member_no'] = $entry['badge_type'] . sprintf("%0".$digits."d", $entry['member_no']);
+    foreach (SimpleConregStorage::adminPaidMemberListLoad($eid, $direction, $order) as $entry) {
+      if (!empty($entry['member_no'])) {
+        $entry['member_no'] = $entry['badge_type'] . sprintf("%0" . $digits . "d", $entry['member_no']);
+      }
       if (!empty($entry['days'])) {
         $dayDescs = [];
-        foreach(explode('|', $entry['days']) as $day) {
-          $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
+        foreach (explode('|', $entry['days']) as $day) {
+          $dayDescs[] = $days[$day] ?? $day;
         }
         $entry['days'] = implode(', ', $dayDescs);
       }
       $entry['member_type'] = isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'];
-      $entry['badge_type'] = isset($badgeTypes[$entry['badge_type']]) ? $badgeTypes[$entry['badge_type']] : $entry['badge_type'];
-      $entry['country'] = isset($countryOptions[$entry['country']]) ? $countryOptions[$entry['country']] : $entry['country'];
-      $entry['communication_method'] = isset($communicationsOptions[$entry['communication_method']]) ? $communicationsOptions[$entry['communication_method']] : $entry['communication_method'];
-      $entry['display'] = isset($displayOptions[$entry['display']]) ? $displayOptions[$entry['display']] : $entry['display'];
-      $entry['is_paid'] = isset($yesNo[$entry['is_paid']]) ? $yesNo[$entry['is_paid']] : $entry['is_paid'];
-      $entry['is_approved'] = isset($yesNo[$entry['is_approved']]) ? $yesNo[$entry['is_approved']] : $entry['is_approved'];
+      $entry['badge_type'] = $badgeTypes[$entry['badge_type']] ?? $entry['badge_type'];
+      $entry['country'] = $countryOptions[$entry['country']] ?? $entry['country'];
+      $entry['communication_method'] = $communicationsOptions[$entry['communication_method']] ?? $entry['communication_method'];
+      $entry['display'] = $displayOptions[$entry['display']] ?? $entry['display'];
+      $entry['is_paid'] = $yesNo[$entry['is_paid']] ?? $entry['is_paid'];
+      $entry['is_approved'] = $yesNo[$entry['is_approved']] ?? $entry['is_approved'];
       // Sanitize each entry.
       $rows[] = $entry;
     }
-    $content['table'] = array(
+    $content['table'] = [
       '#type' => 'table',
       '#header' => $headers,
       '#rows' => $rows,
-      '#empty' => t('No entries available.'),
+      '#empty' => $this->t('No entries available.'),
       '#sticky' => TRUE,
-    );
+    ];
     // Don't cache this page.
     $content['#cache']['max-age'] = 0;
 
@@ -607,62 +758,66 @@ class SimpleConregController extends ControllerBase {
   }
 
   /**
-   * Render a list of paid convention members in the database.
+   * Render a summary convention members in the database.
    */
   public function memberAdminMemberSummary($eid) {
     $content = [
+      '#cache' => [
+        'tags' => ['event:' . $eid . ':members'],
+        'max-age' => Cache::PERMANENT,
+      ],
       '#attached' => [
         'library' => ['simple_conreg/conreg_tables'],
-      ]
+      ],
     ];
 
-    $content['message_member'] = array(
+    $content['message_member'] = [
       '#markup' => $this->t('Summary by member type'),
       '#prefix' => '<h3>',
       '#suffix' => '</h3>',
-    );
+    ];
     $this->memberAdminMemberListSummary($eid, $content);
 
-    $content['message_badge_type'] = array(
+    $content['message_badge_type'] = [
       '#markup' => $this->t('Summary by badge type'),
       '#prefix' => '<h3>',
       '#suffix' => '</h3>',
-    );
+    ];
     $this->memberAdminMemberListBadgeSummary($eid, $content);
 
-    $content['message_days'] = array(
+    $content['message_days'] = [
       '#markup' => $this->t('Summary by day'),
       '#prefix' => '<h3>',
       '#suffix' => '</h3>',
-    );
+    ];
     $this->memberAdminMemberListDaysSummary($eid, $content);
 
-    $content['message_payment_method'] = array(
+    $content['message_payment_method'] = [
       '#markup' => $this->t('Summary by payment method'),
       '#prefix' => '<h3>',
       '#suffix' => '</h3>',
-    );
+    ];
     $this->memberAdminMemberListPaymentMethodSummary($eid, $content);
 
-    $content['message_amount_paid'] = array(
+    $content['message_amount_paid'] = [
       '#markup' => $this->t('Summary by amount paid'),
       '#prefix' => '<h3>',
       '#suffix' => '</h3>',
-    );
+    ];
     $this->memberAdminMemberListAmountPaidSummary($eid, $content);
 
-    $content['message_type_amount_paid'] = array(
+    $content['message_type_amount_paid'] = [
       '#markup' => $this->t('Summary by member type and amount paid'),
       '#prefix' => '<h3>',
       '#suffix' => '</h3>',
-    );
+    ];
     $this->memberAdminMemberListAmountPaidByTypeSummary($eid, $content);
 
-    $content['message_by_date'] = array(
+    $content['message_by_date'] = [
       '#markup' => $this->t('Summary by date joined'),
       '#prefix' => '<h3>',
       '#suffix' => '</h3>',
-    );
+    ];
     $this->memberAdminMemberListByDateSummary($eid, $content);
 
     // Don't cache this page.
@@ -672,336 +827,95 @@ class SimpleConregController extends ControllerBase {
   }
 
   /**
-   * Render a list of Member Badges in the database.
+   * Return a list of member add-ons.
    */
-  public function memberAdminBadges($eid) {
-    $config = SimpleConregConfig::getConfig($eid);
-    $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
-    $days = SimpleConregOptions::days($eid, $config);
-    $digits = $config->get('member_no_digits');
-
-    $content = array();
-
-    $content['message'] = array(
-      '#markup' => $this->t('Here is a list of all paid convention members.'),
-    );
-
-    $rows = array();
-    $headers = array(
-      'member_no' => ['data' => t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
-      'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
-      'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
-      'badge_name' => ['data' => t('Badge name'), 'field' => 'm.badge_name'],
-      'badge_type' =>  ['data' => t('Badge type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      'days' =>  ['data' => t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-    );
-
-    foreach ($entries = SimpleConregStorage::adminMemberBadges($eid) as $entry) {
-      if (!empty($entry['member_no']))
-        $entry['member_no'] = $entry['badge_type'] . sprintf("%0".$digits."d", $entry['member_no']);
-      $entry['badge_type'] = isset($badgeTypes[$entry['badge_type']]) ? $badgeTypes[$entry['badge_type']] : $entry['badge_type'];
-      if (!empty($entry['days'])) {
-        $dayDescs = [];
-        foreach(explode('|', $entry['days']) as $day) {
-          $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
-        }
-        $entry['days'] = implode(', ', $dayDescs);
-      }
-      // Sanitize each entry.
-      $rows[] = $entry;
-    }
-    $content['table'] = array(
-      '#type' => 'table',
-      '#header' => $headers,
-      '#rows' => $rows,
-      '#empty' => t('No entries available.'),
-      '#sticky' => TRUE,
-    );
-    // Don't cache this page.
-    $content['#cache']['max-age'] = 0;
-
-    return $content;
-  }
-
   public function memberAdminMemberAddOns($eid) {
-    $content = array();
-
-    $content['message'] = array(
-      '#markup' => $this->t('List of members with add-ons.'),
-    );
-
-    $table = 0;
-    $rows = array();
-    $headers = array(
-      t('First Name'),
-      t('Last Name'),
-      t('email'),
-      t('Add-on Option'),
-      t('Add-on Detail'),
-      t('Add-on Price'),
-    );
-
-    $total = 0;
-
-    foreach ($entries = SimpleConregStorage::adminMemberAddOns($eid) as $entry) {
-      $total += $entry['add_on_price'];
-      // Sanitize each entry.
-      $rows[] = $entry;
-    }
-
-    $rows[] = [t('Total'), '', '', '', '', number_format($total, 2)];
-
-    $content['table'] = array(
-      '#type' => 'table',
-      '#header' => $headers,
-      '#rows' => $rows,
-      '#empty' => t('No entries available.'),
-      '#sticky' => TRUE,
-    );
-    // Don't cache this page.
-    $content['#cache']['max-age'] = 0;
-
-    return $content;
-  }
-
-  public function memberAdminChildMemberAges($eid) {
-    $content = array();
-
-    $content['message'] = array(
-      '#markup' => $this->t('List of members with add-ons.'),
-    );
-
-    $table = 0;
-    $rows = array();
-    $headers = array(
-      t('Member No'),
-      t('First Name'),
-      t('Last Name'),
-      t('email'),
-      t('Member Type'),
-      t('Age'),
-      t('Parent First Name'),
-      t('Parent Last Name'),
-      t('Parent email'),
-    );
-
-    $total = 0;
-
-    foreach ($entries = SimpleConregStorage::adminMemberChildMembers($eid) as $entry) {
-      // Sanitize each entry.
-      $rows[] = $entry;
-    }
-
-    $content['table'] = array(
-      '#type' => 'table',
-      '#header' => $headers,
-      '#rows' => $rows,
-      '#empty' => t('No entries available.'),
-      '#sticky' => TRUE,
-    );
-    // Don't cache this page.
-    $content['#cache']['max-age'] = 0;
-
-    return $content;
-  }
-
-  /**
-   * Render a list of paid convention members in the database.
-   */
-  public function memberAdminProgrammeList($eid) {
-    $content = array();
-
-    $content['message'] = array(
-      '#markup' => $this->t('Here is a list of all members who ticked the "programme participant" checkbox.'),
-    );
-
-    $rows = array();
-    $headers = array(
-      t('Type'),
-      t('Member No'),
-      t('First Name'),
-      t('Last Name'),
-      t('Email'),
-      t('Badge Name'),
-      t('Paid'),
-      t('Approved'),
-    );
-
-    foreach ($entries = SimpleConregStorage::adminProgrammeMemberListLoad($eid) as $entry) {
-      // Sanitize each entry.
-      $rows[] = $entry;
-    }
-    $content['table'] = array(
-      '#type' => 'table',
-      '#header' => $headers,
-      '#rows' => $rows,
-      '#empty' => t('No entries available.'),
-    );
-    // Don't cache this page.
-    $content['#cache']['max-age'] = 0;
-
-    return $content;
-  }
-
-  /**
-   * Render a list of paid convention members in the database.
-   */
-  public function memberAdminVolunteerList($eid) {
-    $content = array();
-
-    $content['message'] = array(
-      '#markup' => $this->t('Here is a list of all members who ticked the "volunteer" checkbox.'),
-    );
-
-    $rows = array();
-    $headers = array(
-      t('Type'),
-      t('Member No'),
-      t('First Name'),
-      t('Last Name'),
-      t('Email'),
-      t('Badge Name'),
-      t('Paid'),
-      t('Approved'),
-    );
-
-    foreach ($entries = SimpleConregStorage::adminVolunteerMemberListLoad($eid) as $entry) {
-      // Sanitize each entry.
-      $rows[] = $entry;
-    }
-    $content['table'] = array(
-      '#type' => 'table',
-      '#header' => $headers,
-      '#rows' => $rows,
-      '#empty' => t('No entries available.'),
-    );
-    // Don't cache this page.
-    $content['#cache']['max-age'] = 0;
-
-    return $content;
-  }
-
-  /**
-   * Check valid member credentials, and if valid, login and redirect to member portal.
-   */
-  public function memberLoginAndRedirect($mid, $key, $expiry)
-  {
-
-    // Check member credentials valid.
-    $member = SimpleConregStorage::load(['mid' => $mid, 'random_key' => $key, 'login_exp_date' => $expiry, 'is_deleted' => 0]);
-    if (empty($member['mid'])) {
-      $content['markup'] = array(
-        '#markup' => '<p>Invalid credentials.</p>',
-      );
-      return $content;
-    }
-
-    // Check if login has expired.
-    if (empty($member['login_exp_date'] > \Drupal::time()->getRequestTime())) {
-      $content['markup'] = array(
-        '#markup' => '<p>Login has expired. Please use Member Check to generate a new login link.</p>',
-      );
-      return $content;
-    }
-
-    // Check if user already exists.
-    $user = user_load_by_mail($member['email']);
-
-    // If user doesn't exist, create new user.
-    if (!$user) {
-      $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
-      $user = User::create([
-        'name' => $member['email'],
-        'mail' => $member['email'],
-      ]);
-      $user->set("langcode", $language);
-      $user->set("preferred_langcode", $language);
-      $user->set("preferred_admin_langcode", $language);
-      // Set the user timezone to the site default timezone.
-      $dateConfig = \Drupal::config('system.date');
-      $config_data_default_timezone = $dateConfig->get('timezone.default');
-      $user->set('timezone', $config_data_default_timezone ?: @date_default_timezone_get());
-      $user->activate();// NOTE: login will fail silently if not activated!
-      $user->save();
-    }
-
-    // Check if role needs to be added.
-    $config = SimpleConregConfig::getConfig($member['eid']);
-    $addRole = $config->get('member_portal.add_role');
-    if ($addRole) {
-      // Check if user has role already.
-      if (!$user->hasRole($addRole)) {
-        // They don't, so we need to add it.
-        $user->addRole($addRole);
-        $user->save();
-      }
-    }
-
-    // Login user.
-    user_login_finalize($user);
-
-    // Redirect to member portal.
-    return new RedirectResponse(\Drupal\Core\Url::fromRoute('simple_conreg_portal', ['eid' => $member['eid']])->setAbsolute()->toString());
-  }
-
-  /**
-   * Function used for badge uploading.
-   */
-  public function badgeUpload($eid)
-  {
-    $pngdata = \Drupal::request()->request->get('data');
-    if (!empty($pngdata)) {
-      list($id, $base64) = explode('|', $pngdata);
-      list($type, $data) = explode(';', $base64);
-      list(, $data)      = explode(',', $data);
-      $pngdata = base64_decode($data);
-      $path = 'public://badges/'.$eid;
-      \Drupal::service('file_system')->prepareDirectory($path, FileSystemInterface::CREATE_DIRECTORY);
-      file_save_data($pngdata, $path.'/'.$id.'.png', FileSystemInterface::EXISTS_REPLACE);
-    }
-
-    $content['markup'] = array(
-      '#markup' => '<p>Badge Upload.</p>',
-    );
-    return $content;
-  }
-
-  /**
-   * Function used for badge uploading.
-   *
-   * @param int $mid
-   *   The member id.
-   *
-   * @return array
-   *   Content array containing send status.
-   */
-  public function bulksend(int $mid): array {
-    // Look up email address for member.
-    $member = SimpleConregStorage::load([
-      'mid' => $mid,
-      'is_deleted' => 0,
-    ]);
-
-    $config = SimpleConregConfig::getConfig($member['eid']);
-
-    // Set up parameters for receipt email.
-    $params = ['eid' => $member['eid'], 'mid' => $member['mid']];
-    $params['subject'] = $config->get('bulkemail.template_subject');
-    $params['body'] = $config->get('bulkemail.template_body');
-    $params['body_format'] = $config->get('bulkemail.template_format');
-    $module = "simple_conreg";
-    $key = "template";
-    $to = $member["email"];
-    $language_code = \Drupal::languageManager()->getDefaultLanguage()->getId();
-
-    // Send confirmation email to member.
-    if (!empty($member["email"])) {
-      \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $language_code, $params);
-    }
-
-    $content['markup'] = [
-      '#markup' => '<p>Bulk send.</p>',
+    $content = [
+      '#cache' => [
+        'tags' => ['event:' . $eid . ':members'],
+        'max-age' => Cache::PERMANENT,
+      ],
     ];
+
+    $content['message'] = [
+      '#markup' => $this->t('List of members with add-ons.'),
+    ];
+
+    $rows = [];
+    $headers = [
+      $this->t('First Name'),
+      $this->t('Last Name'),
+      $this->t('email'),
+      $this->t('Add-on Option'),
+      $this->t('Add-on Detail'),
+      $this->t('Add-on Price'),
+    ];
+
+    $total = 0;
+
+    foreach (SimpleConregStorage::adminMemberAddOns($eid) as $entry) {
+      $total += $entry['add_on_price'];
+      $rows[] = $entry;
+    }
+
+    $rows[] = [$this->t('Total'), '', '', '', '', number_format($total, 2)];
+
+    $content['table'] = [
+      '#type' => 'table',
+      '#header' => $headers,
+      '#rows' => $rows,
+      '#empty' => $this->t('No entries available.'),
+      '#sticky' => TRUE,
+    ];
+    // Don't cache this page.
+    $content['#cache']['max-age'] = 0;
+
+    return $content;
+  }
+
+  /**
+   * Display a list of child members and their ages.
+   */
+  public function memberAdminChildMemberAges($eid) {
+    $content = [
+      '#cache' => [
+        'tags' => ['event:' . $eid . ':members'],
+        'max-age' => Cache::PERMANENT,
+      ],
+    ];
+
+    $content['message'] = [
+      '#markup' => $this->t('List of members with add-ons.'),
+    ];
+
+    $rows = [];
+    $headers = [
+      $this->t('Member No'),
+      $this->t('First Name'),
+      $this->t('Last Name'),
+      $this->t('email'),
+      $this->t('Member Type'),
+      $this->t('Age'),
+      $this->t('Parent First Name'),
+      $this->t('Parent Last Name'),
+      $this->t('Parent email'),
+    ];
+
+    foreach (SimpleConregStorage::adminMemberChildMembers($eid) as $entry) {
+      // Sanitize each entry.
+      $rows[] = $entry;
+    }
+
+    $content['table'] = [
+      '#type' => 'table',
+      '#header' => $headers,
+      '#rows' => $rows,
+      '#empty' => $this->t('No entries available.'),
+      '#sticky' => TRUE,
+    ];
+    // Don't cache this page.
+    $content['#cache']['max-age'] = 0;
+
     return $content;
   }
 

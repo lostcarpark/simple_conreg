@@ -170,6 +170,7 @@ class Member extends \stdClass {
       // Invoke member updated hook.
       \Drupal::moduleHandler()->invokeAll('convention_member_updated', ['member' => $this]);
     }
+    \Drupal::service('cache_tags.invalidator')->invalidateTags(['event:' . $this->eid . ':members']);
 
     return $this->mid;
   }
@@ -200,6 +201,7 @@ class Member extends \stdClass {
       // Invoke member deleted hook.
       \Drupal::moduleHandler()->invokeAll('convention_member_deleted', ['member' => $this]);
     }
+    \Drupal::service('cache_tags.invalidator')->invalidateTags(['event:' . $this->eid . ':members']);
   }
 
   /**

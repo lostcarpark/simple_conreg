@@ -158,7 +158,7 @@ simple_conreg_login:
   path: 'members/login/{mid}/{key}/{expiry}'
   defaults:
     _title: 'Login'
-    _controller: '\Drupal\simple_conreg\SimpleConregController::memberLoginAndRedirect'
+    _controller: '\Drupal\simple_conreg\Controller\LoginController::memberLoginAndRedirect'
   requirements:
     _access: 'TRUE'
     mid: ^[0-9]+$
@@ -255,7 +255,7 @@ simple_conreg_config_email_templates:
     _permission: 'configure convention email templates'
 
 simple_conreg_admin_member_list:
-  path: 'members/memberlist/{eid}'
+  path: 'admin/members/memberlist/{eid}'
   defaults:
     _title: 'Member List'
     _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminMemberList'
@@ -277,7 +277,7 @@ simple_conreg_admin_member_badges:
 simple_conreg_badge_upload:
   path: 'members/badge/upload/{eid}'
   defaults:
-    _controller: '\Drupal\simple_conreg\SimpleConregController::badgeUpload'
+    _controller: '\Drupal\simple_conreg\Controller\BadgeUploadController::badgeUpload'
     eid: 1
   requirements:
     _permission: 'view membership badges'
@@ -353,27 +353,6 @@ simple_conreg_admin_child_member_ages:
   requirements:
     _permission: 'view child members'
     eid: ^[0-9]+$
-
-simple_conreg_admin_programme_list:
-  path: 'members/programmelist/{eid}'
-  defaults:
-    _title: 'Programme Participant List'
-    _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminProgrammeList'
-    eid: 1
-  requirements:
-    _permission: 'view programme membership details'
-    eid: ^[0-9]+$
-
-simple_conreg_admin_volunteer_list:
-  path: 'members/volunteerlist/{eid}'
-  defaults:
-    _title: 'Volunteer List'
-    _controller: '\Drupal\simple_conreg\SimpleConregController::memberAdminVolunteerList'
-    eid: 1
-  requirements:
-    _permission: 'view volunteer membership details'
-    eid: ^[0-9]+$
-
 
 simple_conreg_admin_members:
   path: 'admin/members/list/{eid}/{display}/{page}'
@@ -456,7 +435,7 @@ simple_conreg_admin_bulk_email:
 simple_conreg_admin_bulk_email_send:
   path: 'admin/members/bulksend/{mid}'
   defaults:
-    _controller: '\Drupal\simple_conreg\SimpleConregController::bulksend'
+    _controller: '\Drupal\simple_conreg\Controller\BulkMailController::bulkSend'
   requirements:
     _permission: 'bulk email sending'
     mid: ^[0-9]+$

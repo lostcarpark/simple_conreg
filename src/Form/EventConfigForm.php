@@ -2,16 +2,70 @@
 
 namespace Drupal\simple_conreg\Form;
 
+use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Cache\CacheTagsInvalidator;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\simple_conreg\SimpleConregEventStorage;
 use Drupal\simple_conreg\SimpleConregTokens;
 use Drupal\user\Entity\Role;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Configure simple_conreg settings for this site.
  */
 class EventConfigForm extends ConfigFormBase {
+
+  /**
+   * The cache invalidator.
+   *
+   * @var \Drupal\Core\Cache\CacheTagsInvalidator
+   */
+  protected CacheTagsInvalidator $cacheInvalidator;
+
+  /**
+   * The cache invalidator.
+   *
+   * @var \Drupal\Core\Cache\CacheBackendInterface
+   */
+  protected CacheBackendInterface $cacheDefault;
+
+  /**
+   * The cache invalidator.
+   *
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected LanguageManagerInterface $languageManager;
+
+  /**
+   * Constructor for member lookup form.
+   *
+   * @param \Drupal\Core\Cache\CacheTagsInvalidator $cacheInvalidator
+   *   The cache invalidator.
+   * @param \Drupal\Core\Cache\CacheBackendInterface $cacheDefault
+   *   The default cache.
+   * @param \Drupal\Core\Language\LanguageManagerInterface $languageManager
+   *   The cache invalidator.
+   */
+  public function __construct(CacheTagsInvalidator $cacheInvalidator, CacheBackendInterface $cacheDefault, LanguageManagerInterface $languageManager) {
+    $this->cacheInvalidator = $cacheInvalidator;
+    $this->cacheDefault = $cacheDefault;
+    $this->languageManager = $languageManager;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    // Instantiates this form class.
+    return new static(
+      // Load the service required to construct this class.
+      $container->get('cache_tags.invalidator'),
+      $container->get('cache.default'),
+      $container->get('language_manager')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -680,12 +734,13 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('member_edit.badge_name_editable', $vals['simple_conreg_member_edit']['badge_name']);
     $config->save();
 
-    $langcodes = \Drupal::languageManager()->getLanguages();
+    $langcodes = $this->languageManager->getLanguages();
     foreach ($langcodes as $language) {
       $langCode = $language->getId();
-      \Drupal::cache()->delete('simple_conreg:countryList_' . $eid . '_' . $langCode);
-      \Drupal::cache()->delete('simple_conreg:fieldOptions_' . $eid . '_' . $langCode);
+      $this->cacheDefault->delete('simple_conreg:countryList_' . $eid . '_' . $langCode);
+      $this->cacheDefault->delete('simple_conreg:fieldOptions_' . $eid . '_' . $langCode);
     }
+    $this->cacheInvalidator->invalidateTags(['event:' . $eid . ':registration']);
 
     parent::submitForm($form, $form_state);
   }

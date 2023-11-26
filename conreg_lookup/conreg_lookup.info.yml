@@ -1,5 +1,4 @@
 name: ConReg Lookup
 type: module
 description: 'Allow lookup of member details in ConReg.'
-core_version_requirement: ^8.8 || ^9
-
+core_version_requirement: ^9.3 || ^10.0

@@ -1,24 +1,19 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\conreg_lookup\LookupMemberForm
- */
-
 namespace Drupal\conreg_lookup\Form;
 
-use Drupal\Core\Form\FormBase;
-use Drupal\Core\Form\FormStateInterface;
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\AlertCommand;
-use Drupal\Core\Ajax\CssCommand;
 use Drupal\Core\Ajax\HtmlCommand;
-use Drupal\Core\Link;
-use Drupal\Core\Url;
-use Drupal\Component\Utility\Html;
+use Drupal\Core\Database\Connection;
+use Drupal\Core\Form\FormBase;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Cache\Cache;
+use Drupal\Core\Render\RendererInterface;
+use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Drupal\simple_conreg\SimpleConregOptions;
-use Drupal\simple_conreg\SimpleConregStorage;
-use Drupal\devel;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Simple form to add an entry, with all the interesting fields.
@@ -26,9 +21,59 @@ use Drupal\devel;
 class LookupMemberForm extends FormBase {
 
   /**
+   * The renderer object.
+   *
+   * @var \Drupal\Core\Render\RendererInterface
+   */
+  protected RendererInterface $renderer;
+
+  /**
+   * The database connection.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected Connection $database;
+
+  /**
+   * Storage for private data.
+   *
+   * @var \Drupal\Core\TempStore\PrivateTempStoreFactory
+   */
+  protected PrivateTempStoreFactory $privateTempStoreFactory;
+
+  /**
+   * Constructor for member lookup form.
+   *
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The renderer object.
+   * @param \Drupal\Core\Database\Connection $database
+   *   The database connection.
+   * @param \Drupal\Core\TempStore\PrivateTempStoreFactory $privateTempStoreFactory
+   *   The store for private data.
+   */
+  public function __construct(RendererInterface $renderer, Connection $database, PrivateTempStoreFactory $privateTempStoreFactory) {
+    $this->renderer = $renderer;
+    $this->database = $database;
+    $this->privateTempStoreFactory = $privateTempStoreFactory;
+  }
+
+  /**
    * {@inheritdoc}
    */
-  public function getFormID() {
+  public static function create(ContainerInterface $container) {
+    // Instantiates this form class.
+    return new static(
+      // Load the service required to construct this class.
+      $container->get('renderer'),
+      $container->get('database'),
+      $container->get('tempstore.private')
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFormId() {
     return 'simple_conreg_admin_members';
   }
 
@@ -39,62 +84,83 @@ class LookupMemberForm extends FormBase {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
 
-    //Get any existing form values for use in AJAX validation.
+    // Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
 
-    $config = $this->config('simple_conreg.settings.'.$eid);
-    $types = SimpleConregOptions::memberTypes($eid, $config);
+    $config = $this->config('simple_conreg.settings.' . $eid);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
     $days = SimpleConregOptions::days($eid, $config);
-    $displayOptions = SimpleConregOptions::display();
-    $pageSize = $config->get('display.page_size');
     $digits = $config->get('member_no_digits');
 
-    $tempstore = \Drupal::service('tempstore.private')->get('simple_conreg');
-    // If form values submitted, use the search value that was submitted over the saved values.
-    if (isset($form_values['search']))
-      $search = $form_values['search'];
-    else
-      $search = $tempstore->get('lookup_search');
+    $tempstore = $this->privateTempStoreFactory->get('simple_conreg');
+    // Use form value if submittd, if not check for previous search.
+    $search = $form_values['search'] ?? $tempstore->get('lookup_search') ?? '';
     $tempstore->set('lookup_search', $search);
 
-    $form = array(
+    $form = [
       '#attached' => [
         'library' => ['simple_conreg/conreg_tables'],
       ],
       '#prefix' => '<div id="memberform">',
       '#suffix' => '</div>',
-    );
+    ];
 
-    $headers = array(
-      'member_no' => ['data' => $this->t('Member No'), 'field' => 'm.member_no'],
-      'first_name' => ['data' => t('First name'), 'field' => 'm.first_name'],
-      'last_name' => ['data' => t('Last name'), 'field' => 'm.last_name'],
-      'email' => ['data' => t('Email'), 'field' => 'm.email'],
-      'phone' => ['data' => t('Phone'), 'field' => 'm.phone'],
-      'badge_name' => ['data' => t('Badge name'), 'field' => 'm.badge_name'],
-      'days' =>  ['data' => t('Days'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      'badge_type' =>  ['data' => t('Badge type'), 'class' => [RESPONSIVE_PRIORITY_LOW]],
-      'registered_by' => ['data' => t('Registered By'), 'field' => 'm.registered_by'],
-    );
+    $headers = [
+      'member_no' => [
+        'data' => $this->t('Member No'),
+        'field' => 'm.member_no',
+      ],
+      'first_name' => [
+        'data' => $this->t('First name'),
+        'field' => 'm.first_name',
+      ],
+      'last_name' => [
+        'data' => $this->t('Last name'),
+        'field' => 'm.last_name',
+      ],
+      'email' => [
+        'data' => $this->t('Email'),
+        'field' => 'm.email',
+      ],
+      'phone' => [
+        'data' => $this->t('Phone'),
+        'field' => 'm.phone',
+      ],
+      'badge_name' => [
+        'data' => $this->t('Badge name'),
+        'field' => 'm.badge_name',
+      ],
+      'days' => [
+        'data' => $this->t('Days'),
+        'class' => [RESPONSIVE_PRIORITY_LOW],
+      ],
+      'badge_type' => [
+        'data' => $this->t('Badge type'),
+        'class' => [RESPONSIVE_PRIORITY_LOW],
+      ],
+      'registered_by' => [
+        'data' => $this->t('Registered By'),
+        'field' => 'm.registered_by',
+      ],
+    ];
 
-    $form['search'] = array(
+    $form['search'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Custom search term'),
       '#default_value' => trim($search),
-    );
-    
-    $form['search_button'] = array(
+    ];
+
+    $form['search_button'] = [
       '#type' => 'button',
-      '#value' => t('Search'),
-      '#attributes' => array('id' => "searchBtn"),
-      '#validate' => array(),
-      '#submit' => array('::search'),
-      '#ajax' => array(
+      '#value' => $this->t('Search'),
+      '#attributes' => ['id' => "searchBtn"],
+      '#validate' => [],
+      '#submit' => ['::search'],
+      '#ajax' => [
         'wrapper' => 'memberform',
-        'callback' => array($this, 'updateDisplayCallback'),
-      ),
-    );
+        'callback' => [$this, 'updateDisplayCallback'],
+      ],
+    ];
 
     if (strlen($search) < 3) {
       $form['message'] = [
@@ -105,96 +171,105 @@ class LookupMemberForm extends FormBase {
       return $form;
     }
 
-    $form['table'] = array(
+    $form['table'] = [
       '#type' => 'table',
       '#header' => $headers,
-      '#attributes' => array('id' => 'simple-conreg-admin-member-list'),
-      '#empty' => t('No entries available.'),
+      '#attributes' => ['id' => 'simple-conreg-admin-member-list'],
+      '#empty' => $this->t('No entries available.'),
       '#sticky' => TRUE,
-    );      
+    ];
 
     $entries = $this->adminMemberLookupLoad($eid, $search);
 
     foreach ($entries as $entry) {
       $mid = $entry['mid'];
       // Sanitize each entry.
-      $is_paid = $entry['is_paid'];
-      $row = array();
+      $row = [];
       if (empty($entry["member_no"])) {
         $member_no = "";
       }
       else {
-        $member_no = trim($entry['badge_type']) . sprintf("%0".$digits."d", $entry['member_no']);
+        $member_no = trim($entry['badge_type']) . sprintf("%0" . $digits . "d", $entry['member_no']);
       }
-      $row["member_no"] = array(
+      $row["member_no"] = [
         '#markup' => $member_no,
-      );
-      $row['first_name'] = array(
+      ];
+      $row['first_name'] = [
         '#markup' => Html::escape($entry['first_name']),
-      );
-      $row['last_name'] = array(
+      ];
+      $row['last_name'] = [
         '#markup' => Html::escape($entry['last_name']),
-      );
-      $row['email'] = array(
+      ];
+      $row['email'] = [
         '#markup' => Html::escape($entry['email']),
-      );
-      $row['phone'] = array(
+      ];
+      $row['phone'] = [
         '#markup' => Html::escape($entry['phone']),
-      );
-      $row['badge_name'] = array(
+      ];
+      $row['badge_name'] = [
         '#markup' => Html::escape($entry['badge_name']),
-      );
+      ];
       if (!empty($entry['days'])) {
         $dayDescs = [];
-        foreach(explode('|', $entry['days']) as $day) {
-          $dayDescs[] = isset($days[$day]) ? $days[$day] : $day;
+        foreach (explode('|', $entry['days']) as $day) {
+          $dayDescs[] = $days[$day] ?? $day;
         }
         $memberDays = implode(', ', $dayDescs);
-      } else
+      }
+      else {
         $memberDays = '';
-      $row['days'] = array(
+      }
+      $row['days'] = [
         '#markup' => Html::escape($memberDays),
-      );
+      ];
       $badgeType = trim($entry['badge_type']);
-      $row['badge_type'] = array(
-        '#markup' => Html::escape(isset($badgeTypes[$badgeType]) ? $badgeTypes[$badgeType] : $badgeType),
-      );
-      $row['registered_by'] = array(
+      $row['badge_type'] = [
+        '#markup' => Html::escape($badgeTypes[$badgeType] ?? $badgeType),
+      ];
+      $row['registered_by'] = [
         '#markup' => Html::escape($entry['registered_by']),
-      );
+      ];
       $form['table'][$mid] = $row;
     }
-    
+
     return $form;
   }
 
-  // Callback function for "member type" and "add-on" drop-downs. Replace price fields.
+  /**
+   * Callback function for "member type" and "add-on" drop-downs.
+   */
   public function updateApprovedCallback(array $form, FormStateInterface $form_state) {
     $triggering_element = $form_state->getTriggeringElement();
     $ajax_response = new AjaxResponse();
     if (preg_match("/table\[(\d+)\]\[is_approved\]/", $triggering_element['#name'], $matches)) {
       $mid = $matches[1];
       $form['table'][$mid]["member_div"]["member_no"]['#value'] = $triggering_element['#value'];
-      $ajax_response->addCommand(new HtmlCommand('#member_no_'.$mid, render($form['table'][$mid]["member_div"]["member_no"]['#value'])));
-      //$ajax_response->addCommand(new AlertCommand($row." = ".));
+      $ajax_response->addCommand(new HtmlCommand('#member_no_' . $mid, $this->renderer->render($form['table'][$mid]["member_div"]["member_no"]['#value'])));
+      // $ajax_response->addCommand(new AlertCommand($row." = ".));
     }
     return $ajax_response;
   }
 
-  // Callback function for "member type" and "add-on" drop-downs. Replace price fields.
+  /**
+   * Callback function for "member type" and "add-on" drop-downs.
+   */
   public function updateTestCallback(array $form, FormStateInterface $form_state) {
     $triggering_element = $form_state->getTriggeringElement();
     $ajax_response = new AjaxResponse();
-    $ajax_response->addCommand(new AlertCommand($triggering_element['#name']." = ".$triggering_element['#value']));
+    $ajax_response->addCommand(new AlertCommand($triggering_element['#name'] . " = " . $triggering_element['#value']));
     return $ajax_response;
   }
 
-  // Callback function for "display" drop down.
+  /**
+   * Callback function for "display" drop down.
+   */
   public function updateDisplayCallback(array $form, FormStateInterface $form_state) {
-    // Form rebuilt with required number of members before callback. Return new form.
     return $form;
   }
 
+  /**
+   * Callback for searching.
+   */
   public function search(array &$form, FormStateInterface $form_state) {
     $form_state->setRebuild();
   }
@@ -202,21 +277,15 @@ class LookupMemberForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-	  //$saved_members = SimpleConregStorage::loadAllMemberNos($eid);
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    Cache::invalidateTags(['simple-conreg-member-list']);
   }
 
   /**
-   * {@inheritdoc}
+   * Ajax callback for loading table.
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
-    \Drupal\Core\Cache\Cache::invalidateTags(['simple-conreg-member-list']);
-  }
-
-  private function adminMemberLookupLoad($eid, $search)
-  {
-    $connection = \Drupal::database();
-    $select = $connection->select('conreg_members', 'm');
+  private function adminMemberLookupLoad($eid, $search) {
+    $select = $this->database->select('conreg_members', 'm');
     $select->leftJoin('conreg_members', 'l', 'l.mid = m.lead_mid');
     // Select these specific fields for the output.
     $select->addField('m', 'mid');
@@ -234,7 +303,7 @@ class LookupMemberForm extends FormBase {
     foreach ($words as $word) {
       if ($word != '') {
         // Escape search word to prevent dangerous characters.
-        $esc_word = '%' . $connection->escapeLike($word) . '%';
+        $esc_word = '%' . $this->database->escapeLike($word) . '%';
         $likes = $select->orConditionGroup()
           ->condition('m.member_no', $esc_word, 'LIKE')
           ->condition('m.first_name', $esc_word, 'LIKE')
@@ -247,12 +316,10 @@ class LookupMemberForm extends FormBase {
     $select->condition("m.is_deleted", FALSE);
     $select->condition("m.is_paid", TRUE);
     $select->orderby("member_no");
-    // Make sure we only get items 0-49, for scalability reasons.
 
     $entries = $select->execute()->fetchAll(\PDO::FETCH_ASSOC);
 
     return $entries;
   }
 
-}    
-
+}
