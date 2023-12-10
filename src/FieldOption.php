@@ -91,24 +91,33 @@ class FieldOption {
    *
    * @param string $optionLine
    *   Line containing option from configuration.
+   *
+   * @return bool
+   *   True if valid option parsed.
    */
-  public function parseOption(string $optionLine): void {
-    $optionFields = array_pad(explode('|', trim($optionLine)), 10, '');
-    [
-      $this->optionId,
-      $this->groupId,
-      $this->title,
-      $this->detailTitle,
-      $this->detailRequired,
-      $this->weight, $belongsIn,
-      $this->mustSelect,
-      $this->private,
-      $this->informEmail,
-    ] = $optionFields;
-    $this->inMemberClasses = [];
-    foreach (explode(',', trim($belongsIn)) as $inClass) {
-      $this->inMemberClasses[] = $inClass;
+  public function parseOption(string $optionLine): bool {
+    if (preg_match("/^\d+\|\d+\|[^|]+\|[^|]*\|\d*\|\d*\|([^|,]+,)*[^|,]?/", $optionLine)) {
+      $optionFields = array_pad(explode('|', trim($optionLine)), 10, '');
+      [
+        $this->optionId,
+        $this->groupId,
+        $this->title,
+        $this->detailTitle,
+        $this->detailRequired,
+        $this->weight,
+        $belongsIn,
+        $this->mustSelect,
+        $this->private,
+        $this->informEmail,
+      ] = $optionFields;
+      $this->inMemberClasses = [];
+      foreach (explode(',', trim($belongsIn)) as $inClass) {
+        $this->inMemberClasses[] = $inClass;
+      }
+      return TRUE;
     }
+    \Drupal::logger('simple_conreg')->notice(t('Unexpected membership option line: @line', ['@line' => $optionLine]));
+    return FALSE;
   }
 
   /**
@@ -130,8 +139,9 @@ class FieldOption {
   public static function newOption($optionLine) {
     if (!empty($optionLine)) {
       $option = new FieldOption();
-      $option->parseOption($optionLine);
-      return $option;
+      if ($option->parseOption($optionLine)) {
+        return $option;
+      }
     }
     return FALSE;
   }
