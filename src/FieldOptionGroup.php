@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\simple_conreg\FieldOptionGroup.
- */
-
 namespace Drupal\simple_conreg;
 
 /**
@@ -12,6 +7,7 @@ namespace Drupal\simple_conreg;
  */
 class FieldOptionGroup {
 
+  public array $fieldOptions;
   public $groupId;
   public $fieldType;
   public $fieldName;
@@ -23,21 +19,21 @@ class FieldOptionGroup {
   /**
    * Constructs a new FieldOption object.
    */
-  public function __construct()
-  {
+  public function __construct() {
     $this->fieldOptions = [];
   }
 
-  public function parseGroup($groupLine)
-  {
-    list($this->groupId, $this->fieldType, $this->fieldName, $this->title, $this->global, $this->public) = array_pad(explode('|', $groupLine), 6, '');
+  /**
+   *
+   */
+  public function parseGroup($groupLine) {
+    [$this->groupId, $this->fieldType, $this->fieldName, $this->title, $this->global, $this->public] = array_pad(explode('|', $groupLine), 6, '');
   }
 
-  /*
+  /**
    * Make a copy of the group, but not its options.
    */
-  public function cloneGroup()
-  {
+  public function cloneGroup() {
     $group = new FieldOptionGroup();
     $group->groupId = $this->groupId;
     $group->fieldType = $this->fieldType;
@@ -47,14 +43,18 @@ class FieldOptionGroup {
     $group->public = $this->public;
     return $group;
   }
-  
-  public function addOption(FieldOption &$option)
-  {
+
+  /**
+   *
+   */
+  public function addOption(FieldOption &$option) {
     $this->options[$option->optionId] = $option;
   }
 
-  public function groupForm(&$member, $requireMandatory = TRUE)
-  {
+  /**
+   *
+   */
+  public function groupForm(&$member, $requireMandatory = TRUE) {
     $options = [
       '#type' => 'fieldset',
       '#title' => t($this->title),
@@ -65,19 +65,23 @@ class FieldOptionGroup {
     switch ($this->fieldType) {
       case 'checkboxes':
         return $this->groupCheckBoxes($options, $member, $requireMandatory);
+
       case 'textfields':
         return $this->groupTextFields($options, $member);
+
       default:
         return $this->groupCheckBoxes($options, $member, $requireMandatory);
     }
   }
 
-  private function groupCheckBoxes($options, &$member, $requireMandatory)
-  {
+  /**
+   *
+   */
+  private function groupCheckBoxes($options, &$member, $requireMandatory) {
     foreach ($this->options as $option) {
       // Create a div to contain the option.
       $options[$option->optionId] = [
-        '#prefix' => '<div class="option_'.$option->optionId.'">',
+        '#prefix' => '<div class="option_' . $option->optionId . '">',
         '#suffix' => '</div>',
       ];
       // Add the option to the form.
@@ -104,7 +108,7 @@ class FieldOptionGroup {
           ],
         ];
         if ($option->detailRequired) {
-          //$options[$option->optionId]['detail']['#required'] = TRUE;
+          // $options[$option->optionId]['detail']['#required'] = TRUE;
           $options[$option->optionId]['detail']['#attributes']['class'][] = 'detail-required';
         }
       }
@@ -119,12 +123,14 @@ class FieldOptionGroup {
     return $options;
   }
 
-  private function groupTextFields($options, &$member)
-  {
+  /**
+   *
+   */
+  private function groupTextFields($options, &$member) {
     foreach ($this->options as $option) {
       // Create a div to contain the option.
       $options[$option->optionId] = [
-        '#prefix' => '<div class="option_'.$option->optionId.'">',
+        '#prefix' => '<div class="option_' . $option->optionId . '">',
         '#suffix' => '</div>',
       ];
       // If option has detail, add the detail.
@@ -148,8 +154,10 @@ class FieldOptionGroup {
     return $options;
   }
 
-  public static function newGroup($groupLine)
-  {
+  /**
+   *
+   */
+  public static function newGroup($groupLine) {
     if (!empty($groupLine)) {
       $group = new FieldOptionGroup();
       $group->parseGroup($groupLine);
@@ -157,4 +165,5 @@ class FieldOptionGroup {
     }
     return FALSE;
   }
+
 }
