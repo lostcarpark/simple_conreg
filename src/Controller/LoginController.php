@@ -8,6 +8,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Url;
 use Drupal\simple_conreg\SimpleConregStorage;
+use Drupal\simple_conreg\SimpleConregConfig;
 use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -106,7 +107,7 @@ class LoginController extends ControllerBase {
       $user->set("preferred_langcode", $language);
       $user->set("preferred_admin_langcode", $language);
       // Set the user timezone to the site default timezone.
-      $dateConfig = $this->config->get('system.date');
+      $dateConfig = $this->configFactory->get('system.date');
       $config_data_default_timezone = $dateConfig->get('timezone.default');
       $user->set('timezone', $config_data_default_timezone ?: @date_default_timezone_get());
       // NOTE: login will fail silently if not activated!
