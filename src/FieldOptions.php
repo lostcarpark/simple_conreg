@@ -262,7 +262,7 @@ class FieldOptions {
     // Loop through each field on the member form.
     foreach ($this->groups as $group) {
       // Check if fieldname exists in submitted values.
-      if (!empty($memberVals) && array_key_exists($group->fieldName, $memberVals)) {
+      if (!empty($memberVals) && array_key_exists($group->fieldName, $memberVals) && is_array($memberVals[$group->fieldName])) {
         switch ($group->fieldType) {
           case 'checkboxes':
             $this->processOptionCheckBoxes($memberVals[$group->fieldName], $mid, $memberOptions);
