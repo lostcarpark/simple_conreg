@@ -58,6 +58,18 @@ simple_conreg.settings.*:
         options:
           type: text
           label: 'A list of options for displaying member on public lists (note: do not translate codes before |)'
+    member_listing_page:
+      type: mapping
+      mapping:
+        show_members:
+          type: boolean
+          label: 'True if member listing page is available'
+        show_countries:
+          type: boolean
+          label: 'True if member countries to be shown'
+        show_summary:
+          type: boolean
+          label: 'True if breakdown by country to be shown'
     display:
       type: mapping
       mapping:

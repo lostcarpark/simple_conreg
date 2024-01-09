@@ -352,9 +352,36 @@ class EventConfigForm extends ConfigFormBase {
     ];
 
     /*
+     * Options for displaying member listing page.
+     */
+     $form['simple_conreg_member_listing'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Member listing page'),
+      '#tree' => TRUE,
+      '#group' => 'admin',
+    ];
+
+    $form['simple_conreg_member_listing']['show_members'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Show public member listing'),
+      '#default_value' => $config->get('member_listing_page.show_members') ?? TRUE,
+    ];
+
+    $form['simple_conreg_member_listing']['show_countries'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Show member countries on public list'),
+      '#default_value' => $config->get('member_listing_page.show_countries') ?? TRUE,
+    ];
+
+    $form['simple_conreg_member_listing']['show_summary'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Show summary of members per country'),
+      '#default_value' => $config->get('member_listing_page.show_summary') ?? TRUE,
+    ];
+
+    /*
      * Display settings - entries per page.
      */
-
     $form['simple_conreg_display'] = [
       '#type' => 'details',
       '#title' => $this->t('Display settings'),
@@ -698,6 +725,9 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('display_options.options', $vals['simple_conreg_display_options']['options']);
     $config->set('simple_conreg_options.option_groups', $vals['simple_conreg_options']['option_groups']);
     $config->set('simple_conreg_options.options', $vals['simple_conreg_options']['options']);
+    $config->set('member_listing_page.show_members', $vals['simple_conreg_member_listing']['show_members']);
+    $config->set('member_listing_page.show_countries', $vals['simple_conreg_member_listing']['show_countries']);
+    $config->set('member_listing_page.show_summary', $vals['simple_conreg_member_listing']['show_summary']);
     $config->set('display.page_size', intval($vals['simple_conreg_display']['page_size']));
     $config->set('reference.default_country', $vals['simple_conreg_reference']['default_country']);
     $config->set('reference.no_country_label', $vals['simple_conreg_reference']['no_country_label']);
