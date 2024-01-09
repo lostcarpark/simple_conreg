@@ -14,11 +14,11 @@ use Symfony\Component\HttpFoundation\Request;
 class SimpleConregController extends ControllerBase {
 
   /**
-   * Storage for private data.
+   * The HTTP request
    *
-   * @var \Drupal\Core\TempStore\PrivateTempStoreFactory
+   * @var \Symfony\Component\HttpFoundation\Request
    */
-  protected PrivateTempStoreFactory $privateTempStoreFactory;
+  protected Request $request;
 
   /**
    * Constructor for member lookup form.
@@ -67,6 +67,10 @@ class SimpleConregController extends ControllerBase {
     $types = SimpleConregOptions::badgeTypes($eid, $config);
     $digits = $config->get('member_no_digits');
 
+    $showMemberList = $config->get('member_listing_page.show_members') ?? TRUE;
+    $showCountries = $config->get('member_listing_page.show_countries') ?? TRUE;
+    $showSummary = $config->get('member_listing_page.show_summary') ?? TRUE;
+
     switch ($this->request->query->get('sort') ?? '') {
       case 'desc':
         $direction = 'DESC';
@@ -102,7 +106,14 @@ class SimpleConregController extends ControllerBase {
       ],
     ];
 
-    // $content['#markup'] = $this->t('Unpaid Members');
+    // If public member list disabled, return message.
+    if (!$showMemberList) {
+      $content['message'] = [
+        '#markup' => $this->t("Public member list is not available."),
+      ];
+      return $content;
+    }
+
     $content['message'] = [
       '#cache' => ['tags' => ['simple-conreg-member-list'], '#max-age' => 600],
       '#markup' => $this->t("Members' public details are listed below."),
@@ -124,12 +135,14 @@ class SimpleConregController extends ControllerBase {
         'field' => 'm.badge_type',
         'class' => [RESPONSIVE_PRIORITY_LOW],
       ],
-      'member_country' => [
+    ];
+    if ($showCountries) {
+      $headers['member_country'] = [
         'data' => $this->t('Country'),
         'field' => 'm.country',
         'class' => [RESPONSIVE_PRIORITY_MEDIUM],
-      ],
-    ];
+      ];
+    }
     $total = 0;
 
     foreach (SimpleConregStorage::adminPublicListLoad($eid) as $entry) {
@@ -155,7 +168,9 @@ class SimpleConregController extends ControllerBase {
           break;
       }
       $member['badge_type'] = trim($types[$badge_type] ?? $badge_type);
-      $member['country'] = trim($countryOptions[$entry['country']] ?? $entry['country']);
+      if ($showCountries) {
+        $member['country'] = trim($countryOptions[$entry['country']] ?? $entry['country']);
+      }
 
       // Set key to field to be sorted by.
       if ($order == 'member_no') {
@@ -187,36 +202,38 @@ class SimpleConregController extends ControllerBase {
       '#empty' => $this->t('No entries available.'),
     ];
 
-    $content['summary_heading'] = [
-      '#markup' => $this->t('Country Breakdown'),
-      '#prefix' => '<h2>',
-      '#suffix' => '</h2>',
-    ];
+    // Member summary page.
+    if ($showSummary) {
+      $content['summary_heading'] = [
+        '#markup' => $this->t('Country Breakdown'),
+        '#prefix' => '<h2>',
+        '#suffix' => '</h2>',
+      ];
 
-    $rows = [];
-    $headers = [
-      $this->t('Country'),
-      $this->t('Number of members'),
-    ];
-    $total = 0;
-    foreach (SimpleConregStorage::adminMemberCountrySummaryLoad($eid) as $entry) {
-      if (!empty($entry['country'])) {
-        // Sanitize each entry.
-        $entry['country'] = trim($countryOptions[$entry['country']]);
-        $rows[] = $entry;
-        $total += $entry['num'];
+      $rows = [];
+      $headers = [
+        $this->t('Country'),
+        $this->t('Number of members'),
+      ];
+      $total = 0;
+      foreach (SimpleConregStorage::adminMemberCountrySummaryLoad($eid) as $entry) {
+        if (!empty($entry['country'])) {
+          // Sanitize each entry.
+          $entry['country'] = trim($countryOptions[$entry['country']]);
+          $rows[] = $entry;
+          $total += $entry['num'];
+        }
       }
+      // Add a row for the total.
+      $rows[] = [$this->t("Total"), $total];
+      $content['summary'] = [
+        '#type' => 'table',
+        '#header' => $headers,
+        '#rows' => $rows,
+        '#empty' => $this->t('No entries available.'),
+      ];
     }
-    // Add a row for the total.
-    $rows[] = [$this->t("Total"), $total];
-    $content['summary'] = [
-      '#type' => 'table',
-      '#header' => $headers,
-      '#rows' => $rows,
-      '#empty' => $this->t('No entries available.'),
-    ];
-    // Don't cache this page.
-    // $content['#cache']['max-age'] = 0;.
+
     return $content;
   }
 
