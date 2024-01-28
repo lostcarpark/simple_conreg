@@ -131,7 +131,7 @@ class LoginController extends ControllerBase {
     user_login_finalize($user);
 
     // Redirect to member portal.
-    return $this->redirect('simple_conreg_portal', ['eid' => $member['eid']]);
+    return $this->redirect('simple_conreg_portal', ['eid' => $member['eid']], ['absolute' => TRUE]);
   }
 
 }
