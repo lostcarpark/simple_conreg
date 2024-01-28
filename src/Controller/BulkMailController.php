@@ -5,6 +5,8 @@ namespace Drupal\simple_conreg\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\simple_conreg\SimpleConregConfig;
+use Drupal\simple_conreg\SimpleConregStorage;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
