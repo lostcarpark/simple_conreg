@@ -685,6 +685,13 @@ class SimpleConregStorage {
       }
       $select->condition($orGroup);
     }
+    if (!empty($options['communication_methods'])) {
+      $orGroup = $select->orConditionGroup();
+      foreach ($options['communication_methods'] as $methodCode => $methodName) {
+        $orGroup->condition('communication_method', $methodCode);
+      }
+      $select->condition($orGroup);
+    }
     if (!empty($options['field_options'])) {
       $select->join('conreg_member_options', 'o', 'm.mid = o.mid');
       $select->condition('o.is_selected', 1);

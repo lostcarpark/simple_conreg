@@ -113,6 +113,14 @@ class SimpleConregAdminBulkEmail extends FormBase {
       '#title' => $this->t('Badge types'),
       '#options' => $badgeTypes,
     ];
+
+    $communicationMethods = SimpleConregOptions::communicationMethod($eid, $config, FALSE);
+    $form['options']['communication_methods'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Communication methods'),
+      '#options' => $communicationMethods,
+    ];
+
     $fieldOptions = FieldOptions::getFieldOptionsTitles($eid);
     $form['options']['field_options'] = [
       '#type' => 'checkboxes',
@@ -185,6 +193,7 @@ class SimpleConregAdminBulkEmail extends FormBase {
     $options = [];
     $options['member_types'] = array_filter($vals['options']['member_types'] ?? [], fn($item) => !empty($item));
     $options['badge_types'] = array_filter($vals['options']['badge_types'] ?? [], fn($item) => !empty($item));
+    $options['communication_methods'] = array_filter($vals['options']['communication_methods'] ?? [], fn($item) => !empty($item));
     $options['field_options'] = array_filter($vals['options']['field_options'] ?? [], fn($item) => !empty($item));
     $options['member_range'] = ($vals['options']['member_range'] ?? 0);
     // For all members in range, if type in selection, add to list.
