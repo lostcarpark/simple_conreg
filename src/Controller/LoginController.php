@@ -130,8 +130,16 @@ class LoginController extends ControllerBase {
     // Login user.
     user_login_finalize($user);
 
+    $url_object = Url::fromRoute('simple_conreg_portal', ['eid' => $member['eid']], ['absolute' => TRUE]);
+    $link = [
+      '#type' => 'link',
+      '#url' => $url_object,
+      '#title' => $this->t('Enter Member Portal'),
+    ];
+    return $link;
+
     // Redirect to member portal.
-    return $this->redirect('simple_conreg_portal', ['eid' => $member['eid']], ['absolute' => TRUE]);
+    //return $this->redirect('simple_conreg_portal', ['eid' => $member['eid']], ['absolute' => TRUE]);
   }
 
 }
