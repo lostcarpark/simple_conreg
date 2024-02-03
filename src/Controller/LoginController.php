@@ -96,6 +96,13 @@ class LoginController extends ControllerBase {
     // Check if user already exists.
     $user = user_load_by_mail($member['email']);
 
+    // Check if user already logged in. If so, redirect to member portal.
+    $current_user = \Drupal::currentUser();
+    if ($current_user && $user && $user->id() == $current_user->id()) {
+      // Redirect to member portal.
+      return $this->redirect('simple_conreg_portal', ['eid' => $member['eid']], ['absolute' => TRUE]);
+    }
+
     // If user doesn't exist, create new user.
     if (!$user) {
       $language = $this->languageManager->getCurrentLanguage()->getId();
@@ -130,16 +137,16 @@ class LoginController extends ControllerBase {
     // Login user.
     user_login_finalize($user);
 
-    $url_object = Url::fromRoute('simple_conreg_portal', ['eid' => $member['eid']], ['absolute' => TRUE]);
-    $link = [
-      '#type' => 'link',
-      '#url' => $url_object,
-      '#title' => $this->t('Enter Member Portal'),
-    ];
-    return $link;
-
     // Redirect to member portal.
-    //return $this->redirect('simple_conreg_portal', ['eid' => $member['eid']], ['absolute' => TRUE]);
+    return $this->redirect('simple_conreg_portal', ['eid' => $member['eid']], ['absolute' => FALSE]);
+
+    // $url_object = Url::fromRoute('simple_conreg_portal', ['eid' => $member['eid']], ['absolute' => TRUE]);
+    // $link = [
+    //   '#type' => 'link',
+    //   '#url' => $url_object,
+    //   '#title' => $this->t('Enter Member Portal'),
+    // ];
+    // return $link;
   }
 
 }
