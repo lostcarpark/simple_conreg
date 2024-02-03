@@ -152,9 +152,9 @@ class LoginController extends ControllerBase {
     // fallback, display link to member portal.
     $url_object = Url::fromRoute('simple_conreg_portal', ['eid' => $member['eid']], ['absolute' => TRUE, 'query' => ['redirect' => 'redirect']]);
     $output = [
-      '#attached' => [
-        'library' => ['simple_conreg/conreg_login'],
-      ],
+      // '#attached' => [
+      //   'library' => ['simple_conreg/conreg_login'],
+      // ],
       'link' => [
         '#type' => 'link',
         '#url' => $url_object,
