@@ -6,12 +6,12 @@ use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Language\LanguageManagerInterface;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
 use Drupal\simple_conreg\SimpleConregStorage;
 use Drupal\simple_conreg\SimpleConregConfig;
 use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * Returns responses for ConReg - Simple Convention Registration routes.
@@ -40,6 +40,13 @@ class LoginController extends ControllerBase {
   protected $languageManager;
 
   /**
+   * The currently logged in user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface|null
+   */
+  protected $currentUser;
+
+  /**
    * The controller constructor.
    *
    * @param \Drupal\Component\Datetime\TimeInterface $time
@@ -48,11 +55,14 @@ class LoginController extends ControllerBase {
    *   The config factory.
    * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
    *   The language manager.
+   * @param \Drupal\user\UserInterface $current_user
+   *   The currently logged in user.
    */
-  public function __construct(TimeInterface $time, ConfigFactoryInterface $config_factory, LanguageManagerInterface $language_manager) {
+  public function __construct(TimeInterface $time, ConfigFactoryInterface $config_factory, LanguageManagerInterface $language_manager, AccountProxyInterface $current_user) {
     $this->time = $time;
     $this->configFactory = $config_factory;
     $this->languageManager = $language_manager;
+    $this->currentUser = $current_user;
   }
 
   /**
@@ -62,7 +72,8 @@ class LoginController extends ControllerBase {
     return new static(
       $container->get('datetime.time'),
       $container->get('config.factory'),
-      $container->get('language_manager')
+      $container->get('language_manager'),
+      $container->get('current_user')
     );
   }
 
@@ -97,8 +108,7 @@ class LoginController extends ControllerBase {
     $user = user_load_by_mail($member['email']);
 
     // Check if user already logged in. If so, redirect to member portal.
-    $current_user = \Drupal::currentUser();
-    if ($current_user && $user && $user->id() == $current_user->id()) {
+    if ($this->currentUser && $user && $user->id() == $this->currentUser->id()) {
       // Redirect to member portal.
       return $this->redirect('simple_conreg_portal', ['eid' => $member['eid']], ['absolute' => TRUE]);
     }
@@ -137,16 +147,21 @@ class LoginController extends ControllerBase {
     // Login user.
     user_login_finalize($user);
 
-    // Redirect to member portal.
-    return $this->redirect('simple_conreg_portal', ['eid' => $member['eid']], ['absolute' => FALSE]);
-
-    // $url_object = Url::fromRoute('simple_conreg_portal', ['eid' => $member['eid']], ['absolute' => TRUE]);
-    // $link = [
-    //   '#type' => 'link',
-    //   '#url' => $url_object,
-    //   '#title' => $this->t('Enter Member Portal'),
-    // ];
-    // return $link;
+    // Redirecting at the same time as login was causing trouble, so after
+    // loading, load JS to reload page. Redirect will happen on reload. As
+    // fallback, display link to member portal.
+    $url_object = Url::fromRoute('simple_conreg_portal', ['eid' => $member['eid']], ['absolute' => TRUE, 'query' => ['redirect' => 'redirect']]);
+    $output = [
+      '#attached' => [
+        'library' => ['simple_conreg/conreg_login'],
+      ],
+      'link' => [
+        '#type' => 'link',
+        '#url' => $url_object,
+        '#title' => $this->t('Enter Member Portal'),
+      ]
+    ];
+    return $output;
   }
 
 }
