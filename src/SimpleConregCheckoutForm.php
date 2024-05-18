@@ -10,11 +10,8 @@ namespace Drupal\simple_conreg;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\MailManagerInterface;
-use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\Link;
 use Drupal\Core\Url;
-use Drupal\Component\Utility\Xss;
-use Drupal\devel;
+use Stripe\Checkout\Session;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -77,7 +74,7 @@ class SimpleConregCheckoutForm extends FormBase
     }
 
     // Get event ID to fetch Stripe keys.
-    // If payment has MID, get event from member. If not, assume event 1 (will come up with a better long term solution). 
+    // If payment has MID, get event from member. If not, assume event 1 (will come up with a better long term solution).
     if (isset($payment) && isset($payment->paymentLines[0]) && !empty($payment->paymentLines[0]->mid)) {
       $mid = $payment->paymentLines[0]->mid;
       $member = Member::loadMember($mid);
@@ -120,10 +117,13 @@ class SimpleConregCheckoutForm extends FormBase
       // Only add member to payment if price greater than zero...
       if ($line->amount > 0) {
         $items[] = [
-          'name' => $line->lineDesc,
-          'description' => $line->lineDesc,
-          'amount' => $line->amount * 100,
-          'currency' => $config->get('payments.currency'),
+          'price_data' => [
+            'currency' => $config->get('payments.currency'),
+            'product_data' => [
+              'name' => $line->lineDesc,
+            ],
+            'unit_amount' => $line->amount * 100,
+          ],
           'quantity' => 1,
         ];
       }
@@ -142,8 +142,9 @@ class SimpleConregCheckoutForm extends FormBase
       $types = empty($config->get('payments.types')) ? ['card'] : explode('|', $config->get('payments.types'));
 
       // Set up Stripe Session.
-      $session = \Stripe\Checkout\Session::create([
+      $session = Session::create([
         'payment_method_types' => $types,
+        'mode' => Session::MODE_PAYMENT,
         'customer_email' => $email,
         'line_items' => $items,
         'success_url' => $success,
