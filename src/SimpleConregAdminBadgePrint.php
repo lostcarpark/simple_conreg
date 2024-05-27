@@ -9,10 +9,7 @@ namespace Drupal\simple_conreg;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\File\FileSystemInterface;
 use Drupal\Component\Utility\Html;
-//use Drupal\file\Entity\File;
-use Drupal\devel;
 
 /**
  * Simple form to add an entry, with all the interesting fields.
@@ -45,19 +42,19 @@ class SimpleConregAdminBadgePrint extends FormBase {
     $form_values = $form_state->getValues();
 
     if ($select_bydate = (isset($form_values['view']['by_date'])) ? $form_values['view']['by_date'] : 0) {
-      
+
     }
     if ($select_bymemberno = (isset($form_values['view']['by_member_no'])) ? $form_values['view']['by_member_no'] : 0) {
-      
+
     }
     if ($select_byname = (isset($form_values['view']['by_name'])) ? $form_values['view']['by_name'] : 0) {
-      
+
     }
     if ($select_max = (isset($form_values['view']['max_badges'])) ? $form_values['view']['max_badges'] : 1) {
       $max_num_badges = (isset($form_values['view']['max']['max_num_badges']) ? $form_values['view']['max']['max_num_badges'] : 10);
     }
     if ($select_blanks = (isset($form_values['view']['blanks'])) ? $form_values['view']['blanks'] : 0) {
-      
+
     }
 
     $form['#attached'] = [
@@ -96,7 +93,7 @@ class SimpleConregAdminBadgePrint extends FormBase {
         'event' => 'change',
       ),
     ];
-    
+
     if ($select_bydate) {
       $form['view']['date'] = [
         '#type' => 'fieldset',
@@ -127,13 +124,10 @@ class SimpleConregAdminBadgePrint extends FormBase {
         '#type' => 'fieldset',
         '#title' => $this->t('Choose member numbers'),
       ];
-      $form['view']['number']['member_no_from'] = [
-        '#type' => 'number',
-        '#title' => $this->t('From'),
-      ];
-      $form['view']['number']['member_no_to'] = [
-        '#type' => 'number',
-        '#title' => $this->t('To'),
+      $form['view']['number']['member_no_range'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t('Member number range'),
+        '#description' => $this->t('Enter Member Nos to print badges for. Use commas (,) to separate ranges and hyphens (-) to separate range limits, e.g. "1,3,5-7".')
       ];
     }
 
@@ -200,12 +194,10 @@ class SimpleConregAdminBadgePrint extends FormBase {
       '#value' => $this->t('Upload Badge Images'),
       '#attributes' => ['onclick' => 'return (false);'],
     ];
-    
 
     $options = [];
     if ($select_bymemberno) {
-      $options['member_no_from'] = (isset($form_values['view']['number']['member_no_from']) ? $form_values['view']['number']['member_no_from'] : '');
-      $options['member_no_to'] = (isset($form_values['view']['number']['member_no_to']) ? $form_values['view']['number']['member_no_to'] : '');
+      $options['member_range'] = $form_values['view']['number']['member_no_range'] ?? '';
     }
     foreach(SimpleConregStorage::adminMemberBadges($eid, $max_num_badges, $options) as $member) {
       $member_type = isset($memberTypes->types[$member['member_type']]) ? $memberTypes->types[$member['member_type']]->name : $member['member_type'];
@@ -225,7 +217,7 @@ class SimpleConregAdminBadgePrint extends FormBase {
         $optionClasses[] = 'field-option-' . $option['optid'];
       }
       $form['member'.$member['mid']] = [
-        '#markup' => 
+        '#markup' =>
 '<div id="mid' . $member['mid'] . '" class="badge badge-type-' . $member['badge_type'] . ' member-type-' . $member['member_type'] . ' ' . implode(' ', $optionClasses) . '">
   <div class="badge-side badge-left">
     <div class="badge-type">'.$badge_type.'</div>
@@ -243,11 +235,11 @@ class SimpleConregAdminBadgePrint extends FormBase {
 </div>',
       ];
     }
-    
+
     if (isset($form_values['view']['num_blanks']['num']) && $form_values['view']['num_blanks']['num'] > 0) {
       for ($cnt = 0; $cnt < $form_values['view']['num_blanks']['num']; $cnt++) {
         $form['blank'.$cnt] = [
-          '#markup' => 
+          '#markup' =>
 '<div id="blank' . $cnt . '" class="badge badge-blank">
   <div class="badge-side badge-left">
     <div id="badge-name-blank'.$cnt.'-left" class="badge-name"></div>
@@ -267,15 +259,15 @@ class SimpleConregAdminBadgePrint extends FormBase {
     // Form rebuilt with required number of members before callback. Return new form.
     return $form['view'];
   }
-  
-  
+
+
   /**
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state)
   {
   }
-  
+
   /**
    * {@inheritdoc}
    */
