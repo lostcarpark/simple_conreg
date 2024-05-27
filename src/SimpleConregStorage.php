@@ -633,7 +633,6 @@ class SimpleConregStorage {
    *   List of member members.
    */
   public static function adminMemberBadges(int $eid, int $max_num_badges = 0, array $options = []): array {
-    dpm($options);
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
     // Select these specific fields for the output.
