@@ -88,6 +88,11 @@ class PlanZAdminForm extends FormBase {
       '#title' => $this->t('Reset passwords for existing members - if checked will update password of members already existing on PlanZ with new random ones (note, we recommend getting users to use password reset on PlanZ rather than setting password centrally)'),
     ];
 
+    $form['resend'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Resend emails for existing members - if checked emails will be generated even if members already exist on PlanZ. If unchecked, emails will only be generated for newly created users.'),
+    ];
+
     $form['dont_email'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Don\'t email - if checked no emails will be sent, member info will display on page. Only use for members who have difficulty receiving emails.'),
@@ -219,11 +224,11 @@ class PlanZAdminForm extends FormBase {
         [$min, $max] = array_pad(explode('-', $range), 2, '');
         if (empty($max)) {
           // If no max set, range is single number in min.
-          $output[] = $this->addMemberToPlanZ($eid, $min, $vals['override'], $vals['reset'], $vals['dont_email'], $optionFields);
+          $output[] = $this->addMemberToPlanZ($eid, $min, $vals['override'], $vals['reset'], $vals['resend'], $vals['dont_email'], $optionFields);
         }
         else {
           for ($num = $min; $num <= $max; $num++) {
-            $output[] = $this->addMemberToPlanZ($eid, $num, $vals['override'], $vals['reset'], $vals['dont_email'], $optionFields);
+            $output[] = $this->addMemberToPlanZ($eid, $num, $vals['override'], $vals['reset'], $vals['resend'], $vals['dont_email'], $optionFields);
           }
         }
         // Log an event to show a member check occurred.
@@ -255,7 +260,7 @@ class PlanZAdminForm extends FormBase {
    *
    * @return string Returns the details of the newly added member.
    */
-  private function addMemberToPlanZ(int $eid, int $memberNo, bool $override, bool $reset, bool $dontEmail, array $optionFields): string {
+  private function addMemberToPlanZ(int $eid, int $memberNo, bool $override, bool $reset, bool $resend, bool $dontEmail, array $optionFields): string {
     $member = Member::loadMemberByMemberNo($eid, $memberNo);
     if (is_null($member)) {
       return "<p>Member: $memberNo does not exist.</p>";
@@ -268,11 +273,13 @@ class PlanZAdminForm extends FormBase {
         }
       }
     }
-    if ($match || $override) {
+    if ($match || $override || $resend) {
 
       $user = new PlanZUser($this->planz);
       $user->load($member->mid);
-      $user->save($member, $reset);
+      if ($match || $override) {
+        $user->save($member, $reset);
+      }
 
       if (!$dontEmail) {
         // Send email to user.
