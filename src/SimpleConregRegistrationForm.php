@@ -1085,7 +1085,7 @@ class SimpleConregRegistrationForm extends FormBase {
               '@first_name' => $entry['first_name'],
               '@last_name' => $entry['last_name'],
             ]),
-            $memberPrices[$cnt]->basePrice
+            $memberPrices[$cnt]->basePriceMinusFree,
           ));
         // Add confirmation.
         \Drupal::messenger()->addMessage($this->t(
@@ -1224,6 +1224,8 @@ class SimpleConregRegistrationForm extends FormBase {
           $discountPrice += $curPrice->basePrice;
           // Take base price off member price (but leave add-ons).
           $memberPrices[$curPrice->memberNo]->price = $memberPrices[$curPrice->memberNo]->price - $curPrice->basePrice;
+          $memberPrices[$curPrice->memberNo]->priceMinusFree = $memberPrices[$curPrice->memberNo]->priceMinusFree - $curPrice->basePrice;
+          $memberPrices[$curPrice->memberNo]->basePriceMinusFree = $memberPrices[$curPrice->memberNo]->basePriceMinusFree - $curPrice->basePrice;
           // New message. Be sure to include add-on price if there is one.
           if ($memberPrices[$curPrice->memberNo]->price == 0) {
             $memberPrices[$curPrice->memberNo]->priceMessage = $this->t('Free member!');
@@ -1310,6 +1312,7 @@ class SimpleConregRegistrationForm extends FormBase {
       'priceMinusFree' => $price + $addOnMinusFree,
       'priceMessage' => $priceMessage,
       'basePrice' => $basePrice,
+      'basePriceMinusFree' => $basePrice,
       'addOnPrice' => $addOnPrice,
       'addOnMinusFree' => $addOnMinusFree,
       'memberType' => $memberType,
