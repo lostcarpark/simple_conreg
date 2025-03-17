@@ -119,7 +119,7 @@ function simple_conreg_schema() {
       'language' =>  array(
         'type' => 'varchar',
         'description' => "Member language",
-        'length' => 2,
+        'length' => 8,
         'not null' => TRUE,
       ),
       // alter table conreg_members modify column member_type varchar(16);
@@ -133,7 +133,7 @@ function simple_conreg_schema() {
       // Base type column removed. To remove from database use:
       // update conreg_members set member_type = base_type;
       // alter table conreg_members drop base_type;
-      //      
+      //
       // alter table conreg_members add days varchar(16) NULL after member_type;
       // update conreg_members set days='W' where days is NULL or days='';
       'days' => array(
@@ -359,7 +359,7 @@ function simple_conreg_schema() {
         'not null' => FALSE,
         'default' => '',
         'description' => 'Extra information about add-on.',
-      ),      
+      ),
       'extra_flag1' => array(
         'type' => 'int',
         'not null' => FALSE,
@@ -413,7 +413,7 @@ function simple_conreg_schema() {
         'type' => 'int',
         'not null' => FALSE,
         'description' => 'The Drupal user ID who checked the member in.',
-      ),      
+      ),
       // alter table conreg_members add is_deleted int NOT NULL default "0" after join_date;
       'is_deleted' => array(
         'type' => 'int',
@@ -726,7 +726,7 @@ function simple_conreg_schema() {
         'not null' => TRUE,
         'default' => '',
         'description' => 'Name of the add-on.',
-      ),      
+      ),
       'addon_option' => array(
         'type' => 'varchar',
         'length' => 255,
@@ -740,7 +740,7 @@ function simple_conreg_schema() {
         'not null' => FALSE,
         'default' => '',
         'description' => 'Extra information about add-on.',
-      ),      
+      ),
       'addon_amount' => array(
         'type' => 'numeric',
         'precision' => 10,
@@ -825,7 +825,7 @@ function simple_conreg_update_9002() {
     'length' => 2,
     'not null' => TRUE,
     'initial' => 'en',
-  ); 
+  );
   $schema = Database::getConnection()->schema();
   $schema->addField('conreg_members', 'language', $spec);
 }
