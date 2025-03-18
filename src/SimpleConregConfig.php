@@ -17,26 +17,35 @@ class SimpleConregConfig {
   /**
    * Cet current event config.
    *
-   * @param int $eid Event ID.
-   * @return ImmutableConfig
+   * @param int $eid
+   *   Event ID.
+   *
+   * @return \Drupal\Core\Config\ImmutableConfig
+   *   The config object.
    */
-  public static function getConfig($eid): ImmutableConfig {
+  public static function getConfig(int $eid): ImmutableConfig {
 
     // Get event configuration from config.
     $config = \Drupal::config('simple_conreg.settings.'.$eid);
     if (empty($config->get('payments.system'))) {
       $config = \Drupal::config('simple_conreg.settings');
     }
-    
+
     return $config;
   }
-    
+
   /**
    * Get specified fieldset config.
    *
-   * Parameters: Event ID, Fieldset.
+   * @param int $eid
+   *   The Event ID.
+   * @param int $fieldset
+   *   The Fieldset number.
+   *
+   * @return \Drupal\Core\Config\ImmutableConfig
+   *   The config object.
    */
-  public static function getFieldsetConfig($eid, $fieldset = 0) {
+  public static function getFieldsetConfig(int $eid, int|null $fieldset = 0): ImmutableConfig {
 
     // If fieldset is not null or zero.
     if (!empty($fieldset)) {
@@ -56,4 +65,3 @@ class SimpleConregConfig {
   }
 
 }
-
