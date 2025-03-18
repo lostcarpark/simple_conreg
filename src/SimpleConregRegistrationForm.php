@@ -5,6 +5,7 @@ namespace Drupal\simple_conreg;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Cache\Cache;
+use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\MailManagerInterface;
@@ -16,20 +17,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class SimpleConregRegistrationForm extends FormBase {
 
   /**
-   * The mail manager.
-   *
-   * @var \Drupal\Core\Mail\MailManagerInterface
-   */
-  protected $mailManager;
-
-  /**
    * Constructs a new EmailExampleGetFormPage.
    *
    * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
    *   The mail manager.
    */
-  public function __construct(MailManagerInterface $mail_manager) {
-    $this->mailManager = $mail_manager;
+  public function __construct(private MailManagerInterface $mail_manager) {
   }
 
   /**
@@ -125,6 +118,7 @@ class SimpleConregRegistrationForm extends FormBase {
 
     [$addOnOptions, $addOnPrices] = SimpleConregOptions::memberAddons($eid, $config);
     // Check if discounts enabled.
+    /** @var \Drupal\Core\Config\ImmutableConfig $config */
     $discountEnabled = $config->get('discount.enable');
     $discountFreeEvery = $config->get('discount.free_every');
 
@@ -799,6 +793,7 @@ class SimpleConregRegistrationForm extends FormBase {
       case 'detail':
         return $form['members']['member' . $callback[1]][$callback[2]]['options']['container_' . $callback[3]];
     }
+    return [];
   }
 
   /**
@@ -1174,7 +1169,7 @@ class SimpleConregRegistrationForm extends FormBase {
    * Method to calculate price of all members, and subtract any discounts.
    */
   public function getAllMemberPrices(
-    $config,
+    ImmutableConfig $config,
     $form_values,
     $memberQty,
     $types,
