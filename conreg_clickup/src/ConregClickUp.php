@@ -8,12 +8,11 @@
 namespace Drupal\conreg_clickup;
 
 use Drupal\Component\Serialization\Json;
-use Drupal\Core\Url;
 use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Utility\Error;
 use Drupal\simple_conreg\SimpleConregConfig;
 use Drupal\simple_conreg\SimpleConregStorage;
 use Drupal\simple_conreg\FieldOptions;
-use Drupal\devel;
 use GuzzleHttp\Exception\RequestException;
 
 /**
@@ -41,11 +40,11 @@ class ConregClickUp
         ],
     ])->getBody()->getContents();
     $decoded = Json::decode($response);
-    
+
     return $decoded['access_token'];
   }
-  
-  
+
+
   public static function getTeam($token = NULL)
   {
     if (empty($token)) {
@@ -173,11 +172,11 @@ class ConregClickUp
     catch (RequestException $e) {
       $response = $e->getResponse();
       $response_info = Json::decode($response->getBody()->getContents());
-      $message = t('Failed to create ClickUp task with error: @error (@code).', ['@error' => $response_info['err'], '@code' => $response_info['ECODE']]);
-      watchdog_exception('Remote API Connection', $e, $message);
+      $logger = \Drupal::logger('conreg_clickup');
+      Error::logException($logger, $e, 'Failed to create ClickUp task with error: @error (@code).', ['@error' => $response_info['err'], '@code' => $response_info['ECODE']]);
       return FALSE;
     }
-    
+
     return $decoded['id'];
   }
 
@@ -219,8 +218,8 @@ class ConregClickUp
     catch (RequestException $e) {
       $response = $e->getResponse();
       $response_info = Json::decode($response->getBody()->getContents());
-      $message = t('Failed to create ClickUp task with error: @error (@code).', ['@error' => $response_info['err'], '@code' => $response_info['ECODE']]);
-      watchdog_exception('Remote API Connection', $e, $message);
+      $logger = \Drupal::logger('modulename');
+      Error::logException($logger, $e, 'Failed to create ClickUp task with error: @error (@code).', ['@error' => $response_info['err'], '@code' => $response_info['ECODE']]);
       return FALSE;
     }
 
@@ -241,17 +240,17 @@ class ConregClickUp
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
-    
+
     // Load the member record and get name.
     $member = SimpleConregStorage::load(['eid' => $eid, 'mid' => $mid]);
     $memberName = $member['first_name'] . ' ' . $member['last_name'];
-    
+
     $optionTitles = FieldOptions::getFieldOptionsTitles($eid, $config);
 
     // Loop through each option group and check if any options set.
     foreach ($config->get('clickup_option_groups') as $groupName => $groupVals) {
-      $groupMapping = $groupVals[option_mapping];
-      
+      $groupMapping = $groupVals['option_mapping'];
+
       // Check if ClickUp Task ID stored.
       $clickUpTask = self::getMemberClickupOption($mid, $groupName);
 
@@ -275,7 +274,7 @@ class ConregClickUp
       $taskName = str_replace('[name]', $memberName, $groupVals['task_title']);
       $link = t('[@text](@url)', ['@text' => $groupVals['link_text'], '@url' => $groupVals['link_url']]);
       $taskDescription = str_replace(['[name]', '[options]', '[link]'],
-                                     [$memberName, implode("\n", $taskOptions), $link], 
+                                     [$memberName, implode("\n", $taskOptions), $link],
                                      $groupVals['task_description']);
       $status = $groupVals['task_status'];
       $assignees = array_values($assignees);
@@ -301,7 +300,7 @@ class ConregClickUp
   public static function insertMemberClickupOption($mid, $optionGroup, $clickUpTaskId)
   {
     $connection = \Drupal::database();
-    
+
     $connection->insert('conreg_member_clickup_options')
       ->fields([
         'mid' => $mid,
@@ -315,7 +314,7 @@ class ConregClickUp
   public static function updateMemberClickupOption($mid, $optionGroup, $clickUpTaskId)
   {
     $connection = \Drupal::database();
-    
+
     $connection->update('conreg_member_clickup_options')
       ->fields([
         'clickup_task_id' => $clickUpTaskId,
@@ -329,19 +328,19 @@ class ConregClickUp
   public static function getMemberClickupOption($mid, $optionGroup)
   {
     $connection = \Drupal::database();
-    
+
     $select = $connection->select('conreg_member_clickup_options', 'm');
     // Select these specific fields for the output.
     $select->addField('m', 'clickup_task_id');
     $select->condition('m.mid', $mid);
     $select->condition('m.option_group', $optionGroup);
-    
+
     return $select->execute()->fetchField(); // Only selecting one field.
   }
-  
+
   public static function getMembersWithoutTasks($eid, $optids, $count) {
     $connection = \Drupal::database();
-    
+
     $select = $connection->select('conreg_members', 'm');
     $select->join('conreg_member_options', 'o', 'm.mid=o.mid');
     $select->leftJoin('conreg_member_clickup_options', 'c', 'm.mid=c.mid');
@@ -353,7 +352,7 @@ class ConregClickUp
     $select->condition('o.is_selected', 1);
     $select->isNull('c.clickup_task_id');
     $select->distinct();
-    
+
     if ($count)
       return $select->countQuery()->execute()->fetchField(); // Count the number of rows.
     else

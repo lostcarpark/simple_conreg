@@ -8,6 +8,7 @@
 namespace Drupal\simple_conreg;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Utility\Error;
 use GuzzleHttp\Exception\RequestException;
 
 /**
@@ -36,8 +37,8 @@ class SimpleConregCountry {
     catch (RequestException $e) {
       $response = $e->getResponse();
       $response_info = Json::decode($response->getBody()->getContents());
-      $message = t('Failed to create ClickUp task with error: @error (@code).', ['@error' => $response_info['err'], '@code' => $response_info['ECODE']]);
-      watchdog_exception('Remote API Connection', $e, $message);
+      $logger = \Drupal::logger('modulename');
+      Error::logException($logger, $e, 'Failed to create ClickUp task with error: @error (@code).', ['@error' => $response_info['err'], '@code' => $response_info['ECODE']]);
       return '';
     }
 

@@ -13,7 +13,6 @@ use Drupal\simple_conreg\SimpleConregTokens;
  *
  */
 class PlanZ {
-  private ImmutableConfig $config;
   public readonly string $target;
   public readonly BadgeIdSource $badgeIdSource;
   public readonly string $prefix;
@@ -34,8 +33,7 @@ class PlanZ {
    *
    * @param \Drupal\Core\Config\ImmutableConfig $config
    */
-  public function __construct(ImmutableConfig $config = NULL) {
-    $this->config = $config;
+  public function __construct(ImmutableConfig|NULL $config = NULL) {
     $this->target = $config->get('target') ?: 'default';
     $this->badgeIdSource = BadgeIdSource::from($config->get('badge_id_source') ?: 'mno');
     $this->prefix = $config->get('prefix') ?: '';

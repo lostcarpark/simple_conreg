@@ -19,7 +19,7 @@ use Drupal\devel;
  */
 class ConregConfigClickUpOptionsForm extends ConfigFormBase
 {
-  /** 
+  /**
    * {@inheritdoc}
    */
   public function getFormId()
@@ -27,7 +27,7 @@ class ConregConfigClickUpOptionsForm extends ConfigFormBase
     return 'conreg_config_clickup_options';
   }
 
-  /** 
+  /**
    * {@inheritdoc}
    */
   protected function getEditableConfigNames()
@@ -37,7 +37,7 @@ class ConregConfigClickUpOptionsForm extends ConfigFormBase
     ];
   }
 
-  /** 
+  /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $eid = 1)
@@ -56,9 +56,9 @@ class ConregConfigClickUpOptionsForm extends ConfigFormBase
       return parent::buildForm($form, $form_state);
     }
 
-    // Get config for event and fieldset.    
+    // Get config for event and fieldset.
     $config = SimpleConregConfig::getConfig($eid);
-    
+
     $optionTitles = FieldOptions::getFieldOptionsTitles($eid, $config);
 
     $memberNames = [];
@@ -168,7 +168,7 @@ class ConregConfigClickUpOptionsForm extends ConfigFormBase
         '#type' => 'fieldset',
         '#title' => $this->t('Option Mapping Test'),
       );
-      
+
       $i = 1;
       $options = [];
       foreach (explode("\n", $mapping) as $mappingLine) {
@@ -191,7 +191,7 @@ class ConregConfigClickUpOptionsForm extends ConfigFormBase
         '#type' => 'fieldset',
         '#title' => $this->t('Create tasks for existing members'),
       );
-      
+
       $count = ConregClickUp::getMembersWithoutTasks($eid, $options, TRUE);
 
       $form['groups'][$groupName]['create']['count'] = array(
@@ -208,7 +208,7 @@ class ConregConfigClickUpOptionsForm extends ConfigFormBase
 
       $buttonName = str_replace(' ', '_', $groupName);
       $buttonGroups[$buttonName] = $groupName;
-      
+
       $form['groups'][$groupName]['create']['submit_create_tasks'] = array(
         '#type' => 'submit',
         '#value' => t('Create Tasks for @name', ['@name' => $groupName]),
@@ -230,16 +230,16 @@ class ConregConfigClickUpOptionsForm extends ConfigFormBase
   public function addGroup(array &$form, FormStateInterface $form_state)
   {
     $eid = $form_state->get('eid');
-    $vals = $form_state->getValues();
+    $groupName = $form_state->getValue(['new_group', 'group_name']);
 
     if (!empty($vals['new_group']['group_name'])) {
       $config = \Drupal::getContainer()->get('config.factory')->getEditable('simple_conreg.settings.'.$eid);
-      $configGroupName = 'clickup_option_groups.'.$vals['new_group']['group_name'];
+      $configGroupName = 'clickup_option_groups.' . $groupName;
       // Only add group if not already present.
       if (empty($config->get($configGroupName))) {
         $config->set($configGroupName, []);
         $config->save();
-        \Drupal::messenger()->addMessage($this->t('Option group @name has been added.', ['@name' => $vals['group_name']]));
+        \Drupal::messenger()->addMessage($this->t('Option group @name has been added.', ['@name' => $groupName]));
       }
       $form_state->setValue(['groups', $groupName, '#value'], '');
     }
@@ -253,7 +253,7 @@ class ConregConfigClickUpOptionsForm extends ConfigFormBase
   {
     $eid = $form_state->get('eid');
     $config = SimpleConregConfig::getConfig($eid);
-    
+
     $groupOptions = $form_state->get('groupOptions');
     $buttonGroups = $form_state->get('buttonGroups');
     $vals = $form_state->getValues();
@@ -274,7 +274,7 @@ class ConregConfigClickUpOptionsForm extends ConfigFormBase
   }
 
 
-  /** 
+  /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {

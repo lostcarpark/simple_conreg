@@ -8,6 +8,7 @@
 namespace Drupal\conreg_discord;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Utility\Error;
 use Drupal\Core\Url;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\simple_conreg\SimpleConregConfig;
@@ -26,7 +27,7 @@ class Discord
   public $channel;
   public $inviteCode;
   public $message;
-  
+
   /**
    * Constructs a new Member object.
    */
@@ -35,7 +36,7 @@ class Discord
     $this->token = $token;
     $this->channelId = $channelId;
   }
-  
+
   /**
    * Gets the channel object.
    */
@@ -55,8 +56,8 @@ class Discord
     catch (RequestException $e) {
       $response = $e->getResponse();
       $response_info = Json::decode($response->getBody()->getContents());
-      $this->message = t('Failed to get channel information with error: @error (@code).', ['@error' => $response_info['channel_id'][0], '@code' => $response->getStatusCode()]);
-      watchdog_exception('Remote API Connection', $e, $this->message);
+      $logger = \Drupal::logger('modulename');
+      Error::logException($logger, $e, 'Failed to get channel information with error: @error (@code).', ['@error' => $response_info['channel_id'][0], '@code' => $response->getStatusCode()]);
       return FALSE;
     }
 
@@ -89,8 +90,8 @@ class Discord
     catch (RequestException $e) {
       $response = $e->getResponse();
       $response_info = Json::decode($response->getBody()->getContents());
-      $this->message = t('Failed to create invite code with error: @error (@code).', ['@error' => $response_info['channel_id'][0], '@code' => $response->getStatusCode()]);
-      watchdog_exception('Remote API Connection', $e, $this->message);
+      $logger = \Drupal::logger('modulename');
+      Error::logException($logger, $e, 'Failed to create invite code with error: @error (@code).', ['@error' => $response_info['channel_id'][0], '@code' => $response->getStatusCode()]);
       return FALSE;
     }
 

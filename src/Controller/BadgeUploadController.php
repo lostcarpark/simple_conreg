@@ -2,7 +2,9 @@
 
 namespace Drupal\simple_conreg\Controller;
 
+use Composer\Repository\FilesystemRepository;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\file\FileRepositoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -13,32 +15,11 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class BadgeUploadController extends ControllerBase {
 
-  /**
-   * The file handler.
-   *
-   * @var \Drupal\Core\File\FileSystemInterface
-   */
-  protected $fileSystem;
-
-  /**
-   * The HTTP request.
-   *
-   * @var Symfony\Component\HttpFoundation\Request
-   */
-  protected Request $request;
-
-  /**
-   * The controller constructor.
-   *
-   * @param \Drupal\Core\File\FileSystemInterface $file_system
-   *   The file handler.
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The HTTP request.
-   */
-  public function __construct(FileSystemInterface $file_system, Request $request) {
-    $this->fileSystem = $file_system;
-    $this->request = $request;
-  }
+  public function __construct(
+    protected FileSystemInterface $fileSystem,
+    protected FileRepositoryInterface $fileRepository,
+    protected Request $request,
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -46,6 +27,7 @@ class BadgeUploadController extends ControllerBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('file_system'),
+      $container->get('file.repository'),
       $container->get('request_stack')->getCurrentRequest()
     );
   }
@@ -62,7 +44,7 @@ class BadgeUploadController extends ControllerBase {
       $pngdata       = base64_decode($data);
       $path          = 'public://badges/' . $eid;
       $this->fileSystem->prepareDirectory($path, FileSystemInterface::CREATE_DIRECTORY);
-      FileRepositoryInterface::writeData($pngdata, $path . '/' . $id . '.png', FileSystemInterface::EXISTS_REPLACE);
+      $this->fileRepository->writeData($pngdata, $path . '/' . $id . '.png', FileExists::Replace);
     }
 
     $content['markup'] = [

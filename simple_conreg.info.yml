@@ -1,6 +1,6 @@
 name: ConReg - Simple Convention Registration
 type: module
 description: 'A simple module to provide a convention registration form.'
-core_version_requirement: ^9.3 || ^10.0
+core_version_requirement: ^10.1 || ^11.0
 libraries:
   - simple_conreg/conreg_form

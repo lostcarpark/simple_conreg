@@ -190,7 +190,7 @@ class SimpleConregOptions {
    * @return object
    *   Object containing type details.
    */
-  public static function memberTypes(int $eid, ImmutableConfig|NULL &$config = NULL): object {
+  public static function memberTypes(int $eid, ImmutableConfig|NULL $config = NULL): object {
     $cid = self::getMemberTypeCid($eid);
     if ($cache = \Drupal::cache()->get($cid)) {
       return $cache->data;
@@ -372,7 +372,7 @@ class SimpleConregOptions {
    * @param Drupal\Core\Config\ImmutableConfig|null $config
    *   The configuration settings.
    */
-  public static function memberUpgrades($eid, &$config = NULL) {
+  public static function memberUpgrades($eid, ImmutableConfig|null &$config = NULL) {
     // Store upgrade options in a static array.
     static $member_upgrades = [];
 
@@ -428,7 +428,7 @@ class SimpleConregOptions {
    * @param Drupal\Core\Config\ImmutableConfig|null $config
    *   The configuration settings.
    */
-  public static function badgeTypes($eid, &$config = NULL) {
+  public static function badgeTypes($eid, ImmutableConfig|null $config = NULL) {
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
@@ -488,7 +488,7 @@ class SimpleConregOptions {
    * @return array
    *   A list of options for the badge name selector.
    */
-  public static function badgeNameOptionsForName(int $eid, string $firstName, string $lastName, int $maxLength, &$config = NULL): array {
+  public static function badgeNameOptionsForName(int $eid, string $firstName, string $lastName, int $maxLength, ImmutableConfig|null $config = NULL): array {
     $badgeNameOptions = self::badgeNameOptions($eid, $config);
     if (!(empty($firstName) && empty($lastName))) {
       if (array_key_exists('F', $badgeNameOptions)) {
@@ -515,7 +515,7 @@ class SimpleConregOptions {
    * @return array
    *   Array of days.
    */
-  public static function days(int $eid, ImmutableConfig &$config = NULL): array {
+  public static function days(int $eid, ImmutableConfig|null $config = NULL): array {
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
@@ -542,7 +542,7 @@ class SimpleConregOptions {
    * @return array
    *   Member add-on options and prices.
    */
-  public static function memberAddons(int $eid, ImmutableConfig|null &$config = NULL): array {
+  public static function memberAddons(int $eid, ImmutableConfig|null $config = NULL): array {
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
@@ -573,7 +573,7 @@ class SimpleConregOptions {
    * @return array
    *   List of countries.
    */
-  public static function memberCountries(int $eid, ImmutableConfig &$config = NULL, bool $reset = FALSE): array {
+  public static function memberCountries(int $eid, ImmutableConfig|null $config = NULL, bool $reset = FALSE): array {
     $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
     $cid = 'simple_conreg:countryList_' . $eid . '_' . $language;
     // Check if previously used country list available.

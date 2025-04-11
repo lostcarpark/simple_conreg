@@ -74,7 +74,7 @@ class SimpleConregAddons {
    * @return array
    *   Array of processed add ons.
    */
-  public static function getAddon(ImmutableConfig $config, array $addonVals, array $addOnOptions, int $memberPos, callable $callback, FormStateInterface $form_state, int $mid = NULL): array {
+  public static function getAddon(ImmutableConfig $config, array $addonVals, array $addOnOptions, int $memberPos, callable $callback, FormStateInterface $form_state, ?int $mid = NULL): array {
 
     $addons = ['#tree' => TRUE];
     $fs_addons = [];
@@ -383,7 +383,7 @@ class SimpleConregAddons {
    * @param \Drupal\simple_conreg\SimpleConregPayment $payment
    *   A payment object.
    */
-  public static function saveAddons(ImmutableConfig $config, array $form_values, array $memberIDs, SimpleConregPayment $payment = NULL): void {
+  public static function saveAddons(ImmutableConfig $config, array $form_values, array $memberIDs, SimpleConregPayment|null $payment = NULL): void {
     $payId = $payment->getId();
     $addOns = $config->get('add-ons');
     if (!isset($addOns)) {
