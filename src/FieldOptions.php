@@ -35,7 +35,7 @@ class FieldOptions {
    *
    * Parameters: Event ID, Config, Fieldset.
    */
-  public function __construct($eid, $config = NULL) {
+  public function __construct($eid, ImmutableConfig|NULL $config = NULL) {
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
@@ -117,7 +117,7 @@ class FieldOptions {
    * @return array
    *   The array of option titles.
    */
-  public static function getFieldOptionsTitles(int $eid, ImmutableConfig $config = NULL): array {
+  public static function getFieldOptionsTitles(int $eid, ImmutableConfig|NULL $config = NULL): array {
     // If event config not passed in, load it.
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
@@ -201,7 +201,7 @@ class FieldOptions {
    * @param bool $requireMandatory
    *   True if option must be checked.
    */
-  public function addOptionFields(string $classRef, array &$memberForm, Member $member = NULL, bool $showGlobal = NULL, bool $showPrivate = FALSE, bool $requireMandatory = TRUE): void {
+  public function addOptionFields(string $classRef, array &$memberForm, Member|NULL $member = NULL, ?bool $showGlobal = NULL, bool $showPrivate = FALSE, bool $requireMandatory = TRUE): void {
     // Loop through each field option.
     foreach ($this->memberClasses[$classRef] as $group) {
       // Check if field should be displayed -- IF $global is null (meaning

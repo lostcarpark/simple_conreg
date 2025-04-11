@@ -1,4 +1,4 @@
 name: ConReg Discord InviteBot
 type: module
 description: 'Create Discord invitations from ConReg.'
-core_version_requirement: ^9.3 || ^10.0
+core_version_requirement: ^10.1 || ^11.0

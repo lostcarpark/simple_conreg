@@ -179,7 +179,7 @@ class ConfigPlanZForm extends ConfigFormBase {
         $form['members']['roles'][$role['permroleid']] = [
           '#type' => 'checkbox',
           '#title' => $role['permrolename'],
-          '#default_value' => $this->planz->roles[$role['permroleid']],
+          '#default_value' => $this->planz->roles[$role['permroleid']] ?? FALSE,
         ];
       }
     }

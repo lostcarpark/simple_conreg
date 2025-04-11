@@ -213,7 +213,7 @@ class PlanZUser {
    *
    * @return int Number of rows affected (normally 1)
    */
-  private function saveParticipant(Connection $planZCon, string $publicationName = NULL, string $sortingName = NULL): int {
+  private function saveParticipant(Connection $planZCon, ?string $publicationName = NULL, ?string $sortingName = NULL): int {
     if ($this->planz->generatePassword && empty($this->hashedPassword)) {
       $this->password = $this->generatePassword(12);
       $this->hashedPassword = password_hash(trim($this->password), PASSWORD_DEFAULT);

@@ -61,8 +61,8 @@ class BadgeNamesForm extends FormBase {
                             FormStateInterface $form_state,
                             int $eid = 1,
                             bool $export = FALSE,
-                            string $fields = NULL,
-                            string $update = NULL): Response | Array {
+                            string|NULL $fields = NULL,
+                            string|NULL $update = NULL): Response | Array {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
 
@@ -86,7 +86,7 @@ class BadgeNamesForm extends FormBase {
       '#title' => $this->t('Include fields'),
     ];
 
-    $showMemberNo = ($form_values['showMemberNo'] ?? TRUE);
+    $showMemberNo = (array_key_exists('showMemberNo', $form_values) ? $form_values['showMemberNo'] : TRUE);
     $exportFields = $showMemberNo ? 'M' : '';
     $form['fields']['showMemberNo'] = $this->checkBox($this->t('Show member number'), TRUE);
 
@@ -307,7 +307,7 @@ class BadgeNamesForm extends FormBase {
                                     bool $showBadgeTypes = TRUE,
                                     bool $showMemberTypes = FALSE,
                                     bool $showDays = TRUE,
-                                    string $updated = NULL): object {
+                                    string|NULL $updated = NULL): object {
     $config = SimpleConregConfig::getConfig($eid);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
     $memberTypes = SimpleConregOptions::memberTypes($eid, $config);

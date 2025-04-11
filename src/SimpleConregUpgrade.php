@@ -6,7 +6,6 @@
  */
 namespace Drupal\simple_conreg;
 
-use Drupal\devel;
 
 class SimpleConregUpgrade
 {
@@ -17,20 +16,20 @@ class SimpleConregUpgrade
   var $fromType, $fromDays;
   var $toType, $toDays, $toBadgeType;
   var $upgradePrice;
-  
+
   public function __construct($eid = 1, $mid = null, $upid = null, &$lead_mid = null,
                               $fromType = null, $fromDays = null, $toType = null, $toDays = null, $toBadgeType = null, $upgradePrice = null)
   {
     $this->eid = $eid;
     $this->mid = $mid;
     $this->lead_mid = $lead_mid;
-    
+
     $lead_mid = $this->getLead(); // Ensure that Lead MID is passed back to caller.
-    
+
     if (!empty($upid))
       $this->setUpgrade($upid);
     else {
-      // Only use passed in values for 
+      // Only use passed in values for
       $this->fromType = $fromType;
       $this->fromDays = $fromDays;
       $this->toType = $toType;
@@ -39,7 +38,7 @@ class SimpleConregUpgrade
       $this->upgradePrice = $upgradePrice;
     }
   }
-  
+
   public function getLead()
   {
     if (empty($this->lead_mid) && !empty($this->mid)) {
@@ -48,7 +47,7 @@ class SimpleConregUpgrade
     }
     return $this->lead_mid;
   }
-  
+
   public function setUpgrade($upid)
   {
     $upgrades = SimpleConregOptions::memberUpgrades($this->eid);
@@ -61,11 +60,11 @@ class SimpleConregUpgrade
       $this->upgradePrice = $upgrades->upgrades[$upid]->price;
     }
   }
-  
+
   public function saveUpgrade($upgradeTotal)
   {
     SimpleConregUpgradeStorage::deleteUnpaidByMid($this->mid);
-  
+
     SimpleConregUpgradeStorage::insert([
       'mid' => $this->mid,
       'eid' => $this->eid,
@@ -79,9 +78,9 @@ class SimpleConregUpgrade
       'is_paid' => 0,
       'payment_amount' => $upgradeTotal,
       'upgrade_date' => time(),
-    ]);	
+    ]);
   }
-  
+
   // Function to complete upgrade when payment received.
   public function complete($lead_mid, $payment_amount, $payment_method, $payment_id)
   {
