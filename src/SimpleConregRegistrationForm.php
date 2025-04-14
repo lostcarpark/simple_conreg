@@ -22,8 +22,9 @@ class SimpleConregRegistrationForm extends FormBase {
    * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
    *   The mail manager.
    */
-  public function __construct(private MailManagerInterface $mail_manager) {
-  }
+  public function __construct(
+    private MailManagerInterface $mail_manager,
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -611,7 +612,7 @@ class SimpleConregRegistrationForm extends FormBase {
       ];
     }
     $form['payment']['price']['total_price'] = [
-      '#prefix' => '<div id="totalPrice">',
+      '#prefix' => '<div id="total-price">',
       '#suffix' => '</div>',
       '#markup' => $this->t(
         'Total amount to pay: @symbol<span id="total-value">@total</span>',
