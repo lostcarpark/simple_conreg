@@ -192,7 +192,7 @@ class SimpleConregRegistrationForm extends FormBase {
         '#prefix' => '<div class="registration-form-paid-members">',
         '#suffix' => '</div>',
         '#markup' => $this->t(
-          '<strong>Please note:</strong> You already have regustered the following members: %members. For more details, please go to the <a href="@member-portal-page">member portal</a>.',
+          '<strong>Please note:</strong> You already have registered the following members: %members. For more details, please go to the <a href="@member-portal-page">member portal</a>.',
           ['%members' => implode(', ', $paidMembers), '@member-portal-page' => $url->toString()]
         )
       ];
