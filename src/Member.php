@@ -125,6 +125,38 @@ class Member extends \stdClass {
   }
 
   /**
+   * Load a member group from lead member email address.
+   *
+   * @param int $eid
+   *   Event ID.
+   * @param string $email
+   *   Email of lead member.
+   *
+   * @return array of member objects.
+   *   The member object.
+   */
+  public static function loadMemberGroupByEmail(int $eid, string $email): array {
+    $leadMember = self::loadMemberByEmail($eid, $email);
+    if (!$leadMember) {
+      return [];
+    }
+    // Load all members in group.
+    $rows = SimpleConregStorage::loadAll([
+      'eid' => $eid,
+      'lead_mid' => $leadMember->mid,
+      'is_deleted' => 0,
+    ]);
+    // Add lead member as first in result array.
+    $members = [$leadMember];
+    foreach ($rows as $row) {
+      if ($row['mid'] != $leadMember->mid) {
+        $members[] = self::newMember($row);
+      }
+    }
+    return $members;
+  }
+
+  /**
    * Save the member to the conreg_members table.
    *
    * @return int

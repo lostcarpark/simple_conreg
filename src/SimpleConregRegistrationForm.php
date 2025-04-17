@@ -2,13 +2,18 @@
 
 namespace Drupal\simple_conreg;
 
+use Drupal\Component\Utility\EmailValidator;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
 use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\Core\Render\RendererInterface;
+use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -19,18 +24,32 @@ class SimpleConregRegistrationForm extends FormBase {
   /**
    * Constructs a new EmailExampleGetFormPage.
    *
+   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
+   *   The currently logged in user.
    * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
    *   The mail manager.
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The Drupal renderer.
+   * @param \Drupal\Component\Utility\EmailValidator $emailValidator
+   *   The email validator service.
    */
   public function __construct(
+    protected AccountProxyInterface $currentUser,
     private MailManagerInterface $mail_manager,
+    protected RendererInterface $renderer,
+    protected EmailValidator $emailValidator,
   ) {}
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static($container->get('plugin.manager.mail'));
+    return new static(
+      $container->get('current_user'),
+      $container->get('plugin.manager.mail'),
+      $container->get('renderer'),
+      $container->get('email.validator'),
+    );
   }
 
   /**
@@ -44,11 +63,6 @@ class SimpleConregRegistrationForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $return = '') {
-    $form['#cache'] = [
-      'tags' => ['event:' . $eid . ':registration'],
-      'max-age' => Cache::PERMANENT,
-    ];
-
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
     $form_state->set('return', $return);
@@ -106,14 +120,27 @@ class SimpleConregRegistrationForm extends FormBase {
       }
     }
 
+    $lead_member = NULL;
+    $first_user_email = NULL;
+    $paidMembers = [];
+    $unpaidMembers = [];
     // Check if user logged in and should be first member.
-    $user = \Drupal::currentUser();
-    $email = $user->getEmail();
-    if (empty($email)) {
-      $lead_member = NULL;
+    if ($this->currentUser->isAuthenticated()) {
+      $email = $this->currentUser->getEmail();
+      if (!empty($email)) {
+        // User is logged in and has an email, check if existing member.
+        $lead_member = Member::loadMemberByEmail($eid, $email);
+        if (!$lead_member) {
+          $first_user_email = $email;
+        }
+        $memberGroup = Member::loadMemberGroupByEmail($eid, $email);
+        $mapFn = fn($member) => $member->badge_name;
+        $paidMembers = array_map($mapFn, array_filter($memberGroup, fn($member) => $member->is_paid));
+        $unpaidMembers = array_map($mapFn, array_filter($memberGroup, fn($member) => !$member->is_paid));
+      }
     }
     else {
-      $lead_member = Member::loadMemberByEmail($eid, $email);
+      $lead_member = NULL;
     }
     $lead_mid = $lead_member?->mid;
 
@@ -143,7 +170,10 @@ class SimpleConregRegistrationForm extends FormBase {
 
     $form = [
       '#tree' => TRUE,
-      '#cache' => ['max-age' => 0],
+      '#cache' => [
+        'tags' => ['event:' . $eid . ':registration'],
+        'max-age' => Cache::PERMANENT,
+      ],
       '#prefix' => '<div id="regform">',
       '#suffix' => '</div>',
       '#attached' => [
@@ -156,7 +186,33 @@ class SimpleConregRegistrationForm extends FormBase {
       ],
     ];
 
+    if ($paidMembers) {
+      $url = Url::fromRoute('simple_conreg_portal', ['eid' => $eid]);
+      $form['paid_members_registered'] = [
+        '#prefix' => '<div class="registration-form-paid-members">',
+        '#suffix' => '</div>',
+        '#markup' => $this->t(
+          '<strong>Please note:</strong> You already have regustered the following members: %members. For more details, please go to the <a href="@member-portal-page">member portal</a>.',
+          ['%members' => implode(', ', $paidMembers), '@member-portal-page' => $url->toString()]
+        )
+      ];
+    }
+
+    if ($unpaidMembers) {
+      $url = Url::fromRoute('simple_conreg_portal', ['eid' => $eid]);
+      $form['unpaid_members_registered'] = [
+        '#prefix' => '<div class="registration-form-unpaid-members">',
+        '#suffix' => '</div>',
+        '#markup' => $this->t(
+          '<strong>Warning:</strong> You have started registration for the following: %unpaid_members. However, you have not completed payment. To complete, please go to the <a href="@member-portal-page">member portal</a>.',
+          ['%unpaid_members' => implode(', ', $unpaidMembers), '@member-portal-page' => $url->toString()]
+        )
+      ];
+    }
+
     $form['intro'] = [
+      '#prefix' => '<div class="registration-form-intro">',
+      '#suffix' => '</div>',
       '#markup' => $config->get('registration_intro'),
     ];
 
@@ -165,10 +221,8 @@ class SimpleConregRegistrationForm extends FormBase {
       '#title' => $this->t('How many members?'),
     ];
 
-    $qtyOptions = [];
-    for ($cnt = 1; $cnt <= 6; $cnt++) {
-      $qtyOptions[$cnt] = $cnt;
-    }
+    $qtyVals = range(1, 6);
+    $qtyOptions = array_combine($qtyVals, $qtyVals);
     $form['global']['member_quantity'] = [
       '#type' => 'select',
       '#title' => $this->t('Select number of members to register'),
@@ -255,16 +309,34 @@ class SimpleConregRegistrationForm extends FormBase {
         '#suffix' => '</div>',
       ];
 
-      $form['members']['member' . $cnt]['email'] = [
-        '#type' => 'email',
-        '#title' => $curMemberClass->fields->email,
-      ];
-      if ($cnt == 1) {
-        $form['members']['member' . $cnt]['email']['#required'] = TRUE;
-        $form['members']['member' . $cnt]['email']['#description'] = $this->t('Email address required for first member.');
+      if ($first_user_email) {
+        $form['members']['member' . $cnt]['email'] = [
+          '#type' =>  'hidden',
+          '#value' => $first_user_email,
+        ];
+        $form['members']['member' . $cnt]['email_label'] = [
+          '#prefix' => '<div class="form-item__label">',
+          '#suffix' => '</div>',
+          '#markup' => $this->t('Email'),
+        ];
+        $form['members']['member' . $cnt]['email_display'] = [
+          '#prefix' => '<div id="edit-members-memver$cnt-email">',
+          '#suffix' => '</div>',
+          '#markup' => $first_user_email,
+        ];
       }
       else {
-        $form['members']['member' . $cnt]['email']['#description'] = $this->t('If you don not provide an email, you will have to get convention updates from the first member.');
+        $form['members']['member' . $cnt]['email'] = [
+          '#type' => 'email',
+          '#title' => $curMemberClass->fields->email,
+        ];
+        if ($cnt == 1) {
+          $form['members']['member' . $cnt]['email']['#required'] = TRUE;
+          $form['members']['member' . $cnt]['email']['#description'] = $this->t('Email address required for first member.');
+        }
+        else {
+          $form['members']['member' . $cnt]['email']['#description'] = $this->t('If you do not provide an email, you will have to get convention updates from the first member.');
+        }
       }
 
       // Member type:
@@ -701,7 +773,7 @@ class SimpleConregRegistrationForm extends FormBase {
       foreach ($addons as $addOnId) {
         if (!empty($form['members']['member' . $cnt]['add_on'][$addOnId]['extra'])) {
           $id = '#member_addon_' . $addOnId . '_info_' . $cnt;
-          $ajax_response->addCommand(new HtmlCommand($id, \Drupal::service('renderer')->render($form['members']['member' . $cnt]['add_on'][$addOnId]['extra']['info'])));
+          $ajax_response->addCommand(new HtmlCommand($id, $this->renderer->render($form['members']['member' . $cnt]['add_on'][$addOnId]['extra']['info'])));
         }
       }
       $ajax_response->addCommand(new HtmlCommand('#memberPrice' . $cnt, $form['members']['member' . $cnt]['price']['#markup']));
@@ -710,7 +782,7 @@ class SimpleConregRegistrationForm extends FormBase {
     foreach ($addons as $addOnId) {
       if (!empty($form['payment']['global_add_on'][$addOnId]['extra'])) {
         $id = '#global_addon_' . $addOnId . '_info';
-        $ajax_response->addCommand(new HtmlCommand($id, \Drupal::service('renderer')->render($form['payment']['global_add_on'][$addOnId]['extra']['info'])));
+        $ajax_response->addCommand(new HtmlCommand($id, $this->renderer->render($form['payment']['global_add_on'][$addOnId]['extra']['info'])));
       }
     }
     $ajax_response->addCommand(new HtmlCommand('#Pricing', $form['payment']['price']));
@@ -736,7 +808,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $memberQty = $form_state->getValue(['global', 'member_quantity']);
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
       if (isset($form['members']['member' . $cnt]['badge_name'])) {
-        $ajax_response->addCommand(new HtmlCommand('#memberBadgeName' . $cnt, \Drupal::service('renderer')->render($form['members']['member' . $cnt]['badge_name'])));
+        $ajax_response->addCommand(new HtmlCommand('#memberBadgeName' . $cnt, $this->renderer->render($form['members']['member' . $cnt]['badge_name'])));
       }
       else {
         $ajax_response->addCommand(new HtmlCommand('#memberBadgeName' . $cnt, ""));
@@ -763,7 +835,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $memberQty = $form_state->getValue(['global', 'member_quantity']);
     // Only need to reshow from member 2 up.
     for ($cnt = 2; $cnt <= $memberQty; $cnt++) {
-      $ajax_response->addCommand(new HtmlCommand('#memberAddress' . $cnt, \Drupal::service('renderer')->render($form['members']['member' . $cnt]['address'])));
+      $ajax_response->addCommand(new HtmlCommand('#memberAddress' . $cnt, $this->renderer->render($form['members']['member' . $cnt]['address'])));
     }
 
     return $ajax_response;
@@ -869,6 +941,7 @@ class SimpleConregRegistrationForm extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
+    $eid = $form_state->get('eid');
     $form_values = $form_state->getValues();
     $memberQty = $form_values['global']['member_quantity'];
     for ($cnt = 1; $cnt <= $memberQty; $cnt++) {
@@ -878,26 +951,44 @@ class SimpleConregRegistrationForm extends FormBase {
         (empty($form_values['members']['member' . $cnt]['last_name']) ||
         empty(trim($form_values['members']['member' . $cnt]['last_name'])))
       ) {
-        $form_state->setErrorByName('members][member' . $cnt . '][first_name', $this->t('You must enter either first name or last name'));
+        $form_state->setErrorByName('members][member' . $cnt . '][first_name', $this->t('You must enter either first name or last name.'));
         $form_state->setErrorByName('members][member' . $cnt . '][last_name');
       }
       // If first name selected for badge, first name must be entered.
       if (
-      !isset($form_values['members']['member' . $cnt]['badge_name_option']) ||
-      $form_values['members']['member' . $cnt]['badge_name_option'] == 'F' &&
-      (empty($form_values['members']['member' . $cnt]['first_name']) ||
-      empty(trim($form_values['members']['member' . $cnt]['first_name'])))
+        !isset($form_values['members']['member' . $cnt]['badge_name_option']) ||
+        $form_values['members']['member' . $cnt]['badge_name_option'] == 'F' &&
+        (empty($form_values['members']['member' . $cnt]['first_name']) ||
+        empty(trim($form_values['members']['member' . $cnt]['first_name'])))
       ) {
-        $form_state->setErrorByName('members][member' . $cnt . '][first_name', $this->t('You cannot choose first name for badge unless you enter a first name'));
+        $form_state->setErrorByName('members][member' . $cnt . '][first_name', $this->t('You cannot choose first name for badge unless you enter a first name.'));
       }
       // If the "other" option has been chosen, a badge name must be entered.
       if (
-      !isset($form_values['members']['member' . $cnt]['badge_name_option']) ||
-      $form_values['members']['member' . $cnt]['badge_name_option'] == 'O' &&
-      (empty($form_values['members']['member' . $cnt]['badge_name']['other']) ||
-      empty(trim($form_values['members']['member' . $cnt]['badge_name']['other'])))
+        !isset($form_values['members']['member' . $cnt]['badge_name_option']) ||
+        $form_values['members']['member' . $cnt]['badge_name_option'] == 'O' &&
+        (empty($form_values['members']['member' . $cnt]['badge_name']['other']) ||
+        empty(trim($form_values['members']['member' . $cnt]['badge_name']['other'])))
       ) {
-        $form_state->setErrorByName('members][member' . $cnt . '][badge_name][other', $this->t('Please enter your badge name'));
+        $form_state->setErrorByName('members][member' . $cnt . '][badge_name][other', $this->t('Please enter your badge name.'));
+      }
+      // Validate that email address is valid and unique for member.
+      $email = $form_values['members']['member' . $cnt]['email'];
+      if ($email) {
+        if ($email && !$this->emailValidator->isValid($email)) {
+          $form_state->setErrorByName('members][member' . $cnt . '][email', $this->t('Please enter a valid email address'));
+        }
+        // Check email isn't used for another member on same form.
+        for ($emailCnt = 1; $emailCnt < $memberQty; $emailCnt++) {
+          if ($cnt != $emailCnt && $email == $form_values['members']['member' . $emailCnt]['email']) {
+            $form_state->setErrorByName('members][member' . $cnt . '][email', $this->t('Member %first has the same email address as member %second.', ['%first' => $cnt, '%second' => $emailCnt]));
+          }
+        }
+        // Check a user hasn't already been registered with the same email.
+        $member = Member::loadMemberByEmail($eid, $email);
+        if ($member) {
+          $form_state->setErrorByName('members][member' . $cnt . '][email', $this->t('A member has previously been registered with this address.'));
+        }
       }
     }
   }
@@ -937,8 +1028,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $lead_mid = NULL;
     if (empty($return)) {
       // Check if user logged in and should be first member.
-      $user = \Drupal::currentUser();
-      $email = $user->getEmail();
+      $email = $this->currentUser->getEmail();
       if (!empty($email)) {
         $lead_member = Member::loadMemberByEmail($eid, $email);
         $lead_mid = $lead_member?->mid;
@@ -1084,7 +1174,7 @@ class SimpleConregRegistrationForm extends FormBase {
             $memberPrices[$cnt]->basePriceMinusFree,
           ));
         // Add confirmation.
-        \Drupal::messenger()->addMessage($this->t(
+        $this->messenger()->addMessage($this->t(
           'Thank you for registering @first_name @last_name.',
           [
             '@first_name' => $entry['first_name'],
