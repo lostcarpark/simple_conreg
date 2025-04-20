@@ -9,6 +9,7 @@ namespace Drupal\simple_conreg;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\AlertCommand;
 use Drupal\Core\Ajax\CssCommand;
@@ -16,14 +17,29 @@ use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Link;
 use Drupal\Core\URL;
 use Drupal\Component\Utility\Html;
-use Drupal\devel;
-
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Simple form to add an entry, with all the interesting fields.
  */
 class SimpleConregAdminFanTable extends FormBase {
 
+  /**
+   * Constructs a new EmailExampleGetFormPage.
+   *
+   * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
+   *   The mail manager.
+   */
+  public function __construct(protected MailManagerInterface $mailManager)
+  {}
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container)
+  {
+    return new static ($container->get('plugin.manager.mail'));
+  }
 
   /**
    * {@inheritdoc}
@@ -56,9 +72,9 @@ class SimpleConregAdminFanTable extends FormBase {
     if (isset($action) && !empty($action)) {
       switch ($action) {
         case "payCash":
-          $toPay = $form_state->get("topay");
-          $lead_mid = $form_state->get("leadmid");
-          return $this->buildCashForm($eid, $lead_mid, $toPay, $config);
+          $payid = $form_state->get("payid");
+          $payment = SimpleConregPayment::load($payid);
+          return $this->buildCashForm($eid, $payment, $config);
           break;
       }
     }
@@ -76,7 +92,7 @@ class SimpleConregAdminFanTable extends FormBase {
       '#title' => $this->t('Membership summary'),
     );
 
-    SimpleConregController::memberAdminMemberListSummaryHorizontal($eid, $form['summary']);
+    $this->memberAdminMemberListSummaryHorizontal($eid, $form['summary']);
 
     $form['search'] = array(
       '#type' => 'fieldset',
@@ -102,9 +118,9 @@ class SimpleConregAdminFanTable extends FormBase {
     $form['search']['search'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Custom search term'),
-      '#default_value' => trim($search),
+      '#default_value' => trim($search ?? ''),
     );
-    
+
     $form['search']['search_button'] = array(
       '#type' => 'button',
       '#value' => t('Search'),
@@ -123,7 +139,7 @@ class SimpleConregAdminFanTable extends FormBase {
       '#attributes' => array('id' => 'simple-conreg-admin-member-list'),
       '#empty' => t('No entries available.'),
       '#sticky' => TRUE,
-    );      
+    );
 
     // Only check database if search filled in.
     if (!empty($search)) {
@@ -226,7 +242,7 @@ class SimpleConregAdminFanTable extends FormBase {
       '#empty' => t('No entries available.'),
       '#sticky' => TRUE,
     );
-    
+
     $entries = SimpleConregStorage::adminMemberUnpaidListLoad($eid);
 
     foreach ($entries as $entry) {
@@ -296,21 +312,48 @@ class SimpleConregAdminFanTable extends FormBase {
       '#type' => 'submit',
       '#value' => $this->t('Pay Cash'),
       '#submit' => [[$this, 'payCash']],
-    );    
+    );
 
     $form['card'] = array(
       '#type' => 'submit',
       '#value' => $this->t('Pay Credit Card'),
       '#submit' => [[$this, 'payCard']],
-    );    
+    );
 
     return $form;
   }
-  
+
+  /**
+   * Add a summary by member type to render array.
+   */
+  public function memberAdminMemberListSummaryHorizontal($eid, &$content) {
+    $types = SimpleConregOptions::memberTypes($eid);
+    $headers = [];
+    $rows = [];
+    $total = 0;
+    foreach (SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
+      // Replace type code with description.
+      $headers[] = isset($types->types[$entry['member_type']]) ? $types->types[$entry['member_type']]->name : $entry['member_type'];
+      $rows[] = ['#markup' => $entry['num']];
+      $total += $entry['num'];
+    }
+    // Add a row for the total.
+    $headers[] = $this->t("Total");
+    $rows[] = ['#markup' => $total];
+    $content['summary'] = [
+      '#type' => 'table',
+      '#header' => $headers,
+      '#empty' => $this->t('No entries available.'),
+      'rows' => $rows,
+    ];
+
+    return $content;
+  }
+
   //
   // Set up markup fields to display cash payment.
   //
-  public function buildCashForm($eid, $lead_mid, $toPay, $config) {
+  public function buildCashForm($eid, SimpleConregPayment $payment, $config) {
     $symbol = $config->get('payments.symbol');
     $form = [];
     $form['intro'] = [
@@ -320,40 +363,34 @@ class SimpleConregAdminFanTable extends FormBase {
       '#suffix' => '</h3></div>',
     ];
     $total_price = 0;
-    
-    $mgr = new SimpleConregUpgradeManager($eid);
-    $mgr->loadUpgrades($lead_mid, FALSE);
-    foreach ($mgr->upgrades as $upgrade) {
-      $member = SimpleConregStorage::load(['mid' => $upgrade->mid]);
-      $form['member'.$upgrade->mid] = [
+
+    // $mgr = new SimpleConregUpgradeManager($eid);
+    // $mgr->loadUpgrades($lead_mid, FALSE);
+    // foreach ($mgr->upgrades as $upgrade) {
+    //   $member = SimpleConregStorage::load(['mid' => $upgrade->mid]);
+    //   $form['member'.$upgrade->mid] = [
+    //     '#type' => 'markup',
+    //     '#markup' => $this->t('Member @first @last to pay @symbol@total',
+    //       ['@first' => $member['first_name'],
+    //        '@last' => $member['last_name'],
+    //        '@symbol' => $symbol,
+    //        '@total' => $upgrade->upgradePrice,
+    //       ]),
+    //     '#prefix' => '<div>',
+    //     '#suffix' => '</div>',
+    //   ];
+    //   $total_price += $upgrade->upgradePrice;
+    // }
+
+    /** @var SimpleConregPaymentLine */
+    foreach ($payment->paymentLines as $line) {
+      $form['line'.$line->payLineId] = [
         '#type' => 'markup',
-        '#markup' => $this->t('Member @first @last to pay @symbol@total',
-          ['@first' => $member['first_name'],
-           '@last' => $member['last_name'],
-           '@symbol' => $symbol,
-           '@total' => $upgrade->upgradePrice,
-          ]),
+        '#markup' => $line->lineDesc,
         '#prefix' => '<div>',
         '#suffix' => '</div>',
       ];
-      $total_price += $upgrade->upgradePrice;
-    }
-    
-    foreach ($toPay as $mid) {
-      if ($member = SimpleConregStorage::load(['mid' => $mid, 'is_paid' => 0])) {
-        $form['member'.$mid] = [
-          '#type' => 'markup',
-          '#markup' => $this->t('Member @first @last to pay @symbol@total',
-            ['@first' => $member['first_name'],
-             '@last' => $member['last_name'],
-             '@symbol' => $symbol,
-             '@total' => $member['member_total'],
-            ]),
-          '#prefix' => '<div>',
-          '#suffix' => '</div>',
-        ];
-        $total_price += $member['member_total'];
-      }
+      $total_price += $line->amount;
     }
     $form['payment_method'] = array(
       '#type' => 'select',
@@ -376,7 +413,7 @@ class SimpleConregAdminFanTable extends FormBase {
       '#type' => 'submit',
       '#value' => $this->t('Confirm Cash Payment'),
       '#submit' => [[$this, 'confirmPayCash']],
-    );  
+    );
     $form['cancel'] = array(
       '#type' => 'submit',
       '#value' => $this->t('Cancel'),
@@ -394,7 +431,7 @@ class SimpleConregAdminFanTable extends FormBase {
   public function search(array &$form, FormStateInterface $form_state) {
     $form_state->setRebuild();
   }
-  
+
   public function addMembers(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
     // Redirect to payment form.
@@ -408,17 +445,18 @@ class SimpleConregAdminFanTable extends FormBase {
   {
     $mgr = new SimpleConregUpgradeManager($eid);
 
-    $lead_mid = $this->getUserLeadMid($eid); // Get lead MID from .
-    foreach ($form_values["table"] as $mid => $memberRow) {
-      $upgrade = new SimpleConregUpgrade($eid, $mid, $memberRow["member_type"], $lead_mid);
-      // Only save upgrade if price is not null.
-      if (isset($upgrade->upgradePrice)) {
-        $mgr->Add($upgrade);
-        $member = SimpleConregStorage::load(['mid' => $mid]);
-        $payment->add(new SimpleConregPaymentLine($mid,
-                                                  'upgrade',
-                                                  t("Upgrade for @first_name @last_name", array('@first_name' => $member['first_name'], '@last_name' => $member['last_name'])),
-                                                  $upgrade->upgradePrice));
+    if ($form_values["table"]) {
+      foreach ($form_values["table"] as $mid => $memberRow) {
+        $upgrade = new SimpleConregUpgrade($eid, $mid, $memberRow["member_type"]);
+        // Only save upgrade if price is not null.
+        if (isset($upgrade->upgradePrice)) {
+          $mgr->Add($upgrade);
+          $member = SimpleConregStorage::load(['mid' => $mid]);
+          $payment->add(new SimpleConregPaymentLine($mid,
+                                                    'upgrade',
+                                                    t("Upgrade for @first_name @last_name", array('@first_name' => $member['first_name'], '@last_name' => $member['last_name'])),
+                                                    $upgrade->upgradePrice));
+        }
       }
     }
     $upgrade_price = $mgr->getTotalPrice();
@@ -430,26 +468,42 @@ class SimpleConregAdminFanTable extends FormBase {
   public function payCash(array &$form, FormStateInterface $form_state)
   {
     $eid = $form_state->get('eid');
+    $event = SimpleConregEventStorage::load(['eid' => $eid]);
     $config = SimpleConregConfig::getConfig($eid);
     $types = SimpleConregOptions::memberTypes($eid, $config);
     $days = SimpleConregOptions::days($eid, $config);
     $form_values = $form_state->getValues();
 
+    $payment = new SimpleConregPayment();
     // Save any member upgrades.
-    $lead_mid = self::saveUpgrades($eid, $form_values, $upgrade_price, $payment);
+    $lead_mid = $this->saveUpgrades($eid, $form_values, $upgrade_price, $payment);
 
     // Next check for any unpaid members to be paid.
     $toPay = [];
     foreach ($form_values['unpaid'] as $mid => $member) {
       if (isset($member['is_selected']) && $member['is_selected']) {
+        $member = Member::loadMember($mid);
+        $payment->add(new SimpleConregPaymentLine(
+          $mid,
+          'member',
+          $this->t("Member registration to @event_name for @first_name @last_name",
+            [
+              '@event_name' => $event['event_name'],
+              '@first_name' => $member->first_name,
+              '@last_name' => $member->last_name,
+            ]),
+            $member->member_total,
+          ));
         $toPay[$mid] = $mid;
       }
     }
 
     // No need to proceed unless members have been selected.
     if (!empty($lead_mid) || count($toPay)) {
+      $payid = $payment->save();
       $form_state->set('action', 'payCash');
       $form_state->set('topay', $toPay);
+      $form_state->set('payid', $payid);
       $form_state->set('leadmid', $lead_mid);
     }
     $form_state->setRebuild();
@@ -459,13 +513,37 @@ class SimpleConregAdminFanTable extends FormBase {
   public function confirmPayCash(array &$form, FormStateInterface $form_state)
   {
     $eid = $form_state->get('eid');
-    $config = SimpleConregConfig::getConfig($eid);
-    $types = SimpleConregOptions::memberTypes($eid, $config);
-    $days = SimpleConregOptions::days($eid, $config);
+    $payid = $form_state->get('payid');
     $form_values = $form_state->getValues();
 
-    // Create a payment.
-    $payment = new SimpleConregPayment();
+    // Load the payment.
+    $payment = SimpleConregPayment::load($payid);
+    if (!is_null($payment)) {
+      $payment->paidDate = time();
+      $payment->paymentMethod = $form_values['payment_method'];
+      $payment->paymentRef = $form_values['payment_id'];
+      $payment->save();
+
+      SimpleConregAddons::markPaid($payment->getId(), $form_values['payment_id']);
+
+      // Process the payment lines.
+      foreach ($payment->paymentLines as $line) {
+        switch ($line->type) {
+          case "member":
+            $member = Member::loadMember($line->mid);
+            if (is_object($member) && !$member->is_paid && !$member->is_deleted) {
+              $member->is_paid = 1;
+              $member->payment_id = $session->payment_intent;
+              $member->payment_method = 'Stripe';
+              $result = $member->saveMember();
+
+              // If email address populated, send confirmation email.
+              if (!empty($member->email))
+                $this->sendConfirmationEmail((array)$member);
+            }
+        }
+      }
+    }
 
     $payment_amount = 0;
     $lead_mid = $form_state->get('leadmid');
@@ -517,8 +595,6 @@ class SimpleConregAdminFanTable extends FormBase {
   public function payCard(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
     $config = SimpleConregConfig::getConfig($eid);
-    $types = SimpleConregOptions::memberTypes($eid, $config);
-    $days = SimpleConregOptions::days($eid, $config);
     $form_values = $form_state->getValues();
 
     // Create a payment.
@@ -578,5 +654,41 @@ class SimpleConregAdminFanTable extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
   }
-}    
 
+  private function sendConfirmationEmail($member)
+  {
+    $config = $this->config('simple_conreg.settings.' . $member['eid']);
+
+    // Set up parameters for receipt email.
+    $params = ['eid' => $member['eid'], 'mid' => $member['mid']];
+    $params['subject'] = $config->get('confirmation.template_subject');
+    $params['body'] = $config->get('confirmation.template_body');
+    $params['body_format'] = $config->get('confirmation.template_format');
+    $params['include_private'] = true;
+    $module = "simple_conreg";
+    $key = "template";
+    $to = $member["email"];
+    $language_code = \Drupal::languageManager()->getDefaultLanguage()->getId();
+    $send_now = TRUE;
+    // Send confirmation email to member.
+    if (!empty($member["email"]))
+      $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $language_code, $params);
+
+    // If copy_us checkbox checked, send a copy to us.
+    if ($config->get('confirmation.copy_us')) {
+      $params['subject'] = $config->get('confirmation.notification_subject');
+      $params['include_private'] = false;
+      $to = $config->get('confirmation.from_email');
+      $result = $this->mailManager->mail($module, $key, $to, $language_code, $params);
+    }
+
+    // If copy email to field provided, send an extra copy to us.
+    if (!empty($config->get('confirmation.copy_email_to'))) {
+      $params['subject'] = $config->get('confirmation.notification_subject');
+      $params['include_private'] = false;
+      $to = $config->get('confirmation.copy_email_to');
+      $result = $this->mailManager->mail($module, $key, $to, $language_code, $params);
+    }
+  }
+
+}
