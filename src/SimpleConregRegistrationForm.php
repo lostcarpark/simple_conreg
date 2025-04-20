@@ -125,7 +125,7 @@ class SimpleConregRegistrationForm extends FormBase {
     $paidMembers = [];
     $unpaidMembers = [];
     // Check if user logged in and should be first member.
-    if ($this->currentUser->isAuthenticated()) {
+    if ($this->currentUser->isAuthenticated() && $return != 'fantable') {
       $email = $this->currentUser->getEmail();
       if (!empty($email)) {
         // User is logged in and has an email, check if existing member.
@@ -138,9 +138,6 @@ class SimpleConregRegistrationForm extends FormBase {
         $paidMembers = array_map($mapFn, array_filter($memberGroup, fn($member) => $member->is_paid));
         $unpaidMembers = array_map($mapFn, array_filter($memberGroup, fn($member) => !$member->is_paid));
       }
-    }
-    else {
-      $lead_member = NULL;
     }
     $lead_mid = $lead_member?->mid;
 
@@ -159,14 +156,16 @@ class SimpleConregRegistrationForm extends FormBase {
       $totalPrice,
       $totalPriceMinusFree,
       $memberPrices,
-    ] = $this->getAllMemberPrices($config,
+    ] = $this->getAllMemberPrices(
+      $config,
       $form_values,
       $memberQty,
       $types->types,
       $addOnPrices,
       $symbol,
       $discountEnabled,
-      $discountFreeEvery);
+      $discountFreeEvery,
+    );
 
     $form = [
       '#tree' => TRUE,
@@ -186,7 +185,7 @@ class SimpleConregRegistrationForm extends FormBase {
       ],
     ];
 
-    if ($paidMembers) {
+    if ($paidMembers && $return != 'fantable') {
       $url = Url::fromRoute('simple_conreg_portal', ['eid' => $eid]);
       $form['paid_members_registered'] = [
         '#prefix' => '<div class="registration-form-paid-members">',
@@ -198,7 +197,7 @@ class SimpleConregRegistrationForm extends FormBase {
       ];
     }
 
-    if ($unpaidMembers) {
+    if ($unpaidMembers && $return != 'fantable') {
       $url = Url::fromRoute('simple_conreg_portal', ['eid' => $eid]);
       $form['unpaid_members_registered'] = [
         '#prefix' => '<div class="registration-form-unpaid-members">',

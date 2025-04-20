@@ -21,22 +21,13 @@ class SimpleConregCheckoutForm extends FormBase
 {
 
   /**
-   * The mail manager.
-   *
-   * @var \Drupal\Core\Mail\MailManagerInterface
-   */
-  protected $mailManager;
-
-  /**
    * Constructs a new EmailExampleGetFormPage.
    *
    * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
    *   The mail manager.
    */
-  public function __construct(MailManagerInterface $mail_manager)
-  {
-    $this->mailManager = $mail_manager;
-  }
+  public function __construct(protected MailManagerInterface $mailManager)
+  {}
 
   /**
    * {@inheritdoc}
