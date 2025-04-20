@@ -308,7 +308,7 @@ class SimpleConregRegistrationForm extends FormBase {
         '#suffix' => '</div>',
       ];
 
-      if ($first_user_email) {
+      if ($first_user_email && $cnt == 1) {
         $form['members']['member' . $cnt]['email'] = [
           '#type' =>  'hidden',
           '#value' => $first_user_email,
