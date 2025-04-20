@@ -164,8 +164,8 @@ class SimpleConregTokens {
       else {
         $leader = $this->vals;
       }
-      $this->html['[lead_key]'] = $leader['random_key'];
-      $this->html['[lead_email]'] = $leader['email'];
+      $this->html['[lead_key]'] = $leader['random_key'] ?? '';
+      $this->html['[lead_email]'] = $leader['email'] ?? '';
 
       // Add tokens for all member fields.
       foreach ($this->vals as $field => $value) {
