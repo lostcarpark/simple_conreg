@@ -470,8 +470,6 @@ class SimpleConregAdminFanTable extends FormBase {
     $eid = $form_state->get('eid');
     $event = SimpleConregEventStorage::load(['eid' => $eid]);
     $config = SimpleConregConfig::getConfig($eid);
-    $types = SimpleConregOptions::memberTypes($eid, $config);
-    $days = SimpleConregOptions::days($eid, $config);
     $form_values = $form_state->getValues();
 
     $payment = new SimpleConregPayment();
@@ -533,7 +531,7 @@ class SimpleConregAdminFanTable extends FormBase {
             $member = Member::loadMember($line->mid);
             if (is_object($member) && !$member->is_paid && !$member->is_deleted) {
               $member->is_paid = 1;
-              $member->payment_id = $session->payment_intent;
+              $member->payment_id = $form_values['payment_id'];
               $member->payment_method = 'Stripe';
               $result = $member->saveMember();
 
@@ -594,45 +592,41 @@ class SimpleConregAdminFanTable extends FormBase {
 
   public function payCard(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
+    $event = SimpleConregEventStorage::load(['eid' => $eid]);
     $config = SimpleConregConfig::getConfig($eid);
     $form_values = $form_state->getValues();
 
-    // Create a payment.
     $payment = new SimpleConregPayment();
-
     // Save any member upgrades.
-    $upgrade_price = 0;
-    $lead_mid = self::saveUpgrades($eid, $form_values, $upgrade_price, $payment);
+    $lead_mid = $this->saveUpgrades($eid, $form_values, $upgrade_price, $payment);
 
-    $payment_amount = 0;
-    $toPay = $form_state->get('topay');
-    // Loop through selected members to get lead and total price.
-    $unpaidMembers = [];
+    // Next check for any unpaid members to be paid.
+    $toPay = [];
     foreach ($form_values['unpaid'] as $mid => $member) {
       if (isset($member['is_selected']) && $member['is_selected']) {
-        if ($member = Member::loadMember($mid)) {
-          // Make first member lead member.
-          if (empty($lead_mid))
-            $lead_mid = $mid;
-          $payment_amount += $member->member_total;
-          $unpaidMembers[$mid] = $member;
-        }
+        $member = Member::loadMember($mid);
+        $payment->add(new SimpleConregPaymentLine(
+          $mid,
+          'member',
+          $this->t("Member registration to @event_name for @first_name @last_name",
+            [
+              '@event_name' => $event['event_name'],
+              '@first_name' => $member->first_name,
+              '@last_name' => $member->last_name,
+            ]),
+            $member->member_total,
+          ));
+        $toPay[$mid] = $mid;
       }
     }
-    // Loop again through the selected unapid members and update lead member ID and total payment amount.
-    foreach ($unpaidMembers as $mid => $member) {
-      $member->lead_mid = $lead_mid;
-      $member->payment_amount = $payment_amount;
-      $member->saveMember();
-    }
-    // Assuming there are members/upgrades to pay for, redirect to payment form.
-    if ($lead_mid) {
-      // Get the Lead Member key...
-      $member = SimpleConregStorage::load(['mid' => $lead_mid]);
-      $lead_key = $member['random_key'];
+
+    // No need to proceed unless members have been selected.
+    if (!empty($lead_mid) || count($toPay)) {
+      $payid = $payment->save();
       // Redirect to payment form.
-      $form_state->setRedirect('simple_conreg_fantable_payment',
-        ['mid' => $lead_mid, 'key' => $lead_key]
+      $form_state->setRedirect(
+        'simple_conreg_fantable_checkout',
+        ['payid' => $payid, 'key' => $payment->randomKey],
       );
     }
   }
