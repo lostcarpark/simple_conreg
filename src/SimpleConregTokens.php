@@ -263,7 +263,7 @@ class SimpleConregTokens {
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup
    *   The token help text.
    */
-  public static function tokenHelp(array $extra = NULL): TranslatableMarkup {
+  public static function tokenHelp(array|null $extra = NULL): TranslatableMarkup {
     $tokens =
       ['[site_name]',
         '[event_name]',

@@ -440,9 +440,10 @@ class SimpleConregAdminFanTable extends FormBase {
     );
   }
 
+
+
   // If any member upgrades selected, save them so they can be charged.
-  public function saveUpgrades($eid, $form_values, &$upgrade_price, SimpleConregPayment &$payment)
-  {
+  public function saveUpgrades($eid, $form_values, &$upgrade_price, SimpleConregPayment &$payment) {
     $mgr = new SimpleConregUpgradeManager($eid);
 
     if ($form_values["table"]) {
@@ -452,10 +453,12 @@ class SimpleConregAdminFanTable extends FormBase {
         if (isset($upgrade->upgradePrice)) {
           $mgr->Add($upgrade);
           $member = SimpleConregStorage::load(['mid' => $mid]);
-          $payment->add(new SimpleConregPaymentLine($mid,
-                                                    'upgrade',
-                                                    t("Upgrade for @first_name @last_name", array('@first_name' => $member['first_name'], '@last_name' => $member['last_name'])),
-                                                    $upgrade->upgradePrice));
+          $payment->add(new SimpleConregPaymentLine(
+            $mid,
+            'upgrade',
+            t("Upgrade for @first_name @last_name", array('@first_name' => $member['first_name'], '@last_name' => $member['last_name'])),
+            $upgrade->upgradePrice,
+          ));
         }
       }
     }
@@ -464,19 +467,11 @@ class SimpleConregAdminFanTable extends FormBase {
     return $lead_mid;
   }
 
-  // "Pay Cash" button on main form clicked.
-  public function payCash(array &$form, FormStateInterface $form_state)
-  {
-    $eid = $form_state->get('eid');
+  private function addMembersToPayment($eid, $form_values, SimpleConregPayment &$payment): array {
     $event = SimpleConregEventStorage::load(['eid' => $eid]);
     $config = SimpleConregConfig::getConfig($eid);
-    $form_values = $form_state->getValues();
 
-    $payment = new SimpleConregPayment();
-    // Save any member upgrades.
-    $lead_mid = $this->saveUpgrades($eid, $form_values, $upgrade_price, $payment);
-
-    // Next check for any unpaid members to be paid.
+    // Check for any unpaid members to add to payment.
     $toPay = [];
     foreach ($form_values['unpaid'] as $mid => $member) {
       if (isset($member['is_selected']) && $member['is_selected']) {
@@ -485,16 +480,43 @@ class SimpleConregAdminFanTable extends FormBase {
           $mid,
           'member',
           $this->t("Member registration to @event_name for @first_name @last_name",
+          [
+            '@event_name' => $event['event_name'],
+            '@first_name' => $member->first_name,
+            '@last_name' => $member->last_name,
+          ]),
+          $member->member_total,
+        ));
+        $addons = SimpleConregAddons::getMemberAddons($config, $mid);
+        foreach ($addons as $addon) {
+          // Add a payment line for the add-on.
+          $payment->add(new SimpleConregPaymentLine(
+            $mid,
+            'addon',
+            t("Add-on @add_on for @first_name @last_name",
             [
-              '@event_name' => $event['event_name'],
+              '@add_on' => $addon->name,
               '@first_name' => $member->first_name,
               '@last_name' => $member->last_name,
             ]),
-            $member->member_total,
+            $addon->amount,
           ));
+        }
         $toPay[$mid] = $mid;
       }
     }
+    return $toPay;
+  }
+
+  // "Pay Cash" button on main form clicked.
+  public function payCash(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
+    $form_values = $form_state->getValues();
+
+    $payment = new SimpleConregPayment();
+    // Save any member upgrades.
+    $lead_mid = $this->saveUpgrades($eid, $form_values, $upgrade_price, $payment);
+    $toPay = $this->addMembersToPayment($eid, $form_values, $payment);
 
     // No need to proceed unless members have been selected.
     if (!empty($lead_mid) || count($toPay)) {
@@ -533,11 +555,12 @@ class SimpleConregAdminFanTable extends FormBase {
               $member->is_paid = 1;
               $member->payment_id = $form_values['payment_id'];
               $member->payment_method = 'Stripe';
-              $result = $member->saveMember();
+              $member->saveMember();
 
               // If email address populated, send confirmation email.
-              if (!empty($member->email))
+              if (!empty($member->email)) {
                 $this->sendConfirmationEmail((array)$member);
+              }
             }
         }
       }
@@ -592,33 +615,13 @@ class SimpleConregAdminFanTable extends FormBase {
 
   public function payCard(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
-    $event = SimpleConregEventStorage::load(['eid' => $eid]);
-    $config = SimpleConregConfig::getConfig($eid);
     $form_values = $form_state->getValues();
 
     $payment = new SimpleConregPayment();
     // Save any member upgrades.
     $lead_mid = $this->saveUpgrades($eid, $form_values, $upgrade_price, $payment);
 
-    // Next check for any unpaid members to be paid.
-    $toPay = [];
-    foreach ($form_values['unpaid'] as $mid => $member) {
-      if (isset($member['is_selected']) && $member['is_selected']) {
-        $member = Member::loadMember($mid);
-        $payment->add(new SimpleConregPaymentLine(
-          $mid,
-          'member',
-          $this->t("Member registration to @event_name for @first_name @last_name",
-            [
-              '@event_name' => $event['event_name'],
-              '@first_name' => $member->first_name,
-              '@last_name' => $member->last_name,
-            ]),
-            $member->member_total,
-          ));
-        $toPay[$mid] = $mid;
-      }
-    }
+    $toPay = $this->addMembersToPayment($eid, $form_values, $payment);
 
     // No need to proceed unless members have been selected.
     if (!empty($lead_mid) || count($toPay)) {
@@ -649,8 +652,7 @@ class SimpleConregAdminFanTable extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
   }
 
-  private function sendConfirmationEmail($member)
-  {
+  private function sendConfirmationEmail($member) {
     $config = $this->config('simple_conreg.settings.' . $member['eid']);
 
     // Set up parameters for receipt email.
