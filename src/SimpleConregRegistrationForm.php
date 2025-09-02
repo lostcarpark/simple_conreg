@@ -329,7 +329,7 @@ class SimpleConregRegistrationForm extends FormBase {
           '#type' => 'email',
           '#title' => $curMemberClass->fields->email,
         ];
-        if ($cnt == 1) {
+        if (!$paidMembers && $cnt == 1) {
           $form['members']['member' . $cnt]['email']['#required'] = TRUE;
           $form['members']['member' . $cnt]['email']['#description'] = $this->t('Email address required for first member.');
         }
