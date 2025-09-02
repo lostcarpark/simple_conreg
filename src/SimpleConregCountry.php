@@ -21,8 +21,8 @@ class SimpleConregCountry {
    */
   public static function getUserCountry() {
 
-    // URL for geo-plugin service.
-    $url = 'http://www.geoplugin.net/json.gp?ip=';
+    // URL for IP country service.
+    $url = 'http://ip-api.com/json/';
 
     try {
       // Get IP address from request.
@@ -30,19 +30,15 @@ class SimpleConregCountry {
       $client = \Drupal::httpClient();
       $response = $client->get($url.$ip)->getBody()->getContents();
       $decoded = Json::decode($response);
-      if (!isset($decoded['geoplugin_status']) || $decoded['geoplugin_status'] != 200) {
+      if (!isset($decoded['status']) || $decoded['status'] != 'success') {
         return '';
       }
     }
     catch (RequestException $e) {
-      $response = $e->getResponse();
-      $response_info = Json::decode($response->getBody()->getContents());
-      $logger = \Drupal::logger('modulename');
-      Error::logException($logger, $e, 'Failed to create ClickUp task with error: @error (@code).', ['@error' => $response_info['err'], '@code' => $response_info['ECODE']]);
       return '';
     }
 
-    return $decoded['geoplugin_countryCode'];
+    return $decoded['countryCode'];
   }
 
 }
