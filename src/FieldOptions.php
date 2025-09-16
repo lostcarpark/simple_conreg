@@ -202,6 +202,10 @@ class FieldOptions {
    *   True if option must be checked.
    */
   public function addOptionFields(string $classRef, array &$memberForm, Member|NULL $member = NULL, ?bool $showGlobal = NULL, bool $showPrivate = FALSE, bool $requireMandatory = TRUE): void {
+    // If no option groups defined for member class, do nothing.
+    if (!$this->memberClasses || !array_key_exists($classRef, $this->memberClasses)) {
+      return;
+    }
     // Loop through each field option.
     foreach ($this->memberClasses[$classRef] as $group) {
       // Check if field should be displayed -- IF $global is null (meaning
