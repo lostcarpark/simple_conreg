@@ -642,8 +642,12 @@ class SimpleConregOptions {
       $config = SimpleConregConfig::getConfig($eid);
     }
     // One communications method per line.
-    $methods = explode("\n", $config->get('communications_method.options'));
     $methodOptions = [];
+    $communicationsMethods = $config->get('communications_method.options');
+    if (!$communicationsMethods) {
+      return $methodOptions;
+    }
+    $methods = explode("\n", $communicationsMethods);
     foreach ($methods as $method) {
       [$code, $description, $public] = array_pad(explode('|', trim($method)), 3, '');
       if (!$publicOnly || $public == '1' || $public == '') {
