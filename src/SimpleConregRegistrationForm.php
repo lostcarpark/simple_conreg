@@ -1189,6 +1189,7 @@ class SimpleConregRegistrationForm extends FormBase {
       // Check Simplenews module loaded.
       if (\Drupal::moduleHandler()->moduleExists('simplenews')) {
         // Get Drupal SimpleNews subscription manager.
+        /** @var \Drupal\simplenews\Subscription\SubscriptionManagerInterface */
         $subscription_manager = \Drupal::service('simplenews.subscription_manager');
         // Simplenews is active, so check mailing lists to subscribed to.
         $simplenews_options = $config->get('simplenews.options');
@@ -1199,14 +1200,14 @@ class SimpleConregRegistrationForm extends FormBase {
               $communications_methods = $simplenews_options[$newsletter_id]['communications_methods'];
               // Check if member matches newsletter criteria.
               if (
-              isset($entry['email']) &&
-              $entry['email'] != '' &&
-              isset($entry['communication_method']) &&
-              isset($communications_methods[$entry['communication_method']]) &&
-              $communications_methods[$entry['communication_method']]
+                isset($entry['email']) &&
+                $entry['email'] != '' &&
+                isset($entry['communication_method']) &&
+                isset($communications_methods[$entry['communication_method']]) &&
+                $communications_methods[$entry['communication_method']]
               ) {
                 // Subscribe member if criteria met.
-                $subscription_manager->subscribe($entry['email'], $newsletter_id, FALSE, 'website');
+                $subscription_manager->subscribe($entry['email'], $newsletter_id);
               }
             }
           }

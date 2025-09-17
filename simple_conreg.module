@@ -60,7 +60,7 @@ function simple_conreg_form_alter(&$form, FormStateInterface $form_state, $form_
         // Get saved settings if they exist.
         $active = (isset($simplenews_options[$newsletter_id]) ? $simplenews_options[$newsletter_id]['active'] : 0);
         $communications_methods = (isset($simplenews_options[$newsletter_id]) ? $simplenews_options[$newsletter_id]['communications_methods'] : []);
-        
+
         $form['simple_conreg_'.$eid] = [
           '#type' => 'fieldset',
           '#title' => t('Simple Convention Registration - @event', ['@event' => $event['event_name']]),
@@ -90,8 +90,9 @@ function simple_conreg_simplenews_form_submit ($form, FormStateInterface $form_s
   $form_values = $form_state->getValues();
 
   // Get Drupal SimpleNews subscription manager.
+  /** @var \Drupal\simplenews\Subscription\SubscriptionManagerInterface */
   $subscription_manager = \Drupal::service('simplenews.subscription_manager');
-  
+
   $newsletter_id = $form_values['id'];
   // Get the list of active events.
   $events = SimpleConregEventStorage::loadAll(['is_open' => 1]);
@@ -112,7 +113,7 @@ function simple_conreg_simplenews_form_submit ($form, FormStateInterface $form_s
       if (\Drupal::moduleHandler()->moduleExists('simplenews')) {
         // Get unique convention member email addresses.
         $members = SimpleConregStorage::adminSimplenewsSubscribeListLoad($eid);
-      
+
         // Loop through convention members.
         foreach ($members as $member) {
           // Check if member matches newsletter criteria.
@@ -120,12 +121,12 @@ function simple_conreg_simplenews_form_submit ($form, FormStateInterface $form_s
               array_key_exists($member['communication_method'], $communications_methods) &&
               $communications_methods[$member['communication_method']]) {
             // Subscribe member if criteria met.
-            $subscription_manager->subscribe($member['email'], $newsletter_id, FALSE, 'website');
+            $subscription_manager->subscribe($member['email'], $newsletter_id);
           } else {
             // Check if member is a subscriber.
-            if (simplenews_subscriber_load_by_mail($member['email'])) {
+            if ($subscription_manager->isSubscribed($member['email'], $newsletter_id)) {
               // Unsubscribe member if criteria don't match.
-              $subscription_manager->unsubscribe($member['email'], $newsletter_id, FALSE, 'website');
+              $subscription_manager->unsubscribe($member['email'], $newsletter_id);
             }
           }
         }
