@@ -7,23 +7,56 @@
 
 namespace Drupal\simple_conreg;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\AlertCommand;
-use Drupal\Core\Ajax\CssCommand;
 use Drupal\Core\Ajax\HtmlCommand;
+use Drupal\Core\Cache\CacheTagsInvalidator;
+use Drupal\Core\Datetime\DateFormatter;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
-use Drupal\Component\Utility\Html;
 use Drupal\Core\Render\RendererInterface;
-use Drupal\devel;
+use Drupal\Core\TempStore\PrivateTempStoreFactory;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Simple form to add an entry, with all the interesting fields.
  */
 class SimpleConregAdminMembers extends FormBase
 {
+
+  /**
+   * Constructs a new EmailExampleGetFormPage.
+   *
+   * @param \Drupal\Core\Datetime\DateFormatter $dateFormatter
+   *   The date formatter.
+   * @param \Drupal\Core\TempStore\PrivateTempStoreFactory $privateTempStoreFactory
+   *   The private storage area for current user.
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The Drupal renderer.
+   * @param \Drupal\Core\Cache\CacheTagsInvalidator $cacheTagInvalidator
+   *   The cache tag invalidator service.
+   */
+  public function __construct(
+    protected DateFormatter $dateFormatter,
+    protected PrivateTempStoreFactory $privateTempStoreFactory,
+    protected RendererInterface $renderer,
+    protected CacheTagsInvalidator $cacheTagInvalidator,
+  ) {}
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('date.formatter'),
+      $container->get('tempstore.private'),
+      $container->get('renderer'),
+      $container->get('cache_tags.invalidator'),
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -94,7 +127,7 @@ class SimpleConregAdminMembers extends FormBase
                 'custom' => $this->t('Custom search'),
                ];
 
-    $tempstore = \Drupal::service('tempstore.private')->get('simple_conreg');
+    $tempstore = $this->privateTempStoreFactory->get('simple_conreg');
     // If form values submitted, use the display value that was submitted over the passed in values.
     if (isset($form_values['display']))
       $display = $form_values['display'];
@@ -152,19 +185,20 @@ class SimpleConregAdminMembers extends FormBase
       'days' =>  ['data' => $this->t('Days')],
       'badge_type' =>  ['data' => $this->t('Badge type')],
       $this->t('Paid'),
+      $this->t('Date joined'),
       $this->t('Approved'),
       'member_no' => ['data' => $this->t('Member no'), 'field' => 'm.member_no', 'sort' => 'asc'],
       $this->t('Update'),
     ];
 
-    // If display 
+    // If display
     if ($display == 'custom') {
       $form['search'] = [
         '#type' => 'textfield',
         '#title' => $this->t('Custom search term'),
         '#default_value' => trim($search),
       ];
-      
+
       $form['search_button'] = [
         '#type' => 'button',
         '#value' => $this->t('Search'),
@@ -200,7 +234,7 @@ class SimpleConregAdminMembers extends FormBase
       $pages = 0;
       $entries = [];
     }
-    
+
     // Check if current page greater than number of pages...
     if ($page > $pages) {
       // Look at making this redirect so correct page is in the URL, but tricky because we're in AJAX callback. For now just show last page.
@@ -257,6 +291,9 @@ class SimpleConregAdminMembers extends FormBase
       $row['is_paid'] = [
         '#markup' => $is_paid ? $this->t('Yes') : $this->t('No'),
       ];
+      $row['join_date'] = [
+        '#markup' => Html::escape($this->dateFormatter->format($entry['join_date'], 'short')),
+      ];
       $row["is_approved"] = [
         //'#attributes' => ['name' => 'is_approved_'.$mid, 'id' => 'edit_is_approved_'.$mid),
         '#type' => 'checkbox',
@@ -299,7 +336,7 @@ class SimpleConregAdminMembers extends FormBase
 
       $form['table'][$mid] = $row;
     }
-    
+
     $form['pager'] = [
       '#markup' => $this->t('Page:'),
       '#prefix' => '<div id="pager">',
@@ -330,7 +367,7 @@ class SimpleConregAdminMembers extends FormBase
     if (preg_match("/table\[(\d+)\]\[is_approved\]/", $triggering_element['#name'], $matches)) {
       $mid = $matches[1];
       $form['table'][$mid]["member_div"]["member_no"]['#value'] = $triggering_element['#value'];
-      $ajax_response->addCommand(new HtmlCommand('#member_no_'.$mid, RendererInterface::render($form['table'][$mid]["member_div"]["member_no"]['#value'])));
+      $ajax_response->addCommand(new HtmlCommand('#member_no_'.$mid, $this->renderer->render($form['table'][$mid]["member_div"]["member_no"]['#value'])));
       //$ajax_response->addCommand(new AlertCommand($row." = ".));
     }
     return $ajax_response;
@@ -392,7 +429,6 @@ class SimpleConregAdminMembers extends FormBase
         $return = $member->saveMember();
       }
     }
-    \Drupal\Core\Cache\Cache::invalidateTags(['simple-conreg-member-list']);
+    $this->cacheTagInvalidator->invalidateTags(['simple-conreg-member-list']);
   }
-}    
-
+}
