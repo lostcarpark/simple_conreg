@@ -180,6 +180,7 @@ class SimpleConregAdminMembers extends FormBase
       'last_name' => ['data' => $this->t('Last name'), 'field' => 'm.last_name'],
       'email' => ['data' => $this->t('Email'), 'field' => 'm.email'],
       'badge_name' => ['data' => $this->t('Badge name'), 'field' => 'm.badge_name'],
+      'registered_by' => ['data' => $this->t('Registered by'), 'field' => 'registered_by'],
       'display' =>  ['data' => $this->t('Display')],
       'member_type' =>  ['data' => $this->t('Member type')],
       'days' =>  ['data' => $this->t('Days')],
@@ -265,6 +266,9 @@ class SimpleConregAdminMembers extends FormBase
       ];
       $row['badge_name'] = [
         '#markup' => Html::escape($entry['badge_name']),
+      ];
+      $row['registered_by'] = [
+        '#markup' => $entry['mid'] == $entry['lead_mid'] ? '' : Html::escape($entry['registered_by']). '<br />' . Html::escape($entry['lead_email']),
       ];
       $row['display'] = [
         '#markup' => Html::escape(isset($displayOptions[$entry['display']]) ? $displayOptions[$entry['display']] : $entry['display']),

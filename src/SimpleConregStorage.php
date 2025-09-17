@@ -263,23 +263,23 @@ class SimpleConregStorage {
       case 'approval':
         $select->condition('m.is_paid', 1);
         $select->condition('m.is_approved', 0);
-        $select->condition("is_deleted", FALSE);
+        $select->condition("m.is_deleted", FALSE);
         break;
 
       case 'approved':
         $select->condition('m.is_paid', 1);
         $select->condition('m.is_approved', 1);
-        $select->condition("is_deleted", FALSE);
+        $select->condition("m.is_deleted", FALSE);
         break;
 
       case 'unpaid':
         $select->condition('m.is_paid', 0);
-        $select->condition("is_deleted", FALSE);
+        $select->condition("m.is_deleted", FALSE);
         break;
 
       case 'all':
         // All members.
-        $select->condition("is_deleted", FALSE);
+        $select->condition("m.is_deleted", FALSE);
         break;
 
       case 'custom':
@@ -300,7 +300,7 @@ class SimpleConregStorage {
           }
         }
         // Only include members who aren't deleted.
-        $select->condition("is_deleted", FALSE);
+        $select->condition("m.is_deleted", FALSE);
     }
     return $select;
   }
@@ -351,6 +351,10 @@ class SimpleConregStorage {
     $select->addField('m', 'member_no');
     $select->addField('m', 'phone');
     $select->addField('m', 'join_date');
+    $select->addField('m', 'lead_mid');
+    $select->addExpression("concat(l.first_name, ' ', l.last_name)", 'registered_by');
+    $select->addField('l', 'email', 'lead_email');
+    $select->join('conreg_members', 'l', 'm.lead_mid = l.mid');
     // Add selection criteria.
     $select = SimpleConregStorage::adminMemberListCondition($eid, $select, $condition, $search);
     // Sort by specified field and direction.
