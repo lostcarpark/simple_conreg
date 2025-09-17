@@ -350,6 +350,7 @@ class SimpleConregStorage {
     $select->addField('m', 'is_approved');
     $select->addField('m', 'member_no');
     $select->addField('m', 'phone');
+    $select->addField('m', 'join_date');
     // Add selection criteria.
     $select = SimpleConregStorage::adminMemberListCondition($eid, $select, $condition, $search);
     // Sort by specified field and direction.
