@@ -15,6 +15,7 @@ use Drupal\Core\Ajax\AlertCommand;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Cache\CacheTagsInvalidator;
 use Drupal\Core\Datetime\DateFormatter;
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\Core\Render\RendererInterface;
@@ -197,7 +198,20 @@ class SimpleConregAdminMembers extends FormBase
       $form['search'] = [
         '#type' => 'textfield',
         '#title' => $this->t('Custom search term'),
+        '#description' => $this->t('Words to search for. Words may appear in any of the following fields: member number, first name, last name, badge name, email, payment ID, comment.'),
         '#default_value' => trim($search),
+      ];
+
+      $form['datefrom'] = [
+        '#type' => 'date',
+        '#title' => $this->t('Date joined from'),
+        '#title_display' => 'before',
+      ];
+
+      $form['dateto'] = [
+        '#type' => 'date',
+        '#title' => $this->t('Date joined to'),
+        '#title_display' => 'before',
       ];
 
       $form['search_button'] = [
@@ -233,24 +247,36 @@ class SimpleConregAdminMembers extends FormBase
       '#sticky' => TRUE,
     ];
 
-    if ($display != 'custom')
-      list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($eid, $display, NULL, $page, $pageSize, $order, $direction);
-    elseif (!empty(trim($search)))
-      list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($eid, $display, $search, $page, $pageSize, $order, $direction);
-    else {
-      $pages = 0;
-      $entries = [];
-    }
+    $datefrom = isset($form_values['datefrom'])  && preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $form_values['datefrom']) ? DrupalDateTime::createFromFormat('Y-m-d\TH:i:sT', $form_values['datefrom'] . "T00:00:00Z") : NULL;
+    $dateto = isset($form_values['dateto'])  && preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $form_values['dateto']) ? DrupalDateTime::createFromFormat('Y-m-d\TH:i:sT', $form_values['dateto'] . "T00:00:00Z") : NULL;
+    [$pages, $entries] = SimpleConregStorage::adminMemberListLoad(
+      $eid,
+      $display,
+      $display != 'custom' || empty(trim($search)) ? NULL : $search,
+      $datefrom ? $datefrom->getTimestamp() : NULL,
+      $dateto ? $dateto->getTimestamp() : NULL,
+      $page,
+      $pageSize,
+      $order,
+      $direction,
+    );
 
     // Check if current page greater than number of pages...
     if ($page > $pages) {
       // Look at making this redirect so correct page is in the URL, but tricky because we're in AJAX callback. For now just show last page.
       $page = $pages;
       // Refetch page data.
-      if ($display != 'custom')
-        list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($eid, $display, NULL, $page, $pageSize, $order, $direction);
-      elseif (!empty(trim($search)))
-        list($pages, $entries) = SimpleConregStorage::adminMemberListLoad($eid, $display, $search, $page, $pageSize, $order, $direction);
+      [$pages, $entries] = SimpleConregStorage::adminMemberListLoad(
+        $eid,
+        $display,
+        $display != 'custom' || empty(trim($search)) ? NULL : $search,
+        $datefrom ? $datefrom->getTimestamp() : NULL,
+        $dateto ? $dateto->getTimestamp() : NULL,
+        $page,
+        $pageSize,
+        $order,
+        $direction,
+      );
       // Page doesn't exist for current selection criteria, so go to last page of query.
       // $form_state->setRedirect('simple_conreg_admin_members', ['display' => $display, 'page' => $pages], ['query' => $pageOptions]);
       //return;

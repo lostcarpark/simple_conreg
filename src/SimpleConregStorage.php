@@ -252,11 +252,15 @@ class SimpleConregStorage {
    *   Text to select the condition to add.
    * @param string|null $search
    *   Entry for text searches.
+   * @param int|null $datefrom
+   *   Start of date range to show, or null for unlimited.
+   * @param int|null $dateto
+   *   End of date range to show, or null.
    *
    * @return \Drupal\Core\Database\Query\SelectInterface
    *   Modified selection criteris.
    */
-  private static function adminMemberListCondition(int $eid, SelectInterface $select, string $condition, string|NULL $search): SelectInterface {
+  private static function adminMemberListCondition(int $eid, SelectInterface $select, string $condition, string|NULL $search, int|NULL $datefrom, int|NULL $dateto): SelectInterface {
     $connection = \Drupal::database();
     $select->condition('m.eid', $eid);
     switch ($condition) {
@@ -283,21 +287,29 @@ class SimpleConregStorage {
         break;
 
       case 'custom':
-        $words = explode(' ', trim($search));
-        foreach ($words as $word) {
-          if ($word != '') {
-            // Escape search word to prevent dangerous characters.
-            $esc_word = '%' . $connection->escapeLike($word) . '%';
-            $likes = $select->orConditionGroup()
-              ->condition('m.member_no', $esc_word, 'LIKE')
-              ->condition('m.first_name', $esc_word, 'LIKE')
-              ->condition('m.last_name', $esc_word, 'LIKE')
-              ->condition('m.badge_name', $esc_word, 'LIKE')
-              ->condition('m.email', $esc_word, 'LIKE')
-              ->condition('m.payment_id', $esc_word, 'LIKE')
-              ->condition('m.comment', $esc_word, 'LIKE');
-            $select->condition($likes);
+        if (!is_null($search)) {
+          $words = explode(' ', trim($search));
+          foreach ($words as $word) {
+            if ($word != '') {
+              // Escape search word to prevent dangerous characters.
+              $esc_word = '%' . $connection->escapeLike($word) . '%';
+              $likes = $select->orConditionGroup()
+                ->condition('m.member_no', $esc_word, 'LIKE')
+                ->condition('m.first_name', $esc_word, 'LIKE')
+                ->condition('m.last_name', $esc_word, 'LIKE')
+                ->condition('m.badge_name', $esc_word, 'LIKE')
+                ->condition('m.email', $esc_word, 'LIKE')
+                ->condition('m.payment_id', $esc_word, 'LIKE')
+                ->condition('m.comment', $esc_word, 'LIKE');
+              $select->condition($likes);
+            }
           }
+        }
+        if (!is_null($datefrom)) {
+          $select->condition('m.join_date', $datefrom, '>=');
+        }
+        if (!is_null($dateto)) {
+          $select->condition('m.join_date', $dateto, '<=');
         }
         // Only include members who aren't deleted.
         $select->condition("m.is_deleted", FALSE);
@@ -314,6 +326,10 @@ class SimpleConregStorage {
    *   Type of list from drop-down list.
    * @param string|null $search
    *   Search string for custom search.
+   * @param int|null $datefrom
+   *   Start of date range to show, or null for unlimited.
+   * @param int|null $dateto
+   *   End of date range to show, or null.
    * @param int $page
    *   Page number.
    * @param int $pageSize
@@ -326,13 +342,17 @@ class SimpleConregStorage {
    * @return array
    *   Associative array of members.
    */
-  public static function adminMemberListLoad(int $eid,
+  public static function adminMemberListLoad(
+    int $eid,
     string $condition,
     string|NULL $search,
+    int|NULL $datefrom,
+    int|NULL $dateto,
     int $page = 1,
     int $pageSize = 10,
     string $order = 'm.mid',
-    string $direction = 'ASC'): array {
+    string $direction = 'ASC',
+  ): array {
 
     $connection = \Drupal::database();
     $select = $connection->select('conreg_members', 'm');
@@ -356,7 +376,7 @@ class SimpleConregStorage {
     $select->addField('l', 'email', 'lead_email');
     $select->join('conreg_members', 'l', 'm.lead_mid = l.mid');
     // Add selection criteria.
-    $select = SimpleConregStorage::adminMemberListCondition($eid, $select, $condition, $search);
+    $select = SimpleConregStorage::adminMemberListCondition($eid, $select, $condition, $search, $datefrom, $dateto);
     // Sort by specified field and direction.
     $select->orderby($order, $direction);
     $select->orderby('m.mid', $direction);
@@ -369,7 +389,7 @@ class SimpleConregStorage {
     $select = $connection->select('conreg_members', 'm');
     $select->addField('m', 'mid');
     $select->condition('m.eid', $eid);
-    $select = SimpleConregStorage::adminMemberListCondition($eid, $select, $condition, $search);
+    $select = SimpleConregStorage::adminMemberListCondition($eid, $select, $condition, $search, $datefrom, $dateto);
     $count = $select->countQuery()->execute()->fetchField();
     $pages = (int) (($count - 1) / $pageSize) + 1;
 
