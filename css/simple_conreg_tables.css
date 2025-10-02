@@ -10,3 +10,8 @@ table {
   font-weight: bold;
 }
 
+.table-copy {
+  margin-left: auto!important;
+  margin-bottom: .5rem;
+  display: block!important;
+}

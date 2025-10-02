@@ -219,6 +219,12 @@ class SimpleConregAdminMembers extends FormBase
       '#attributes' => ['class' => ['select-all']],
     ];
 
+    $form['copy'] = [
+      '#type' => 'button',
+      '#value' => $this->t('Copy to clipboard'),
+      '#attributes' => ['class' => ['table-copy']]
+    ];
+
     $form['table'] = [
       '#type' => 'table',
       '#header' => $headers,

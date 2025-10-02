@@ -650,6 +650,12 @@ class SimpleConregController extends ControllerBase {
       '#markup' => $this->t('Here is a list of all paid convention members.'),
     ];
 
+    $content['copy'] = [
+      '#type' => 'button',
+      '#value' => $this->t('Copy to clipboard'),
+      '#attributes' => ['class' => ['table-copy']]
+    ];
+
     $this->memberAdminMemberListSummary($eid, $content);
 
     $rows = [];
@@ -759,6 +765,12 @@ class SimpleConregController extends ControllerBase {
       '#attached' => [
         'library' => ['simple_conreg/conreg_tables'],
       ],
+    ];
+
+    $content['copy'] = [
+      '#type' => 'button',
+      '#value' => $this->t('Copy to clipboard'),
+      '#attributes' => ['class' => ['table-copy']]
     ];
 
     $content['message_member'] = [

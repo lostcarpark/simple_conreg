@@ -41,6 +41,8 @@ conreg_tables:
   css:
     theme:
       css/simple_conreg_tables.css: {}
+  js:
+    js/conreg_tables.js: {}
 
 conreg_login:
   version: 1.x
