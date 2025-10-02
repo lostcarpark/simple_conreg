@@ -31,9 +31,11 @@ class SimpleConregAdminMemberAddOns extends FormBase {
 
     $addons = $config->get('add-ons');
     $options = [0 => 'All'];
-    foreach ($addons as $key => $val) {
-      if ($val['addon']['active'] ?? FALSE) {
-        $options[$key] = $val['free']['label'] ?: $val['addon']['label'] ?? '';
+    if ($addons) {
+      foreach ($addons as $key => $val) {
+        if ($val['addon']['active'] ?? FALSE) {
+          $options[$key] = $val['free']['label'] ?: $val['addon']['label'] ?? '';
+        }
       }
     }
 
@@ -68,6 +70,12 @@ class SimpleConregAdminMemberAddOns extends FormBase {
         'callback' => [$this, 'updateDisplayCallback'],
         'event' => 'change',
       ],
+    ];
+
+    $form['copy'] = [
+      '#type' => 'button',
+      '#value' => $this->t('Copy to clipboard'),
+      '#attributes' => ['class' => ['table-copy']]
     ];
 
     $memberAddOns = SimpleConregAddonStorage::loadAddOnReport($eid, $selection);
