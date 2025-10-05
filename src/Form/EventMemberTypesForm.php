@@ -8,6 +8,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\simple_conreg\SimpleConregEventStorage;
 use Drupal\simple_conreg\SimpleConregOptions;
+use Drupal\simple_conreg\SimpleConregTokens;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -175,6 +176,28 @@ class EventMemberTypesForm extends ConfigFormBase {
 
       $typeDays = $type->days ?? [];
       $form[$typeRef]['days'] = $this->buildDaysTable($typeRef, $typeDays, $days);
+
+      $form[$typeRef]['confirmation'] = [
+        '#type' => 'fieldset',
+        '#title' => $this->t('Member Type Details'),
+      ];
+      $form[$typeRef]['confirmation']['override'] = [
+        '#type' => 'checkbox',
+        '#title' => $this->t('Override confirmation email.'),
+        '#default_value' => $type->confirmation->override,
+      ];
+      $form[$typeRef]['confirmation']['template_subject'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t('Confiramtion email subject'),
+        '#default_value' => $type->confirmation->template_subject,
+      ];
+      $form[$typeRef]['confirmation']['template_body'] = [
+        '#type' => 'text_format',
+        '#title' => $this->t('Confiramtion email body'),
+        '#description' => $this->t('Text for the email body. you may use the following tokens: @tokens.', ['@tokens' => SimpleConregTokens::tokenHelp()]),
+        '#default_value' => $type->confirmation->template_body,
+        '#format' => $type->confirmation->template_format,
+      ];
 
       $form[$typeRef]['clone'] = [
         '#type' => 'submit',
@@ -445,6 +468,12 @@ class EventMemberTypesForm extends ConfigFormBase {
           unset($memberTypes->types[$typeCode]->dayOptions[$dayRef]);
         }
       }
+      $memberTypes->types[$typeCode]->confirmation = (object)[
+        'override' => $vals[$typeCode]['confirmation']['override'],
+        'template_subject' => $vals[$typeCode]['confirmation']['template_subject'],
+        'template_body' => $vals[$typeCode]['confirmation']['template_body']['value'],
+        'template_format' => $vals[$typeCode]['confirmation']['template_body']['format'],
+      ];
     }
     $this->cacheInvalidator->invalidateTags(['event:' . $eid . ':registration']);
   }

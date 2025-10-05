@@ -9,6 +9,7 @@ namespace Drupal\simple_conreg;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Url;
 use Stripe\Checkout\Session;
@@ -17,39 +18,42 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Simple form to add an entry, with all the interesting fields.
  */
-class SimpleConregCheckoutForm extends FormBase
-{
+class SimpleConregCheckoutForm extends FormBase {
 
   /**
    * Constructs a new EmailExampleGetFormPage.
    *
    * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
    *   The mail manager.
+   * @param \Drupal\Core\Language\LanguageManagerInterface $languageManager
+   *   The language manager.
    */
-  public function __construct(protected MailManagerInterface $mailManager)
-  {}
+  public function __construct(
+    protected MailManagerInterface $mailManager,
+    protected LanguageManagerInterface $languageManager,
+  ) {}
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container)
-  {
-    return new static ($container->get('plugin.manager.mail'));
+  public static function create(ContainerInterface $container) {
+    return new static (
+      $container->get('plugin.manager.mail'),
+      $container->get('language_manager'),
+    );
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getFormID()
-  {
+  public function getFormID() {
     return 'simple_conreg_payment';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $payid = NULL, $key = NULL, $return = '')
-  {
+  public function buildForm(array $form, FormStateInterface $form_state, $payid = NULL, $key = NULL, $return = '') {
 
     $form_state->set('return', $return);
 
@@ -174,8 +178,7 @@ class SimpleConregCheckoutForm extends FormBase
   /**
    * Display
    */
-  function showThankYouPage($form, $eid, $config, $payment)
-  {
+  function showThankYouPage($form, $eid, $config, $payment) {
     $event = SimpleConregEventStorage::load(['eid' => $eid]);
     $find = ['[reference]', '[event_name]'];
     $replace = [$payment->paymentRef, $event['event_name']];
@@ -194,8 +197,7 @@ class SimpleConregCheckoutForm extends FormBase
   }
 
   // Function to process payments coming back from Stripe.
-  private function processStripeMessages($config)
-  {
+  private function processStripeMessages($config) {
     // Check events on Stripe.
     $events = \Stripe\Event::all([
       'type' => 'checkout.session.completed',
@@ -229,8 +231,7 @@ class SimpleConregCheckoutForm extends FormBase
     }
   }
 
-  private function processPaymentLine($line, $session)
-  {
+  private function processPaymentLine($line, $session) {
     switch ($line->type) {
       case "member":
         // Only update member if not already paid.
@@ -259,8 +260,7 @@ class SimpleConregCheckoutForm extends FormBase
     }
   }
 
-  private function processWithoutPayment($line)
-  {
+  private function processWithoutPayment($line) {
     switch ($line->type) {
       case "member":
         // Only update member if not already paid.
@@ -279,31 +279,37 @@ class SimpleConregCheckoutForm extends FormBase
     }
   }
 
-  private function sendConfirmationEmail($member)
-  {
+  private function sendConfirmationEmail($member) {
     $config = $this->config('simple_conreg.settings.' . $member['eid']);
+    $types = SimpleConregOptions::memberTypes($member['eid'], $config);
 
     // Set up parameters for receipt email.
     $params = ['eid' => $member['eid'], 'mid' => $member['mid']];
-    $params['subject'] = $config->get('confirmation.template_subject');
-    $params['body'] = $config->get('confirmation.template_body');
-    $params['body_format'] = $config->get('confirmation.template_format');
+    if ($types->types[$member['member_type']]->confirmation->override ?: false) {
+      $params['subject'] = $types->types[$member['member_type']]->confirmation->template_subject;
+      $params['body'] = $types->types[$member['member_type']]->confirmation->template_body;
+      $params['body_format'] = $types->types[$member['member_type']]->confirmation->template_format;
+    } else {
+      $params['subject'] = $config->get('confirmation.template_subject');
+      $params['body'] = $config->get('confirmation.template_body');
+      $params['body_format'] = $config->get('confirmation.template_format');
+    }
     $params['include_private'] = true;
     $module = "simple_conreg";
     $key = "template";
     $to = $member["email"];
-    $language_code = \Drupal::languageManager()->getDefaultLanguage()->getId();
-    $send_now = TRUE;
+    $language_code = $this->languageManager->getDefaultLanguage()->getId();
     // Send confirmation email to member.
-    if (!empty($member["email"]))
-      $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $language_code, $params);
+    if (!empty($member["email"])) {
+      $this->mailManager->mail($module, $key, $to, $language_code, $params);
+    }
 
     // If copy_us checkbox checked, send a copy to us.
     if ($config->get('confirmation.copy_us')) {
       $params['subject'] = $config->get('confirmation.notification_subject');
       $params['include_private'] = false;
       $to = $config->get('confirmation.from_email');
-      $result = $this->mailManager->mail($module, $key, $to, $language_code, $params);
+      $this->mailManager->mail($module, $key, $to, $language_code, $params);
     }
 
     // If copy email to field provided, send an extra copy to us.
@@ -311,22 +317,20 @@ class SimpleConregCheckoutForm extends FormBase
       $params['subject'] = $config->get('confirmation.notification_subject');
       $params['include_private'] = false;
       $to = $config->get('confirmation.copy_email_to');
-      $result = $this->mailManager->mail($module, $key, $to, $language_code, $params);
+      $this->mailManager->mail($module, $key, $to, $language_code, $params);
     }
   }
 
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state)
-  {
+  public function validateForm(array &$form, FormStateInterface $form_state) {
   }
 
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state)
-  {
+  public function submitForm(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
     $mid = $form_state->get('mid');
     $return = $form_state->get('return');

@@ -229,9 +229,25 @@ class SimpleConregOptions {
             }
           }
         }
+        elseif ($key == 'confirmation') {
+          $type->confirmation = (object)[
+            'override' => $val['override'] ?: FALSE,
+            'template_subject' => $val['template_subject'] ?: '',
+            'template_body' => $val['template_body'] ?: '',
+            'template_format' => $val['template_format'] ?: '',
+          ];
+        }
         elseif (!empty($key)) {
           $type->$key = $val;
         }
+      }
+      if (!isset($type->confirmation)) {
+        $type->confirmation = (object)[
+          'override' => FALSE,
+          'template_subject' => '',
+          'template_body' => '',
+          'template_format' => '',
+        ];
       }
       $memberTypes->types[$typeCode] = $type;
       if ($type->active && $type->allowFirst) {
@@ -351,6 +367,12 @@ class SimpleConregOptions {
         }
         elseif ($key == 'dayOptions') {
           // Do nothing - dayoptions are generated.
+        }
+        elseif ($key == 'confirmation') {
+          $config->set("member.types.$typeRef.confirmation.override", $val->override);
+          $config->set("member.types.$typeRef.confirmation.template_subject", $val->template_subject);
+          $config->set("member.types.$typeRef.confirmation.template_body", $val->template_body);
+          $config->set("member.types.$typeRef.confirmation.template_format", $val->template_format);
         }
         elseif ($key == '') {
           // Don't save empty key.

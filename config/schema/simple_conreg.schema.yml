@@ -232,6 +232,22 @@ simple_conreg.settings.*:
                     price:
                       type: string
                       label: 'Price for the member for day'
+              confirmation:
+                type: mapping
+                label: 'Confirmation email'
+                mapping:
+                  override:
+                    type: boolean
+                    label: 'If true, override the confirmation email'
+                  template_subject:
+                    type: label
+                    label: 'The subject of the overridden confirmation email'
+                  template_body:
+                    type: text
+                    label: 'The body of the overridden confirmation email'
+                  template_format:
+                    type: string
+                    label: 'The text format of the overridden template'
     submit:
       type: mapping
       label: 'Labels for submit buttons'

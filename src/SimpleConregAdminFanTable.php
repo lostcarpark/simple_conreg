@@ -9,13 +9,8 @@ namespace Drupal\simple_conreg;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Mail\MailManagerInterface;
-use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\AlertCommand;
-use Drupal\Core\Ajax\CssCommand;
-use Drupal\Core\Ajax\HtmlCommand;
-use Drupal\Core\Link;
-use Drupal\Core\URL;
 use Drupal\Component\Utility\Html;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -29,17 +24,24 @@ class SimpleConregAdminFanTable extends FormBase {
    *
    * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
    *   The mail manager.
+   * @param \Drupal\Core\Language\LanguageManagerInterface $languageManager
+   *   The language manager.
    */
-  public function __construct(protected MailManagerInterface $mailManager)
-  {}
+  public function __construct(
+    protected MailManagerInterface $mailManager,
+    protected LanguageManagerInterface $languageManager,
+  ) {}
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container)
-  {
-    return new static ($container->get('plugin.manager.mail'));
+  public static function create(ContainerInterface $container) {
+    return new static (
+      $container->get('plugin.manager.mail'),
+      $container->get('language_manager'),
+    );
   }
+
 
   /**
    * {@inheritdoc}
@@ -440,9 +442,18 @@ class SimpleConregAdminFanTable extends FormBase {
     );
   }
 
-
-
-  // If any member upgrades selected, save them so they can be charged.
+  /**
+   * If any member upgrades selected, save them so they can be charged.
+   *
+   * @param int $eid
+   *   The event ID.
+   * @param array $form_values
+   *   Array of values returned by the form.
+   * @param int|float $upgrade_price
+   *   Returns the price of upgrades.
+   * @param SimpleConregPayment $payment
+   *   Payment object.
+   */
   public function saveUpgrades($eid, $form_values, &$upgrade_price, SimpleConregPayment &$payment) {
     $mgr = new SimpleConregUpgradeManager($eid);
 
@@ -530,8 +541,7 @@ class SimpleConregAdminFanTable extends FormBase {
   }
 
   // "Confirm" button on Pay Cash subform clicked.
-  public function confirmPayCash(array &$form, FormStateInterface $form_state)
-  {
+  public function confirmPayCash(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
     $payid = $form_state->get('payid');
     $form_values = $form_state->getValues();
@@ -654,28 +664,35 @@ class SimpleConregAdminFanTable extends FormBase {
 
   private function sendConfirmationEmail($member) {
     $config = $this->config('simple_conreg.settings.' . $member['eid']);
+    $types = SimpleConregOptions::memberTypes($member['eid'], $config);
 
     // Set up parameters for receipt email.
     $params = ['eid' => $member['eid'], 'mid' => $member['mid']];
-    $params['subject'] = $config->get('confirmation.template_subject');
-    $params['body'] = $config->get('confirmation.template_body');
-    $params['body_format'] = $config->get('confirmation.template_format');
+    if ($types->types[$member['member_type']]->confirmation->override ?: false) {
+      $params['subject'] = $types->types[$member['member_type']]->confirmation->template_subject;
+      $params['body'] = $types->types[$member['member_type']]->confirmation->template_body;
+      $params['body_format'] = $types->types[$member['member_type']]->confirmation->template_format;
+    } else {
+      $params['subject'] = $config->get('confirmation.template_subject');
+      $params['body'] = $config->get('confirmation.template_body');
+      $params['body_format'] = $config->get('confirmation.template_format');
+    }
     $params['include_private'] = true;
     $module = "simple_conreg";
     $key = "template";
     $to = $member["email"];
-    $language_code = \Drupal::languageManager()->getDefaultLanguage()->getId();
-    $send_now = TRUE;
+    $language_code = $this->languageManager->getDefaultLanguage()->getId();
     // Send confirmation email to member.
-    if (!empty($member["email"]))
-      $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $language_code, $params);
+    if (!empty($member["email"])) {
+      $this->mailManager->mail($module, $key, $to, $language_code, $params);
+    }
 
     // If copy_us checkbox checked, send a copy to us.
     if ($config->get('confirmation.copy_us')) {
       $params['subject'] = $config->get('confirmation.notification_subject');
       $params['include_private'] = false;
       $to = $config->get('confirmation.from_email');
-      $result = $this->mailManager->mail($module, $key, $to, $language_code, $params);
+      $this->mailManager->mail($module, $key, $to, $language_code, $params);
     }
 
     // If copy email to field provided, send an extra copy to us.
@@ -683,7 +700,7 @@ class SimpleConregAdminFanTable extends FormBase {
       $params['subject'] = $config->get('confirmation.notification_subject');
       $params['include_private'] = false;
       $to = $config->get('confirmation.copy_email_to');
-      $result = $this->mailManager->mail($module, $key, $to, $language_code, $params);
+      $this->mailManager->mail($module, $key, $to, $language_code, $params);
     }
   }
 
