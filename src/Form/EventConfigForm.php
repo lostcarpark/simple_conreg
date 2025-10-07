@@ -206,6 +206,12 @@ class EventConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('payments.postcode'),
     ];
 
+    $form['simple_conreg_payments']['auto_approve'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Automatically approve new members when payment complete'),
+      '#default_value' => $config->get('payments.auto_approve'),
+    ];
+
     // Member Information Section.
     $form['simple_conreg_members'] = [
       '#type' => 'details',
@@ -711,6 +717,7 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('payments.symbol', trim($vals['simple_conreg_payments']['symbol']));
     $config->set('payments.name', trim($vals['simple_conreg_payments']['show_name']));
     $config->set('payments.postcode', trim($vals['simple_conreg_payments']['show_postcode']));
+    $config->set('payments.auto_approve', trim($vals['simple_conreg_payments']['auto_approve']));
     $config->set('member_type_default', $vals['simple_conreg_members']['member_type_default']);
     $config->set('member_upgrades', $vals['simple_conreg_members']['upgrades']);
     $config->set('badge_types', $vals['simple_conreg_members']['badge_types']);
