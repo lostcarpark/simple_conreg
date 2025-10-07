@@ -69,6 +69,8 @@ class SimpleConregAdminFanTable extends FormBase {
     $communicationMethods = SimpleConregOptions::communicationMethod($eid, $config, TRUE);
     $pageSize = $config->get('display.page_size');
 
+    $form_state->set('auto_approve', $config->get('payments.auto_approve'));
+
     // If action set, display either payment or check-in subpage.
     $action = $form_state->get('action');
     if (isset($action) && !empty($action)) {
@@ -356,6 +358,7 @@ class SimpleConregAdminFanTable extends FormBase {
   // Set up markup fields to display cash payment.
   //
   public function buildCashForm($eid, SimpleConregPayment $payment, $config) {
+
     $symbol = $config->get('payments.symbol');
     $form = [];
     $form['intro'] = [
@@ -564,7 +567,13 @@ class SimpleConregAdminFanTable extends FormBase {
             if (is_object($member) && !$member->is_paid && !$member->is_deleted) {
               $member->is_paid = 1;
               $member->payment_id = $form_values['payment_id'];
-              $member->payment_method = 'Stripe';
+              $member->payment_method = $form_values['payment_method'];
+              if ($form_state->get('auto_approve')) {
+                $member->is_approved = 1;
+                $max_member = SimpleConregStorage::loadMaxMemberNo($eid);
+                $max_member++;
+                $member->member_no = $max_member;
+              }
               $member->saveMember();
 
               // If email address populated, send confirmation email.

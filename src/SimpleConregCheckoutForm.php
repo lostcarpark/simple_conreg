@@ -20,6 +20,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class SimpleConregCheckoutForm extends FormBase {
 
+  private int $eid;
+  private bool $autoApprove;
+
   /**
    * Constructs a new EmailExampleGetFormPage.
    *
@@ -73,7 +76,7 @@ class SimpleConregCheckoutForm extends FormBase {
     if (isset($payment) && isset($payment->paymentLines[0]) && !empty($payment->paymentLines[0]->mid)) {
       $mid = $payment->paymentLines[0]->mid;
       $member = Member::loadMember($mid);
-      $eid = $member->eid;
+      $this->eid = $member->eid;
       if (empty(trim($member->email)) && $mid != $member->lead_mid) {
         $lead_member = Member::loadMember($member->lead_mid);
         $email = $lead_member->email;
@@ -84,12 +87,14 @@ class SimpleConregCheckoutForm extends FormBase {
       $form_state->set('mid', $mid);
     }
     else {
-      $eid = 1;
+      $this->eid = 1;
       $email = '';
     }
-    $config = $this->config('simple_conreg.settings.' . $eid);
+    $config = $this->config('simple_conreg.settings.' . $this->eid);
 
-    $form_state->set('eid', $eid);
+    $form_state->set('eid', $this->eid);
+
+    $this->autoApprove = $config->get('payments.auto_approve');
 
     // Set your secret key: remember to change this to your live secret key in production
     // See your keys here: https://dashboard.stripe.com/account/apikeys
@@ -102,7 +107,7 @@ class SimpleConregCheckoutForm extends FormBase {
 
     // Check if payment date populated. If so, payment is complete, thank you message can be displayed.
     if ($payment->paidDate) {
-      return $this->showThankYouPage($form, $eid, $config, $payment);
+      return $this->showThankYouPage($form, $this->eid, $config, $payment);
     }
 
     // Set up payment lines on Stripe.
@@ -132,7 +137,7 @@ class SimpleConregCheckoutForm extends FormBase {
     if ($total > 0) {
       // Set up return URLs.
       $success = Url::fromRoute("simple_conreg_checkout", ["payid" => $payment->payId, "key" => $payment->randomKey], ['absolute' => TRUE])->toString();
-      $cancel = Url::fromRoute("simple_conreg_register", ["eid" => $eid], ['absolute' => TRUE])->toString();
+      $cancel = Url::fromRoute("simple_conreg_register", ["eid" => $this->eid], ['absolute' => TRUE])->toString();
 
       $types = empty($config->get('payments.types')) ? ['card'] : explode('|', $config->get('payments.types'));
 
@@ -169,7 +174,7 @@ class SimpleConregCheckoutForm extends FormBase {
       $payment->paymentMethod = "Free";
       $payment->paymentRef = "N/A";
       $payment->save();
-      return $this->showThankYouPage($form, $eid, $config, $payment);
+      return $this->showThankYouPage($form, $this->eid, $config, $payment);
     }
 
     return $form;
@@ -238,6 +243,12 @@ class SimpleConregCheckoutForm extends FormBase {
         $member = Member::loadMember($line->mid);
         if (is_object($member) && !$member->is_paid && !$member->is_deleted) {
           $member->is_paid = 1;
+          if ($this->autoApprove) {
+            $member->is_approved = 1;
+            $max_member = SimpleConregStorage::loadMaxMemberNo($this->eid);
+            $max_member++;
+            $member->member_no = $max_member;
+          }
           $member->payment_id = $session->payment_intent;
           $member->payment_method = 'Stripe';
           $result = $member->saveMember();
@@ -267,6 +278,12 @@ class SimpleConregCheckoutForm extends FormBase {
         $member = Member::loadMember($line->mid);
         if (is_object($member) && !$member->is_paid && !$member->is_deleted) {
           $member->is_paid = 1;
+          if ($this->autoApprove) {
+            $member->is_approved = 1;
+            $max_member = SimpleConregStorage::loadMaxMemberNo($this->eid);
+            $max_member++;
+            $member->member_no = $max_member;
+          }
           $member->payment_id = 'N/A';
           $member->payment_method = 'Free';
           $result = $member->saveMember();
@@ -331,26 +348,26 @@ class SimpleConregCheckoutForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $eid = $form_state->get('eid');
+    $this->eid = $form_state->get('eid');
     $mid = $form_state->get('mid');
     $return = $form_state->get('return');
 
     switch ($return) {
       case 'checkin':
         // Redirect to check-in page.
-        $form_state->setRedirect('simple_conreg_admin_checkin', ['eid' => $eid, 'lead_mid' => $mid]);
+        $form_state->setRedirect('simple_conreg_admin_checkin', ['eid' => $this->eid, 'lead_mid' => $mid]);
         break;
       case 'fantable':
         // Redirect to fan table page.
-        $form_state->setRedirect('simple_conreg_admin_fantable', ['eid' => $eid, 'lead_mid' => $mid]);
+        $form_state->setRedirect('simple_conreg_admin_fantable', ['eid' => $this->eid, 'lead_mid' => $mid]);
         break;
       case 'portal':
         // Redirect to portal.
-        $form_state->setRedirect('simple_conreg_portal', ['eid' => $eid]);
+        $form_state->setRedirect('simple_conreg_portal', ['eid' => $this->eid]);
         break;
       default:
         // Redirect to payment form.
-        $form_state->setRedirect('simple_conreg_thanks', ['eid' => $eid]);
+        $form_state->setRedirect('simple_conreg_thanks', ['eid' => $this->eid]);
     }
   }
 }
