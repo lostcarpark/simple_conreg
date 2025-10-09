@@ -25,6 +25,9 @@ simple_conreg.settings.*:
         postcode:
           type: boolean
           label: 'Postal code on payment form'
+        auto_approve:
+          type: boolean
+          label: 'If true, automatically approve member upon payment'
         types:
           type: string
     badge_types:

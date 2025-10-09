@@ -94,7 +94,7 @@ class SimpleConregCheckoutForm extends FormBase {
 
     $form_state->set('eid', $this->eid);
 
-    $this->autoApprove = $config->get('payments.auto_approve');
+    $this->autoApprove = $config->get('payments.auto_approve') ?: FALSE;
 
     // Set your secret key: remember to change this to your live secret key in production
     // See your keys here: https://dashboard.stripe.com/account/apikeys
