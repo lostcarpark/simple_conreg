@@ -119,9 +119,9 @@ class EventMemberTypesForm extends ConfigFormBase {
 
       $form[$typeRef]['type']['code'] = [
         '#type' => 'markup',
-        '#prefix' => $this->t('<div><label>Type code</label>'),
+        '#prefix' => '<div>',
         '#suffix' => '</div>',
-        '#markup' => $typeRef,
+        '#markup' => $this->t('<label>Type code</label>: %type', ['%type' => $typeRef]),
       ];
       $form[$typeRef]['type']['name'] = [
         '#type' => 'textfield',
@@ -141,6 +141,13 @@ class EventMemberTypesForm extends ConfigFormBase {
         '#default_value' => $type->price,
         '#step' => '0.01',
         '#required' => TRUE,
+      ];
+      $form[$typeRef]['type']['number_allowed'] = [
+        '#type' => 'number',
+        '#title' => $this->t('Number allowed'),
+        '#description' => $this->t('Number of members allowed to register for this member type'),
+        '#default_value' => $type->number_allowed ?? '',
+        '#step' => '1',
       ];
       $form[$typeRef]['type']['badgeType'] = [
         '#type' => 'select',
@@ -323,6 +330,7 @@ class EventMemberTypesForm extends ConfigFormBase {
       $row["enable"] = [
         '#type' => 'checkbox',
         '#title' => $this->t('Enable'),
+        '#title_display' => 'invisible',
         '#default_value' => isset($typeDays[$dayRef]) ? TRUE : FALSE,
       ];
       $row["description"] = [
@@ -351,6 +359,8 @@ class EventMemberTypesForm extends ConfigFormBase {
     $vals = $form_state->getValues();
     $this->updateMemberTypes($memberTypes, $vals, $eid);
     SimpleConregOptions::saveMemberTypes($eid, $memberTypes);
+
+    \Drupal::service('cache_tags.invalidator')->invalidateTags(['event:' . $eid . ':type']);
 
     parent::submitForm($form, $form_state);
   }

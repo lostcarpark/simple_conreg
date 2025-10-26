@@ -2,6 +2,7 @@
 
 namespace Drupal\simple_conreg;
 
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Locale\CountryManager;
 
@@ -199,7 +200,18 @@ class SimpleConregOptions {
     if (is_null($config)) {
       $config = SimpleConregConfig::getConfig($eid);
     }
+    $showRemaining = $config->get('payments.show_remaining') ?? FALSE;
     $days = self::days($eid, $config);
+
+    // If we need to show remaining memberships, fetch number of members of each
+    // type from database.
+    $numberOfMembers = [];
+    if ($showRemaining) {
+      // Get the number of members by type.
+      foreach (SimpleConregStorage::adminMemberSummaryLoad($eid) as $entry) {
+        $numberOfMembers[$entry['member_type']] = $entry['num'];
+      }
+    }
 
     $memberTypes = new \stdClass();
     $memberTypes->types = [];
@@ -214,6 +226,7 @@ class SimpleConregOptions {
     }
     foreach ($typesArray as $typeCode => $typeVals) {
       $type = new \stdClass();
+      $soldOut = FALSE;
       foreach ($typeVals as $key => $val) {
         if ($key == 'days') {
           $type->days = [];
@@ -249,17 +262,35 @@ class SimpleConregOptions {
           'template_format' => '',
         ];
       }
-      $memberTypes->types[$typeCode] = $type;
-      if ($type->active && $type->allowFirst) {
-        $memberTypes->firstOptions[$typeCode] = $type->description;
+      // Display number of remaining memberships if required.
+      if ($showRemaining && $typeVals['number_allowed']) {
+        // If limited number for type, calculate number left.
+        $numberForType = isset($numberOfMembers[$typeCode]) && $numberOfMembers[$typeCode] ? $numberOfMembers[$typeCode] : 0;
+        $numberRemaining = $typeVals['number_allowed'] - $numberForType;
+        $displayDescription = t('%description (%number remaining)', ['%description' => $type->description, '%number' => $numberRemaining]);
+        if ($numberRemaining <= 0) {
+          $soldOut = TRUE;
+        }
       }
-      if ($type->active) {
-        $memberTypes->publicOptions[$typeCode] = $type->description;
+      else {
+        // No number limit so just show description.
+        $displayDescription = $type->description;
+      }
+      $memberTypes->types[$typeCode] = $type;
+      if ($type->active && $type->allowFirst && !$soldOut) {
+        $memberTypes->firstOptions[$typeCode] = $displayDescription;
+      }
+      if ($type->active && !$soldOut) {
+        $memberTypes->publicOptions[$typeCode] = $displayDescription;
         $memberTypes->publicNames[$typeCode] = $type->name;
       }
-      $memberTypes->privateOptions[$typeCode] = $type->description;
+      $memberTypes->privateOptions[$typeCode] = $displayDescription;
     }
-    \Drupal::cache()->set($cid, $memberTypes);
+    $tags = ['event:' . $eid . ':type'];
+    if ($showRemaining) {
+      $tags[] = 'event:' . $eid . ':remaining';
+    }
+    \Drupal::cache()->set($cid, $memberTypes, Cache::PERMANENT, $tags);
     return $memberTypes;
   }
 

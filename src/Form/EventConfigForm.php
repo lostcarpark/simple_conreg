@@ -18,27 +18,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class EventConfigForm extends ConfigFormBase {
 
   /**
-   * The cache invalidator.
-   *
-   * @var \Drupal\Core\Cache\CacheTagsInvalidator
-   */
-  protected CacheTagsInvalidator $cacheInvalidator;
-
-  /**
-   * The cache invalidator.
-   *
-   * @var \Drupal\Core\Cache\CacheBackendInterface
-   */
-  protected CacheBackendInterface $cacheDefault;
-
-  /**
-   * The cache invalidator.
-   *
-   * @var \Drupal\Core\Language\LanguageManagerInterface
-   */
-  protected LanguageManagerInterface $languageManager;
-
-  /**
    * Constructor for member lookup form.
    *
    * @param \Drupal\Core\Cache\CacheTagsInvalidator $cacheInvalidator
@@ -48,11 +27,11 @@ class EventConfigForm extends ConfigFormBase {
    * @param \Drupal\Core\Language\LanguageManagerInterface $languageManager
    *   The cache invalidator.
    */
-  public function __construct(CacheTagsInvalidator $cacheInvalidator, CacheBackendInterface $cacheDefault, LanguageManagerInterface $languageManager) {
-    $this->cacheInvalidator = $cacheInvalidator;
-    $this->cacheDefault = $cacheDefault;
-    $this->languageManager = $languageManager;
-  }
+  public function __construct(
+    protected CacheTagsInvalidator $cacheInvalidator,
+    protected CacheBackendInterface $cacheDefault,
+    protected LanguageManagerInterface $languageManager,
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -210,6 +189,12 @@ class EventConfigForm extends ConfigFormBase {
       '#type' => 'checkbox',
       '#title' => $this->t('Automatically approve new members when payment complete'),
       '#default_value' => $config->get('payments.auto_approve'),
+    ];
+
+    $form['simple_conreg_payments']['show_remaining'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Show remaining memberships for types with limited number'),
+      '#default_value' => $config->get('payments.show_remaining'),
     ];
 
     // Member Information Section.
@@ -718,6 +703,7 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('payments.name', trim($vals['simple_conreg_payments']['show_name']));
     $config->set('payments.postcode', trim($vals['simple_conreg_payments']['show_postcode']));
     $config->set('payments.auto_approve', trim($vals['simple_conreg_payments']['auto_approve']));
+    $config->set('payments.show_remaining', trim($vals['simple_conreg_payments']['show_remaining']));
     $config->set('member_type_default', $vals['simple_conreg_members']['member_type_default']);
     $config->set('member_upgrades', $vals['simple_conreg_members']['upgrades']);
     $config->set('badge_types', $vals['simple_conreg_members']['badge_types']);

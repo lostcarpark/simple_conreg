@@ -2,7 +2,8 @@
 
 namespace Drupal\simple_conreg;
 
-use Drupal\Component\Utility\EmailValidator;
+use Drupal\Component\Utility\EmailValidatorInterface;
+use Drupal\Core\DependencyInjection\AutowireTrait;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Cache\Cache;
@@ -21,6 +22,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class SimpleConregRegistrationForm extends FormBase {
 
+  use AutowireTrait;
+
   /**
    * Constructs a new EmailExampleGetFormPage.
    *
@@ -30,27 +33,15 @@ class SimpleConregRegistrationForm extends FormBase {
    *   The mail manager.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The Drupal renderer.
-   * @param \Drupal\Component\Utility\EmailValidator $emailValidator
+   * @param \Drupal\Component\Utility\EmailValidatorInterface $emailValidator
    *   The email validator service.
    */
-  public function __construct(
-    protected AccountProxyInterface $currentUser,
-    private MailManagerInterface $mail_manager,
-    protected RendererInterface $renderer,
-    protected EmailValidator $emailValidator,
+  final public function __construct(
+    protected readonly AccountProxyInterface $currentUser,
+    protected readonly MailManagerInterface $mail_manager,
+    protected readonly RendererInterface $renderer,
+    protected readonly EmailValidatorInterface $emailValidator,
   ) {}
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('current_user'),
-      $container->get('plugin.manager.mail'),
-      $container->get('renderer'),
-      $container->get('email.validator'),
-    );
-  }
 
   /**
    * {@inheritdoc}
@@ -338,10 +329,12 @@ class SimpleConregRegistrationForm extends FormBase {
         }
       }
 
-      // Member type:
-      // If not returning to fan table/reg desk,
-      // and not logged in with existing membership,
-      // then first member must be an adult.
+      // Member type: If not returning to fan table/reg desk, and not logged in
+      // with existing membership, then first member must be an adult.
+      $tags = ['event:' . $eid . ':types'];
+      if ($config->get('payments.show_remaining') ?? FALSE) {
+        $tags[] = 'event:' . $eid . ':remaining';
+      }
       $form['members']['member' . $cnt]['type'] = [
         '#type' => 'select',
         '#title' => $curMemberClass->fields->membership_type,
@@ -353,6 +346,10 @@ class SimpleConregRegistrationForm extends FormBase {
           'wrapper' => 'regform',
           'callback' => [$this, 'updateMemberPriceCallback'],
           'event' => 'change',
+        ],
+        '#cache' => [
+          'tags' => $tags,
+          'max-age' => Cache::PERMANENT,
         ],
       ];
       if (!empty($defaultType)) {
