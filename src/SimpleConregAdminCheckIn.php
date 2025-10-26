@@ -3,6 +3,7 @@
 namespace Drupal\simple_conreg;
 
 use Drupal\Core\Cache\Cache;
+use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
@@ -91,6 +92,7 @@ class SimpleConregAdminCheckIn extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $lead_mid = 0) {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
+    $event = SimpleConregEventStorage::load(['eid' => $eid]);
 
     // Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
@@ -134,6 +136,7 @@ class SimpleConregAdminCheckIn extends FormBase {
     $search = trim($form_values['search'] ?? '');
 
     $form = [
+      '#title' => $this->t('Member Checkin for %event_name', ['%event_name' => $event['event_name']]),
       '#prefix' => '<div id="memberform">',
       '#suffix' => '</div>',
     ];
@@ -141,7 +144,7 @@ class SimpleConregAdminCheckIn extends FormBase {
     $this->checkInSummary($eid, $form);
 
     $headers = [
-      'member_no' => [
+      'badge_no' => [
         'data' => $this->t('Member no'),
         'field' => 'm.member_no',
         'sort' => 'asc',
@@ -207,8 +210,8 @@ class SimpleConregAdminCheckIn extends FormBase {
         // Sanitize each entry.
         $is_paid = $entry['is_paid'];
         $row = [];
-        $row['mid'] = [
-          '#markup' => Html::escape($entry['member_no']),
+        $row['badge_no'] = [
+          '#markup' => Html::escape($this->showBadgeNumber($entry, $config)),
         ];
         $row['first_name'] = [
           '#markup' => Html::escape($entry['first_name']),
@@ -484,6 +487,7 @@ class SimpleConregAdminCheckIn extends FormBase {
    * Set up markup fields to display check-in confirm.
    */
   public function buildConfirmForm($eid, $toPay) {
+    $config = $this->config('simple_conreg.settings.' . $eid);
     $form = [];
     $form['intro'] = [
       '#type' => 'markup',
@@ -503,6 +507,9 @@ class SimpleConregAdminCheckIn extends FormBase {
         }
         else {
           $member_no = ++$maxMemberNo;
+          // Add member number to loaded member entry.
+          $member['member_no'] = $member_no;
+          // Add to update record so it will be saved.
           $update['member_no'] = $member_no;
         }
         SimpleConregStorage::update($update);
@@ -510,7 +517,7 @@ class SimpleConregAdminCheckIn extends FormBase {
           '#type' => 'markup',
           '#markup' => $this->t('Badge number @memberno for @first @last',
           [
-            '@memberno' => $member_no,
+            '@memberno' => $this->showBadgeNumber($member, $config),
             '@first' => $member['first_name'],
             '@last' => $member['last_name'],
           ]),
@@ -695,6 +702,8 @@ class SimpleConregAdminCheckIn extends FormBase {
    * Callback for check in button.
    */
   public function confirmCheckInSubmit(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get("eid");
+    $config = $this->config('simple_conreg.settings.' . $eid);
     $toPay = $form_state->get("topay");
     $uid = $this->currentUser->id();
     // Loop through members and mark checked in.
@@ -706,6 +715,12 @@ class SimpleConregAdminCheckIn extends FormBase {
         'check_in_by' => $uid,
       ];
       SimpleConregStorage::update($update);
+      if ($member = SimpleConregStorage::load(['mid' => $mid])) {
+        $this->messenger()->addMessage($this->t("Member %badge_no - %badge_name checked in.", [
+          '%badge_no' => $this->showBadgeNumber($member, $config),
+          '%badge_name' => $member['badge_name'],
+        ]));
+      }
     }
     // Form may have checked in member in URL. Redirect to clear.
     $form_state->setRedirect('simple_conreg_admin_checkin', ['eid' => $eid]);
@@ -797,6 +812,16 @@ class SimpleConregAdminCheckIn extends FormBase {
       }
     }
     Cache::invalidateTags(['simple-conreg-member-list']);
+  }
+
+  protected function showBadgeNumber(array $member, ImmutableConfig $config): string {
+    if (!$member['member_no']) {
+      return '';
+    }
+    $digits = $config->get('member_no_digits');
+    $badge_type = trim($member['badge_type']);
+    $member_no = sprintf("%0" . $digits . "d", $member['member_no']);
+    return $badge_type . $member_no;
   }
 
 }
