@@ -28,6 +28,9 @@ simple_conreg.settings.*:
         auto_approve:
           type: boolean
           label: 'If true, automatically approve member upon payment'
+        show_remaining:
+          type: boolean
+          label: 'Show number of memberships remaining for type in member type drop-down'
         types:
           type: string
     badge_types:
@@ -210,6 +213,9 @@ simple_conreg.settings.*:
                 label: 'Description of member type - normally includes age requirement and price'
               price:
                 type: string
+              number_allowed:
+                type: integer
+                label: 'Number of members allowed to register for this member type'
               badgeType:
                 type: string
               memberClass:
