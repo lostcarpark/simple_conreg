@@ -79,6 +79,7 @@ final class PriceAvailabilityBlock extends BlockBase implements ContainerFactory
    * {@inheritdoc}
    */
   public function blockSubmit($form, FormStateInterface $form_state): void {
+    $this->configuration['eid'] = $form_state->getValue('eid');
     $this->configuration['price_text'] = $form_state->getValue('price_text');
   }
 
