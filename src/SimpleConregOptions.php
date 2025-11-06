@@ -271,6 +271,7 @@ class SimpleConregOptions {
         if ($numberRemaining <= 0) {
           $soldOut = TRUE;
         }
+        $type->remaining = $numberRemaining;
       }
       else {
         // No number limit so just show description.
