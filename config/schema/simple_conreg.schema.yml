@@ -408,3 +408,14 @@ simple_conreg.settings.*:
         options:
           type: text
           label: 'The options withing an option group'
+
+block.settings.simple_conreg_price_availability:
+  type: block_settings
+  label: 'Price and Availability block'
+  mapping:
+    eid:
+      type: integer
+      label: Event ID
+    price_text:
+      type: string
+      label: Price and availability text
