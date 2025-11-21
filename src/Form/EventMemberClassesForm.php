@@ -92,6 +92,10 @@ class EventMemberClassesForm extends ConfigFormBase {
       return $this->buildDeleteForm($form, $form_state, $deleteMemberClassID, $memberClasses);
     }
 
+    $form = [
+      '#title' => $this->t('@event_name Member Classes', ['@event_name' => $event['event_name']]),
+    ];
+
     $form['admin'] = [
       '#type' => 'vertical_tabs',
       '#default_tab' => 'edit-simple_conreg_event',

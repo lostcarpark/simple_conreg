@@ -25,8 +25,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Simple form to add an entry, with all the interesting fields.
  */
-class SimpleConregAdminMembers extends FormBase
-{
+class SimpleConregAdminMembers extends FormBase {
 
   /**
    * Constructs a new EmailExampleGetFormPage.
@@ -62,18 +61,17 @@ class SimpleConregAdminMembers extends FormBase
   /**
    * {@inheritdoc}
    */
-  public function getFormID()
-  {
+  public function getFormID() {
     return 'simple_conreg_admin_members';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $display = NULL, $page = NULL)
-  {
+  public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $display = NULL, $page = NULL) {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
+    $event = SimpleConregEventStorage::load(['eid' => $eid]);
 
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
@@ -150,6 +148,7 @@ class SimpleConregAdminMembers extends FormBase
     $tempstore->set('search', $search);
 
     $form = [
+      '#title' => $this->t('@event_name Member Administration', ['@event_name' => $event['event_name']]),
       '#attached' => [
         'library' => [
           'simple_conreg/conreg_select_all',
