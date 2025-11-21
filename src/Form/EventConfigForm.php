@@ -83,6 +83,10 @@ class EventConfigForm extends ConfigFormBase {
     // Get config for event.
     $config = $this->configFactory()->getEditable('simple_conreg.settings.' . $eid);
 
+    $form = [
+      '#title' => $this->t('@event_name Event Configuration', ['@event_name' => $event['event_name']]),
+    ];
+
     $form['admin'] = [
       '#type' => 'vertical_tabs',
       '#default_tab' => 'edit-simple_conreg_event',

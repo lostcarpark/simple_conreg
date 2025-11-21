@@ -56,6 +56,7 @@ class SimpleConregAdminFanTable extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state, $eid = 1, $lead_mid = 0) {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
+    $event = SimpleConregEventStorage::load(['eid' => $eid]);
 
     //Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
@@ -87,6 +88,7 @@ class SimpleConregAdminFanTable extends FormBase {
       $search = trim($form_values['search']);
 
     $form = array(
+      '#title' => $this->t('@event_name Fan Table Console', ['@event_name' => $event['event_name']]),
       '#prefix' => '<div id="memberform">',
       '#suffix' => '</div>',
     );

@@ -757,7 +757,9 @@ class SimpleConregController extends ControllerBase {
    * Render a summary convention members in the database.
    */
   public function memberAdminMemberSummary($eid) {
+    $event = SimpleConregEventStorage::load(['eid' => $eid]);
     $content = [
+      '#title' => $this->t('@event_name Member Summary', ['@event_name' => $event['event_name']]),
       '#cache' => [
         'tags' => ['event:' . $eid . ':members'],
         'max-age' => Cache::PERMANENT,
