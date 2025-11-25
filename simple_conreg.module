@@ -134,3 +134,13 @@ function simple_conreg_simplenews_form_submit ($form, FormStateInterface $form_s
     }
   }
 }
+
+/**
+ * Implements hook_page_attachments().
+ */
+function simple_conreg_page_attachments(&$variables) {
+  // Include Icon CSS if Drupal earlier than 11.1 - after this use Icon API.
+  if (version_compare(\Drupal::VERSION, '11.1', '<')) {
+    $variables['#attached']['library'][] = 'simple_conreg/icon';
+  }
+}

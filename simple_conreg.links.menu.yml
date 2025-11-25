@@ -20,6 +20,7 @@ simple_conreg.portal:
 
 simple_conreg.event_list:
   title: ConReg events
+  description: Manage registration for conventions.
   route_name: simple_conreg_event_list
   menu_name: admin
   parent: system.admin

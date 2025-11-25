@@ -90,3 +90,12 @@ conreg_disable_on_click:
   dependencies:
     - core/drupal.form
     - core/jquery
+
+# CSS for navigation icon.
+icon:
+  version: 1.x
+  css:
+    theme:
+      css/simple_conreg_navigation.css: {}
+  dependencies:
+    - navigation/internal.navigation
