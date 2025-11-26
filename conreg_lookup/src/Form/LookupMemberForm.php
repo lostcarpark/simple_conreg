@@ -13,6 +13,7 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Drupal\simple_conreg\SimpleConregOptions;
+use Drupal\simple_conreg\SimpleConregEventStorage;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -83,6 +84,7 @@ class LookupMemberForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state, $eid = 1) {
     // Store Event ID in form state.
     $form_state->set('eid', $eid);
+    $event = SimpleConregEventStorage::load(['eid' => $eid]);
 
     // Get any existing form values for use in AJAX validation.
     $form_values = $form_state->getValues();
@@ -101,6 +103,7 @@ class LookupMemberForm extends FormBase {
       '#attached' => [
         'library' => ['simple_conreg/conreg_tables'],
       ],
+      '#title' => $this->t('@event_name Member Lookup', ['@event_name' => $event['event_name']]),
       '#prefix' => '<div id="memberform">',
       '#suffix' => '</div>',
     ];
@@ -227,7 +230,7 @@ class LookupMemberForm extends FormBase {
         '#markup' => Html::escape($badgeTypes[$badgeType] ?? $badgeType),
       ];
       $row['registered_by'] = [
-        '#markup' => Html::escape($entry['registered_by']),
+        '#markup' => Html::escape($entry['registered_by'] ?? ''),
       ];
       $form['table'][$mid] = $row;
     }

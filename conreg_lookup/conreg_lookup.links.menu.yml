@@ -1,4 +1,4 @@
-conreg_lookup.member_lookup:
-  title: Member Lookup
-  route_name: conreg_member_lookup
-  weight: 55
+# Deriver for dynamic member lookup menu items.
+conreg_lookup.event_links:
+  deriver: \Drupal\conreg_lookup\Plugin\Derivative\LookupMenuDeriver
+  menu_name: admin
