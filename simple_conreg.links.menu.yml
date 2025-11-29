@@ -18,74 +18,24 @@ simple_conreg.portal:
   route_name: simple_conreg_portal
   weight: 3
 
-
 simple_conreg.event_list:
-  title: Registration Events
+  title: ConReg events
+  description: Manage registration for conventions.
   route_name: simple_conreg_event_list
+  menu_name: admin
+  parent: system.admin
   weight: 10
-
-simple_conreg.config:
-  title: Registration Configuration
-  route_name: simple_conreg_config
-  weight: 12
+  options:
+    icon:
+      pack_id: simple_conreg
+      icon_id: identification-badge
 
 simple_conreg.config_email:
-  title: Convention Email Templates
+  title: Email Templates
   route_name: simple_conreg_config_email_templates
-  weight: 13
+  parent: simple_conreg.event_list
+  weight: -100
 
-simple_conreg.admin.bulkemail:
-  title: Membership Bulk Email Sender
-  route_name: simple_conreg_admin_bulk_email
-  weight: 19
-
-simple_conreg.admin.members:
-  title: Membership Admin
-  route_name: simple_conreg_admin_members
-  weight: 11
-
-simple_conreg.admin.options:
-  title: Membership Selected Options
-  route_name: simple_conreg_admin_member_options
-  weight: 18
-
-simple_conreg.admin.mailout.emails:
-  title: Membership Mailout Emails
-  route_name: simple_conreg_admin_mailout_emails
-  weight: 19
-
-simple_conreg.admin.checkin:
-  title: Membership Check In
-  route_name: simple_conreg_admin_checkin
-  weight: 20
-
-simple_conreg.admin.fantable:
-  title: Fan Table Registration
-  route_name: simple_conreg_admin_fantable
-  weight: 20
-
-simple_conreg.member_list:
-  title: Membership List
-  route_name: simple_conreg_admin_member_list
-  weight: 14
-
-simple_conreg.member_badges:
-  title: Badge Printing
-  route_name: simple_conreg_admin_member_badges
-  weight: 22
-
-simple_conreg.member_addons:
-  title: Member Add-Ons
-  route_name: simple_conreg_admin_member_addons
-  weight: 16
-
-simple_conreg.child_member_ages:
-  title: Child Member Ages
-  route_name: simple_conreg_admin_child_member_ages
-  weight: 17
-
-simple_conreg.member_summary:
-  title: Membership Summary
-  route_name: simple_conreg_admin_member_summary
-  weight: 10
-
+simple_conreg.event_links:
+  deriver: \Drupal\simple_conreg\Plugin\Derivative\EventsMenuDeriver
+  menu_name: admin

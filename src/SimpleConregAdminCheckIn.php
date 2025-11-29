@@ -136,7 +136,7 @@ class SimpleConregAdminCheckIn extends FormBase {
     $search = trim($form_values['search'] ?? '');
 
     $form = [
-      '#title' => $this->t('Member Checkin for %event_name', ['%event_name' => $event['event_name']]),
+      '#title' => $this->t('@event_name Member Checkin', ['@event_name' => $event['event_name']]),
       '#prefix' => '<div id="memberform">',
       '#suffix' => '</div>',
     ];

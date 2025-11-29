@@ -1,4 +1,4 @@
-conreg_planz.admin:
-  title: PlanZ admim
-  route_name: conreg_config_planz_admin
-  weight: 75
+# Deriver for dynamic PlanZ menu items.
+conreg_planz.event_links:
+  deriver: \Drupal\conreg_planz\Plugin\Derivative\PlanZMenuDeriver
+  menu_name: admin

@@ -1,5 +1,4 @@
-conreg_badges.member_badge_names:
-  title: Badge Names
-  route_name: conreg_badges_list
-  weight: 21
-
+# Deriver for dynamic badge menu items.
+conreg_badges.event_links:
+  deriver: \Drupal\conreg_badges\Plugin\Derivative\BadgesMenuDeriver
+  menu_name: admin
