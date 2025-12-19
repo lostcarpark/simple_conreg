@@ -224,6 +224,22 @@ class EventMemberTypesForm extends ConfigFormBase {
         '#limit_validation_errors' => [],
         '#attributes' => ['id' => "submitBtn"],
       ];
+
+      $form[$typeRef]['move_up'] = [
+        '#type' => 'submit',
+        '#value' => $this->t('Move @name up', ['@name' => $typeName]),
+        '#submit' => [[$this, 'moveUpSubmit']],
+        '#limit_validation_errors' => [],
+        '#attributes' => ['id' => "submitBtn"],
+      ];
+
+      $form[$typeRef]['move_down'] = [
+        '#type' => 'submit',
+        '#value' => $this->t('Move @name down', ['@name' => $typeName]),
+        '#submit' => [[$this, 'moveDownSubmit']],
+        '#limit_validation_errors' => [],
+        '#attributes' => ['id' => "submitBtn"],
+      ];
     }
 
     return parent::buildForm($form, $form_state);
@@ -458,6 +474,76 @@ class EventMemberTypesForm extends ConfigFormBase {
   public function cancelAction(array &$form, FormStateInterface $form_state) {
     $form_state->set('clone_member_type_id', NULL);
     $form_state->set('delete_member_type_id', NULL);
+
+    $form_state->setRebuild();
+  }
+
+  /**
+   * Call back for move up button.
+   */
+  public function moveUpSubmit(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
+    $memberTypes = $form_state->get('member_types');
+
+    // Get the parent of the button that was triggered.
+    $memberTypeID = $form_state->getTriggeringElement()['#parents'][0];
+    // Get the member type IDs in indexed array.
+    $keys = array_keys($memberTypes->types);
+    foreach ($keys as $position => $type) {
+      if ($type == $memberTypeID) {
+        // Only move up if not first element.
+        if ($position > 0) {
+          // Swap key order with previous element.
+          $keys[$position] = $keys[$position - 1];
+          $keys[$position - 1] = $type;
+        }
+        // Found match, so no need to continue.
+        break;
+      }
+    }
+    // Now loop again to assign in new array order.
+    $newTypes = [];
+    foreach ($keys as $type) {
+      $newTypes[$type] = $memberTypes->types[$type];
+    }
+    // Replace member types with new reordered ones.
+    $memberTypes->types = $newTypes;
+    $form_state->set('member_types', $memberTypes);
+
+    $form_state->setRebuild();
+  }
+
+  /**
+   * Call back for move down button.
+   */
+  public function moveDownSubmit(array &$form, FormStateInterface $form_state) {
+    $eid = $form_state->get('eid');
+    $memberTypes = $form_state->get('member_types');
+
+    // Get the parent of the button that was triggered.
+    $memberTypeID = $form_state->getTriggeringElement()['#parents'][0];
+    // Get the member type IDs in indexed array.
+    $keys = array_keys($memberTypes->types);
+    foreach ($keys as $position => $type) {
+      if ($type == $memberTypeID) {
+        // Only move down if not last element.
+        if ($position < count($keys) - 1) {
+          // Swap key order with previous element.
+          $keys[$position] = $keys[$position + 1];
+          $keys[$position + 1] = $type;
+        }
+        // Found match, so no need to continue.
+        break;
+      }
+    }
+    // Now loop again to assign in new array order.
+    $newTypes = [];
+    foreach ($keys as $type) {
+      $newTypes[$type] = $memberTypes->types[$type];
+    }
+    // Replace member types with new reordered ones.
+    $memberTypes->types = $newTypes;
+    $form_state->set('member_types', $memberTypes);
 
     $form_state->setRebuild();
   }
