@@ -37,10 +37,10 @@ class SimpleConregRegistrationForm extends FormBase {
    *   The email validator service.
    */
   final public function __construct(
-    protected readonly AccountProxyInterface $currentUser,
-    protected readonly MailManagerInterface $mail_manager,
-    protected readonly RendererInterface $renderer,
-    protected readonly EmailValidatorInterface $emailValidator,
+    protected AccountProxyInterface $currentUser,
+    protected MailManagerInterface $mail_manager,
+    protected RendererInterface $renderer,
+    protected  EmailValidatorInterface $emailValidator,
   ) {}
 
   /**
