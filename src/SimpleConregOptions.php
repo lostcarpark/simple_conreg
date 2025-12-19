@@ -382,10 +382,7 @@ class SimpleConregOptions {
     // Get existing types and check they haven't been deleted.
     $typeArray = $config->get('member.types');
     foreach ($typeArray as $typeRef => $val) {
-      if (!array_key_exists($typeRef, $memberTypes->types)) {
-        // Member type not in memberTypes, so delete from configuration.
-        $config->clear("member.types.$typeRef");
-      }
+      $config->clear("member.types.$typeRef");
     }
     // Save all member types to configuration.
     foreach ($memberTypes->types as $typeRef => $typeVals) {
