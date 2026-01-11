@@ -141,7 +141,7 @@ simple_conreg_list:
     _controller: '\Drupal\simple_conreg\SimpleConregController::memberList'
     eid: 1
   requirements:
-    _permission: 'convention registration'
+    _permission: 'view public members'
     eid: ^[0-9]+$
 
 simple_conreg_check:

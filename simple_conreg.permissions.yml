@@ -4,6 +4,10 @@
   title: Register for convention
   description: Allow users to register and view other members
 
+'view public members':
+  title: View public membership list
+  description: Allow users to view list of members who opted in
+
 'check membership':
   title: Check membership
   description: Allow users to check if they have registered
@@ -35,39 +39,39 @@
 'view membership options':
   title: View membership options
   description: Allow users to view lists of members who have selected options (including private data)
-  
+
 'manage mailout lists':
   title: Manage mailout lists
   description: Allow users view member mailout options and email list integration.
-  
+
 'view membership add-ons':
   title: View membership add-ons
   description: Allow users to view lists of members add-ons (including private data)
-  
+
 'view child members':
   title: View child member ages
   description: Allow users to view lists of child members (including private data)
-  
+
 'view membership summary':
   title: View membership summary
   description: Allow users to view membership summary (including financial data)
-  
+
 'view programme membership details':
   title: View programme participant membership details
   description: Allow users to view lists of members who ticked "programme participant" (including private data)
-  
+
 'view volunteer membership details':
   title: View volunteer membership details
   description: Allow users to view lists of members who ticked "volunteer" (including private data)
-  
+
 'manage convention members':
   title: Manage convention members
   description: Allow users to approve, add and update members
-  
+
 'check in convention members':
   title: Check in convention members
   description: Allow users to check in members arriving at the convention
-  
+
 'fan table registration':
   title: Sign up members at a fan table
   description: Allow users to help members to join at a convention fan table
