@@ -201,7 +201,7 @@ class SimpleConregMemberEdit extends FormBase
         '#title' => $curMemberClass->fields->display,
         '#description' => $this->t('Select how you would like to appear on the membership list.'),
         '#options' => SimpleConregOptions::display(),
-        '#default_value' => $member->display ?: 'F',
+        '#default_value' => $member->display ?: $config->get('display_options.default'),
         '#required' => TRUE,
       );
     }
