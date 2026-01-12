@@ -469,7 +469,7 @@ class SimpleConregRegistrationForm extends FormBase {
           '#title' => $curMemberClass->fields->display,
           '#description' => $curMemberClass->fields->display_description,
           '#options' => SimpleConregOptions::display(),
-          '#default_value' => 'F',
+          '#default_value' => $config->get('display_options.default'),
           '#required' => TRUE,
         ];
       }
