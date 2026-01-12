@@ -8,6 +8,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\simple_conreg\SimpleConregEventStorage;
+use Drupal\simple_conreg\SimpleConregOptions;
 use Drupal\simple_conreg\SimpleConregTokens;
 use Drupal\user\Entity\Role;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -320,6 +321,14 @@ class EventConfigForm extends ConfigFormBase {
       '#title' => $this->t('Display options'),
       '#description' => $this->t('Put each display option on a line with single character code, description, separated by | character (e.g. "F|Full name and badge name").'),
       '#default_value' => $config->get('display_options.options'),
+    ];
+
+    $form['simple_conreg_display_options']['default'] = [
+      '#type' => 'select',
+      '#options' => SimpleConregOptions::display($eid),
+      '#title' => $this->t('Default display option'),
+      '#description' => $this->t('Select default display option (make sure list above saved).'),
+      '#default_value' => $config->get('display_options.default'),
     ];
 
     /*
@@ -720,6 +729,7 @@ class EventConfigForm extends ConfigFormBase {
     $config->set('communications_method.options', $vals['simple_conreg_communication']['options']);
     $config->set('communications_method.default', $vals['simple_conreg_communication']['default']);
     $config->set('display_options.options', $vals['simple_conreg_display_options']['options']);
+    $config->set('display_options.default', $vals['simple_conreg_display_options']['default']);
     $config->set('simple_conreg_options.option_groups', $vals['simple_conreg_options']['option_groups']);
     $config->set('simple_conreg_options.options', $vals['simple_conreg_options']['options']);
     $config->set('member_listing_page.show_members', $vals['simple_conreg_member_listing']['show_members']);
