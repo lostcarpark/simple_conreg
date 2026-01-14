@@ -47,6 +47,7 @@ class SimpleConregMemberPortal extends FormBase {
     $upgrades = SimpleConregOptions::memberUpgrades($eid, $config);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
     $days = SimpleConregOptions::days($eid, $config);
+    [$addOnOptions, $addOnPrices] = SimpleConregOptions::memberAddons($eid, $config);
     $displayOptions = SimpleConregOptions::display();
     $communicationMethods = SimpleConregOptions::communicationMethod($eid, $config, TRUE);
     $pageSize = $config->get('display.page_size');
@@ -84,7 +85,7 @@ class SimpleConregMemberPortal extends FormBase {
         '#attributes' => array('id' => 'simple-conreg-admin-member-list'),
         '#empty' => t('No entries available.'),
         '#sticky' => TRUE,
-      );      
+      );
 
       foreach ($entries as $entry) {
         $mid = $entry['mid'];
@@ -169,12 +170,12 @@ class SimpleConregMemberPortal extends FormBase {
       '#empty' => t('No entries available.'),
       '#sticky' => TRUE,
     );
-  
+
     foreach ($entries as $entry) {
       $mid = $entry['mid'];
       // Sanitize each entry.
       $is_paid = $entry['is_paid'];
-      
+
       if (!$is_paid) {
         $row = [];
         $row['type'] = ['#markup' => t('Member')];
@@ -186,7 +187,7 @@ class SimpleConregMemberPortal extends FormBase {
         $unpaid[$mid] = $row;
         $display_unpaid = TRUE;
       }
-      
+
       foreach (SimpleConregAddonStorage::loadAll(['mid' =>$mid, 'is_paid' => 0]) as $addon) {
         $row = [];
         $row['type'] = ['#markup' => t('Add-on')];
@@ -205,10 +206,26 @@ class SimpleConregMemberPortal extends FormBase {
         '#markup' => $this->t('Unpaid Members and Add-ons'),
         '#prefix' => '<h2>',
         '#suffix' => '</h2>',
-      );  
-    
+      );
+
       $form['unpaid'] = $unpaid;
     }
+
+    $form['payment'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Add ons'),
+      '#tree' => TRUE,
+    ];
+
+    // Get global add-on details.
+    $form['payment']['global_add_on'] = SimpleConregAddons::getAddon(
+      $config,
+      $form_values['payment']['global_add_on'] ?? [],
+      $addOnOptions,
+      0,
+      [$this, 'updateMemberPriceCallback'],
+      $form_state
+    );
 
 /*
     $form['add_members_button'] = array(
@@ -227,7 +244,7 @@ class SimpleConregMemberPortal extends FormBase {
 
     return $form;
   }
-  
+
   // Callback function for "display" drop down.
   public function updateDisplayCallback(array $form, FormStateInterface $form_state) {
     // Form rebuilt with required number of members before callback. Return new form.
@@ -237,7 +254,7 @@ class SimpleConregMemberPortal extends FormBase {
   public function search(array &$form, FormStateInterface $form_state) {
     $form_state->setRebuild();
   }
-  
+
   public function addMembers(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
     // Redirect to payment form.
@@ -245,7 +262,7 @@ class SimpleConregMemberPortal extends FormBase {
       array('eid' => $eid)
     );
   }
-  
+
   /***
    * Get the Member ID of the currently logged in user.
    */
@@ -257,8 +274,8 @@ class SimpleConregMemberPortal extends FormBase {
       return $member['mid'];
     }
   }
-    
-  
+
+
   // If any member upgrades selected, save them so they can be charged.
   public function saveUpgrades($eid, $form_values, &$upgrade_price, SimpleConregPayment &$payment)
   {
@@ -285,7 +302,7 @@ class SimpleConregMemberPortal extends FormBase {
     $lead_mid = $mgr->saveUpgrades();
     return $lead_mid;
   }
-  
+
   // Callback for "Pay by Card" button. Sets up members to be paid and transfers to Credit Card form.
   public function payCard(array &$form, FormStateInterface $form_state) {
     $eid = $form_state->get('eid');
@@ -325,7 +342,7 @@ class SimpleConregMemberPortal extends FormBase {
       $mid = $entry['mid'];
       // Sanitize each entry.
       $is_paid = $entry['is_paid'];
-      
+
       // If member unpaid, add to payment.
       if (!$is_paid) {
         $payment->add(new SimpleConregPaymentLine($mid,
@@ -334,7 +351,7 @@ class SimpleConregMemberPortal extends FormBase {
                                                   $entry['member_price']));
         $payment_amount += $entry['member_price'];
       }
-      
+
       // Loop through unpaid upgrades for member, and add those to payment.
       foreach (SimpleConregAddonStorage::loadAll(['mid' =>$mid, 'is_paid' => 0]) as $addon) {
         $payment->add(new SimpleConregPaymentLine($mid,
@@ -349,6 +366,10 @@ class SimpleConregMemberPortal extends FormBase {
         $payment_amount += $addon['addon_amount'];
       }
     }
+
+    $member = Member::loadMemberByEmail($eid, $email);
+    // All members saved. Now save any add-ons.
+    SimpleConregAddons::saveAddons($config, $form_values, [1 => $member->mid], $payment);
 
     // Assuming there are members/upgrades to pay for, redirect to payment form.
     if ($payment_amount > 0 || $upgrade_price > 0) {
@@ -383,5 +404,9 @@ class SimpleConregMemberPortal extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
   }
-}    
+
+  public function updateMemberPriceCallback(array $form, FormStateInterface $form_state): array|AjaxResponse {
+    return [];
+  }
+}
 
