@@ -188,6 +188,14 @@ simple_conreg_portal_edit:
     eid: ^[0-9]+$
     mid: ^[0-9]+$
 
+simple_conreg_overview:
+  path: '/admin/config/conreg/overview'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'ConReg Overview'
+  requirements:
+    _permission: 'access conreg events'
+
 simple_conreg_event_list:
   path: 'admin/config/conreg/list'
   defaults:
@@ -204,6 +212,16 @@ simple_conreg_event_clone:
     eid: 1
   requirements:
     _permission: 'configure convention registration'
+    eid: ^[0-9]+$
+
+simple_conreg_event_overview:
+  path: '/admin/config/conreg/event/overview/{eid}'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'ConReg Event Overview'
+    eid: 1
+  requirements:
+    _permission: 'access conreg events'
     eid: ^[0-9]+$
 
 simple_conreg_config:
