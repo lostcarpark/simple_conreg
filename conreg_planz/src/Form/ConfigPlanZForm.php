@@ -161,6 +161,24 @@ class ConfigPlanZForm extends ConfigFormBase {
       '#default_value' => $this->planz->digits,
     ];
 
+    $form['members']['generate_password_reset_link'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Generate password reset link when adding to PlanZ.'),
+      '#default_value' => $this->planz->generatePasswordResetLink,
+    ];
+
+    $form['members']['password_reset_expiry'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Time before password reset link expires',),
+      '#description' => $this->t('Specify time in seconds - 1 hour = 3600, 1 day = 86400, 1 week = 604800.'),
+      '#default_value' => $this->planz->passwordResetExpiry,
+      '#states' => [
+        'visible' => [
+          ':input[name="members[generate_password_reset_link]"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
     $form['members']['generate_password'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Generate password when adding to PlanZ.'),
@@ -216,11 +234,23 @@ class ConfigPlanZForm extends ConfigFormBase {
       '#markup' => $this->t('Select which option fields to invite member to PlanZ if selected.'),
     ];
 
+    $form['option_fields']['use_options'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Use selected option fields to determine whether to add members.'),
+      '#description' => $this->t('If checked, only members with selected options will be added. If unchecked, all members will be added to PlanZ.'),
+      '#default_value' => $this->planz->useOptions,
+    ];
+
     foreach ($fieldOptions->options as $option) {
       $form['option_fields'][$option->optionId] = [
         '#type' => 'checkbox',
         '#title' => $this->t('Invite members who select "@option"', ['@option' => $option->title]),
-        '#default_value' => $this->planz->optionFields[$option->optionId],
+        '#default_value' => $this->planz->optionFields[$option->optionId] ?? FALSE,
+        '#states' => [
+          'visible' => [
+            ':input[name="option_fields[use_options]"]' => ['checked' => TRUE],
+          ],
+        ],
       ];
     }
 
@@ -243,15 +273,24 @@ class ConfigPlanZForm extends ConfigFormBase {
       '#markup' => $this->t('Automatically add members to PlanZ when approved, if any of specified options selected.'),
     ];
 
+    $form['auto']['add'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Automatically add new members to PlanZ'),
+      '#description' => $this->t('If checked, members will be added to PlanZ. This will not send an invite email on its own.'),
+      '#default_value' => $this->planz->autoAdd,
+    ];
+
     $form['auto']['enabled'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable automatic invites'),
+      '#description' => $this->t('If checked, members will automatically be sent an invitation email after adding to PlanZ.'),
       '#default_value' => $this->planz->autoEnabled,
     ];
 
     $form['auto']['when_confirmed'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Only send invitation when member confirmed (if using member ID for badge ID, members will be invited immediately after joining if this is not checked)'),
+      '#title' => $this->t('Only send invitation when member confirmed'),
+      '#description' => $this->t('If using member ID for badge ID, members will be invited immediately after joining if this is not checked.'),
       '#default_value' => $this->planz->autoWhenConfirmed,
     ];
 
@@ -296,6 +335,8 @@ class ConfigPlanZForm extends ConfigFormBase {
     $config->set('badge_id_source', $vals['members']['badge_id_source']);
     $config->set('prefix', $vals['members']['prefix']);
     $config->set('digits', $vals['members']['digits']);
+    $config->set('generate_password_reset_link', $vals['members']['generate_password_reset_link']);
+    $config->set('password_reset_expiry', $vals['members']['password_reset_expiry']);
     $config->set('generate_password', $vals['members']['generate_password']);
     foreach ($vals['members']['roles'] as $key => $val) {
       $config->set('roles.' . $key, $val);
@@ -305,6 +346,7 @@ class ConfigPlanZForm extends ConfigFormBase {
     foreach ($vals['option_fields'] as $key => $val) {
       $config->set('option_fields.' . $key, $val);
     }
+    $config->set('auto.add', $vals['auto']['add']);
     $config->set('auto.enabled', $vals['auto']['enabled']);
     $config->set('auto.when_confirmed', $vals['auto']['when_confirmed']);
     $config->set('email.template_subject', $vals['email']['template_subject']);

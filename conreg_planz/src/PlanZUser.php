@@ -275,6 +275,24 @@ class PlanZUser {
     return $return_value;
   }
 
+  private function savePasswordResetRequest(Connection $planZCon, string $email, string $selector, string $token) {
+
+    $planZCon->update('ParticipantPasswordResetRequests')
+      ->fields(['cancelled' => 1])
+      ->condition('badgeid', $this->badgeId)
+      ->execute();
+
+    $return_value = $planZCon->insert('ParticipantPasswordResetRequests')
+      ->fields([
+        'badgeid' => $this->badgeId,
+        'email' => $email,
+        'selector' => $selector,
+        'token' => $token,
+      ])
+      ->execute();
+
+  }
+
   /**
    * Generate a random password of specified length.
    *
