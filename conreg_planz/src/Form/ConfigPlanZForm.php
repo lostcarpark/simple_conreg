@@ -315,7 +315,14 @@ class ConfigPlanZForm extends ConfigFormBase {
     $form['email']['template_body'] = [
       '#type' => 'text_format',
       '#title' => $this->t('InviteBulk email body'),
-      '#description' => $this->t('Text for the email body. you may use the following tokens: @tokens.', ['@tokens' => SimpleConregTokens::tokenHelp(['planz_user', 'planz_password', 'planz_url'])]),
+      '#description' => $this->t('Text for the email body. you may use the following tokens: @tokens.', [
+        '@tokens' => SimpleConregTokens::tokenHelp([
+          '[planz_user]',
+          '[planz_password]',
+          '[planz_url]',
+          '[planz_login_url]',
+        ]),
+      ]),
       '#default_value' => $this->planz->emailTemplateBody,
       '#format' => $this->planz->emailTemplateFormat,
     ];
@@ -338,8 +345,10 @@ class ConfigPlanZForm extends ConfigFormBase {
     $config->set('generate_password_reset_link', $vals['members']['generate_password_reset_link']);
     $config->set('password_reset_expiry', $vals['members']['password_reset_expiry']);
     $config->set('generate_password', $vals['members']['generate_password']);
-    foreach ($vals['members']['roles'] as $key => $val) {
-      $config->set('roles.' . $key, $val);
+    if ($vals['members']['roles'] ?? FALSE) {
+      foreach ($vals['members']['roles'] as $key => $val) {
+        $config->set('roles.' . $key, $val);
+      }
     }
     $config->set('interested_default', $vals['members']['interested_default']);
     $config->set('url', $vals['members']['url']);

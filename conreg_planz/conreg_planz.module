@@ -39,13 +39,14 @@ function conreg_planz_check_user(Member $member): void
   // Once confirmed, we'll see if user is already on PlanZ.
   $user = new PlanZUser($planz);
   if ($user->load($member->mid)) {
-    // Member is already on PlanZ, so we want to update their details, even if they've changed their preferences.
+    // Member is already on PlanZ, so we want to update their details, even if
+    // they've changed their preferences.
     $user->save($member, false);
     return;
   }
 
-  // Only continue if auto updating enabled.
-  if (!$planz->autoEnabled) {
+  // Only continue if auto adding enabled.
+  if (!$planz->autoAdd) {
     return;
   }
   // If automatic invite when confirmed enabled, make sure member approved.
@@ -57,12 +58,19 @@ function conreg_planz_check_user(Member $member): void
     return;
   }
 
-  // Next, check at least one of the expected member options has been selected by the member.
+  // Next, if not using options, all members should be added. Or, if using
+  // options, check at least one of the expected member options has been
+  // selected by the member.
   $match = FALSE;
-  foreach ($planz->optionFields as $optId => $optVal) {
-    if ($optVal) {
-      if (isset($member->options[$optId]) && $member->options[$optId]->isSelected) {
-        $match = TRUE;
+  if (!$planz->useOptions) {
+    $match = TRUE;
+  }
+  else {
+    foreach ($planz->optionFields as $optId => $optVal) {
+      if ($optVal) {
+        if (isset($member->options[$optId]) && $member->options[$optId]->isSelected) {
+          $match = TRUE;
+        }
       }
     }
   }
@@ -70,6 +78,13 @@ function conreg_planz_check_user(Member $member): void
   if ($match) {
     // Save new user.
     $user->save($member, false);
+  }
+
+  // Only continue if auto email invites enabled.
+  if (!$planz->autoEnabled) {
+    return;
+  }
+  if ($match) {
     // Send email to user.
     $planz->sendInviteEmail($user);
   }

@@ -12,6 +12,7 @@ class PlanZUser {
   private PlanZ $planz;
   public int $mid;
   public string $badgeId;
+  public ?string $passwordResetLink;
   public ?string $password;
   public ?string $hashedPassword;
   public bool $existingParticipant = FALSE;
@@ -147,7 +148,7 @@ class PlanZUser {
       $participantName = trim($member->first_name . ' ' . $member->last_name);
       $partSortName = trim($member->last_name . ' ' . $member->first_name);
       // Save the participant to set the password.
-      $this->saveParticipant($planZCon, $participantName, $partSortName);
+      $this->saveParticipant($planZCon, $participantName, $partSortName, $$member->email);
       // Loop through PlanZ permissions, and save the ones set in config.
       foreach ($this->planz->roles as $role => $value) {
         if ($value) {
@@ -213,7 +214,7 @@ class PlanZUser {
    *
    * @return int Number of rows affected (normally 1)
    */
-  private function saveParticipant(Connection $planZCon, ?string $publicationName = NULL, ?string $sortingName = NULL): int {
+  private function saveParticipant(Connection $planZCon, ?string $publicationName = NULL, ?string $sortingName = NULL, ?string $email): int {
     if ($this->planz->generatePassword && empty($this->hashedPassword)) {
       $this->password = $this->generatePassword(12);
       $this->hashedPassword = password_hash(trim($this->password), PASSWORD_DEFAULT);
@@ -224,6 +225,11 @@ class PlanZUser {
     ];
 
     if (empty($this->existingParticipant)) {
+      if ($this->planz->generatePasswordResetLink) {
+        $selector = bin2hex(random_bytes(8));
+        $token = random_bytes(32);
+        $this->passwordResetLink = $this->savePasswordResetRequest($planZCon, $email, $selector, $token);
+      }
       // Member not on participant table, so set default values.
       $fields['share_email'] = 1;
       $fields['data_retention'] = 0;
