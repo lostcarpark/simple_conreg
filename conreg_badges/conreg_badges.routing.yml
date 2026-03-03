@@ -17,7 +17,7 @@ conreg_badges_list_export:
     eid: 1
     export: true
     fields: null
-    update: null
+    update: 0
   requirements:
     _permission: "view membership badges"
     eid: ^[0-9]+$
