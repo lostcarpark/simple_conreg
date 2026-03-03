@@ -115,6 +115,10 @@ class BadgeNamesForm extends FormBase {
     $exportFields .= $showDays ? 'D' : '';
     $form['fields']['showDays'] = $this->checkBox($this->t('Show days'), TRUE);
 
+    $showRegisteredBy = ($form_values['showRegisteredBy'] ?? TRUE);
+    $exportFields .= $showRegisteredBy ? 'R' : '';
+    $form['fields']['showRegisteredBy'] = $this->checkBox($this->t('Show registered by'), TRUE);
+
     $form['filter'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Filters'),
@@ -162,7 +166,7 @@ class BadgeNamesForm extends FormBase {
       '#suffix' => '</div>',
     ];
 
-    $badgeNameRows = $this->getBadgeNameRows($eid, $showMemberNo, $showMemberName, $showBadgeName, $showBadgeTypes, $showMemberTypes, $showDays, $update);
+    $badgeNameRows = $this->getBadgeNameRows($eid, $showMemberNo, $showMemberName, $showBadgeName, $showBadgeTypes, $showMemberTypes, $showDays, $showRegisteredBy, $update);
 
     $headers = [];
     foreach ($badgeNameRows->headers as $field => $label) {
@@ -252,6 +256,8 @@ class BadgeNamesForm extends FormBase {
       empty($fields) || str_contains($fields, 'T'),
     // 'D' for Days.
       empty($fields) || str_contains($fields, 'D'),
+    // 'R' for Registered by.
+      empty($fields) || str_contains($fields, 'R'),
       $update
     );
     $output = '';
@@ -307,6 +313,7 @@ class BadgeNamesForm extends FormBase {
                                     bool $showBadgeTypes = TRUE,
                                     bool $showMemberTypes = FALSE,
                                     bool $showDays = TRUE,
+                                    bool $showRegisteredBy = TRUE,
                                     string|NULL $updated = NULL): object {
     $config = SimpleConregConfig::getConfig($eid);
     $badgeTypes = SimpleConregOptions::badgeTypes($eid, $config);
@@ -333,6 +340,9 @@ class BadgeNamesForm extends FormBase {
     }
     if ($showDays) {
       $headers['days'] = $this->t('Days');
+    }
+    if ($showRegisteredBy) {
+      $headers['registered_by'] = $this->t('Registered by');
     }
 
     $rows = [];
@@ -369,6 +379,9 @@ class BadgeNamesForm extends FormBase {
           }
         }
         $row['days'] = implode(', ', $dayDescs);
+      }
+      if ($showRegisteredBy && $entry['lead_member_no'] && $entry['lead_member_no'] != $entry['member_no']) {
+        $row['registered_by'] = $entry['lead_badge_type'] . sprintf("%0" . $digits . "d", $entry['lead_member_no']);
       }
       $rows[] = $row;
     }

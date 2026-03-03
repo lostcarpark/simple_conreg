@@ -670,11 +670,15 @@ class SimpleConregStorage {
     $select->addField('m', 'country');
     $select->addField('m', 'member_type');
     $select->addField('m', 'mid');
+    $select->join('conreg_members', 'l', 'm.lead_mid = l.mid');
+    $select->addField('l', 'member_no', 'lead_member_no');
+    $select->addField('l', 'badge_type', 'lead_badge_type');
+    $select->addExpression("concat(l.first_name, ' ', l.last_name)", 'registered_by');
     $select->condition('m.eid', $eid);
     $select->condition('m.is_paid', 1);
     $select->condition('m.is_approved', 1);
     // Only include members who aren't deleted.
-    $select->condition("is_deleted", FALSE);
+    $select->condition("m.is_deleted", FALSE);
     if (!empty($options['member_no_from'])) {
       $select->condition('m.member_no', $options['member_no_from'], '>=');
     }
