@@ -145,6 +145,10 @@ class LookupMemberForm extends FormBase {
         'data' => $this->t('Registered By'),
         'field' => 'm.registered_by',
       ],
+      'is_checked_in' => [
+        'data' => $this->t('Checked in?'),
+        'field' => 'm.is_checked_in',
+      ],
     ];
 
     $form['search'] = [
@@ -232,6 +236,9 @@ class LookupMemberForm extends FormBase {
       $row['registered_by'] = [
         '#markup' => Html::escape($entry['registered_by'] ?? ''),
       ];
+      $row['is_checked_in'] = [
+        '#markup' => Html::escape(($entry['is_checked_in'] ?? 0) ? $this->t('Yes') : $this->t('No')),
+      ];
       $form['table'][$mid] = $row;
     }
 
@@ -300,6 +307,7 @@ class LookupMemberForm extends FormBase {
     $select->addField('m', 'badge_type');
     $select->addField('m', 'member_no');
     $select->addField('m', 'phone');
+    $select->addField('m', 'is_checked_in');
     $select->addExpression("concat(l.first_name, ' ', l.last_name)", 'registered_by');
     // Add selection criteria.
     $words = explode(' ', trim($search));
