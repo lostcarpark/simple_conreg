@@ -8,6 +8,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -16,21 +17,15 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class SimpleConregAdminCheckIn extends FormBase {
 
   /**
-   * The database connection.
-   *
-   * @var \Drupal\Core\Session\AccountProxyInterface
-   */
-  protected AccountProxyInterface $currentUser;
-
-  /**
    * Constructor for member lookup form.
    *
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
    *   The database connection.
    */
-  public function __construct(AccountProxyInterface $currentUser) {
-    $this->currentUser = $currentUser;
-  }
+  public function __construct(
+    protected AccountProxyInterface $currentUser,
+    protected LanguageManagerInterface $languageManager,
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -39,7 +34,8 @@ class SimpleConregAdminCheckIn extends FormBase {
     // Instantiates this form class.
     return new static(
       // Load the service required to construct this class.
-      $container->get('current_user')
+      $container->get('current_user'),
+      $container->get('language_manager'),
     );
   }
 
@@ -563,6 +559,7 @@ class SimpleConregAdminCheckIn extends FormBase {
     $types = SimpleConregOptions::memberTypes($eid, $config);
     $days = SimpleConregOptions::days($eid, $config);
     $form_values = $form_state->getValues();
+    $language = $this->languageManager->getDefaultLanguage()->getId();
     // Assign random key for payment URL.
     $rand_key = mt_rand();
     if (!empty($form_values['unpaid']['add']['badge_name'])) {
@@ -610,6 +607,7 @@ class SimpleConregAdminCheckIn extends FormBase {
       'payment_amount' => $price,
       'join_date' => time(),
       'update_date' => time(),
+      'language' => $language,
     ];
     // Insert to database table.
     $return = SimpleConregStorage::insert($entry);
