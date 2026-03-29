@@ -692,10 +692,10 @@ class SimpleConregStorage {
         [$min, $max] = array_pad(explode('-', $range), 2, '');
         if (empty($max)) {
           // If no max set, range is single number in min.
-          $orGroup->condition('member_no', $min);
+          $orGroup->condition('m.member_no', $min);
         }
         else {
-          $orGroup->condition('member_no', [$min, $max], 'BETWEEN');
+          $orGroup->condition('m.member_no', [$min, $max], 'BETWEEN');
         }
       }
       $select->condition($orGroup);
@@ -703,21 +703,21 @@ class SimpleConregStorage {
     if (!empty($options['member_types'])) {
       $orGroup = $select->orConditionGroup();
       foreach ($options['member_types'] as $typeCode => $type) {
-        $orGroup->condition('member_type', $typeCode);
+        $orGroup->condition('m.member_type', $typeCode);
       }
       $select->condition($orGroup);
     }
     if (!empty($options['badge_types'])) {
       $orGroup = $select->orConditionGroup();
       foreach ($options['badge_types'] as $badgeCode => $badge) {
-        $orGroup->condition('badge_type', $badgeCode);
+        $orGroup->condition('m.badge_type', $badgeCode);
       }
       $select->condition($orGroup);
     }
     if (!empty($options['communication_methods'])) {
       $orGroup = $select->orConditionGroup();
       foreach ($options['communication_methods'] as $methodCode => $methodName) {
-        $orGroup->condition('communication_method', $methodCode);
+        $orGroup->condition('m.communication_method', $methodCode);
       }
       $select->condition($orGroup);
     }
