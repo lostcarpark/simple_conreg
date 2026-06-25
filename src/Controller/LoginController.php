@@ -132,18 +132,6 @@ class LoginController extends ControllerBase {
       $user->save();
     }
 
-    // Check if role needs to be added.
-    $config = SimpleConregConfig::getConfig($member['eid']);
-    $addRole = $config->get('member_portal.add_role');
-    if ($addRole) {
-      // Check if user has role already.
-      if (!$user->hasRole($addRole)) {
-        // They don't, so we need to add it.
-        $user->addRole($addRole);
-        $user->save();
-      }
-    }
-
     // Login user.
     user_login_finalize($user);
 

@@ -237,6 +237,8 @@ class SimpleConregCheckoutForm extends FormBase {
   }
 
   private function processPaymentLine($line, $session) {
+    $config = SimpleConregConfig::getConfig($this->eid);
+
     switch ($line->type) {
       case "member":
         // Only update member if not already paid.
@@ -256,6 +258,17 @@ class SimpleConregCheckoutForm extends FormBase {
           // If email address populated, send confirmation email.
           if (!empty($member->email))
             $this->sendConfirmationEmail((array)$member);
+          // Check if event has a role to add to user account.
+          $add_role = $config->get('member_portal.add_role');
+          if ($add_role) {
+            $account = user_load_by_mail($member->email);
+            // Check if user has role already.
+            if ($account && !$account->hasRole($add_role)) {
+              // They don't, so we need to add it.
+              $account->addRole($add_role);
+              $account->save();
+            }
+          }
         }
         break;
       case "upgrade":

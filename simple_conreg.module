@@ -9,13 +9,14 @@
 
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Component\Utility\SafeMarkup;
-use Drupal\devel;
+use Drupal\simple_conreg\Member;
 use Drupal\simple_conreg\SimpleConregEventStorage;
 use Drupal\simple_conreg\SimpleConregStorage;
 use Drupal\simple_conreg\SimpleConregOptions;
 use Drupal\simple_conreg\SimpleConregEmailer;
 use Drupal\simple_conreg\SimpleConregConfig;
+use Drupal\user\UserInterface;
+
 
 function simple_conreg_help($route_name, RouteMatchInterface $route_match)
 {
@@ -142,5 +143,35 @@ function simple_conreg_page_attachments(&$variables) {
   // Include Icon CSS if Drupal earlier than 11.1 - after this use Icon API.
   if (version_compare(\Drupal::VERSION, '11.1', '<')) {
     $variables['#attached']['library'][] = 'simple_conreg/icon';
+  }
+}
+
+/**
+ * Implements hook_user_login().
+ */
+function simple_conreg_user_login(UserInterface $account) {
+  $email = $account->getEmail();
+  if (is_null($email)) {
+    // User is anonymous, so no permissions to add.
+  }
+  // Get the list of all events.
+  $events = SimpleConregEventStorage::loadAll();
+  foreach ($events as $event) {
+    $eid = $event['eid'];
+    $config = SimpleConregConfig::getConfig($eid);
+    // Get the role for the event.
+    $add_role = $config->get('member_portal.add_role');
+    if ($add_role) {
+      // Check if user has role already.
+      if (!$account->hasRole($add_role)) {
+        // Check if account is member of event.
+        $member = Member::loadMemberByEmail($eid, $email);
+        if (!is_null($member)) {
+          // They don't, so we need to add it.
+          $account->addRole($add_role);
+          $account->save();
+        }
+      }
+    }
   }
 }
